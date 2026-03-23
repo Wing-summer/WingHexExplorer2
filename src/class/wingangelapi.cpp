@@ -75,7 +75,7 @@ void WingAngelAPI::onRegisterScriptObj(WingHex::IWingAngel *o) {
 }
 
 void WingAngelAPI::installAPI(ScriptMachine *machine) {
-    Q_ASSERT(machine);
+    ASSERT(machine);
     auto engine = machine->engine();
 
     installBasicTypes(engine);
@@ -95,20 +95,19 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
 
 void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("msgbox");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
     registerAngelType<QMessageBox::Icon>(engine, "icon");
 
     r = engine->SetDefaultNamespace("inputbox");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
     registerAngelType<Qt::InputMethodHints>(engine, "InputMethodHints");
 
     r = engine->SetDefaultNamespace("filedlg");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAngelType<QFileDialog::Options>(engine, "options");
 
@@ -119,8 +118,7 @@ void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("log");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(
         engine,
@@ -161,8 +159,7 @@ void WingAngelAPI::installExtAPI(asIScriptEngine *engine) {
 
 void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("msgbox");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _MSG_AboutQt, (const QString &), void),
@@ -225,8 +222,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
 
 void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("inputbox");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(
         engine,
@@ -286,8 +282,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
 
 void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("filedlg");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _FileDialog_GetExistingDirectory,
@@ -328,8 +323,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
 
 void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("colordlg");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _Color_get, (const QString &), QColor),
@@ -346,57 +340,74 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     auto r = engine->RegisterObjectType(
         "HexPosition", sizeof(WingHex::HexPosition),
         asOBJ_VALUE | asOBJ_POD | ::asGetTypeTraits<WingHex::HexPosition>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty("HexPosition", QSIZETYPE_WRAP("line"),
                                        asOFFSET(WingHex::HexPosition, line));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty("HexPosition", "int column",
                                        asOFFSET(WingHex::HexPosition, column));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
         "HexPosition", "uint8 lineWidth",
         asOFFSET(WingHex::HexPosition, lineWidth));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
         "HexPosition", "int nibbleindex",
         asOFFSET(WingHex::HexPosition, nibbleindex));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("HexPosition", QSIZETYPE_WRAP("offset()"),
                                      asMETHOD(WingHex::HexPosition, offset),
                                      asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "HexPosition", "int opSub(const HexPosition &in) const",
         asMETHODPR(WingHex::HexPosition, operator-,
                    (const WingHex::HexPosition &) const, qsizetype),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "HexPosition", "bool opEquals(const HexPosition &in) const",
         asMETHODPR(WingHex::HexPosition, operator==,
                    (const WingHex::HexPosition &) const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
+    // MetadataInfo
+    r = engine->RegisterObjectType(
+        "MetadataInfo", sizeof(WingHex::MetadataInfo),
+        asOBJ_VALUE | asOBJ_POD | ::asGetTypeTraits<WingHex::MetadataInfo>());
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectProperty("MetadataInfo", QSIZETYPE_WRAP("begin"),
+                                       asOFFSET(WingHex::MetadataInfo, begin));
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectProperty("MetadataInfo", QSIZETYPE_WRAP("end"),
+                                       asOFFSET(WingHex::MetadataInfo, end));
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectProperty(
+        "MetadataInfo", "color foreground",
+        asOFFSET(WingHex::MetadataInfo, foreground));
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectProperty(
+        "MetadataInfo", "color background",
+        asOFFSET(WingHex::MetadataInfo, background));
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectProperty(
+        "MetadataInfo", "string comment",
+        asOFFSET(WingHex::MetadataInfo, comment));
+    ASSERT(r >= 0);
 }
 
 void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("reader");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, isCurrentDocEditing,
@@ -585,13 +596,33 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                            (qsizetype) const, bool),
                 "bool existBookMark(" QSIZETYPE " pos)");
 
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, metadataInfo,
+                           (qsizetype) const, WingHex::MetadataInfo),
+                "MetadataInfo metadataInfo(" QSIZETYPE " offset)");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, metadataInfoByIndex,
+                           (qsizetype) const, WingHex::MetadataInfo),
+                "MetadataInfo metadataInfoByIndex(" QSIZETYPE " index)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, bookMarkCount, () const, qint64),
+        "int64 bookMarkCount()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, bookMarkPos, (qsizetype) const,
+                           qint64),
+                "int64 bookMarkPos(" QSIZETYPE " index)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, metadataCount, () const, qint64),
+        "int64 metadataCount()");
+
     engine->SetDefaultNamespace("");
 }
 
 void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("ctl");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, switchDocument, (int), bool),
@@ -628,9 +659,10 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, endMarco, (void), bool),
                 "bool endMarco()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isMacroEmpty, (void), bool),
-                "bool isMacroEmpty()");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, isMacroEmpty, (void) const, bool),
+        "bool isMacroEmpty()");
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, resetMarco, (void), bool),
                 "bool resetMarco()");
@@ -900,36 +932,31 @@ void WingAngelAPI::installInvokeServiceAPI(asIScriptEngine *engine) {
         "bool invokeService(const string&in puid, const string&in method, "
         "?&out result, const ?&in ...)",
         asFUNCTION(_invoke_service), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "bool invokeService(const string&in puid, const string&in method, "
         "?&out result)",
         asFUNCTION(_invoke_service), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "bool invokeService(const string&in puid, const string&in method)",
         asFUNCTION(_invoke_service_p_r), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "bool invokeServiceVoid(const string&in puid, const string&in method, "
         "const ?&in ...)",
         asFUNCTION(_invoke_service_p_p), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 void WingAngelAPI::registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
                                const char *sig) {
     auto r =
         engine->RegisterGlobalFunction(sig, fn, asCALL_THISCALL_ASGLOBAL, this);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
@@ -1023,7 +1050,7 @@ void WingAngelAPI::qvariantCastOp(
             }
         } else {
             auto id = qvariantCastASID(engine, type);
-            Q_ASSERT(id >= 0);
+            ASSERT(id >= 0);
             dic->Set(key, addr, id);
         }
     };
@@ -1091,7 +1118,7 @@ void WingAngelAPI::qvariantCastOp(
     case QMetaType::QByteArray: {
         auto value = var.toByteArray();
         auto info = engine->GetTypeInfoByDecl("array<byte>");
-        Q_ASSERT(info);
+        ASSERT(info);
         auto len = value.length();
         auto arr = CScriptArray::Create(info, len);
         arr->AddRef();
@@ -1131,7 +1158,7 @@ void WingAngelAPI::qvariantCastOp(
     case QMetaType::QStringList: {
         auto values = var.toStringList();
         auto info = engine->GetTypeInfoByDecl("string");
-        Q_ASSERT(info);
+        ASSERT(info);
         auto len = values.length();
         auto arr = CScriptArray::Create(info, len);
         arr->AddRef();
@@ -1288,7 +1315,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 bool WingAngelAPI::getQVariantGetFlag(
     const WingScriptInternal::ScriptFnInfo &info, int index) {
     auto &params = info.params;
-    Q_ASSERT(index >= 0 && index < params.size());
+    ASSERT(index >= 0 && index < params.size());
 
     auto minfo = params.at(index).first;
     return !!(minfo & WingHex::Meta_List) || !!(minfo & WingHex::Meta_Hash);
@@ -1535,8 +1562,8 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         fn->GetUserData(AsUserDataType::UserData_PluginFn));
     auto engine = fn->GetEngine();
 
-    Q_ASSERT(p);
-    Q_ASSERT(id >= 0 && id < p->_sfns.size());
+    ASSERT(p);
+    ASSERT(id >= 0 && id < p->_sfns.size());
     if (id < 0 || id >= p->_sfns.size()) {
         return;
     }
@@ -1588,7 +1615,7 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
                 break;
             default:
                 // should not go here
-                Q_ASSERT(false);
+                ASSERT(false);
                 break;
             }
         } else {
@@ -1645,8 +1672,8 @@ void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
     auto id = reinterpret_cast<qsizetype>(
         fn->GetUserData(AsUserDataType::UserData_PluginFn));
 
-    Q_ASSERT(p);
-    Q_ASSERT(id >= 0 && id < p->_usfns.size());
+    ASSERT(p);
+    ASSERT(id >= 0 && id < p->_usfns.size());
     if (id < 0 || id >= p->_usfns.size()) {
         return;
     }
@@ -2030,7 +2057,7 @@ CScriptArray *WingAngelAPI::_HexReader_selectionBytes() {
         // performance issues if the function is called frequently.
         asITypeInfo *arrt = engine->GetTypeInfoByDecl("array<array<byte>>");
         asITypeInfo *t = engine->GetTypeInfoByDecl("array<byte>");
-        Q_ASSERT(arrt && t);
+        ASSERT(arrt && t);
         auto array = CScriptArray::Create(arrt, ret.size());
         for (qsizetype i = 0; i < ret.size(); ++i) {
             auto buffer = ret.at(i);

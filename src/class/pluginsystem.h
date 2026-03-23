@@ -449,6 +449,13 @@ public slots:
     qsizetype findPrevious(const QObject *sender, qsizetype begin,
                            const QByteArray &ba);
 
+    WingHex::MetadataInfo metadataInfo(const QObject *caller, qsizetype offset);
+    WingHex::MetadataInfo metadataInfoByIndex(const QObject *sender,
+                                              qsizetype index);
+    qint64 bookMarkCount(const QObject *sender);
+    qint64 bookMarkPos(const QObject *sender, qsizetype index);
+    qint64 metadataCount(const QObject *sender);
+
     QString bookMarkComment(const QObject *sender, qsizetype pos);
 
     bool existBookMark(const QObject *sender, qsizetype pos);

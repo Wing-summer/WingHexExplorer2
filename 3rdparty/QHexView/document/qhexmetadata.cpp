@@ -213,7 +213,11 @@ void QHexMetadata::removeMetadata(qsizetype offset) {
     Q_EMIT metadataChanged();
 }
 
-QVector<QHexMetadataItem> QHexMetadata::getAllMetadata() const {
+const QHexMetadataItem &QHexMetadata::at(qsizetype index) const {
+    return m_metadata.at(index);
+}
+
+const QVector<QHexMetadataItem> &QHexMetadata::getAllMetadata() const {
     return m_metadata;
 }
 
@@ -275,7 +279,7 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
     Q_EMIT metadataChanged();
 }
 
-bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }
+bool QHexMetadata::hasMetadata() const { return m_metadata.count() > 0; }
 
 QColor QHexMetadata::generateContrastingColor(const QColor &backgroundColor) {
     // Invert RGB values

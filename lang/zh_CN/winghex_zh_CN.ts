@@ -2319,27 +2319,27 @@
 <context>
     <name>MetaDataModel</name>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="127"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="123"/>
         <source>Begin</source>
         <translation>开始</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="129"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="125"/>
         <source>End</source>
         <translation>结束</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="131"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="127"/>
         <source>Foreground</source>
         <translation>前景色</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="133"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="129"/>
         <source>Background</source>
         <translation>背景色</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="135"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="131"/>
         <source>Comment</source>
         <translation>批注</translation>
     </message>
@@ -2630,143 +2630,143 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2498"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2565"/>
         <source>LoadingPlugin</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2901"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2968"/>
         <source>AppClosingCanceled:</source>
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3024"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3091"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3044"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3111"/>
         <source>FoundDrvPluginCount</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2528"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2595"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加载失败：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3196"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3264"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3263"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3331"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3217"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3284"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2531"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2598"/>
         <source>InvalidPlugin</source>
         <translation>非法插件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3226"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3293"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3227"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3294"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3228"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3295"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3267"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3334"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3268"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3335"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3285"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3352"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3308"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3375"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3347"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3414"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3357"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3424"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3365"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3432"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3478"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3545"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1328"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1395"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>监测到异常推入的撤销命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2521"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2588"/>
         <source>InvalidPluginID</source>
         <translation>加载插件失败：非法插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2524"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2591"/>
         <source>InvalidDupPlugin</source>
         <translation>加载插件失败：重复的插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2989"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3056"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3020"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3087"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依赖插件加载失败总结</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3025"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3092"/>
         <source>- Dependencies:</source>
         <translation>- 依赖：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3027"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3094"/>
         <source>PUID:</source>
         <translation>插件唯一标志符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3028"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3095"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3035"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3102"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -4027,18 +4027,18 @@
         <translation>为 AngelScript 脚本提供调用主机 API 能力的内部插件。</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1152"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1179"/>
         <source>NotSupportedQMetaType:</source>
         <translation>不支持的 QT 数据元类型：</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1604"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1691"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1631"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1718"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>脚本调用发生异常：（%1）%2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1630"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1657"/>
         <source>InvalidRetType: need </source>
         <translation>无效返回值：需要 </translation>
     </message>

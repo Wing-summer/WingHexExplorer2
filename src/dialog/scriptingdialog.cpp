@@ -1906,7 +1906,7 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
-    if (ScriptEditor::isAllClosed()) {
+    if (!ScriptEditor::isAllClosed()) {
         event->ignore();
         this->hide();
         return;

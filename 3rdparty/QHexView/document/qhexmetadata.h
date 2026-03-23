@@ -44,8 +44,9 @@ struct QHexMetadataItem : QHexRegionObject<qsizetype, QHexMetadataItem> {
         this->end = -1;
     }
 
-    explicit QHexMetadataItem(qsizetype begin, qsizetype end, QColor foreground,
-                              QColor background, const QString comment)
+    explicit QHexMetadataItem(qsizetype begin, qsizetype end,
+                              const QColor &foreground,
+                              const QColor &background, const QString &comment)
         : foreground(foreground), background(background), comment(comment) {
         this->begin = begin;
         this->end = end;
@@ -180,7 +181,8 @@ public:
     bool removeLineMetadata(const QHexMetadataItem &item);
     void removeMetadata(qsizetype offset);
 
-    QVector<QHexMetadataItem> getAllMetadata() const;
+    const QHexMetadataItem &at(qsizetype index) const;
+    const QVector<QHexMetadataItem> &getAllMetadata() const;
 
     std::optional<QHexMetadataItem> get(qsizetype offset);
     QHexLineMetadata gets(qsizetype line);
@@ -188,7 +190,7 @@ public:
 
     void applyMetas(const QVector<QHexMetadataItem> &metas);
 
-    bool hasMetadata();
+    bool hasMetadata() const;
 
 public:
     static QColor generateContrastingColor(const QColor &backgroundColor);

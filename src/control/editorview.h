@@ -418,6 +418,13 @@ private slots:
     bool setMetabgVisible(const QObject *caller, bool b);
     bool setMetaCommentVisible(const QObject *caller, bool b);
 
+    WingHex::MetadataInfo metadataInfo(const QObject *caller, qsizetype offset);
+    WingHex::MetadataInfo metadataInfoByIndex(const QObject *caller,
+                                              qsizetype index);
+    qint64 bookMarkCount(const QObject *caller);
+    qint64 bookMarkPos(const QObject *caller, qsizetype index);
+    qint64 metadataCount(const QObject *caller);
+
     // bookmark
     bool addBookMark(const QObject *caller, qsizetype pos,
                      const QString &comment);

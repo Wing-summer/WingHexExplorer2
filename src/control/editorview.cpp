@@ -2466,6 +2466,108 @@ bool EditorView::setMetaCommentVisible(const QObject *caller, bool b) {
     return true;
 }
 
+qint64 EditorView::bookMarkCount(const QObject *caller) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (!checkThreadAff()) {
+            return -1;
+        }
+        if (checkErrAndReport(caller, __func__)) {
+            return -1;
+        }
+    }
+
+    auto doc = m_hex->document();
+    return doc->bookMarksCount();
+}
+
+qint64 EditorView::bookMarkPos(const QObject *caller, qsizetype index) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (!checkThreadAff()) {
+            return -1;
+        }
+        if (checkErrAndReport(caller, __func__)) {
+            return -1;
+        }
+    }
+
+    auto doc = m_hex->document();
+    if (index < 0 || index >= doc->bookMarksCount()) {
+        return -1;
+    }
+    return doc->bookMarkPos(index);
+}
+
+qint64 EditorView::metadataCount(const QObject *caller) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (!checkThreadAff()) {
+            return -1;
+        }
+        if (checkErrAndReport(caller, __func__)) {
+            return -1;
+        }
+    }
+
+    auto doc = m_hex->document();
+    auto meta = doc->metadata();
+    return meta->size();
+}
+
+MetadataInfo EditorView::metadataInfoByIndex(const QObject *caller,
+                                             qsizetype index) {
+    MetadataInfo info{-1, -1, {}, {}, {}};
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (!checkThreadAff()) {
+            return info;
+        }
+        if (checkErrAndReport(caller, __func__)) {
+            return info;
+        }
+    }
+
+    auto doc = m_hex->document();
+    auto meta = doc->metadata();
+    if (index < 0 || index >= meta->size()) {
+        return info;
+    }
+
+    auto r = meta->at(index);
+    info.begin = r.begin;
+    info.end = r.end;
+    info.foreground = r.foreground;
+    info.background = r.background;
+    info.comment = r.comment;
+    return info;
+}
+
+MetadataInfo EditorView::metadataInfo(const QObject *caller, qsizetype offset) {
+    MetadataInfo info{-1, -1, {}, {}, {}};
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (!checkThreadAff()) {
+            return info;
+        }
+        if (checkErrAndReport(caller, __func__)) {
+            return info;
+        }
+    }
+
+    auto doc = m_hex->document();
+    auto meta = doc->metadata();
+    auto r = meta->get(offset);
+    if (r) {
+        info.begin = r->begin;
+        info.end = r->end;
+        info.foreground = r->foreground;
+        info.background = r->background;
+        info.comment = r->comment;
+    }
+    return info;
+}
+
 bool EditorView::addBookMark(const QObject *caller, qsizetype pos,
                              const QString &comment) {
     auto &plgsys = PluginSystem::instance();

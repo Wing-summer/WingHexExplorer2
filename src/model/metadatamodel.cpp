@@ -34,8 +34,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getAllMetadata();
-        auto d = b.at(r);
+        const auto &d = _doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return QString(QStringLiteral("0x") +
@@ -60,8 +59,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::ToolTipRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getAllMetadata();
-        auto d = b.at(r);
+        const auto &d = _doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return QString(QString::number(d.begin) + QStringLiteral(" - 0x") +
@@ -86,8 +84,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::DecorationRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getAllMetadata();
-        auto d = b.at(r);
+        const auto &d = _doc->metadata()->at(r);
         switch (index.column()) {
         case 2:
             if (d.foreground.isValid())
@@ -105,8 +102,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         return int(Qt::AlignCenter);
     case Qt::UserRole:
         auto r = index.row();
-        const auto &b = _doc->metadata()->getAllMetadata();
-        auto d = b.at(r);
+        const auto &d = _doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return d.begin;

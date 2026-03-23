@@ -1085,6 +1085,73 @@ qsizetype PluginSystem::findPrevious(const QObject *sender, qsizetype begin,
     return -1;
 }
 
+qint64 PluginSystem::bookMarkCount(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return -1;
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->bookMarkCount(this);
+    }
+    return -1;
+}
+
+qint64 PluginSystem::bookMarkPos(const QObject *sender, qsizetype index) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return -1;
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->bookMarkPos(this, index);
+    }
+    return -1;
+}
+
+qint64 PluginSystem::metadataCount(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return -1;
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->metadataCount(this);
+    }
+    return -1;
+}
+
+MetadataInfo PluginSystem::metadataInfoByIndex(const QObject *sender,
+                                               qsizetype index) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {-1, -1, {}, {}, {}};
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->metadataInfoByIndex(this, index);
+    }
+    return {-1, -1, {}, {}, {}};
+}
+
+MetadataInfo PluginSystem::metadataInfo(const QObject *sender,
+                                        qsizetype offset) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {-1, -1, {}, {}, {}};
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->metadataInfo(this, offset);
+    }
+    return {-1, -1, {}, {}, {}};
+}
+
 QString PluginSystem::bookMarkComment(const QObject *sender, qsizetype pos) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
