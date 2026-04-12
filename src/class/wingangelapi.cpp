@@ -1777,7 +1777,11 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
         ScriptManager::instance().setIndicatorBusy(true);
         return ScriptMachine::instance().executeScript(
             ScriptMachine::Background, fileName, false, {},
-            [this]() { ScriptManager::instance().setIndicatorBusy(false); });
+            [this](bool isNotBusy) {
+                if (isNotBusy) {
+                    ScriptManager::instance().setIndicatorBusy(false);
+                }
+            });
     };
 
     if (QThread::currentThread() != qApp->thread()) {
@@ -1795,8 +1799,11 @@ bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
     auto exec = [this, code]() -> void {
         ScriptManager::instance().setIndicatorBusy(true);
         ScriptMachine::instance().executeCode(
-            ScriptMachine::Background, code,
-            [this]() { ScriptManager::instance().setIndicatorBusy(false); });
+            ScriptMachine::Background, code, [this](bool isNotBusy) {
+                if (isNotBusy) {
+                    ScriptManager::instance().setIndicatorBusy(false);
+                }
+            });
     };
 
     if (QThread::currentThread() != qApp->thread()) {
@@ -2015,9 +2022,10 @@ void WingAngelAPI::_invoke_service_p_p(asIScriptGeneric *generic) {
 
 bool WingAngelAPI::invoke_service(
     const QString &puid, const char *method,
-    const std::vector<const char *> &names,
-    const std::vector<const void *> &data,
-    const std::vector<const QtPrivate::QMetaTypeInterface *> &metas) {
+    const QVarLengthArray<const char *, DEFAULT_PARAMS_SIZE> &names,
+    const QVarLengthArray<const void *, DEFAULT_PARAMS_SIZE> &data,
+    const QVarLengthArray<const QtPrivate::QMetaTypeInterface *,
+                          DEFAULT_PARAMS_SIZE> &metas) {
     if (puid.isEmpty() || method == nullptr) {
         return false;
     }

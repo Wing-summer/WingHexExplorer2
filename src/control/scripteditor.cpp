@@ -375,9 +375,7 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
-const LinkedList<ScriptEditor *> &ScriptEditor::instances() {
-    return m_instances;
-}
+const QList<ScriptEditor *> &ScriptEditor::instances() { return m_instances; }
 
 bool ScriptEditor::isAllClosed() {
     return m_instances.isEmpty() ||

@@ -18,18 +18,13 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QStyleOptionSlider>
 
 #include "qcolorpicker_slider.hpp"
 
 QColorPickerSlider::QColorPickerSlider(Qt::Orientation orientation,
                                        QWidget *parent)
-    : QSlider(orientation, parent) {
-    _checkerboardPixmap = QPixmap(16, 16);
-    _checkerboardPixmap.fill(Qt::white);
-    QPainter painter(&_checkerboardPixmap);
-    painter.fillRect(0, 0, 8, 8, Qt::lightGray);
-    painter.fillRect(8, 8, 8, 8, Qt::lightGray);
-}
+    : QSlider(orientation, parent) {}
 
 QColorPickerSlider::QColorPickerSlider(QWidget *parent)
     : QColorPickerSlider(Qt::Vertical, parent) {}
@@ -41,71 +36,38 @@ void QColorPickerSlider::setGradientStops(QGradientStops gradientStops) {
     update();
 }
 
-void QColorPickerSlider::setRenderCheckerboard(bool renderCheckerboard) {
-    _renderCheckerboard = renderCheckerboard;
-    update();
-}
-
 void QColorPickerSlider::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
+    QRectF groove = rect().adjusted(1, 1, -1, -1);
+    qreal r = orientation() == Qt::Horizontal ? groove.height() / 2.0
+                                              : groove.width() / 2.0;
+
     QLinearGradient gradient;
-    QRect drawingRect = rect();
-
-    float roundRectRadius = 0;
-    float handleRadius = 0;
-    QPointF handlePos;
-
-    switch (orientation()) {
-    case Qt::Horizontal: {
-        drawingRect.adjust(height() / 2, 2, -height() / 2, -2);
-        gradient = QLinearGradient(0, 0, drawingRect.width(), 0);
-        roundRectRadius = drawingRect.height() / 2;
-        handleRadius = height() / 2;
-        handlePos = {static_cast<qreal>(sliderPosition()) *
-                             drawingRect.width() / maximum() +
-                         height() / 2,
-                     static_cast<qreal>(height()) / 2};
-        break;
+    if (orientation() == Qt::Horizontal) {
+        gradient = QLinearGradient(groove.left() + r, 0, groove.right() - r, 0);
+    } else {
+        gradient = QLinearGradient(0, groove.top() + r, 0, groove.bottom() - r);
     }
-
-    case Qt::Vertical: {
-        drawingRect.adjust(2, width() / 2, -2, -width() / 2);
-        gradient = QLinearGradient(0, 0, 0, drawingRect.height());
-        roundRectRadius = drawingRect.width() / 2;
-        handleRadius = width() / 2;
-        handlePos = {static_cast<qreal>(width()) / 2,
-                     static_cast<qreal>(sliderPosition()) *
-                             drawingRect.width() / maximum() +
-                         width() / 2};
-        break;
-    }
-    };
-
     gradient.setStops(_gradientStops);
-
-    if (_renderCheckerboard) {
-        painter.setBrush(QBrush(_checkerboardPixmap));
-        painter.setPen(Qt::NoPen);
-        painter.drawRoundedRect(drawingRect, roundRectRadius, roundRectRadius);
-    }
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(gradient);
-    painter.drawRoundedRect(drawingRect, roundRectRadius, roundRectRadius);
+    painter.drawRoundedRect(groove, r, r);
 
-    // find the 2 colors that are closest to the handle position
     QColor leftColor =
-        _gradientStops.isEmpty() ? QColor() : _gradientStops.front().second;
+        _gradientStops.isEmpty() ? QColor() : _gradientStops.first().second;
     QColor rightColor =
-        _gradientStops.isEmpty() ? QColor() : _gradientStops.back().second;
-    float leftPos = 0;
-    float rightPos = 1;
-    float valueFloat = static_cast<float>(value() - minimum()) /
-                       static_cast<float>(maximum() - minimum());
+        _gradientStops.isEmpty() ? QColor() : _gradientStops.last().second;
+    float leftPos = 0.0f, rightPos = 1.0f;
+
+    const float valueFloat =
+        (maximum() == minimum())
+            ? 0.0f
+            : float(value() - minimum()) / float(maximum() - minimum());
 
     for (int i = 0; i < _gradientStops.size() - 1; ++i) {
         if (_gradientStops[i].first <= valueFloat &&
@@ -118,19 +80,117 @@ void QColorPickerSlider::paintEvent(QPaintEvent *event) {
         }
     }
 
-    // interpolate between the 2 colors
-    float handlePosInGradient = (valueFloat - leftPos) / (rightPos - leftPos);
-    QColor fill = QColor::fromRgbF(
-        leftColor.redF() +
-            (rightColor.redF() - leftColor.redF()) * handlePosInGradient,
-        leftColor.greenF() +
-            (rightColor.greenF() - leftColor.greenF()) * handlePosInGradient,
-        leftColor.blueF() +
-            (rightColor.blueF() - leftColor.blueF()) * handlePosInGradient,
-        leftColor.alphaF() +
-            (rightColor.alphaF() - leftColor.alphaF()) * handlePosInGradient);
+    QColor fill = leftColor;
+    if (rightPos > leftPos) {
+        const float t = (valueFloat - leftPos) / (rightPos - leftPos);
+        fill = QColor::fromRgbF(
+            leftColor.redF() + (rightColor.redF() - leftColor.redF()) * t,
+            leftColor.greenF() + (rightColor.greenF() - leftColor.greenF()) * t,
+            leftColor.blueF() + (rightColor.blueF() - leftColor.blueF()) * t,
+            leftColor.alphaF() +
+                (rightColor.alphaF() - leftColor.alphaF()) * t);
+    }
 
-    painter.setPen(QPen(palette().color(QPalette::Text), 2));
+    const QPointF c = handleCenter();
+    const qreal outerRadius = qMin(width(), height()) / 2.0 - 1.0;
+    const qreal borderWidth = 2.0;
+    const qreal innerRadius = outerRadius - borderWidth;
+
+    QColor borderColor = palette().color(QPalette::Text);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(borderColor);
+    painter.drawEllipse(c, outerRadius, outerRadius);
+
     painter.setBrush(fill);
-    painter.drawEllipse(handlePos, handleRadius - 1, handleRadius - 1);
+    painter.drawEllipse(c, innerRadius, innerRadius);
+}
+
+QRectF QColorPickerSlider::trackRect() const {
+    const qreal r = qMin(width(), height()) / 2.0;
+
+    if (orientation() == Qt::Horizontal) {
+        return QRectF(r, 0.0, width() - 2.0 * r, height());
+    } else {
+        return QRectF(0.0, r, width(), height() - 2.0 * r);
+    }
+}
+
+QPointF QColorPickerSlider::handleCenter() const {
+    QRectF groove = rect().adjusted(1, 1, -1, -1);
+
+    const qreal r = orientation() == Qt::Horizontal ? groove.height() / 2.0
+                                                    : groove.width() / 2.0;
+
+    const qreal t = (maximum() == minimum()) ? 0.0
+                                             : qreal(value() - minimum()) /
+                                                   qreal(maximum() - minimum());
+
+    if (orientation() == Qt::Horizontal) {
+        const qreal x = groove.left() + r + t * (groove.width() - 2.0 * r);
+        return QPointF(x, groove.center().y());
+    } else {
+        const qreal y = groove.top() + r + t * (groove.height() - 2.0 * r);
+        return QPointF(groove.center().x(), y);
+    }
+}
+
+void QColorPickerSlider::setValueFromPosition(const QPoint &pos) {
+    QRectF groove = rect().adjusted(1, 1, -1, -1);
+
+    const qreal r = orientation() == Qt::Horizontal ? groove.height() / 2.0
+                                                    : groove.width() / 2.0;
+
+    qreal t = 0.0;
+
+    if (orientation() == Qt::Horizontal) {
+        const qreal span = groove.width() - 2.0 * r;
+        const qreal x =
+            qBound(groove.left() + r, qreal(pos.x()), groove.right() - r);
+        t = (x - (groove.left() + r)) / span;
+    } else {
+        const qreal span = groove.height() - 2.0 * r;
+        const qreal y =
+            qBound(groove.top() + r, qreal(pos.y()), groove.bottom() - r);
+        t = (y - (groove.top() + r)) / span;
+    }
+
+    const int v = minimum() + int(std::round(t * (maximum() - minimum())));
+    setValue(v);
+}
+
+bool QColorPickerSlider::hitHandle(const QPoint &p) const {
+    const QPointF c = handleCenter();
+    const qreal r = qMin(width(), height()) / 2.0 - 1.0;
+    return QLineF(c, p).length() <= r;
+}
+
+void QColorPickerSlider::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton && hitHandle(event->pos())) {
+        setSliderDown(true);
+        event->accept();
+        return;
+    }
+
+    QSlider::mousePressEvent(event);
+}
+
+void QColorPickerSlider::mouseMoveEvent(QMouseEvent *event) {
+    if (isSliderDown() && (event->buttons() & Qt::LeftButton)) {
+        setValueFromPosition(event->pos());
+        event->accept();
+        return;
+    }
+
+    QSlider::mouseMoveEvent(event);
+}
+
+void QColorPickerSlider::mouseReleaseEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        setSliderDown(false);
+        setValueFromPosition(event->pos());
+        event->accept();
+        return;
+    }
+
+    QSlider::mouseReleaseEvent(event);
 }

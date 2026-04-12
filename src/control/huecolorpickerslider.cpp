@@ -32,7 +32,7 @@ HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
                             {180.0 / 360.0, Qt::cyan},
                             {240.0 / 360.0, Qt::blue},
                             {300.0 / 360.0, Qt::magenta},
-                            {359.0 / 360.0, Qt::red}});
+                            {1.0, Qt::red}});
 
     _color.setHsv(180, 255, 255);
     connect(this, &HueColorPickerSlider::valueChanged, this, [this](int v) {
@@ -63,15 +63,21 @@ void HueColorPickerSlider::setColor(const QColor &newColor) {
 
         auto colorS = newColor.hsvSaturation();
         auto colorV = newColor.value();
+
         this->setGradientStops({{0.0 / 360.0, redColor(colorS, colorV)},
                                 {60.0 / 360.0, yellowColor(colorS, colorV)},
                                 {120.0 / 360.0, greenColor(colorS, colorV)},
                                 {180.0 / 360.0, cyanColor(colorS, colorV)},
                                 {240.0 / 360.0, blueColor(colorS, colorV)},
                                 {300.0 / 360.0, magentaColor(colorS, colorV)},
-                                {359.0 / 360.0, redColor(colorS, colorV)}});
+                                {1.0, redColor(colorS, colorV)}});
 
-        this->setValue(_color.hsvHue());
+        int hue = newColor.hsvHue();
+        if (hue < 0) {
+            hue = value();
+        }
+        setValue(hue);
+
         Q_EMIT colorChanged(newColor);
     }
 }

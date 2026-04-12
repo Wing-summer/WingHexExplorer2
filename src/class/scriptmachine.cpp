@@ -705,30 +705,41 @@ bool ScriptMachine::executeScript(
     ConsoleMode mode, const QString &script, bool isInDebug,
     std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
         sections,
-    const std::function<void()> &onFinished) {
+    const std::function<void(bool)> &onFinished) {
+    Q_ASSERT(onFinished);
+    if (_engine == nullptr) {
+        Logger::warning(QStringLiteral("The script engine is not initialized"));
+        onFinished(true);
+        return false;
+    }
 
     ASSERT(mode != Interactive);
     // script-running is not allowed in interactive mode
     if (mode == Interactive) {
-        onFinished();
+        onFinished(true);
         return false;
     }
 
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
-        onFinished();
+        onFinished(true);
         return false;
     }
 
     if (script.isEmpty()) {
-        onFinished();
+        onFinished(true);
         return true;
+    }
+
+    if (isRunning(mode)) {
+        onFinished(false);
+        return false;
     }
 
     // Compile the script
     auto mod = createModuleIfNotExist(mode);
     if (mod == nullptr) {
-        onFinished();
+        onFinished(true);
         return false;
     }
 
@@ -788,7 +799,7 @@ bool ScriptMachine::executeScript(
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         endEvaluateDefine();
-        onFinished();
+        onFinished(true);
         return false;
     }
 
@@ -802,7 +813,7 @@ bool ScriptMachine::executeScript(
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         endEvaluateDefine();
-        onFinished();
+        onFinished(true);
         return false;
     }
 
@@ -823,7 +834,7 @@ bool ScriptMachine::executeScript(
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         endEvaluateDefine();
-        onFinished();
+        onFinished(true);
         return false;
     }
 
@@ -858,7 +869,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         delete ctxMgr;
-        onFinished();
+        onFinished(true);
         return false;
     }
 
@@ -967,9 +978,7 @@ bool ScriptMachine::executeScript(
             // this can also be debugged if desired
             mod->Discard();
 
-            if (onFinished) {
-                onFinished();
-            }
+            onFinished(true);
         });
     runner->start();
     return true;
@@ -1732,15 +1741,26 @@ asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
-                                const std::function<void()> &onFinished) {
+                                const std::function<void(bool)> &onFinished) {
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
-        onFinished();
+        onFinished(true);
+        return;
+    }
+
+    if (_engine == nullptr) {
+        Logger::warning(QStringLiteral("The script engine is not initialized"));
+        onFinished(true);
         return;
     }
 
     if (code.isEmpty()) {
-        onFinished();
+        onFinished(true);
+        return;
+    }
+
+    if (isRunning(mode)) {
+        onFinished(false);
         return;
     }
 
@@ -1785,7 +1805,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                 _cachedGlobalStrs.clear();
             }
         }
-        onFinished();
+        onFinished(true);
         return;
     }
 
@@ -1793,7 +1813,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
 
     ccode = code.toUtf8();
     if (ccode.isEmpty()) {
-        onFinished();
+        onFinished(true);
         return;
     }
 
@@ -1808,7 +1828,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
     auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
     if (cr < 0) {
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished();
+        onFinished(true);
         return;
     }
 
@@ -1825,7 +1845,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         info.type = MessageType::Error;
         outputMessage(info);
         delete ctxMgr;
-        onFinished();
+        onFinished(true);
         return;
     }
     _ctx[mode] = ctx;
@@ -1896,9 +1916,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                 _engine->GarbageCollect();
             }
 
-            if (onFinished) {
-                onFinished();
-            }
+            onFinished(true);
         });
 
     runner->start();

@@ -113,6 +113,12 @@ public:
         LackDependencies
     };
 
+    struct DependencyMap {
+        using Map = QList<QList<int>>;
+        Map host; // all dependencies
+        Map dep;  // all plugins depend on it
+    };
+
 private:
     struct PluginFileContext {
         SharedUniqueId fid;
@@ -262,8 +268,9 @@ public:
     QString currentLoadingPlugin() const;
 
     QList<PluginInfo> blockedPlugins() const;
-
     QList<PluginInfo> blockedDevPlugins() const;
+
+    DependencyMap generatePluginsDepMap() const;
 
 signals:
     void pluginLoading(const QString &plgName);
@@ -638,10 +645,10 @@ private:
 private:
     MainWindow *_win = nullptr;
     QHash<IWingPluginBase *, PluginInfo> _pinfos;
-    QList<IWingPlugin *> _loadedplgs;
     QHash<QWidget *, ads::CDockWidget *> _raisedw;
     QStringList _lazyplgs;
 
+    QList<IWingPlugin *> _loadedplgs;
     QList<IWingDevice *> _loadeddevs;
 
     QStringList _enabledExtIDs;
@@ -662,6 +669,7 @@ private:
     QList<IWingPlugin *> _pragmaedPlg;
 
     bool _handleDirty = false;
+    bool _unloading = false;
 
 private:
     QString _curLoadingPlg;

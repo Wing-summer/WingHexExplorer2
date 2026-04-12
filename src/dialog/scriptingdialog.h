@@ -239,7 +239,7 @@ private:
 public:
     ScriptEditor *openFile(const QString &filename);
 
-    bool try2CloseScriptViews(const LinkedList<ScriptEditor *> views);
+    bool try2CloseScriptViews(const QList<ScriptEditor *> views);
 
 private slots:
     void on_newfile();
@@ -295,6 +295,8 @@ private:
     void destoryFakeEditor();
 
     void destoryEditor(ScriptEditor *editor);
+
+    void reportBusyScriptRun();
 
 private:
     ads::CDockManager *m_dock = nullptr;

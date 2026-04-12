@@ -154,14 +154,14 @@ public:
 
 public:
     void executeCode(ScriptMachine::ConsoleMode mode, const QString &code,
-                     const std::function<void()> &onFinished);
+                     const std::function<void(bool)> &onFinished);
 
     // only scripting mode can be debugged
     bool executeScript(
         ScriptMachine::ConsoleMode mode, const QString &script, bool isInDebug,
         std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
             sections,
-        const std::function<void()> &onFinished);
+        const std::function<void(bool)> &onFinished);
 
     QVariant evaluateDefine(const QString &code);
 

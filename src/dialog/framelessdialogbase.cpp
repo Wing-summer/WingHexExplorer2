@@ -73,6 +73,8 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
 
     setWindowTitle(content->windowTitle());
     setWindowIcon(content->windowIcon());
+    connect(content, &QWidget::windowTitleChanged, this,
+            &FramelessDialogBase::setWindowTitle);
 
 #ifdef QT_DEBUG
     m_isBuilt = true;

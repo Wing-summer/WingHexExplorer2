@@ -910,7 +910,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
-    for (auto item : m_dock->openedDockAreas()) {
+    const auto areas = m_dock->openedDockAreas();
+    for (auto item : areas) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
             updateUI();
             auto d = item->dockWidget(i);
@@ -1194,8 +1195,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
         return e;
     }
 
-    auto editor = new ScriptEditor(this);
-
+    auto editor = std::make_unique<ScriptEditor>(this);
     auto res = editor->openFile(filename);
     if (!res) {
         WingMessageBox::critical(this, tr("Error"),
@@ -1207,14 +1207,14 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
         editor->setReadOnly(true);
     }
 
-    registerEditorView(editor);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+    registerEditorView(editor.get());
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
+                          editorViewArea());
     editor->setFocus();
-    return editor;
+    return editor.release();
 }
 
-bool ScriptingDialog::try2CloseScriptViews(
-    const LinkedList<ScriptEditor *> views) {
+bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
     auto &runner = ScriptMachine::instance();
     if (runner.isRunning(ScriptMachine::Scripting)) {
         if (WingMessageBox::warning(
@@ -1313,7 +1313,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
 
             PluginSystem::instance().scriptPragmaBegin();
         },
-        [this, fileName]() {
+        [this, fileName](bool isNotBusy) {
             for (const auto &e : std::as_const(_reditors)) {
                 e->setReadOnly(false);
             }
@@ -1349,9 +1349,13 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             _curDbgData.clear();
             destoryFakeEditor();
 
-            if (_needRestart) {
-                _needRestart = false;
-                startDebugScript(fileName);
+            if (isNotBusy) {
+                if (_needRestart) {
+                    _needRestart = false;
+                    startDebugScript(fileName);
+                }
+            } else {
+                reportBusyScriptRun();
             }
         });
 }
@@ -1542,7 +1546,7 @@ void ScriptingDialog::on_newfile() {
             return;
         }
 
-        auto editor = new ScriptEditor(this);
+        auto editor = std::make_unique<ScriptEditor>(this);
         auto res = editor->openFile(filename);
         if (!res) {
             WingMessageBox::critical(this, tr("Error"),
@@ -1550,10 +1554,11 @@ void ScriptingDialog::on_newfile() {
             return;
         }
         addRecentFile(filename);
-        registerEditorView(editor);
-        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
+        registerEditorView(editor.get());
+        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
                               editorViewArea());
         editor->setFocus();
+        editor.release();
     }
 }
 
@@ -1813,11 +1818,15 @@ void ScriptingDialog::on_runscript() {
         updateRunDebugMode();
         ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
                                                 editor->fileName(), false, {},
-                                                [this, editor]() {
+                                                [this, editor](bool isNotBusy) {
                                                     editor->setReadOnly(false);
                                                     m_outConsole->raise();
                                                     destoryFakeEditor();
                                                     updateRunDebugMode();
+
+                                                    if (!isNotBusy) {
+                                                        reportBusyScriptRun();
+                                                    }
                                                 });
     }
 }
@@ -2008,6 +2017,10 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
 
     editor->deleteDockWidget();
     updateEditModeEnabled();
+}
+
+void ScriptingDialog::reportBusyScriptRun() {
+    WingMessageBox::critical(this, tr("Error"), tr("BusyRunScript"));
 }
 
 QPixmap ScriptingDialog::markFromPath(const QString &name) {

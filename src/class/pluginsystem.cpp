@@ -374,11 +374,10 @@ QColor PluginSystem::dlgGetColor(const QObject *sender, const QString &caption,
 
 bool PluginSystem::existsServiceHost(const QObject *sender,
                                      const QString &puid) {
-    return std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
-                        [puid, this](IWingPlugin *plg) {
-                            return puid.compare(getPluginID(plg),
-                                                Qt::CaseInsensitive) == 0;
-                        }) != _loadedplgs.end();
+    return std::find_if(
+               _pinfos.keyBegin(), _pinfos.keyEnd(), [=](IWingPluginBase *plg) {
+                   return puid.compare(getPUID(plg), Qt::CaseInsensitive) == 0;
+               }) != _pinfos.keyEnd();
 }
 
 bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
@@ -407,10 +406,10 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         State = None;
     }
 
-    static QCache<QString, IWingPluginBase *> cache(10);
+    static Cache<QString, IWingPluginBase *> cache(10);
     IWingPluginBase *rc = nullptr;
-    if (cache.contains(rpuid)) {
-        rc = *cache.object(rpuid);
+    if (!_unloading && cache.contains(rpuid)) {
+        rc = cache.object(rpuid);
     } else {
         auto r = std::find_if(
             _pinfos.keyBegin(), _pinfos.keyEnd(), [=](IWingPluginBase *plg) {
@@ -421,9 +420,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
             return false;
         }
         rc = *r;
-        auto rp = new IWingPluginBase *;
-        *rp = rc;
-        cache.insert(rpuid, rp);
+        cache.insert(rpuid, rc);
     }
 
     switch (State) {
@@ -500,8 +497,16 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     }
 
     if (!m.isValid()) {
-        qCritical(
-            "[PluginSystem::invokeServiceImpl] Invalid MetaMethod (Not-Found)");
+        QByteArrayList args;
+        args.reserve(len);
+        for (int i = 1; i < paramCount; ++i) {
+            args.append(metaTypes[i]->name);
+        }
+        QByteArray r = method + QByteArrayLiteral("(") + args.join(',') +
+                       QByteArrayLiteral(")");
+        qCritical("[PluginSystem::invokeServiceImpl] Invalid MetaMethod "
+                  "(Not-Found) - %s",
+                  r.constData());
         return false;
     }
 
@@ -512,7 +517,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         info.puid = getPUID(p);
     }
 
-    auto meta_name = "WING_META";
+    constexpr auto meta_name = "WING_META";
     // property first
     auto var = sender->property(meta_name);
     if (var.isValid()) {
@@ -531,9 +536,9 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     auto inf = QtPrivate::Invoke::metaTypeHelper(info);
 
     auto nparamCount = paramCount + 1;
-    QVarLengthArray<decltype(data)> nparameters;
-    QVarLengthArray<decltype(tn)> ntypeNames;
-    QVarLengthArray<decltype(inf)> nmetaTypes;
+    QVarLengthArray<decltype(data), 16> nparameters;
+    QVarLengthArray<decltype(tn), 16> ntypeNames;
+    QVarLengthArray<decltype(inf), 16> nmetaTypes;
     nparameters.reserve(nparamCount);
     ntypeNames.reserve(nparamCount);
     nmetaTypes.reserve(nparamCount);
@@ -2296,6 +2301,31 @@ IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
 
 QList<PluginInfo> PluginSystem::blockedDevPlugins() const { return _blkdevs; }
 
+PluginSystem::DependencyMap PluginSystem::generatePluginsDepMap() const {
+    const auto total = _loadedplgs.size();
+    DependencyMap ret;
+    ret.host.resize(total);
+    ret.dep.resize(total);
+
+    for (qsizetype hi = 0; hi < total; ++hi) {
+        const auto &p = _loadedplgs.at(hi);
+        const auto &info = _pinfos.value(p);
+        const auto &deps = info.dependencies;
+        QList<int> map(deps.size());
+
+        const auto total = deps.size();
+        for (qsizetype i = 0; i < total; ++i) {
+            auto pidx = _enabledExtIDs.indexOf(deps.at(i).puid);
+            ret.dep[pidx].append(hi);
+            map[i] = pidx;
+        }
+
+        ret.host[hi] = map;
+    }
+
+    return ret;
+}
+
 QList<PluginInfo> PluginSystem::blockedPlugins() const { return _blkplgs; }
 
 void PluginSystem::doneRegisterScriptObj() {
@@ -2562,7 +2592,6 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
         QScopeGuard g([this]() { _curLoadingPlg.clear(); });
         QPluginLoader loader(fileName, this);
         auto fName = fileinfo.fileName();
-        Logger::info(tr("LoadingPlugin") + fName);
 
         auto lmeta = loader.metaData();
         PluginStatus cret;
@@ -2601,17 +2630,21 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
 
         auto m = meta.value();
         if constexpr (std::is_same_v<T, IWingPlugin>) {
-            if (!_enabledExtIDs.contains(m.id)) {
+            auto idx = _enabledExtIDs.lastIndexOf(m.id);
+            if (idx < 0) {
                 _blkplgs.append(m);
                 return std::nullopt;
             }
+            _enabledExtIDs.move(idx, _loadedplgs.size());
         } else if constexpr (std::is_same_v<T, IWingDevice>) {
-            if (!_enabledDevIDs.contains(m.id)) {
+            auto idx = _enabledDevIDs.lastIndexOf(m.id);
+            if (idx < 0) {
                 _blkdevs.append(m);
                 return std::nullopt;
             }
         }
 
+        Logger::info(tr("LoadingPlugin") + fName);
         auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(packLoadPlgMessage(fName, loader.errorString()));
@@ -2721,6 +2754,15 @@ PluginInfo PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
                     }
                     auto version = QVersionNumber::fromString(
                         d["Version"].toString().trimmed());
+                    WingDependency dp;
+                    dp.puid = id;
+                    dp.version = version;
+                    info.dependencies.append(dp);
+                } else if (d.isString()) {
+                    auto vp = d.toString();
+                    auto id = vp.section(':', 0, 0).trimmed();
+                    auto version = QVersionNumber::fromString(
+                        vp.section(':', 1).trimmed());
                     WingDependency dp;
                     dp.puid = id;
                     dp.version = version;
@@ -3593,6 +3635,7 @@ void PluginSystem::loadAllPlugins() {
         Q_ASSERT(checkPluginMetadata(meta, true) == PluginStatus::Valid);
         retranslateMetadata(_angelplg, meta);
         loadPlugin(_angelplg, meta, std::nullopt);
+        _enabledExtIDs.prepend(meta.id);
     }
 
     Logger::newLine();
@@ -3656,6 +3699,10 @@ void PluginSystem::loadAllPlugins() {
         }
         Logger::newLine();
     }
+
+    _lazyplgs.squeeze();
+    _curLoadingPlg.clear();
+    _lazyplgs.squeeze();
 }
 
 void PluginSystem::destory() {
@@ -3666,11 +3713,14 @@ void PluginSystem::destory() {
         qApp->exit(int(CrashCode::PluginSetting));
     }
 
-    for (const auto &item : std::as_const(_loadedplgs)) {
+    _unloading = true; // marked as unloading and disable cache
+    for (auto plg = _loadedplgs.rbegin(); plg != _loadedplgs.rend(); ++plg) {
+        auto item = *plg;
         auto set =
             std::make_unique<QSettings>(udir.absoluteFilePath(_pinfos[item].id),
                                         QSettings::Format::IniFormat);
         item->unload(set);
+        _pinfos.remove(item);
         delete item;
     }
     _loadedplgs.clear();

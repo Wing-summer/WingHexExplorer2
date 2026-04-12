@@ -642,9 +642,11 @@ QString WingAngel::type2AngelScriptString(uint type, bool isArg,
             // extensive scripting system.
             // It will be faster and flexible but not easy to implement.
             if (isContainer) {
-                if (type != WingHex::Meta_Byte &&
-                    type != WingHex::Meta_String) {
-                    return {};
+                if (isArray || isList) {
+                    if (type != WingHex::Meta_Byte &&
+                        type != WingHex::Meta_String) {
+                        return {};
+                    }
                 }
 
                 retype.append(QStringLiteral("@"));

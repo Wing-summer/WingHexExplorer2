@@ -33,13 +33,13 @@ bool ScriptDictionary::set(const QString &key, void *value,
         if (isValid()) {
             int typeId;
             if (typeIDCache.contains(type)) {
-                typeId = *typeIDCache.object(type);
+                typeId = typeIDCache.object(type);
             } else {
                 typeId = ctx->GetEngine()->GetTypeIdByDecl(type.data());
                 if (typeId == asINVALID_TYPE) {
                     return false;
                 }
-                typeIDCache.insert(type, new int(typeId));
+                typeIDCache.insert(type, typeId);
             }
             _data->Set(key, value, typeId);
             return true;
@@ -79,13 +79,13 @@ bool ScriptDictionary::get(const QString &key, void *value,
         if (isValid()) {
             int typeId;
             if (typeIDCache.contains(type)) {
-                typeId = *typeIDCache.object(type);
+                typeId = typeIDCache.object(type);
             } else {
                 typeId = ctx->GetEngine()->GetTypeIdByDecl(type.data());
                 if (typeId == asINVALID_TYPE) {
                     return false;
                 }
-                typeIDCache.insert(type, new int(typeId));
+                typeIDCache.insert(type, typeId);
             }
             return _data->Get(key, value, typeId);
         }
@@ -395,13 +395,13 @@ void ScriptAny::store(void *ref, std::string_view type) {
         if (isValid()) {
             int typeId;
             if (typeIDCache.contains(type)) {
-                typeId = *typeIDCache.object(type);
+                typeId = typeIDCache.object(type);
             } else {
                 typeId = ctx->GetEngine()->GetTypeIdByDecl(type.data());
                 if (typeId == asINVALID_TYPE) {
                     return;
                 }
-                typeIDCache.insert(type, new int(typeId));
+                typeIDCache.insert(type, typeId);
             }
             _data->Store(ref, typeId);
         }
@@ -432,13 +432,13 @@ bool ScriptAny::retrieve(void *ref, std::string_view type) const {
         if (isValid()) {
             int typeId;
             if (typeIDCache.contains(type)) {
-                typeId = *typeIDCache.object(type);
+                typeId = typeIDCache.object(type);
             } else {
                 typeId = ctx->GetEngine()->GetTypeIdByDecl(type.data());
                 if (typeId == asINVALID_TYPE) {
                     return false;
                 }
-                typeIDCache.insert(type, new int(typeId));
+                typeIDCache.insert(type, typeId);
             }
             return _data->Retrieve(ref, typeId);
         }

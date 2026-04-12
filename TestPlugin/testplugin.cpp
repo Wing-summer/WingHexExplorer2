@@ -524,7 +524,7 @@ void TestPlugin::eventReady() {
     bool ret;
     invokeService(QStringLiteral("WingAngelAPI"), "execCode",
                   Qt::AutoConnection, qReturnArg(ret),
-                  QStringLiteral(R"(print("Hello, this is TestPlugin!");)"));
+                  QStringLiteral(R"(println("Hello, this is TestPlugin!");)"));
 }
 
 void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {

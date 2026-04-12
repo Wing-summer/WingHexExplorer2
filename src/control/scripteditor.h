@@ -48,7 +48,7 @@ public:
     QString fileName() const;
 
 public:
-    static const LinkedList<ScriptEditor *> &instances();
+    static const QList<ScriptEditor *> &instances();
     static bool isAllClosed();
 
 public:
@@ -93,7 +93,7 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    inline static LinkedList<ScriptEditor *> m_instances;
+    inline static QList<ScriptEditor *> m_instances;
 
     CodeEdit *m_editor = nullptr;
     quint64 version = 1;

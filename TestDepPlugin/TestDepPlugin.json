@@ -1,10 +1,10 @@
 {
-    "Id": "TestPlugin",
+    "Id": "TestDepPlugin",
     "SDK": 20,
     "Version": "0.0.1",
     "Vendor": "WingCloudStudio",
     "Dependencies": [
-        "WingAngelAPI"
+        "TestPlugin", "WingAngelAPI:2.0.0"
     ],
     "Author": "wingsummer",
     "License": "MIT",

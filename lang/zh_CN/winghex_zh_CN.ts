@@ -474,7 +474,7 @@
         <translation>未命名</translation>
     </message>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="1141"/>
+        <location filename="../../src/control/editorview.cpp" line="1146"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
@@ -1408,7 +1408,7 @@
         <translation>启动脚本服务</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4227"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4230"/>
         <source>SetupScriptEditor</source>
         <translation>构建脚本编辑器</translation>
     </message>
@@ -1449,7 +1449,7 @@
         <translation>导出结果</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3942"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3945"/>
         <source>NothingToSave</source>
         <translation>没有保存的数据</translation>
     </message>
@@ -1645,7 +1645,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2964"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4409"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4412"/>
         <source>LayoutRestoring...</source>
         <translation>恢复布局中...</translation>
     </message>
@@ -1792,30 +1792,30 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="3265"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="3272"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="3621"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3980"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3989"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4292"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3983"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3992"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4295"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4298"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4301"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4304"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4307"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4315"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4320"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4310"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4318"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4323"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2059"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4298"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4301"/>
         <source>FileNotExist</source>
         <translation>文件不存在！</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2062"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3980"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3989"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4295"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3983"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3992"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4298"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
@@ -1862,8 +1862,8 @@
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2229"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2814"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3948"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4643"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3951"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4646"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
@@ -1930,74 +1930,74 @@
         <translation>该编辑页已被克隆编辑，如果关闭，相关联的页也会被关闭，你确认继续吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3935"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3938"/>
         <source>SaveWorkSpace</source>
         <translation>保存工作区</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3936"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3939"/>
         <source>WingHexWorkSpace (*.wingpro)</source>
         <translation>羽云十六进制工作区 (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4268"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4271"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4289"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4292"/>
         <source>AlreadyOpened</source>
         <translation>文件已被打开</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4292"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4295"/>
         <source>DevNotFound</source>
         <translation>找不到设备</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4307"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4310"/>
         <source>TooManyOpenedFile</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4316"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4319"/>
         <source>UnknownError</source>
         <translation>未知错误</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4372"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4375"/>
         <source>[Info]</source>
         <translation>【信息】</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4380"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4383"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4388"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4391"/>
         <source>[Error]</source>
         <translation>【错误】</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4425"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4428"/>
         <source>LayoutRestoreBreak</source>
         <translation>编辑视图不在同一区域，恢复布局会破坏现有的同时可见编辑视图的布局，恢复后会合并，确认继续？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4488"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4491"/>
         <source>ScriptStillRunning</source>
         <translation>脚本仍在运行，你确定要退出吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4021"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4625"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4653"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4024"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4628"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4656"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4301"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4304"/>
         <source>SaveWSError</source>
         <translation>保存工作区错误！</translation>
     </message>
@@ -2055,8 +2055,8 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="3147"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4625"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4653"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4628"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4656"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失败！</translation>
     </message>
@@ -2219,17 +2219,17 @@
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3731"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3734"/>
         <source>ChecksumFailed</source>
         <translation>文件指纹匹配失败，请确认你打开的文件内容是否被外部修改。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4215"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4218"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4304"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4307"/>
         <source>FileInvalidFmt</source>
         <translation>非法文件格式</translation>
     </message>
@@ -2514,7 +2514,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="81"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="234"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="292"/>
         <source>PluginInfo</source>
         <translation>插件信息</translation>
     </message>
@@ -2531,7 +2531,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="146"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="242"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="300"/>
         <source>DevExtInfo</source>
         <translation>设备插件信息</translation>
     </message>
@@ -2541,88 +2541,82 @@
         <translation>设备插件：</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="277"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="335"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="391"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="449"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="389"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="447"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="392"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="450"/>
         <source>License</source>
         <translation>协议</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="393"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="451"/>
         <source>Author</source>
         <translation>作者</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="394"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="452"/>
         <source>Vendor</source>
         <translation>厂家</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="396"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="407"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="454"/>
         <source>Version</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="327"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="385"/>
         <source>SelectAll</source>
         <translation>全选</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="306"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="364"/>
         <source>SelectEnable</source>
         <translation>启用选择</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="315"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="373"/>
         <source>SelectDisable</source>
         <translation>禁用选择</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="328"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="386"/>
         <source>SelectClear</source>
         <translation>删除所选</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="332"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="390"/>
         <source>DiscardChanges</source>
         <translation>丢弃修改</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="402"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="460"/>
         <source>Dependencies</source>
         <translation>依赖</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="404"/>
-        <source>PUID</source>
-        <translation>PUID</translation>
-    </message>
-    <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="413"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="471"/>
         <source>Comment</source>
         <translation>说明</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="416"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="474"/>
         <source>NoPluginLoaded</source>
         <translation>无加载的插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="398"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="456"/>
         <source>URL</source>
         <translation>网址</translation>
     </message>
@@ -2630,143 +2624,143 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2565"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2647"/>
         <source>LoadingPlugin</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2968"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3010"/>
         <source>AppClosingCanceled:</source>
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3091"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3133"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3111"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3153"/>
         <source>FoundDrvPluginCount</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2595"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2624"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加载失败：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3263"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3331"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3305"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3373"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3284"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3326"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2598"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2627"/>
         <source>InvalidPlugin</source>
         <translation>非法插件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3293"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3335"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3294"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3336"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3295"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3337"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3334"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3376"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3335"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3377"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3352"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3394"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3375"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3417"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3414"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3456"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3424"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3466"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3432"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3474"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3545"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3587"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1395"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1400"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>监测到异常推入的撤销命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2588"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2617"/>
         <source>InvalidPluginID</source>
         <translation>加载插件失败：非法插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2591"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2620"/>
         <source>InvalidDupPlugin</source>
         <translation>加载插件失败：重复的插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3056"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3098"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3087"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3129"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依赖插件加载失败总结</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3092"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3134"/>
         <source>- Dependencies:</source>
         <translation>- 依赖：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3094"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3136"/>
         <source>PUID:</source>
         <translation>插件唯一标志符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3095"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3137"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3102"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3144"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -2774,7 +2768,7 @@
 <context>
     <name>QApplication</name>
     <message>
-        <location filename="../../src/utilities.h" line="290"/>
+        <location filename="../../src/utilities.h" line="268"/>
         <source>OptionNeedRestart</source>
         <translation>该设置需要程序重启后生效</translation>
     </message>
@@ -3251,7 +3245,7 @@
 <context>
     <name>ScriptingDialog</name>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1115"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1116"/>
         <source>ScriptEditor</source>
         <translation>脚本编辑器</translation>
     </message>
@@ -3293,7 +3287,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="381"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1519"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1524"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
@@ -3309,7 +3303,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="391"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1475"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1480"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
@@ -3382,7 +3376,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="461"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2048"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2062"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
@@ -3549,128 +3543,134 @@
         <translation>诊断</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="929"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="930"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1201"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1482"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1548"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1584"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1612"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1637"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1487"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1553"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1590"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1618"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1643"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2024"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="930"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="931"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="991"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="992"/>
         <source>ScriptSaveFailedClose</source>
         <translation>脚本保存失败，你仍确认关闭吗？</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1202"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1549"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1554"/>
         <source>InvalidFileOrPermission</source>
         <translation>非法格式文件或访问文件权限不足</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1476"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1481"/>
         <source>ReloadNeededYesOrNo</source>
         <translation>目标文件被修改，是否重新加载？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1160"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2024"/>
+        <source>BusyRunScript</source>
+        <translation>脚本运行繁忙</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1161"/>
         <source>Debuging...</source>
         <translation>调试中...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1163"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1164"/>
         <source>Running...</source>
         <translation>运行中...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1461"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1466"/>
         <source>Line %1, Col %2</source>
         <translation>行 %1, 列 %2</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1463"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1468"/>
         <source> (Selected: %1)</source>
         <translation> (选中: %1)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1513"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1565"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1518"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1571"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1612"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1618"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1519"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1524"/>
         <source>NewFileWithDbgExists</source>
         <translation>新建的文件名和正在调试的文件冲突</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1480"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1582"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1485"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1588"/>
         <source>ReloadSuccessfully</source>
         <translation>文件重新加载成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1483"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1584"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1488"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1590"/>
         <source>ReloadUnSuccessfully</source>
         <translation>文件重新加载失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1624"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1630"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1610"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1635"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1616"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1641"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1260"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1637"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1261"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1643"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1711"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1717"/>
         <source>FormatCodeFailed</source>
         <translation>代码格式化失败</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1766"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1772"/>
         <source>LayoutRestoreBreak</source>
         <translation>编辑视图不在同一区域，恢复布局会破坏现有的同时可见编辑视图的布局，恢复后会合并，确认继续？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1806"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1830"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1812"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1840"/>
         <source>CannotSave2RunScript</source>
         <translation>无法保存，故无法继续运行脚本。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="977"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1221"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1901"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="978"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1222"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1911"/>
         <source>ScriptStillRunning</source>
         <translation>脚本仍在运行，你确定要退出吗？</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="325"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="956"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="957"/>
         <source>ConfirmScriptSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的脚本文件，你确定保存这些更改吗？</translation>
     </message>

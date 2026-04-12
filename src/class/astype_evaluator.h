@@ -26,7 +26,6 @@
 #include "fmtlibext.h"
 #include "src/scriptaddon/scriptqdictionary.h"
 
-#include <QCache>
 #include <QChar>
 #include <QColor>
 #include <QJsonArray>
@@ -518,11 +517,11 @@ public:
                     auto rId = typeIDCache.object(data.type);
                     int typeId;
                     if (rId) {
-                        typeId = *rId;
+                        typeId = rId;
                     } else {
                         typeId = engine->GetTypeIdByDecl(data.type.toUtf8());
                         if (typeId != asINVALID_TYPE) {
-                            typeIDCache.insert(data.type, new int(typeId));
+                            typeIDCache.insert(data.type, typeId);
                         }
                     }
                     auto temp = data.buffer;
@@ -558,11 +557,11 @@ public:
                     auto rId = typeIDCache.object(value.type);
                     int typeId;
                     if (rId) {
-                        typeId = *rId;
+                        typeId = rId;
                     } else {
                         typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
                         if (typeId != asINVALID_TYPE) {
-                            typeIDCache.insert(value.type, new int(typeId));
+                            typeIDCache.insert(value.type, typeId);
                         }
                     }
                     auto temp = value.buffer;
@@ -593,7 +592,7 @@ public:
 
 private:
     QHash<std::string_view, WingHex::IWingAngel::Evaluator> evals;
-    mutable QCache<QString, int> typeIDCache;
+    mutable WingHex::Cache<QString, int> typeIDCache;
 };
 
 #endif // ASTYPE_EVALUATOR_H

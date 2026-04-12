@@ -45,6 +45,8 @@ class WingAngelAPI : public WingHex::IWingPlugin {
 
     friend class WingAngel;
 
+    static constexpr auto DEFAULT_PARAMS_SIZE = 10;
+
 public:
     WingAngelAPI();
     virtual ~WingAngelAPI();
@@ -216,9 +218,11 @@ private:
                                  asIScriptGeneric *generic, const QString &puid,
                                  const char *method) {
         auto total = generic->GetArgCount();
-        std::vector<const char *> names;
-        std::vector<const void *> data;
-        std::vector<const QtPrivate::QMetaTypeInterface *> metas;
+        QVarLengthArray<const char *, DEFAULT_PARAMS_SIZE> names;
+        QVarLengthArray<const void *, DEFAULT_PARAMS_SIZE> data;
+        QVarLengthArray<const QtPrivate::QMetaTypeInterface *,
+                        DEFAULT_PARAMS_SIZE>
+            metas;
 
         if constexpr (T == RetWithParam || T == ParamOnly) {
             auto paramStart = (T == ParamOnly ? 2 : 3);
@@ -251,9 +255,9 @@ private:
                 metas[idx] = idint;
             }
         } else if constexpr (T == RetOnly) {
-            names.push_back(r.name);
-            data.push_back(r.data);
-            metas.push_back(r.metaType);
+            names.append(r.name);
+            data.append(r.data);
+            metas.append(r.metaType);
         }
 
         auto ret = invoke_service(puid, method, names, data, metas);
@@ -325,9 +329,10 @@ private:
 
     static bool invoke_service(
         const QString &puid, const char *method,
-        const std::vector<const char *> &names,
-        const std::vector<const void *> &data,
-        const std::vector<const QtPrivate::QMetaTypeInterface *> &metas);
+        const QVarLengthArray<const char *, DEFAULT_PARAMS_SIZE> &names,
+        const QVarLengthArray<const void *, DEFAULT_PARAMS_SIZE> &data,
+        const QVarLengthArray<const QtPrivate::QMetaTypeInterface *,
+                              DEFAULT_PARAMS_SIZE> &metas);
 
 private:
     CScriptArray *_HexReader_selectedBytes(qsizetype index);

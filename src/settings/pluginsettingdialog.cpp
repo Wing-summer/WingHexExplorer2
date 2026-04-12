@@ -26,6 +26,8 @@ enum PLUGIN_INFO {
     PLUIGN_META = Qt::UserRole,
     PLUIGN_NAME,
     PLUIGN_COMMENT,
+    PLUGIN_DEPENDENCY_DEP,
+    PLUGIN_DEPENDENCY_HOST,
 };
 
 PluginSettingDialog::PluginSettingDialog(QWidget *parent)
@@ -76,7 +78,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto pico = ICONRES("plugin");
     ui->plglist->clear();
 
-    for (const auto &p : plgsys.plugins()) {
+    const auto &plugins = plgsys.plugins();
+    const auto total = plugins.size();
+    const auto deps = plgsys.generatePluginsDepMap();
+    for (qsizetype i = 0; i < total; ++i) {
+        auto p = plugins.at(i);
         auto pco = p->pluginIcon();
         auto lwi =
             new QListWidgetItem(pco.isNull() ? pico : pco, p->pluginName());
@@ -94,6 +100,10 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         lwi->setData(PLUIGN_META, QVariant::fromValue(info));
         lwi->setData(PLUIGN_NAME, p->pluginName());
         lwi->setData(PLUIGN_COMMENT, p->pluginComment());
+        lwi->setData(PLUGIN_DEPENDENCY_HOST,
+                     QVariant::fromValue(deps.host.at(i)));
+        lwi->setData(PLUGIN_DEPENDENCY_DEP,
+                     QVariant::fromValue(deps.dep.at(i)));
         ui->plglist->addItem(lwi);
     }
 
@@ -149,34 +159,82 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                 if (item == nullptr) {
                     return;
                 }
-                auto info = item->data(PLUIGN_META).value<PluginInfo>();
-                auto id = info.id;
+                const auto info = item->data(PLUIGN_META).value<PluginInfo>();
+                const auto id = info.id;
+
                 switch (item->checkState()) {
-                case Qt::Unchecked:
+                case Qt::Unchecked: {
+                    const auto deps =
+                        item->data(PLUGIN_DEPENDENCY_DEP).value<QList<int>>();
+                    for (const auto &idx : deps) {
+                        // exclude WingAngelAPI
+                        if (idx || !PluginSystem::instance().angelApi()) {
+                            auto item = ui->plglist->item(idx);
+                            Q_ASSERT(item);
+                            item->setCheckState(Qt::Unchecked);
+                        }
+                    }
                     _plgChanged.pushRemoveItem(id);
-                    break;
-                case Qt::Checked:
+                } break;
+                case Qt::Checked: {
+                    const auto deps =
+                        item->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
+                    for (const auto &idx : deps) {
+                        if (idx || !PluginSystem::instance().angelApi()) {
+                            auto item = ui->plglist->item(idx);
+                            Q_ASSERT(item);
+                            item->setCheckState(Qt::Checked);
+                        }
+                    }
                     _plgChanged.pushAddItem(id);
-                    break;
+                } break;
                 case Qt::PartiallyChecked:
                     break;
                 }
 
                 ui->btnplgSave->setEnabled(_plgChanged.containChanges());
             });
-    connect(ui->plglist, &QListWidget::currentItemChanged, this,
-            [this](QListWidgetItem *current, QListWidgetItem *) {
-                if (current == nullptr) {
-                    return;
+    connect(
+        ui->plglist, &QListWidget::currentItemChanged, this,
+        [this](QListWidgetItem *current, QListWidgetItem *previous) {
+            ui->plglist->blockSignals(true);
+            if (previous) {
+                const auto deps =
+                    previous->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
+                for (const auto &idx : deps) {
+                    auto d = ui->plglist->item(idx);
+                    if (d) {
+                        auto font = d->font();
+                        font.setUnderline(false);
+                        font.setBold(false);
+                        d->setFont(font);
+                    }
                 }
+            }
 
-                auto info = current->data(PLUIGN_META).value<PluginInfo>();
-                auto plgName = current->data(PLUIGN_NAME).toString();
-                auto plgComment = current->data(PLUIGN_COMMENT).toString();
+            if (current == nullptr) {
+                return;
+            }
 
-                loadPluginInfo(info, plgName, plgComment, info.dependencies,
-                               ui->txtc);
-            });
+            auto info = current->data(PLUIGN_META).value<PluginInfo>();
+            auto plgName = current->data(PLUIGN_NAME).toString();
+            auto plgComment = current->data(PLUIGN_COMMENT).toString();
+
+            loadPluginInfo(info, plgName, plgComment, info.dependencies,
+                           ui->txtc);
+
+            // highlight deps
+            const auto deps =
+                current->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
+            for (const auto &idx : deps) {
+                auto d = ui->plglist->item(idx);
+                auto font = d->font();
+                font.setUnderline(true);
+                font.setBold(true);
+                d->setFont(font);
+            }
+            ui->plglist->blockSignals(false);
+        });
 
     connect(ui->devlist, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -401,11 +459,11 @@ void PluginSettingDialog::loadPluginInfo(
         if (!dependencies.isEmpty()) {
             ui->txtc->append(getWrappedText(tr("Dependencies") + sep));
             for (const auto &d : dependencies) {
-                ui->txtc->append(getWrappedText(QString(4, ' ') + tr("PUID") +
-                                                sep + d.puid));
-                ui->txtc->append(getWrappedText(QString(4, ' ') +
-                                                tr("Version") + sep +
-                                                d.version.toString()));
+                auto dep = d.puid;
+                if (!d.version.isNull()) {
+                    dep.append(':').append(d.version.toString());
+                }
+                ui->txtc->append(getWrappedText(dep));
             }
         }
 

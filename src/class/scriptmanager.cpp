@@ -395,7 +395,11 @@ void ScriptManager::runScript(const QString &filename) {
     Q_ASSERT(m_indicator);
     setIndicatorBusy(true);
     ins.executeScript(ScriptMachine::Background, filename, false, {},
-                      [this]() { setIndicatorBusy(false); });
+                      [this](bool isNotBusy) {
+                          if (isNotBusy) {
+                              setIndicatorBusy(false);
+                          }
+                      });
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {

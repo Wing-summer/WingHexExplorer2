@@ -209,7 +209,7 @@ public slots:
     void raiseAndSwitchView(const QString &id);
 
 public:
-    static const LinkedList<EditorView *> &instances();
+    static const QList<EditorView *> &instances();
     static bool isAllClosed();
 
 public:
@@ -618,7 +618,7 @@ private:
     CallTable _viewFns;
 
 private:
-    inline static LinkedList<EditorView *> m_instances;
+    inline static QList<EditorView *> m_instances;
 
     // EditorInfo interface
 public:

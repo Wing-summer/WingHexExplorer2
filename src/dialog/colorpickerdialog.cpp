@@ -40,7 +40,6 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent)
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
-    _dialog->setWindowTitle(this->windowTitle());
 
     Utilities::moveToCenter(_dialog);
 }

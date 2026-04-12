@@ -36,7 +36,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     auto cmenu = new QMenu(DockWidgetTab::tr("CloseGroup"), parent);
     cmenu->addAction(DockWidgetTab::tr("Left"), parent, [dockWidget]() {
         auto app = AppManager::instance();
-        LinkedList<T *> cviews;
+        QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
         auto total = area->dockWidgetsCount();
@@ -68,7 +68,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     });
     cmenu->addAction(DockWidgetTab::tr("Right"), parent, [dockWidget]() {
         auto app = AppManager::instance();
-        LinkedList<T *> cviews;
+        QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
         auto total = area->dockWidgetsCount();
@@ -100,7 +100,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     });
     cmenu->addAction(DockWidgetTab::tr("All"), parent, [dockWidget]() {
         auto app = AppManager::instance();
-        LinkedList<T *> cviews;
+        QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
         auto total = area->dockWidgetsCount();
@@ -124,7 +124,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     });
     cmenu->addAction(DockWidgetTab::tr("Others"), parent, [dockWidget]() {
         auto app = AppManager::instance();
-        LinkedList<T *> cviews;
+        QList<T *> cviews;
         for (const auto &view : T::instances()) {
             if (view->isClosed()) {
                 continue;

@@ -498,6 +498,11 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     if (d->keepSize()) {
         m_hex->setLockKeepSize(true);
     }
+    m_hex->setKeepSize(d->defaultIsKeepSize());
+    m_hex->setLockedFile(d->defaultIsLocked());
+    m_hex->cursor()->setInsertionMode(d->defaultIsOverwrite()
+                                          ? QHexCursor::OverwriteMode
+                                          : QHexCursor::InsertMode);
 
     auto fileName = Utilities::getDeviceFileName(ext, file);
 
@@ -3042,7 +3047,7 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
-const LinkedList<EditorView *> &EditorView::instances() { return m_instances; }
+const QList<EditorView *> &EditorView::instances() { return m_instances; }
 
 bool EditorView::isAllClosed() {
     return m_instances.isEmpty() ||

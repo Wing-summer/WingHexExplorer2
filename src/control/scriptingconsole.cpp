@@ -412,7 +412,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
             _codes.append('\n').append(exec);
         }
         ScriptMachine::instance().executeCode(
-            ScriptMachine::Interactive, _codes, [this]() {
+            ScriptMachine::Interactive, _codes, [this](bool) {
                 _codes.clear();
                 appendCommandPrompt();
                 setEditMode(Input);

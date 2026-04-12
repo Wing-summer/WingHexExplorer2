@@ -3110,7 +3110,7 @@ void MainWindow::on_update() {
         });
 }
 
-bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
+bool MainWindow::try2CloseHexViews(const QList<EditorView *> views) {
     if (!views.isEmpty()) {
         for (const auto &editor : views) {
             bool saved = editor->isSaved();
@@ -3158,7 +3158,7 @@ bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
     return true;
 }
 
-bool MainWindow::try2CloseScriptViews(const LinkedList<ScriptEditor *> views) {
+bool MainWindow::try2CloseScriptViews(const QList<ScriptEditor *> views) {
     if (m_scriptDialog) {
         return m_scriptDialog->try2CloseScriptViews(views);
     }
@@ -3641,20 +3641,21 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
     QFileInfo finfo(file);
     auto filename = finfo.absoluteFilePath();
 
-    auto ev = new EditorView(this);
+    auto ev = std::make_unique<EditorView>(this);
     auto res = ev->openFile(filename);
 
     if (res != ErrFile::Success) {
-        delete ev;
         return res;
     }
 
-    registerEditorView(ev);
+    registerEditorView(ev.get());
     if (editor) {
-        *editor = ev;
+        *editor = ev.get();
     }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
+                          editorViewArea());
     ev->setFocus();
+    ev.release();
     return ErrFile::Success;
 }
 
@@ -3668,21 +3669,22 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
         return ErrFile::AlreadyOpened;
     }
 
-    auto ev = new EditorView(this);
+    auto ev = std::make_unique<EditorView>(this);
     auto res = ev->openExtFile(ext, file);
 
     if (res != ErrFile::Success) {
-        delete ev;
         return res;
     }
 
-    registerEditorView(ev);
+    registerEditorView(ev.get());
     if (editor) {
-        *editor = ev;
+        *editor = ev.get();
     }
 
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
+                          editorViewArea());
     ev->setFocus();
+    ev.release();
     return ErrFile::Success;
 }
 
@@ -3711,21 +3713,22 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     QFileInfo finfo(file);
     auto filename = finfo.absoluteFilePath();
 
-    auto ev = new EditorView(this);
+    auto ev = std::make_unique<EditorView>(this);
     auto res = ev->openWorkSpace(filename, wsDoc);
 
     bool failed = (res != ErrFile::Success && res != ErrFile::WorkSpaceUnSaved);
     if (failed) {
-        delete ev;
         return res;
     }
 
-    registerEditorView(ev, file);
+    registerEditorView(ev.get(), file);
     if (editor) {
-        *editor = ev;
+        *editor = ev.get();
     }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
+                          editorViewArea());
     ev->setFocus();
+    ev.release();
 
     if (res == ErrFile::WorkSpaceUnSaved) {
         WingMessageBox::warning(this, qAppName(), tr("ChecksumFailed"));

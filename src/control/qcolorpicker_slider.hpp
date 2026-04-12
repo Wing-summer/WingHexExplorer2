@@ -32,14 +32,23 @@ public:
     ~QColorPickerSlider();
 
     void setGradientStops(QGradientStops gradientStops);
-    void setRenderCheckerboard(bool renderCheckerboard);
 
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    QRectF trackRect() const;
+    QPointF handleCenter() const;
+    void setValueFromPosition(const QPoint &pos);
+
+    bool hitHandle(const QPoint &p) const;
+
+protected:
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
     QGradientStops _gradientStops;
-    bool _renderCheckerboard = false;
-    QPixmap _checkerboardPixmap;
 };
 
 #endif

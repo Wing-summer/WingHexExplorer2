@@ -217,8 +217,8 @@ private slots:
     void on_update();
 
 public:
-    bool try2CloseHexViews(const LinkedList<EditorView *> views);
-    bool try2CloseScriptViews(const LinkedList<ScriptEditor *> views);
+    bool try2CloseHexViews(const QList<EditorView *> views);
+    bool try2CloseScriptViews(const QList<ScriptEditor *> views);
 
 public:
     ErrFile openFile(const QString &file, EditorView **editor);
