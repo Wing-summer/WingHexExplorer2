@@ -77,6 +77,10 @@ void CodeInfoTip::resolve() const {
     }
 
     auto &lsp = AngelLsp::instance();
+    if (!lsp.isActive()) {
+        return;
+    }
+
     auto v = lsp.requestResolve(value);
     auto label = v["label"].toString();
 

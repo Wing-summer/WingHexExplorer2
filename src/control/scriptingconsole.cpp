@@ -18,6 +18,7 @@
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
 #include "class/angellsp.h"
+#include "class/editorlspevent.h"
 #include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
@@ -32,7 +33,6 @@
 #include <QClipboard>
 #include <QColor>
 #include <QIcon>
-#include <QJsonArray>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMimeData>
@@ -446,34 +446,6 @@ QString ScriptingConsole::packUpLoggingStr(const QString &message) {
 void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_L) {
         clearConsole();
-    } else if (e->modifiers() == Qt::NoModifier) {
-        QConsoleWidget::keyPressEvent(e);
-        auto key = e->key();
-        if (key == Qt::Key_Comma) {
-            auto &lsp = AngelLsp::instance();
-            auto url = lspFileNameURL();
-            auto tc = currentPosition();
-            auto line = tc.blockNumber;
-            auto character = tc.positionInBlock;
-
-            while (isContentLspUpdated()) {
-                // wait for a moment
-            }
-
-            auto r = lsp.requestSignatureHelp(url, line, character);
-            const auto sigs = r["signatures"].toArray();
-            QList<WingSignatureTooltip::Signature> ss;
-            for (const auto &&sig : sigs) {
-                QJsonValue js = sig;
-                WingSignatureTooltip::Signature s;
-                s.label = js["label"].toString();
-                s.doc = js["documentation"].toString();
-                ss.append(s);
-            }
-            showFunctionTip(ss);
-        } else if (key == Qt::Key_Semicolon) {
-            hideHelpTooltip();
-        }
     } else {
         QConsoleWidget::keyPressEvent(e);
     }
@@ -491,6 +463,13 @@ void ScriptingConsole::wheelEvent(QWheelEvent *e) {
         hideHelpTooltip();
     }
     ScriptingConsoleBase::wheelEvent(e);
+}
+
+bool ScriptingConsole::event(QEvent *event) {
+    if (EditorLspEvent::processEvent(event, this)) {
+        return true;
+    }
+    return ScriptingConsoleBase::event(event);
 }
 
 void ScriptingConsole::onCompletion(const QModelIndex &index) {
@@ -728,6 +707,15 @@ void ScriptingConsole::sendDocChange() {
     }
 }
 
+void ScriptingConsole::syncSemanticTokens() {
+    // SemanticTokens are not supported with console
+}
+
+QVector<LSP::SemanticToken> ScriptingConsole::parseSemanticTokens() {
+    // SemanticTokens are not supported with console
+    return {};
+}
+
 QString ScriptingConsole::lspURL() {
     return QStringLiteral("dev://as_console");
 }
@@ -746,8 +734,8 @@ void ScriptingConsole::setEditMode(ConsoleMode mode) {
 
 bool ScriptingConsole::isContentLspUpdated() const { return _ok; }
 
-LspEditorInterace::CursorPos ScriptingConsole::currentPosition() const {
-    auto cursor = textCursor();
+LspEditorInterace::CursorPos
+ScriptingConsole::cursorPosition(const QTextCursor &cursor) const {
     auto block = cursor.block();
 
     int prefixLen = 0;
@@ -761,6 +749,10 @@ LspEditorInterace::CursorPos ScriptingConsole::currentPosition() const {
     pos.blockNumber = _codes.length() + 1;
     pos.positionInBlock = cursor.positionInBlock() - prefixLen;
     return pos;
+}
+
+LspEditorInterace::CursorPos ScriptingConsole::currentPosition() const {
+    return cursorPosition(textCursor());
 }
 
 void ScriptingConsole::showFunctionTip(
@@ -799,11 +791,13 @@ void ScriptingConsole::enableLSP() {
     connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
         completer()->setEnabled(true);
         auto &lsp = AngelLsp::instance();
-        auto txt = currentCodes();
-        txt.prepend(QStringLiteral("void f(){\n"))
-            .append(QStringLiteral("\n}"));
-        lsp.openDocument(lspFileNameURL(), 0, txt);
-        version = 1;
+        if (lsp.isActive()) {
+            auto txt = currentCodes();
+            txt.prepend(QStringLiteral("void f(){\n"))
+                .append(QStringLiteral("\n}"));
+            lsp.openDocument(lspFileNameURL(), 0, txt);
+            version = 1;
+        }
     });
     connect(&lsp, &AngelLsp::serverExited, this,
             [this]() { completer()->setEnabled(false); });

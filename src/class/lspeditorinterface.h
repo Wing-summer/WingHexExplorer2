@@ -23,6 +23,7 @@
 
 #include "WingCodeEdit/wingcodeedit.h"
 #include "WingCodeEdit/wingsignaturetooltip.h"
+#include "class/lsp.h"
 
 class LspEditorInterace {
 public:
@@ -32,11 +33,14 @@ public:
     };
 
 public:
+    LspEditorInterace();
+
     virtual const WingCodeEdit *editorPtr() const = 0;
 
     virtual QString lspFileNameURL() const = 0;
     virtual bool isContentLspUpdated() const = 0;
     virtual CursorPos currentPosition() const = 0;
+    virtual CursorPos cursorPosition(const QTextCursor &cursor) const = 0;
 
     virtual void sendDocChange() = 0;
     void syncUpdate();
@@ -44,6 +48,12 @@ public:
     virtual void
     showFunctionTip(const QList<WingSignatureTooltip::Signature> &sigs) = 0;
     virtual void clearFunctionTip() = 0;
+
+    virtual void syncSemanticTokens() = 0;
+
+protected:
+    void applySemanticTokens();
+    virtual QVector<LSP::SemanticToken> parseSemanticTokens() = 0;
 };
 
 #endif // LSPEDITORINTERFACE_H

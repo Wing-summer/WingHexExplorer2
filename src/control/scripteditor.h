@@ -23,7 +23,6 @@
 #include "class/lspeditorinterface.h"
 #include "class/resettabletimer.h"
 #include "control/codeedit.h"
-#include "utilities.h"
 
 #include <QFileSystemWatcher>
 
@@ -56,12 +55,18 @@ public:
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;
+    virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
     virtual void sendDocChange() override;
 
     virtual void saveState(QXmlStreamWriter &Stream) const override;
+
+    virtual void syncSemanticTokens() override;
+
+protected:
+    virtual QVector<LSP::SemanticToken> parseSemanticTokens() override;
 
 signals:
     void onToggleMark(int line);
@@ -99,6 +104,7 @@ private:
     quint64 version = 1;
 
     ResettableTimer *_timer;
+    ResettableTimer *_tokentimer;
     bool _ok = true;
     bool _lastSent = true;
 

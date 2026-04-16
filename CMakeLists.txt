@@ -391,6 +391,8 @@ set(CLASS_SRC
     src/class/angellsp.h
     src/class/angellsp.cpp
     src/class/lsp.h
+    src/class/editorlspevent.h
+    src/class/editorlspevent.cpp
     src/class/resettabletimer.h
     src/class/resettabletimer.cpp
     src/class/astype_evaluator.h

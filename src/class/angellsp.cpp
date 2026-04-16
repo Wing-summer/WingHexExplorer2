@@ -187,9 +187,11 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     sync["dynamicRegistration"] = false;
     td["synchronization"] = sync;
     caps["textDocument"] = td;
-    params["capabilities"] = caps;
+    params["capabilities"] = buildSemanticTokensClientCapability();
 
-    return sendRequestSync(QStringLiteral("initialize"), params, timeoutMs);
+    auto r = sendRequestSync(QStringLiteral("initialize"), params, timeoutMs);
+    updateSemanticTokensCapabilities(r["capabilities"]);
+    return r;
 }
 
 void AngelLsp::initialized() {
@@ -219,6 +221,18 @@ void AngelLsp::closeDocument(const QString &uri) {
     QJsonObject params;
     params["textDocument"] = QJsonObject{{"uri", uri}};
     sendNotification(QStringLiteral("textDocument/didClose"), params);
+    m_semanticTokenCache.remove(uri);
+}
+
+QJsonValue AngelLsp::requestSemanticTokensFull(const QString &uri,
+                                               int timeoutMs) {
+    if (!m_proc)
+        return {};
+
+    QJsonObject p;
+    p["textDocument"] = QJsonObject{{"uri", uri}};
+    return sendRequestSync(QStringLiteral("textDocument/semanticTokens/full"),
+                           p, timeoutMs);
 }
 
 void AngelLsp::reloadConfigure() {
@@ -227,16 +241,6 @@ void AngelLsp::reloadConfigure() {
 
     // Angel-lsp dont use the param actually, so don't construct it
     sendNotification(QStringLiteral("workspace/didChangeConfiguration"));
-}
-
-QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
-    if (!m_proc)
-        return {};
-
-    QJsonObject p;
-    p["textDocument"] = QJsonObject{{"uri", uri}};
-    return sendRequestSync(QStringLiteral("textDocument/documentSymbol"), p,
-                           timeoutMs);
 }
 
 QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
@@ -318,6 +322,178 @@ QJsonValue AngelLsp::requestFormat(const QString &uri, int timeoutMs) {
 
     return sendRequestSync(QStringLiteral("textDocument/formatting"), p,
                            timeoutMs);
+}
+
+QVector<LSP::SemanticToken>
+AngelLsp::decodeSemanticTokenData(const QVector<quint32> &raw,
+                                  const LSP::SemanticTokensLegend &legend) {
+    QVector<LSP::SemanticToken> out;
+    out.reserve(raw.size() / 5);
+
+    int prevLine = 0;
+    int prevCharacter = 0;
+
+    for (int i = 0; i + 4 < raw.size(); i += 5) {
+        const int deltaLine = static_cast<int>(raw[i]);
+        const int deltaStart = static_cast<int>(raw[i + 1]);
+        const int length = static_cast<int>(raw[i + 2]);
+        const int typeId = static_cast<int>(raw[i + 3]);
+        const quint32 modifierMask = raw[i + 4];
+
+        prevLine += deltaLine;
+        prevCharacter =
+            (deltaLine == 0) ? (prevCharacter + deltaStart) : deltaStart;
+
+        LSP::SemanticToken token;
+        token.line = prevLine;
+        token.character = prevCharacter;
+        token.length = length;
+
+        if (typeId >= 0 && typeId < legend.tokenTypes.size())
+            token.tokenType = legend.tokenTypes[typeId];
+
+        for (int bit = 0; bit < legend.tokenModifiers.size(); ++bit) {
+            if (modifierMask & (1u << bit))
+                token.modifiers.append(legend.tokenModifiers[bit]);
+        }
+
+        out.push_back(std::move(token));
+    }
+
+    return out;
+}
+
+QVector<LSP::SemanticToken>
+AngelLsp::parseSemanticTokens(const QString &uri, const QJsonValue &value) {
+    QVector<quint32> raw;
+    QString resultId;
+
+    if (value.isObject()) {
+        const QJsonObject obj = value.toObject();
+        resultId = obj.value(QStringLiteral("resultId")).toString();
+
+        if (obj.contains(QStringLiteral("data"))) {
+            raw = jsonArrayToU32Vector(
+                obj.value(QStringLiteral("data")).toArray());
+        } else if (obj.contains(QStringLiteral("edits"))) {
+            const auto it = m_semanticTokenCache.find(uri);
+            if (it == m_semanticTokenCache.end())
+                return {};
+
+            raw = applySemanticTokenEdits(
+                it->rawData, obj.value(QStringLiteral("edits")).toArray());
+        }
+    } else if (value.isArray()) {
+        raw = jsonArrayToU32Vector(value.toArray());
+    } else {
+        return {};
+    }
+
+    if (!resultId.isEmpty() || !raw.isEmpty()) {
+        m_semanticTokenCache[uri] = SemanticTokenCache{resultId, raw};
+    }
+
+    return decodeSemanticTokenData(raw, m_semanticLegend);
+}
+
+QVector<quint32> AngelLsp::jsonArrayToU32Vector(const QJsonArray &arr) {
+    QVector<quint32> out;
+    out.reserve(arr.size());
+    for (const auto &v : arr)
+        out.push_back(static_cast<quint32>(v.toInt()));
+    return out;
+}
+
+QVector<quint32> AngelLsp::applySemanticTokenEdits(QVector<quint32> base,
+                                                   const QJsonArray &edits) {
+    struct Edit {
+        int start = 0;
+        int deleteCount = 0;
+        QVector<quint32> data;
+    };
+
+    QVector<Edit> parsed;
+    parsed.reserve(edits.size());
+
+    for (const auto &v : edits) {
+        if (!v.isObject())
+            continue;
+
+        const QJsonObject e = v.toObject();
+        Edit edit;
+        edit.start = e.value(QStringLiteral("start")).toInt();
+        edit.deleteCount = e.value(QStringLiteral("deleteCount")).toInt();
+        edit.data =
+            jsonArrayToU32Vector(e.value(QStringLiteral("data")).toArray());
+        parsed.push_back(std::move(edit));
+    }
+
+    std::sort(parsed.begin(), parsed.end(),
+              [](const Edit &a, const Edit &b) { return a.start > b.start; });
+
+    for (const auto &e : parsed) {
+        if (e.start < 0 || e.start > base.size())
+            continue;
+
+        const int del = qBound(0, e.deleteCount, base.size() - e.start);
+        base.remove(e.start, del);
+
+        for (int i = 0; i < e.data.size(); ++i)
+            base.insert(e.start + i, e.data[i]);
+    }
+
+    return base;
+}
+
+QStringList AngelLsp::jsonArrayToStringList(const QJsonArray &arr) {
+    QStringList list;
+    list.reserve(arr.size());
+    for (const auto &v : arr)
+        list << v.toString();
+    return list;
+}
+
+void AngelLsp::updateSemanticTokensCapabilities(
+    const QJsonValue &serverCapabilities) {
+    auto provider = serverCapabilities["semanticTokensProvider"];
+    if (!provider.isObject()) {
+        return;
+    }
+    auto legend = provider["legend"];
+    m_semanticLegend.tokenTypes =
+        jsonArrayToStringList(legend["tokenTypes"].toArray());
+    m_semanticLegend.tokenModifiers =
+        jsonArrayToStringList(legend["tokenModifiers"].toArray());
+}
+
+QJsonObject AngelLsp::buildSemanticTokensClientCapability() {
+    QJsonObject semanticTokens;
+
+    semanticTokens["dynamicRegistration"] = false;
+
+    QJsonObject requests;
+    requests["range"] = false;
+    requests["full"] = true;
+    semanticTokens["requests"] = requests;
+
+    semanticTokens["tokenTypes"] = QJsonArray{
+        "namespace",     "class",     "enum",      "interface",     "struct",
+        "typeParameter", "type",      "parameter", "variable",      "property",
+        "enumMember",    "decorator", "event",     "function",      "method",
+        "macro",         "label",     "comment",   "string",        "keyword",
+        "number",        "regexp",    "operator",  "keywordControl"};
+
+    semanticTokens["tokenModifiers"] =
+        QJsonArray{"declaration",   "definition",    "readonly", "static",
+                   "deprecated",    "abstract",      "async",    "modification",
+                   "documentation", "defaultLibrary"};
+
+    semanticTokens["formats"] = QJsonArray{QStringLiteral("relative")};
+    semanticTokens["overlappingTokenSupport"] = false;
+    semanticTokens["multilineTokenSupport"] = true;
+    semanticTokens["augmentsSyntaxTokens"] = true;
+
+    return semanticTokens;
 }
 
 qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,

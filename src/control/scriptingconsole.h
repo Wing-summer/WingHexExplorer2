@@ -50,10 +50,16 @@ public:
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;
+    virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
     virtual void sendDocChange() override;
+
+    virtual void syncSemanticTokens() override;
+
+protected:
+    virtual QVector<LSP::SemanticToken> parseSemanticTokens() override;
 
 private:
     static QString lspURL();
@@ -91,6 +97,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *e) override;
     virtual void mousePressEvent(QMouseEvent *e) override;
     virtual void wheelEvent(QWheelEvent *e) override;
+    virtual bool event(QEvent *event) override;
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;

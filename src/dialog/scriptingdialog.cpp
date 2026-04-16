@@ -115,59 +115,63 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                                                callbacks);
 
     auto &lsp = AngelLsp::instance();
-    connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
-        // only happened when restarting
-        for (const auto &view : ScriptEditor::instances()) {
-            view->onReconnectLsp();
-            view->setCompleterEnabled(true);
-        }
-    });
-    connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-        for (const auto &view : ScriptEditor::instances()) {
-            view->setCompleterEnabled(false);
-        }
-    });
-    connect(
-        &lsp, &AngelLsp::diagnosticsPublished, this,
-        [this](const QString &url, const QList<LSP::Diagnostics> &diagnostics) {
-            if (url.startsWith(QStringLiteral("dev"))) {
-                // a device not a file
-                return;
-            }
-            QUrl path(url);
-            if (path.isValid()) {
-                auto fileName = path.toLocalFile();
-                auto view = findEditorView(fileName);
-                if (view) {
-                    auto editor = view->editor();
-                    editor->clearSquiggle();
-                    auto lsps = [](LSP::DiagnosticSeverity s)
-                        -> WingCodeEdit::SeverityLevel {
-                        switch (s) {
-                        case LSP::DiagnosticSeverity::None:
-                            return WingCodeEdit::SeverityLevel::Information;
-                        case LSP::DiagnosticSeverity::Error:
-                            return WingCodeEdit::SeverityLevel::Error;
-                        case LSP::DiagnosticSeverity::Warning:
-                            return WingCodeEdit::SeverityLevel::Warning;
-                        case LSP::DiagnosticSeverity::Information:
-                            return WingCodeEdit::SeverityLevel::Information;
-                        case LSP::DiagnosticSeverity::Hint:
-                            return WingCodeEdit::SeverityLevel::Hint;
-                        }
-                        return WingCodeEdit::SeverityLevel::Information;
-                    };
-                    for (const auto &d : diagnostics) {
-                        editor->addSquiggle(
-                            lsps(d.severity),
-                            {d.range.start.line + 1, d.range.start.character},
-                            {d.range.end.line + 1, d.range.end.character},
-                            d.message);
-                    }
-                    editor->highlightAllSquiggle();
-                }
+    if (lsp.isActive()) {
+        connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
+            // only happened when restarting
+            for (const auto &view : ScriptEditor::instances()) {
+                view->onReconnectLsp();
+                view->setCompleterEnabled(true);
             }
         });
+        connect(&lsp, &AngelLsp::serverExited, this, [this]() {
+            for (const auto &view : ScriptEditor::instances()) {
+                view->setCompleterEnabled(false);
+            }
+        });
+        connect(
+            &lsp, &AngelLsp::diagnosticsPublished, this,
+            [this](const QString &url,
+                   const QList<LSP::Diagnostics> &diagnostics) {
+                if (url.startsWith(QStringLiteral("dev"))) {
+                    // a device not a file
+                    return;
+                }
+                QUrl path(url);
+                if (path.isValid()) {
+                    auto fileName = path.toLocalFile();
+                    auto view = findEditorView(fileName);
+                    if (view) {
+                        auto editor = view->editor();
+                        editor->clearSquiggle();
+                        auto lsps = [](LSP::DiagnosticSeverity s)
+                            -> WingCodeEdit::SeverityLevel {
+                            switch (s) {
+                            case LSP::DiagnosticSeverity::None:
+                                return WingCodeEdit::SeverityLevel::Information;
+                            case LSP::DiagnosticSeverity::Error:
+                                return WingCodeEdit::SeverityLevel::Error;
+                            case LSP::DiagnosticSeverity::Warning:
+                                return WingCodeEdit::SeverityLevel::Warning;
+                            case LSP::DiagnosticSeverity::Information:
+                                return WingCodeEdit::SeverityLevel::Information;
+                            case LSP::DiagnosticSeverity::Hint:
+                                return WingCodeEdit::SeverityLevel::Hint;
+                            }
+                            return WingCodeEdit::SeverityLevel::Information;
+                        };
+                        for (const auto &d : diagnostics) {
+                            editor->addSquiggle(
+                                lsps(d.severity),
+                                {d.range.start.line + 1,
+                                 d.range.start.character},
+                                {d.range.end.line + 1, d.range.end.character},
+                                d.message);
+                        }
+                        editor->highlightAllSquiggle();
+                    }
+                }
+            });
+    }
 
     this->setUpdatesEnabled(true);
     this->setAttribute(Qt::WA_DeleteOnClose);
@@ -1603,7 +1607,8 @@ void ScriptingDialog::on_save() {
         return;
     }
 
-    if (AngelLsp::instance().autofmt()) {
+    auto &lsp = AngelLsp::instance();
+    if (lsp.isActive() && lsp.autofmt()) {
         editor->formatCode();
     }
 

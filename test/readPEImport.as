@@ -33,7 +33,7 @@ class IMAGE_SECTION_HEADER {
     uint32 PointerToRawData;
 }
 
-int64 rva2foa(IMAGE_SECTION_HEADER[]@ headers, uint rva) {
+int64 rva2foa(IMAGE_SECTION_HEADER[] headers, uint rva) {
     if (rva == 0) {
         return 0;
     }

@@ -35,18 +35,24 @@ public:
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;
+    virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void sendDocChange() override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
+
+    virtual void syncSemanticTokens() override;
+
+protected:
+    virtual QVector<LSP::SemanticToken> parseSemanticTokens() override;
 
 signals:
     void onCloseEvent();
 
     // QWidget interface
 protected:
-    virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;
+    virtual bool event(QEvent *event) override;
 
 private slots:
     void onSendFullTextChangeCompleted();
@@ -61,6 +67,7 @@ private:
     quint64 version = 1;
 
     ResettableTimer *_timer;
+    ResettableTimer *_tokentimer;
     bool _ok = true;
     bool _lastSent = true;
 };

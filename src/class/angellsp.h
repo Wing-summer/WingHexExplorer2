@@ -70,7 +70,8 @@ public:
 
 public:
     // High-level feature wrappers (sync)
-    QJsonValue requestDocumentSymbol(const QString &uri, int timeoutMs = 3000);
+    QJsonValue requestSemanticTokensFull(const QString &uri,
+                                         int timeoutMs = 3000);
     QJsonValue requestCompletion(const QString &uri, int line, int character,
                                  const QString &triggerChar,
                                  int timeoutMs = 3000);
@@ -82,7 +83,26 @@ public:
 
     QJsonValue requestFormat(const QString &uri, int timeoutMs = 3000);
 
+public:
+    QVector<LSP::SemanticToken>
+    decodeSemanticTokenData(const QVector<quint32> &raw,
+                            const LSP::SemanticTokensLegend &legend);
+
+    QVector<LSP::SemanticToken> parseSemanticTokens(const QString &uri,
+                                                    const QJsonValue &value);
+
+    QVector<quint32> jsonArrayToU32Vector(const QJsonArray &arr);
+
+    QVector<quint32> applySemanticTokenEdits(QVector<quint32> base,
+                                             const QJsonArray &edits);
+
+    QStringList jsonArrayToStringList(const QJsonArray &arr);
+
+    void updateSemanticTokensCapabilities(const QJsonValue &serverCapabilities);
+
 private:
+    QJsonObject buildSemanticTokensClientCapability();
+
     void reloadConfigure();
 
     // Generic request/notification
@@ -148,6 +168,12 @@ public:
     void setAutofmt(bool newAutofmt);
 
 private:
+    struct SemanticTokenCache {
+        QString resultId;
+        QVector<quint32> rawData;
+    };
+
+private:
     QProcess *m_proc = nullptr;
     QByteArray m_stdoutBuffer;
 
@@ -156,6 +182,9 @@ private:
     QMap<qint64, QJsonValue> m_pendingResponses;
 
     QMap<qint64, QString> m_outstandingRequests; // map request id -> method
+
+    LSP::SemanticTokensLegend m_semanticLegend;
+    QHash<QString, SemanticTokenCache> m_semanticTokenCache;
 
     // Debounce/coalesce document change support
     QHash<QString, QTimer *> m_docTimers; // per-document debouncers

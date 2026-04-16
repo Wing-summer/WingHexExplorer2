@@ -94,11 +94,11 @@
                 <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="*" lookAhead="true" />
                 <DetectChar attribute="Symbol" context="#stay" char="{" beginRegion="block1"/>
                 <DetectChar attribute="Symbol" context="#stay" char="}" endRegion="block1"/>
-                <RegExpr attribute="Data Type" context="#stay" String="\bauto(?=\s+\w+)"/>
+                <RegExpr attribute="Data Type" context="#stay" String="\bauto(?=\s+\w+|\s*@|@)"/>
                 <RegExpr attribute="Keyword" context="#stay" String="\b(?=\s+(?:class|interface|void)|(?=\s+(?:return|break))|(?:set|get)(?=\s*[;{])|(?=\s*::\s*\w+))"/>
                 <RegExpr attribute="Function" context="#stay" String="\b[_\w][_\w\d]*(?=[\s]*[(])" />
                 <DetectChar attribute="Symbol" context="Member" char="."/>
-                <AnyChar attribute="Symbol" context="#stay" String=":!%&amp;()+,-/*&lt;=&gt;?[]|~^&#59;"/>
+                <AnyChar attribute="Symbol" context="#stay" String="@:!%&amp;()+,-/*&lt;=&gt;?[]|~^&#59;"/>
                 <DetectChar attribute="Macro" context="Macro" char="#"/>
             </context>
 

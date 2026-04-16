@@ -4504,8 +4504,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     auto &lsp = AngelLsp::instance();
-    lsp.blockSignals(true);
-    lsp.shutdownAndExit();
+    if (lsp.isActive()) {
+        lsp.blockSignals(true);
+        lsp.shutdownAndExit();
+    }
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());

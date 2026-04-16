@@ -191,6 +191,19 @@ struct Diagnostics {
     // QString source; = "AngelScript"
 };
 
+struct SemanticTokensLegend {
+    QStringList tokenTypes;
+    QStringList tokenModifiers;
+};
+
+struct SemanticToken {
+    int line = 0;          // 0-based
+    int character = 0;     // 0-based
+    int length = 0;        // UTF-16 code units / document positions
+    QString tokenType;     // e.g. "class", "function", "typeParameter"
+    QStringList modifiers; // e.g. "declaration", "readonly"
+};
+
 } // namespace LSP
 
 #endif // LSP_H

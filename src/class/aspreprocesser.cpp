@@ -447,16 +447,17 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             bool val;
             if (er) {
                 val = er.value();
+                bool parent =
+                    condStack.isEmpty() ? true : condStack.last().currentTaking;
+                CondState cs;
+                cs.parentTaking = parent;
+                cs.currentTaking = parent && val;
+                cs.anyBranchTaken = cs.currentTaking;
+                condStack.append(cs);
             } else {
-                return;
+                // reported in evalExpression
             }
-            bool parent =
-                condStack.isEmpty() ? true : condStack.last().currentTaking;
-            CondState cs;
-            cs.parentTaking = parent;
-            cs.currentTaking = parent && val;
-            cs.anyBranchTaken = cs.currentTaking;
-            condStack.append(cs);
+
             emitBlankLine();
             return;
         }
@@ -479,8 +480,6 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 cs.currentTaking = false;
                 cs.anyBranchTaken = false;
                 condStack.append(cs);
-                emitBlankLine();
-                return;
             } else {
                 bool take = m_runtimeMacros.contains(name);
                 bool parent =
@@ -549,12 +548,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             bool val;
             if (er) {
                 val = er.value();
+                bool current = parent && (!prevAny) && val;
+                top.currentTaking = current;
+                top.anyBranchTaken = prevAny || current;
             } else {
-                return;
+                // reported in evalExpression
             }
-            bool current = parent && (!prevAny) && val;
-            top.currentTaking = current;
-            top.anyBranchTaken = prevAny || current;
+
             emitBlankLine();
             return;
         }
@@ -599,6 +599,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         }
 
         // unknown directive: remove line (preserve blank)
+        PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                       Severity::Warning,
+                       m_currentSource,
+                       dStartLine,
+                       dStartCol,
+                       QStringLiteral("Unknown directive #") + kw};
+        errorReport(e);
         emitBlankLine();
     }; // end handleDirective
 
@@ -844,22 +851,15 @@ std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
     antlr4::CommonTokenStream tokens(&lexer);
 
     // reuse the listener, ha!
-    CStructErrorListener lis([line, col](const MsgInfo &info) {
-        ScriptMachine::MessageInfo inf;
-        // only scripting canbe used with eval #if expression
-        inf.mode = ScriptMachine::Scripting;
-        inf.row = line;
-        inf.col = col;
-        inf.message = info.info;
-        switch (info.type) {
-        case MsgType::Error:
-            inf.type = ScriptMachine::MessageType::Error;
-            break;
-        case MsgType::Warn:
-            inf.type = ScriptMachine::MessageType::Warn;
-            break;
-        }
-        ScriptMachine::instance().outputMessage(inf);
+    CStructErrorListener lis([line, col, this](const MsgInfo &info) {
+        PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
+                       info.type == MsgType::Error ? Severity::Error
+                                                   : Severity::Warning,
+                       m_currentSource,
+                       line,
+                       col,
+                       info.info};
+        errorReport(e);
     });
 
     AngelscriptConsoleParser parser(&tokens);
@@ -868,6 +868,7 @@ std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
     parser.setBuildParseTree(false);
     parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 
+    // TODO use AngelscriptConsoleParser to calculate value
     AngelScriptConsoleVisitor visitor(tokens);
     try {
         visitor.visit(parser.logicalOrExpression());

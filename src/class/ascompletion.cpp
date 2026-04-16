@@ -131,8 +131,12 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return false;
     }
 
-    auto url = editor->lspFileNameURL();
     auto &lsp = AngelLsp::instance();
+    if (!lsp.isActive()) {
+        return false;
+    }
+
+    auto url = editor->lspFileNameURL();
 
     auto tc = editor->currentPosition();
     auto line = tc.blockNumber;
@@ -221,10 +225,14 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
     }
     auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
     if (v.type == LSP::CompletionItemKind::Function) {
+        auto &lsp = AngelLsp::instance();
+        if (!lsp.isActive()) {
+            return;
+        }
+
         auto tc = editor->currentPosition();
         auto line = tc.blockNumber;
         auto character = tc.positionInBlock;
-        auto &lsp = AngelLsp::instance();
 
         // textChanged will emit later so send now
         editor->syncUpdate();
