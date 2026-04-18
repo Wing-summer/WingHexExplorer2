@@ -50,6 +50,7 @@ enum AsUserDataType : unsigned int {
     // copyable context attribute
     UserData_CopyAttr_Begin = 100,
     UserData_isDbg = UserData_CopyAttr_Begin,
+    UserData_NeedYeild,
     UserData_ContextMode,
     UserData_Timer,
     UserData_TimeOut,

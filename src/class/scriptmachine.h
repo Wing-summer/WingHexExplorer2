@@ -163,8 +163,6 @@ public:
             sections,
         const std::function<void(bool)> &onFinished);
 
-    QVariant evaluateDefine(const QString &code);
-
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
 
@@ -172,8 +170,6 @@ public:
 
 protected:
     bool configureEngine();
-    void beginEvaluateDefine();
-    void endEvaluateDefine();
 
     QString getCallStack(asIScriptContext *context);
 

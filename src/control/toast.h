@@ -20,6 +20,7 @@
 
 #include <QDialog>
 #include <QFont>
+#include <QGraphicsOpacityEffect>
 #include <QIcon>
 #include <QSize>
 #include <QString>
@@ -56,9 +57,15 @@ protected:
     QFont displayFont() const;
     QSize calculateTextSize();
     void init();
-    void paintEvent(QPaintEvent *event);
-    void showEvent(QShowEvent *event);
-    void timerEvent(QTimerEvent *event);
+
+    virtual void paintEvent(QPaintEvent *event) override;
+    virtual void showEvent(QShowEvent *event) override;
+    virtual void timerEvent(QTimerEvent *event) override;
+    virtual void enterEvent(QEnterEvent *event) override;
+    virtual void leaveEvent(QEvent *event) override;
+
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     QString m_strContent;
@@ -72,8 +79,10 @@ private:
     QPixmap m_icon;
 
     QWidget *_parent = nullptr;
+    QGraphicsOpacityEffect *_oe = nullptr;
 
     TOAST_POS m_pos = TOAST_POS::BOTTOM;
+    bool _pauseTimer = false;
 
     Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
           QWidget *parent);

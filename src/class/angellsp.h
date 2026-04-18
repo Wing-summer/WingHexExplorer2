@@ -167,6 +167,8 @@ public:
     bool autofmt() const;
     void setAutofmt(bool newAutofmt);
 
+    void defineMacroWord(const QString &word, const QString &value = {});
+
 private:
     struct SemanticTokenCache {
         QString resultId;
@@ -188,6 +190,8 @@ private:
 
     // Debounce/coalesce document change support
     QHash<QString, QTimer *> m_docTimers; // per-document debouncers
+
+    QHash<QString, QString> m_defines;
 
 private:
     // configures

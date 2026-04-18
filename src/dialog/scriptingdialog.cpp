@@ -59,7 +59,11 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     m_recentmanager = new RecentFileManager(m_recentMenu, true);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [this](const RecentFileManager::RecentInfo &rinfo) {
-                openFile(rinfo.url.toLocalFile());
+                auto e = openFile(rinfo.url.toLocalFile());
+                if (e) {
+                    e->setTabToolTip(
+                        RecentFileManager::getDisplayTooltip(rinfo, true));
+                }
             });
     m_recentmanager->apply(this,
                            SettingManager::instance().recentScriptFiles());
@@ -241,7 +245,7 @@ void ScriptingDialog::initConsole() {
                         e->setFocus();
                         e->raise();
 
-                        addRecentFile(file);
+                        addRecentFile(e, file);
                     } else {
                         e = createFakeEditor(file, _curDbgData[file].source);
                     }
@@ -365,8 +369,8 @@ void ScriptingDialog::buildUpRibbonBar() {
         [this](const QStringList &files) {
             for (const auto &file : files) {
                 if (ScriptManager::isScriptFile(file)) {
-                    if (openFile(file)) {
-                        addRecentFile(file);
+                    if (auto e = openFile(file)) {
+                        addRecentFile(e, file);
                         m_lastusedpath = Utilities::getAbsoluteDirPath(file);
                     }
                 } else {
@@ -1127,9 +1131,13 @@ void ScriptingDialog::updateWindowTitle() {
     }
 }
 
-void ScriptingDialog::addRecentFile(const QString &fileName) {
+void ScriptingDialog::addRecentFile(ScriptEditor *editor,
+                                    const QString &fileName) {
     RecentFileManager::RecentInfo info;
     info.url = QUrl::fromLocalFile(fileName);
+    if (editor) {
+        editor->setTabToolTip(RecentFileManager::getDisplayTooltip(info, true));
+    }
     m_recentmanager->addRecentFile(info);
 }
 
@@ -1535,19 +1543,18 @@ void ScriptingDialog::on_newfile() {
         }
 
         auto e = findEditorView(filename);
+        if (e) {
+            e->raise();
+            e->setFocus();
+            addRecentFile(nullptr, filename);
+            return;
+        }
 
         // create an empty file
         QFile f(filename);
         if (f.open(QFile::WriteOnly | QFile::Text)) {
             f.write(QByteArrayLiteral("int main() {\n    return 0;\n}\n"));
             f.close();
-        }
-
-        if (e) {
-            e->reload();
-            e->raise();
-            e->setFocus();
-            return;
         }
 
         auto editor = std::make_unique<ScriptEditor>(this);
@@ -1557,7 +1564,7 @@ void ScriptingDialog::on_newfile() {
                                      tr("InvalidFileOrPermission"));
             return;
         }
-        addRecentFile(filename);
+        addRecentFile(editor.get(), filename);
         registerEditorView(editor.get());
         m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
                               editorViewArea());
@@ -1575,8 +1582,8 @@ void ScriptingDialog::on_openfile() {
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
-        if (openFile(filename)) {
-            addRecentFile(filename);
+        if (auto e = openFile(filename)) {
+            addRecentFile(e, filename);
         }
     }
 }
@@ -1641,13 +1648,12 @@ void ScriptingDialog::on_saveas() {
     if (res) {
         setWindowFilePath(filename);
         updateWindowTitle();
+        addRecentFile(editor, filename);
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
     } else {
         WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
     }
-
-    addRecentFile(filename);
 }
 
 void ScriptingDialog::on_undofile() {
@@ -1987,6 +1993,7 @@ ScriptEditor *ScriptingDialog::createFakeEditor(const QString &fileName,
     auto name = finfo.fileName();
     _fakeEditor->setWindowTitle(name);
     _fakeEditor->setWindowFilePath(fileName);
+    _fakeEditor->setTabToolTip(QStringLiteral("[?] ") + fileName);
 
     auto editor = _fakeEditor->editor();
     editor->setPlainText(text);

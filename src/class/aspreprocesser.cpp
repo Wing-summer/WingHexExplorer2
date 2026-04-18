@@ -16,12 +16,11 @@
 */
 
 #include "aspreprocesser.h"
-#include "class/angelscriptconsolevisitor.h"
+#include "class/asexprevaluator.h"
 #include "class/languagemanager.h"
 #include "class/skinmanager.h"
-#include "grammar/ASConsole/AngelscriptConsoleLexer.h"
-#include "grammar/ASConsole/AngelscriptConsoleParser.h"
-#include "scriptmachine.h"
+#include "grammar/AngelscriptExprParser/AngelscriptExprParserLexer.h"
+#include "grammar/AngelscriptExprParser/AngelscriptExprParserParser.h"
 #include "structlib/cstructerrorlistener.h"
 #include "utilities.h"
 
@@ -58,58 +57,7 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
         return QStringLiteral("\"%1\"").arg(finfo.fileName());
     });
 
-    for (const auto &m : std::as_const(*DEFAULT_MARCO)) {
-        defineMacroWord(m);
-    }
-
-    static QHash<QString, QString> addInfos;
-    if (addInfos.isEmpty()) {
-        // software infos
-        auto ver = QVersionNumber::fromString(WINGHEX_VERSION);
-        addInfos.insert(QStringLiteral("__WING_VERSION__"),
-                        "\"" WINGHEX_VERSION "\"");
-        addInfos.insert(QStringLiteral("__WING_VERSION_MAJOR__"),
-                        QString::number(ver.majorVersion()));
-        addInfos.insert(QStringLiteral("__WING_VERSION_MINOR__"),
-                        QString::number(ver.minorVersion()));
-        addInfos.insert(QStringLiteral("__WING_VERSION_PATCH__"),
-                        QString::number(ver.microVersion()));
-        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION__"),
-                        "\"" ANGELSCRIPT_VERSION_STRING "\"");
-        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MAJOR__"),
-                        QString::number(ANGELSCRIPT_VERSION / 10000));
-        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MINOR__"),
-                        QString::number((ANGELSCRIPT_VERSION / 100) % 100));
-        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_PATCH__"),
-                        QString::number(ANGELSCRIPT_VERSION % 100));
-        addInfos.insert(QStringLiteral("__WINGHEX_APPNAME__"),
-                        "\"" APP_NAME "\"");
-        addInfos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), "\"wingsummer\"");
-        ver = QLibraryInfo::version();
-        addInfos.insert(QStringLiteral("__QT_VERSION__"),
-                        ver.toString().prepend('"').append('"'));
-        addInfos.insert(QStringLiteral("__QT_VERSION_MAJOR__"),
-                        QString::number(ver.majorVersion()));
-        addInfos.insert(QStringLiteral("__QT_VERSION_MINOR__"),
-                        QString::number(ver.minorVersion()));
-        addInfos.insert(QStringLiteral("__QT_VERSION_PATCH__"),
-                        QString::number(ver.microVersion()));
-
-        // UI
-        addInfos.insert(QStringLiteral("__LANG__"), LanguageManager::instance()
-                                                        .defaultLocale()
-                                                        .name()
-                                                        .prepend('"')
-                                                        .append('"'));
-        auto theme = SkinManager::instance().currentTheme();
-        auto te = QMetaEnum::fromType<SkinManager::Theme>();
-        addInfos.insert(QStringLiteral("__THEME__"),
-                        QString::fromLatin1(te.valueToKey(int(theme)))
-                            .prepend('"')
-                            .append('"'));
-    }
-
-    m_runtimeMacros.insert(addInfos);
+    m_runtimeMacros.insert(defaultRuntimeMarcos());
 }
 
 AsPreprocesser::~AsPreprocesser() {}
@@ -117,6 +65,60 @@ AsPreprocesser::~AsPreprocesser() {}
 void AsPreprocesser::registerBuiltin(
     const QString &name, std::function<QString(const SourcePos &)> cb) {
     m_builtinMacros[name] = cb;
+}
+
+QHash<QString, QString> AsPreprocesser::defaultRuntimeMarcos() {
+    static QHash<QString, QString> marcos;
+    if (marcos.isEmpty()) {
+        for (const auto &m : std::as_const(*DEFAULT_MARCO)) {
+            marcos.insert(m, {});
+        }
+
+        // software infos
+        auto ver = QVersionNumber::fromString(WINGHEX_VERSION);
+        marcos.insert(QStringLiteral("__WING_VERSION__"),
+                      "\"" WINGHEX_VERSION "\"");
+        marcos.insert(QStringLiteral("__WING_VERSION_MAJOR__"),
+                      QString::number(ver.majorVersion()));
+        marcos.insert(QStringLiteral("__WING_VERSION_MINOR__"),
+                      QString::number(ver.minorVersion()));
+        marcos.insert(QStringLiteral("__WING_VERSION_PATCH__"),
+                      QString::number(ver.microVersion()));
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION__"),
+                      "\"" ANGELSCRIPT_VERSION_STRING "\"");
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MAJOR__"),
+                      QString::number(ANGELSCRIPT_VERSION / 10000));
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MINOR__"),
+                      QString::number((ANGELSCRIPT_VERSION / 100) % 100));
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_PATCH__"),
+                      QString::number(ANGELSCRIPT_VERSION % 100));
+        marcos.insert(QStringLiteral("__WINGHEX_APPNAME__"),
+                      "\"" APP_NAME "\"");
+        marcos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), "\"wingsummer\"");
+        ver = QLibraryInfo::version();
+        marcos.insert(QStringLiteral("__QT_VERSION__"),
+                      ver.toString().prepend('"').append('"'));
+        marcos.insert(QStringLiteral("__QT_VERSION_MAJOR__"),
+                      QString::number(ver.majorVersion()));
+        marcos.insert(QStringLiteral("__QT_VERSION_MINOR__"),
+                      QString::number(ver.minorVersion()));
+        marcos.insert(QStringLiteral("__QT_VERSION_PATCH__"),
+                      QString::number(ver.microVersion()));
+
+        // UI
+        marcos.insert(QStringLiteral("__LANG__"), LanguageManager::instance()
+                                                      .defaultLocale()
+                                                      .name()
+                                                      .prepend('"')
+                                                      .append('"'));
+        auto theme = SkinManager::instance().currentTheme();
+        auto te = QMetaEnum::fromType<SkinManager::Theme>();
+        marcos.insert(QStringLiteral("__THEME__"),
+                      QString::fromLatin1(te.valueToKey(int(theme)))
+                          .prepend('"')
+                          .append('"'));
+    }
+    return marcos;
 }
 
 void AsPreprocesser::processBuffer(const QByteArray &buf,
@@ -132,9 +134,11 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
     bool lineHasSignificantToken = false;
 
     struct CondState {
-        bool parentTaking;
-        bool anyBranchTaken;
-        bool currentTaking;
+        bool parentTaking = true;
+        bool branchTaken = false;
+        bool currentTaking = false;
+        bool seenElse = false;
+        bool valid = true;
     };
     QVector<CondState> condStack;
 
@@ -235,96 +239,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         return QString();
     };
 
-    // Expand macro (host-provided) in code; builtins use expansion site pos
-    std::function<void(const QString &, const QString &, int, int,
-                       QStringList &)>
-        expandMacroInCode;
-    expandMacroInCode = [&](const QString &name, const QString &expFile,
-                            int expLine, int expCol, QStringList &visited) {
-        if (!m_runtimeMacros.contains(name))
-            return;
-        if (visited.count(name)) {
-            // recursion -> output the token itself mapped to source file (if we
-            // have def pos use it)
-            appendReplacementFromOrigin(name, expFile, expLine, expCol);
-            return;
-        }
-        visited.append(name);
-        QString val = m_runtimeMacros.value(name);
-        SourcePos defPos = SourcePos{{}, 1, 1};
-        // empty value => treat as "no-value" macro: remove identifier (i.e.
-        // emit nothing)
-        if (val.isEmpty()) {
-            visited.removeOne(name);
-            return;
-        }
-        // walk the value and expand builtins and nested macros
-        qint64 p = 0;
-        while (p < val.size()) {
-            QChar c = val[p];
-            if (c.isSpace()) {
-                appendReplacementFromOrigin(QString(c), defPos.file,
-                                            defPos.line, defPos.column);
-                ++p;
-                continue;
-            }
-            if (c == '"' || c == '\'') {
-                QChar q = c;
-                QString lit;
-                lit.append(c);
-                ++p;
-                while (p < val.size()) {
-                    lit.append(val[p]);
-                    if (val[p] == '\\') {
-                        if (p + 1 < val.size()) {
-                            lit.append(val[p + 1]);
-                            p += 2;
-                            continue;
-                        }
-                    }
-                    if (val[p] == q) {
-                        ++p;
-                        break;
-                    }
-                    ++p;
-                }
-                appendReplacementFromOrigin(lit, defPos.file, defPos.line,
-                                            defPos.column);
-                continue;
-            }
-            if (c.isLetter() || c == '_' || c.unicode() > 127) {
-                int st = p;
-                ++p;
-                while (p < val.size() &&
-                       (val[p].isLetterOrNumber() || val[p] == '_' ||
-                        val[p].unicode() > 127))
-                    ++p;
-                QString id = val.mid(st, p - st);
-                if (m_builtinMacros.contains(id)) {
-                    SourcePos sp{expFile, expLine, expCol};
-                    QString rep = m_builtinMacros[id](sp);
-                    appendReplacementFromOrigin(rep, expFile, expLine, expCol);
-                } else if (m_runtimeMacros.contains(id)) {
-                    expandMacroInCode(id, expFile, expLine, expCol, visited);
-                } else {
-                    appendReplacementFromOrigin(id, defPos.file, defPos.line,
-                                                defPos.column);
-                }
-                continue;
-            }
-            appendReplacementFromOrigin(QString(c), defPos.file, defPos.line,
-                                        defPos.column);
-            ++p;
-        }
-        visited.removeOne(name);
-    };
-
     // handle directive line (a whole line that starts with #)
     auto handleDirective = [&](const QByteArray &dirBytes, qint64 dStartLine,
                                qint64 dStartCol) -> void {
         QString s = QString::fromUtf8(dirBytes);
         while (!s.isEmpty() && (s.endsWith('\n') || s.endsWith('\r')))
             s.chop(1);
+
         int p = 0;
         while (p < s.size() && s[p].isSpace())
             p++;
@@ -332,9 +253,12 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             p++;
         while (p < s.size() && s[p].isSpace())
             p++;
+
         QString rest = s.mid(p);
+
         static QRegularExpression re(QStringLiteral(R"(^(\w+)\b(.*)$)"));
         auto m = re.match(rest);
+
         QString kw = m.hasMatch() ? m.captured(1) : QString();
         QString args = m.hasMatch() ? m.captured(2) : QString();
 
@@ -344,92 +268,65 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             flushCurrLine();
         };
 
-        if (kw == QStringLiteral("define") || kw == QStringLiteral("undef")) {
-            // Always forbidden in script
-            PreprocError e{
-                PreprocErrorCode::ERR_SOURCE_DEFINE_FORBIDDEN,
-                Severity::Error,
-                m_currentSource,
-                dStartLine,
-                dStartCol,
-                QStringLiteral("#%1 in source is forbidden.").arg(kw)};
-            errorReport(e);
+        auto parentTaking = [&]() -> bool {
+            return condStack.isEmpty() ? true : condStack.last().currentTaking;
+        };
+
+        // ==================== define / undef ====================
+        if (kw == "define" || kw == "undef") {
+            errorReport(
+                {PreprocErrorCode::ERR_SOURCE_DEFINE_FORBIDDEN, Severity::Error,
+                 m_currentSource, dStartLine, dStartCol,
+                 QStringLiteral("#%1 in source is forbidden.").arg(kw)});
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("pragma")) {
+        // ==================== pragma ====================
+        if (kw == "pragma") {
             if (pragmaCallback) {
                 auto r = pragmaCallback(args, this, m_currentSource);
-                auto c = r.info;
-                if (!c.isEmpty()) {
-                    PreprocError e{PreprocErrorCode::ERR_SUCCESS,
-                                   Severity::Info,
-                                   m_currentSource,
-                                   dStartLine,
-                                   dStartCol,
-                                   c};
-                    errorReport(e);
-                }
-                c = r.warn;
-                if (!c.isEmpty()) {
-                    PreprocError e{PreprocErrorCode::ERR_SUCCESS,
-                                   Severity::Warning,
-                                   m_currentSource,
-                                   dStartLine,
-                                   dStartCol,
-                                   c};
-                    errorReport(e);
-                }
-                c = r.error;
-                if (!c.isEmpty()) {
-                    PreprocError e{PreprocErrorCode::ERR_ERROR,
-                                   Severity::Error,
-                                   m_currentSource,
-                                   dStartLine,
-                                   dStartCol,
-                                   c};
-                    errorReport(e);
-                }
+
+                if (!r.info.isEmpty())
+                    errorReport({PreprocErrorCode::ERR_SUCCESS, Severity::Info,
+                                 m_currentSource, dStartLine, dStartCol,
+                                 r.info});
+
+                if (!r.warn.isEmpty())
+                    errorReport({PreprocErrorCode::ERR_SUCCESS,
+                                 Severity::Warning, m_currentSource, dStartLine,
+                                 dStartCol, r.warn});
+
+                if (!r.error.isEmpty())
+                    errorReport({PreprocErrorCode::ERR_ERROR, Severity::Error,
+                                 m_currentSource, dStartLine, dStartCol,
+                                 r.error});
             }
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("include")) {
-            // parse include token
+        // ==================== include ====================
+        if (kw == "include") {
             QString incPath;
             if (!parseIncludePathToken(args, incPath)) {
-                // bad include syntax -> report error and emit blank line
-                PreprocError e{
-                    PreprocErrorCode::ERR_IF_PARSE,
-                    Severity::Error,
-                    m_currentSource,
-                    dStartLine,
-                    dStartCol,
-                    QStringLiteral("Bad #include syntax: %1, use "
-                                   "#include \"file\" pattern instead")
-                        .arg(args.trimmed())};
-                errorReport(e);
+                errorReport({PreprocErrorCode::ERR_IF_PARSE, Severity::Error,
+                             m_currentSource, dStartLine, dStartCol,
+                             QStringLiteral("Bad #include syntax: %1")
+                                 .arg(args.trimmed())});
                 emitBlankLine();
                 return;
             }
 
-            // Resolve path
             QString curDir = QFileInfo(m_currentSource).absolutePath();
             auto resolved = resolveIncludeFile(incPath, curDir);
 
             if (resolved.isEmpty()) {
-                PreprocError e{
-                    PreprocErrorCode::ERR_INCLUDE_NOT_FOUND,
-                    Severity::Error,
-                    m_currentSource,
-                    dStartLine,
-                    dStartCol,
-                    QStringLiteral("Included file not found: %1").arg(incPath)};
-                errorReport(e);
-                // preserve one blank line so row count moves on (or choose to
-                // preserve file lines if you prefer)
+                errorReport({PreprocErrorCode::ERR_INCLUDE_NOT_FOUND,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol,
+                             QStringLiteral("Included file not found: %1")
+                                 .arg(incPath)});
                 emitBlankLine();
                 return;
             }
@@ -439,175 +336,155 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
+        // ==================== #if ====================
         if (kw == QStringLiteral("if")) {
-            QString expanded = expandExpressionForIf(args, m_currentSource,
-                                                     dStartLine, dStartCol);
-            auto er = evalExpression(expanded, m_currentSource, dStartLine,
-                                     dStartCol);
-            bool val;
-            if (er) {
-                val = er.value();
-                bool parent =
-                    condStack.isEmpty() ? true : condStack.last().currentTaking;
-                CondState cs;
-                cs.parentTaking = parent;
-                cs.currentTaking = parent && val;
-                cs.anyBranchTaken = cs.currentTaking;
-                condStack.append(cs);
+            CondState cs;
+            cs.parentTaking = parentTaking();
+
+            bool exprOk = true;
+            QString expanded = expandExpressionForIf(
+                args, m_currentSource, dStartLine, dStartCol, &exprOk);
+
+            if (exprOk) {
+                auto er = evalExpression(expanded, m_currentSource, dStartLine,
+                                         dStartCol);
+                if (er) {
+                    cs.currentTaking = cs.parentTaking && er.value();
+                    cs.branchTaken = cs.currentTaking;
+                } else {
+                    cs.currentTaking = false;
+                    cs.branchTaken = false;
+                    cs.valid = false;
+                }
             } else {
-                // reported in evalExpression
+                cs.currentTaking = false;
+                cs.branchTaken = false;
+                cs.valid = false;
             }
 
+            condStack.append(cs);
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("ifdef")) {
+        // ==================== #ifdef ====================
+        if (kw == "ifdef" || kw == "ifndef") {
             QByteArray ba = args.toUtf8();
             QString name = parseFirstIdentifierInBA(ba);
+
+            CondState cs;
+            cs.parentTaking = parentTaking();
+
             if (name.isEmpty()) {
-                PreprocError e{
-                    PreprocErrorCode::ERR_IF_PARSE,
-                    Severity::Error,
-                    m_currentSource,
-                    dStartLine,
-                    dStartCol,
-                    QStringLiteral("bad #ifdef usage: missing identifier")};
-                errorReport(e);
-                CondState cs;
-                cs.parentTaking =
-                    condStack.isEmpty() ? true : condStack.last().currentTaking;
+                errorReport({PreprocErrorCode::ERR_IF_PARSE, Severity::Error,
+                             m_currentSource, dStartLine, dStartCol,
+                             QStringLiteral("bad #%1 usage: missing identifier")
+                                 .arg(kw)});
                 cs.currentTaking = false;
-                cs.anyBranchTaken = false;
-                condStack.append(cs);
             } else {
-                bool take = m_runtimeMacros.contains(name);
-                bool parent =
-                    condStack.isEmpty() ? true : condStack.last().currentTaking;
-                CondState cs;
-                cs.parentTaking = parent;
-                cs.currentTaking = parent && take;
-                cs.anyBranchTaken = cs.currentTaking;
-                condStack.append(cs);
+                bool defined = m_runtimeMacros.contains(name);
+                bool take = (kw == "ifdef") ? defined : !defined;
+                cs.currentTaking = cs.parentTaking && take;
+                cs.branchTaken = cs.currentTaking;
             }
+
+            condStack.append(cs);
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("ifndef")) {
-            QByteArray ba = args.toUtf8();
-            QString name = parseFirstIdentifierInBA(ba);
-            if (name.isEmpty()) {
-                PreprocError e{
-                    PreprocErrorCode::ERR_IF_PARSE,
-                    Severity::Error,
-                    m_currentSource,
-                    dStartLine,
-                    dStartCol,
-                    QStringLiteral("bad #ifndef usage: missing identifier")};
-                errorReport(e);
-                CondState cs;
-                cs.parentTaking =
-                    condStack.isEmpty() ? true : condStack.last().currentTaking;
-                cs.currentTaking = false;
-                cs.anyBranchTaken = false;
-                condStack.append(cs);
-            } else {
-                bool take = !m_runtimeMacros.contains(name);
-                bool parent =
-                    condStack.isEmpty() ? true : condStack.last().currentTaking;
-                CondState cs;
-                cs.parentTaking = parent;
-                cs.currentTaking = parent && take;
-                cs.anyBranchTaken = cs.currentTaking;
-                condStack.append(cs);
-            }
-            emitBlankLine();
-            return;
-        }
-
+        // ==================== #elif ====================
         if (kw == QStringLiteral("elif")) {
             if (condStack.isEmpty()) {
-                PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               QStringLiteral("#elif without matching #if")};
-                errorReport(e);
+                errorReport({PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol, "#elif without matching #if"});
                 emitBlankLine();
                 return;
             }
+
             CondState &top = condStack.last();
-            bool parent = top.parentTaking;
-            bool prevAny = top.anyBranchTaken;
-            QString expanded = expandExpressionForIf(args, m_currentSource,
-                                                     dStartLine, dStartCol);
-            auto er = evalExpression(expanded, m_currentSource, dStartLine,
-                                     dStartCol);
-            bool val;
-            if (er) {
-                val = er.value();
-                bool current = parent && (!prevAny) && val;
-                top.currentTaking = current;
-                top.anyBranchTaken = prevAny || current;
-            } else {
-                // reported in evalExpression
+
+            if (top.seenElse) {
+                errorReport({PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol, "#elif after #else is not allowed"});
+                top.currentTaking = false;
+                emitBlankLine();
+                return;
             }
+
+            bool current = false;
+            if (top.parentTaking && !top.branchTaken) {
+                bool exprOk = true;
+                QString expanded = expandExpressionForIf(
+                    args, m_currentSource, dStartLine, dStartCol, &exprOk);
+                if (exprOk) {
+                    auto er = evalExpression(expanded, m_currentSource,
+                                             dStartLine, dStartCol);
+                    if (er)
+                        current = er.value();
+                }
+            }
+
+            top.currentTaking = top.parentTaking && !top.branchTaken && current;
+            top.branchTaken = top.branchTaken || top.currentTaking;
 
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("else")) {
+        // ==================== #else ====================
+        if (kw == "else") {
             if (condStack.isEmpty()) {
-                PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               QStringLiteral("#else without matching #if")};
-                errorReport(e);
+                errorReport({PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol, "#else without matching #if"});
                 emitBlankLine();
                 return;
             }
+
             CondState &top = condStack.last();
-            bool parent = top.parentTaking;
-            bool prevAny = top.anyBranchTaken;
-            bool current = parent && (!prevAny);
-            top.currentTaking = current;
-            top.anyBranchTaken = true;
+
+            if (top.seenElse) {
+                errorReport({PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol, "duplicate #else"});
+                top.currentTaking = false;
+                emitBlankLine();
+                return;
+            }
+
+            top.seenElse = true;
+            top.currentTaking = top.parentTaking && !top.branchTaken;
+            top.branchTaken = true;
+
             emitBlankLine();
             return;
         }
 
-        if (kw == QStringLiteral("endif")) {
+        // ==================== #endif ====================
+        if (kw == "endif") {
             if (condStack.isEmpty()) {
-                PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               QStringLiteral("#endif without matching #if")};
-                errorReport(e);
+                errorReport({PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
+                             Severity::Error, m_currentSource, dStartLine,
+                             dStartCol, "#endif without matching #if"});
                 emitBlankLine();
                 return;
             }
+
             condStack.removeLast();
             emitBlankLine();
             return;
         }
 
-        // unknown directive: remove line (preserve blank)
-        PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
-                       Severity::Warning,
-                       m_currentSource,
-                       dStartLine,
-                       dStartCol,
-                       QStringLiteral("Unknown directive #") + kw};
-        errorReport(e);
+        // ==================== unknown ====================
+        errorReport({PreprocErrorCode::ERR_MARCO_ERROR, Severity::Warning,
+                     m_currentSource, dStartLine, dStartCol,
+                     QStringLiteral("Unknown directive #") + kw});
+
         emitBlankLine();
-    }; // end handleDirective
+    }; // end handle directive
 
     m_currentSource = sourceName;
 
@@ -736,7 +613,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             if (m_runtimeMacros.contains(tokenText)) {
                 QStringList visited;
                 expandMacroInCode(tokenText, sourceName, srcLine, srcCol,
-                                  visited);
+                                  visited, appendReplacementFromOrigin);
                 for (int k = 0; k < tlen; ++k) {
                     if (tokStart[k] == '\n') {
                         ++srcLine;
@@ -815,30 +692,205 @@ QString AsPreprocesser::resolveIncludeFile(const QString &filename,
 
 QString AsPreprocesser::expandExpressionForIf(const QString &expr,
                                               const QString &file, qint64 line,
-                                              qint64 col) {
-    QString ret;
+                                              qint64 col, bool *ok) {
+    if (ok)
+        *ok = true;
 
-    qint64 pos = 0;
-    auto codes = expr.toUtf8();
-    auto total = codes.length();
-    while (pos < total) {
-        asUINT len = 0;
-        auto t =
-            engine->ParseToken(codes.data() + pos, codes.size() - pos, &len);
-        auto word = QString::fromUtf8(codes.sliced(pos, len));
-        if (t == asTC_IDENTIFIER) {
-            if (m_runtimeMacros.contains(word)) {
-                // get macro value (host provided)
-                auto val = m_runtimeMacros.value(word);
-                ret.append(val);
-            }
-        } else {
-            ret.append(word);
-        }
-        pos += len;
+    QString ident;
+    if (isBareIdentifierExpr(expr, &ident)) {
+        return m_runtimeMacros.contains(ident) ? QStringLiteral("1")
+                                               : QStringLiteral("0");
     }
 
-    return ret;
+    QByteArray ba = expr.toUtf8();
+    unsigned int offset = 0;
+    QString out;
+
+    while (offset < (unsigned int)ba.size()) {
+        unsigned int tl = 0;
+        int cls = asTC_UNKNOWN;
+        try {
+            cls = engine->ParseToken(ba.constData() + offset,
+                                     ba.size() - offset, &tl);
+        } catch (...) {
+            cls = asTC_UNKNOWN;
+            tl = 0;
+        }
+
+        if (tl == 0)
+            break;
+
+        if (cls == asTC_WHITESPACE || cls == asTC_COMMENT) {
+            out += QString::fromUtf8(ba.constData() + offset, tl);
+            offset += tl;
+            continue;
+        }
+
+        if (cls == asTC_IDENTIFIER) {
+            QString tok = QString::fromUtf8(ba.constData() + offset, tl);
+
+            if (m_builtinMacros.contains(tok)) {
+                SourcePos sp{file, line, col};
+                out += m_builtinMacros[tok](sp);
+            } else if (m_runtimeMacros.contains(tok)) {
+                QString val = m_runtimeMacros.value(tok);
+
+                if (val.isEmpty()) {
+                    if (ok)
+                        *ok = false;
+
+                    errorReport(
+                        {PreprocErrorCode::ERR_IF_PARSE, Severity::Error,
+                         m_currentSource, line, col,
+                         QStringLiteral("Empty macro '%1' cannot be used in "
+                                        "#if/#elif expression with operators.")
+                             .arg(tok)});
+                    return QString();
+                }
+
+                out += val;
+            } else {
+                out += QStringLiteral("0");
+            }
+
+            offset += tl;
+            continue;
+        }
+
+        out += QString::fromUtf8(ba.constData() + offset, tl);
+        offset += tl;
+    }
+
+    return out;
+}
+
+bool AsPreprocesser::isBareIdentifierExpr(const QString &expr,
+                                          QString *outIdent) {
+    QByteArray ba = expr.toUtf8();
+    unsigned int offset = 0;
+    QString ident;
+    bool seenIdent = false;
+
+    while (offset < (unsigned int)ba.size()) {
+        unsigned int tl = 0;
+        int cls = asTC_UNKNOWN;
+        try {
+            cls = engine->ParseToken(ba.constData() + offset,
+                                     ba.size() - offset, &tl);
+        } catch (...) {
+            cls = asTC_UNKNOWN;
+            tl = 0;
+        }
+
+        if (tl == 0)
+            break;
+
+        if (cls == asTC_WHITESPACE || cls == asTC_COMMENT) {
+            offset += tl;
+            continue;
+        }
+
+        if (cls == asTC_IDENTIFIER) {
+            if (seenIdent)
+                return false;
+            seenIdent = true;
+            ident = QString::fromUtf8(ba.constData() + offset, tl);
+            offset += tl;
+            continue;
+        }
+
+        return false;
+    }
+
+    if (!seenIdent)
+        return false;
+
+    if (outIdent)
+        *outIdent = ident;
+    return true;
+}
+
+void AsPreprocesser::expandMacroInCode(
+    const QString &name, const QString &expFile, int expLine, int expCol,
+    QStringList &visited,
+    std::function<void(const QString &, const QString &, int, int)>
+        appendReplacementFromOrigin) {
+    if (!m_runtimeMacros.contains(name))
+        return;
+    if (visited.count(name)) {
+        // recursion -> output the token itself mapped to source file
+        // (if we have def pos use it)
+        appendReplacementFromOrigin(name, expFile, expLine, expCol);
+        return;
+    }
+    visited.append(name);
+    QString val = m_runtimeMacros.value(name);
+    SourcePos defPos = SourcePos{{}, 1, 1};
+    // empty value => treat as "no-value" macro: remove identifier (i.e.
+    // emit nothing)
+    if (val.isEmpty()) {
+        visited.removeOne(name);
+        return;
+    }
+    // walk the value and expand builtins and nested macros
+    qint64 p = 0;
+    while (p < val.size()) {
+        QChar c = val[p];
+        if (c.isSpace()) {
+            appendReplacementFromOrigin(QString(c), defPos.file, defPos.line,
+                                        defPos.column);
+            ++p;
+            continue;
+        }
+        if (c == '"' || c == '\'') {
+            QChar q = c;
+            QString lit;
+            lit.append(c);
+            ++p;
+            while (p < val.size()) {
+                lit.append(val[p]);
+                if (val[p] == '\\') {
+                    if (p + 1 < val.size()) {
+                        lit.append(val[p + 1]);
+                        p += 2;
+                        continue;
+                    }
+                }
+                if (val[p] == q) {
+                    ++p;
+                    break;
+                }
+                ++p;
+            }
+            appendReplacementFromOrigin(lit, defPos.file, defPos.line,
+                                        defPos.column);
+            continue;
+        }
+        if (c.isLetter() || c == '_' || c.unicode() > 127) {
+            int st = p;
+            ++p;
+            while (p < val.size() && (val[p].isLetterOrNumber() ||
+                                      val[p] == '_' || val[p].unicode() > 127))
+                ++p;
+            QString id = val.mid(st, p - st);
+            if (m_builtinMacros.contains(id)) {
+                SourcePos sp{expFile, expLine, expCol};
+                QString rep = m_builtinMacros[id](sp);
+                appendReplacementFromOrigin(rep, expFile, expLine, expCol);
+            } else if (m_runtimeMacros.contains(id)) {
+                expandMacroInCode(id, expFile, expLine, expCol, visited,
+                                  appendReplacementFromOrigin);
+            } else {
+                appendReplacementFromOrigin(id, defPos.file, defPos.line,
+                                            defPos.column);
+            }
+            continue;
+        }
+        appendReplacementFromOrigin(QString(c), defPos.file, defPos.line,
+                                    defPos.column);
+        ++p;
+    }
+    visited.removeOne(name);
 }
 
 std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
@@ -847,7 +899,7 @@ std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
     // check grammar
     auto ccode = expr.toUtf8();
     antlr4::ANTLRInputStream input(ccode.constData(), ccode.length());
-    AngelscriptConsoleLexer lexer(&input);
+    AngelscriptExprParserLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
 
     // reuse the listener, ha!
@@ -862,24 +914,29 @@ std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
         errorReport(e);
     });
 
-    AngelscriptConsoleParser parser(&tokens);
+    AngelscriptExprParserParser parser(&tokens);
     parser.removeErrorListeners();
     parser.addErrorListener(&lis);
-    parser.setBuildParseTree(false);
-    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 
-    // TODO use AngelscriptConsoleParser to calculate value
-    AngelScriptConsoleVisitor visitor(tokens);
+    AsExprEvaluator visitor;
     try {
-        visitor.visit(parser.logicalOrExpression());
-    } catch (...) {
-        return false;
-    }
-
-    // eval
-    auto r = ScriptMachine::instance().evaluateDefine(expr);
-    if (r.isValid()) {
-        return r.toBool();
+        return visitor.eval(parser.expr());
+    } catch (const AsExprException &ex) {
+        PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
+                       Severity::Error,
+                       m_currentSource,
+                       line + ex.line - 1,
+                       col + ex.column,
+                       QString::fromUtf8(ex.what())};
+        errorReport(e);
+    } catch (const std::exception &ex) {
+        PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
+                       Severity::Error,
+                       m_currentSource,
+                       line,
+                       col,
+                       QString::fromUtf8(ex.what())};
+        errorReport(e);
     }
 
     return {};

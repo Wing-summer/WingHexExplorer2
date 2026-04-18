@@ -32,6 +32,8 @@ int Toast::LENGTH_SHORT = 1500;
 static const int TIMER_INTERVAL = 50;
 static const int PADDING = 10;
 
+static Toast *_toast = nullptr;
+
 Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
              QWidget *parent)
     : QDialog(parent), m_strContent(strContent),
@@ -42,24 +44,51 @@ Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
     init();
 }
 
+bool Toast::eventFilter(QObject *watched, QEvent *event) {
+    auto type = event->type();
+    if (watched == qApp) {
+        if (type == QEvent::ApplicationDeactivate) {
+            this->deleteLater();
+        }
+    } else {
+        if (type == QEvent::Resize || type == QEvent::Move) {
+            setToastPos(TOAST_POS::BOTTOM);
+        } else if (type == QEvent::Hide || type == QEvent::HideToParent) {
+            this->deleteLater();
+        } else if (type == QEvent::WindowStateChange ||
+                   type == QEvent::ActivationChange) {
+            auto w = qobject_cast<QWidget *>(watched);
+            if (w) {
+                if (w->windowState() & Qt::WindowState::WindowMinimized) {
+                    this->deleteLater();
+                }
+            }
+        }
+    }
+    return QDialog::eventFilter(watched, event);
+}
+
 void Toast::toast(QWidget *parent, const QPixmap &icon,
                   const QString &strContent, int nToastInterval) {
     Q_ASSERT(parent);
-    static Toast *toast = nullptr;
 
-    if (toast) {
-        toast->hide();
-        toast->destroy();
-        toast->deleteLater();
+    if (_toast) {
+        _toast->hide();
+        _toast->destroy();
+        _toast->deleteLater();
     }
 
     static QRegularExpression regex(QStringLiteral("\r\n|\n"));
     auto str = strContent;
     str.remove(regex);
-    toast = new Toast(str, icon, nToastInterval, parent);
-    connect(toast, &Toast::destroyed, toast, [&] { toast = nullptr; });
-
-    toast->show();
+    _toast = new Toast(str, icon, nToastInterval, parent);
+    connect(_toast, &Toast::destroyed, _toast, [&] {
+        _toast->parent()->removeEventFilter(_toast);
+        _toast = nullptr;
+    });
+    parent->installEventFilter(_toast);
+    qApp->installEventFilter(_toast);
+    _toast->show();
 }
 
 Toast::~Toast() {}
@@ -75,12 +104,13 @@ void Toast::init() {
     setWindowFlags(Qt::ToolTip);
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_TransparentForMouseEvents);
     setToastPos(TOAST_POS::BOTTOM);
     auto w = _parent->width();
     constexpr auto PADDING = 100;
     setMaximumWidth(qMax(PADDING, w - PADDING));
-    setWindowOpacity(1.0);
+    setWindowOpacity(1);
+    _oe = new QGraphicsOpacityEffect(this);
+    _oe->setOpacity(1);
 }
 
 void Toast::setToastPos(TOAST_POS pos) {
@@ -174,6 +204,9 @@ void Toast::showEvent(QShowEvent *) {
 void Toast::timerEvent(QTimerEvent *e) {
     constexpr int FADE_STEP = 10;
     constexpr int FADE_MS = 400;
+    if (_pauseTimer) {
+        return;
+    }
 
     if (m_nStatus == 0x02) {
         if (m_nCurrentStayTime < m_nToastInterval) {
@@ -195,7 +228,7 @@ void Toast::timerEvent(QTimerEvent *e) {
             m_nCurrentWindowOpacity -= m_nFadeStep;
             if (m_nCurrentWindowOpacity < 0)
                 m_nCurrentWindowOpacity = 0;
-            setWindowOpacity(qMax(0.0, m_nCurrentWindowOpacity / 100.0));
+            _oe->setOpacity(qMax(0.0, m_nCurrentWindowOpacity / 100.0));
             update();
             return;
         }
@@ -208,6 +241,10 @@ void Toast::timerEvent(QTimerEvent *e) {
         this->deleteLater();
     }
 }
+
+void Toast::enterEvent(QEnterEvent *) { _pauseTimer = true; }
+
+void Toast::leaveEvent(QEvent *) { _pauseTimer = false; }
 
 QColor Toast::textColor() const { return m_textColor; }
 

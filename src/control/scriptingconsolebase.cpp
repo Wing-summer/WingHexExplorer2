@@ -34,12 +34,15 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     _s.setDevice(this->device());
 }
 
-void ScriptingConsoleBase::stdOutLine(const QString &str,
+void ScriptingConsoleBase::stdOutLine(QString str,
                                       const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
 
+    if (str.endsWith('\n')) {
+        str.chop(1);
+    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -52,12 +55,15 @@ void ScriptingConsoleBase::stdOutLine(const QString &str,
     }
 }
 
-void ScriptingConsoleBase::stdErrLine(const QString &str,
+void ScriptingConsoleBase::stdErrLine(QString str,
                                       const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
 
+    if (str.endsWith('\n')) {
+        str.chop(1);
+    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -70,12 +76,15 @@ void ScriptingConsoleBase::stdErrLine(const QString &str,
     }
 }
 
-void ScriptingConsoleBase::stdWarnLine(const QString &str,
+void ScriptingConsoleBase::stdWarnLine(QString str,
                                        const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
 
+    if (str.endsWith('\n')) {
+        str.chop(1);
+    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -97,6 +106,7 @@ void ScriptingConsoleBase::initOutput() {
     newLine();
     stdWarnLine(tr(">>>> Powered by AngelScript <<<<"));
     newLine();
+    newLine();
     appendCommandPrompt();
 }
 
@@ -104,8 +114,12 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
 
     auto doc = this->document();
-    if (!doc->isEmpty()) {
-        newLine();
+    auto blk = doc->lastBlock();
+    auto h = consoleHighligher();
+    if (blk.isValid()) {
+        if (!h->isDefaultBlock(blk)) {
+            newLine();
+        }
     }
 
     if (storeOnly) {
@@ -116,8 +130,7 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
 
     _lastCommandPrompt = storeOnly;
     auto id = write(commandPrompt);
-    auto blk = doc->findBlockByNumber(id);
-    auto h = consoleHighligher();
+    blk = doc->findBlockByNumber(id);
     h->setBlockAsCodeWithPrefix(blk, commandPrompt.length());
 }
 

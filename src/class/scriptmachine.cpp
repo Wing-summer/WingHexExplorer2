@@ -743,8 +743,6 @@ bool ScriptMachine::executeScript(
         return false;
     }
 
-    beginEvaluateDefine();
-
     asPWORD isDbg = 0;
     if (mode == Scripting) {
         if (isInDebug) {
@@ -798,7 +796,6 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        endEvaluateDefine();
         onFinished(true);
         return false;
     }
@@ -812,7 +809,6 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        endEvaluateDefine();
         onFinished(true);
         return false;
     }
@@ -833,7 +829,6 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        endEvaluateDefine();
         onFinished(true);
         return false;
     }
@@ -852,8 +847,6 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Info;
         outputMessage(info);
     }
-
-    endEvaluateDefine();
 
     // Set up a context to execute the script
     // The context manager will request the context from the
@@ -982,147 +975,6 @@ bool ScriptMachine::executeScript(
         });
     runner->start();
     return true;
-}
-
-void ScriptMachine::beginEvaluateDefine() {
-    ASSERT(_eMod == nullptr);
-    if (_eMod == nullptr) {
-        _eMod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
-        _eMod->SetAccessMask(0x2);
-    }
-}
-
-QVariant ScriptMachine::evaluateDefine(const QString &code) {
-    ASSERT(_eMod);
-    if (!_eMod) {
-        return {};
-    }
-
-    asIScriptFunction *func = nullptr;
-
-    auto ccode = code;
-    ccode.prepend("any f(){any ret;ret.store(").append(");return ret;}");
-    // start to compile
-
-    auto cr = _eMod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
-    if (cr < 0) {
-        return {};
-    }
-
-    // Set up a context to execute the script
-    // The context manager will request the context from the
-    // pool, which will automatically attach the debugger
-    asIScriptContext *ctx = _engine->RequestContext();
-    if (!ctx)
-        return {};
-
-    int r = ctx->Prepare(func);
-    if (r < 0) {
-        _engine->ReturnContext(ctx);
-        return {};
-    }
-
-    ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
-                         AppManager::instance()->currentMSecsSinceEpoch())),
-                     AsUserDataType::UserData_Timer);
-
-    asPWORD isDbg = 0;
-    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
-    _eMod->SetUserData(reinterpret_cast<void *>(isDbg),
-                       AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(0, AsUserDataType::UserData_ContextMode);
-
-    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
-                              asCALL_THISCALL);
-
-    // Execute the script until completion
-    // The script may create co-routines. These will automatically
-    // be managed by the context manager
-    while (ctx->Execute() == asEXECUTION_ACTIVE) {
-    }
-
-    QVariant result;
-    // Check if the main script finished normally
-    r = ctx->GetState();
-    if (r == asEXECUTION_FINISHED) {
-        auto ret = reinterpret_cast<CScriptAny *>(ctx->GetReturnObject());
-        int typeID = ret->GetTypeId();
-        switch (typeID) {
-        case asTYPEID_BOOL: {
-            bool r;
-            ret->Retrieve(&r, asTYPEID_BOOL);
-            result = r;
-        } break;
-        case asTYPEID_INT8: {
-            qint8 r;
-            ret->Retrieve(&r, asTYPEID_INT8);
-            result = r;
-        } break;
-        case asTYPEID_INT16: {
-            qint16 r;
-            ret->Retrieve(&r, asTYPEID_INT16);
-            result = r;
-        } break;
-        case asTYPEID_INT32: {
-            qint32 r;
-            ret->Retrieve(&r, asTYPEID_INT32);
-            result = r;
-        } break;
-        case asTYPEID_INT64: {
-            qint64 r;
-            ret->Retrieve(&r, asTYPEID_INT64);
-            result = r;
-        } break;
-        case asTYPEID_UINT8: {
-            quint8 r;
-            ret->Retrieve(&r, asTYPEID_UINT8);
-            result = r;
-        } break;
-        case asTYPEID_UINT16: {
-            quint16 r;
-            ret->Retrieve(&r, asTYPEID_UINT16);
-            result = r;
-        } break;
-        case asTYPEID_UINT32: {
-            quint32 r;
-            ret->Retrieve(&r, asTYPEID_UINT32);
-            result = r;
-        } break;
-        case asTYPEID_UINT64: {
-            quint64 r;
-            ret->Retrieve(&r, asTYPEID_UINT64);
-            result = r;
-        } break;
-        case asTYPEID_FLOAT: {
-            float r;
-            ret->Retrieve(&r, asTYPEID_FLOAT);
-            result = r;
-        } break;
-        case asTYPEID_DOUBLE: {
-            double r;
-            ret->Retrieve(r);
-            result = r;
-        } break;
-        default:
-            break;
-        }
-    }
-
-    func->Release();
-
-    // Return the context after retrieving the return value
-    _engine->ReturnContext(ctx);
-    _engine->GarbageCollect();
-
-    return result;
-}
-
-void ScriptMachine::endEvaluateDefine() {
-    if (_eMod) {
-        _eMod->Discard();
-        _eMod = nullptr;
-    }
 }
 
 void ScriptMachine::abortDbgScript() {
@@ -1289,8 +1141,10 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
 }
 
 void ScriptMachine::lineCallback(asIScriptContext *ctx, void *) {
-    // return the control
-    ctx->Suspend();
+    if (ctx->GetUserData(AsUserDataType::UserData_NeedYeild)) {
+        // return the control
+        ctx->Suspend();
+    }
 }
 
 void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
@@ -1309,6 +1163,12 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
         if (ctx->Unprepare() < 0) {
             ctx->Release();
             return;
+        }
+
+        // reset userdata
+        for (int i = AsUserDataType::UserData_CopyAttr_Begin;
+             i < AsUserDataType::UserData_CopyAttr_End; ++i) {
+            ctx->SetUserData(0, i);
         }
 
         auto p = reinterpret_cast<ScriptMachine *>(param);

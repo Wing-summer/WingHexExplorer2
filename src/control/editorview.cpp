@@ -435,8 +435,6 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
 
-    auto tab = this->tabWidget();
-    tab->setToolTip(fName);
     setFileNameUrl(QUrl::fromLocalFile(fName));
     if (generateCache) {
         generateIconBaseCache(Utilities::getIconFromFile(style(), fName));
@@ -517,8 +515,6 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
 
-    auto tab = this->tabWidget();
-    tab->setToolTip(fileName);
     setFileNameUrl(fileName);
     if (generateCache) {
         generateIconBaseCache(dev->supportedFileIcon());
@@ -2931,8 +2927,8 @@ EditorView *EditorView::clone() {
     ev->setWindowTitle(this->windowTitle() + QStringLiteral(" : ") +
                        QString::number(cloneIndex + 1));
 
-    auto tab = ev->tabWidget();
     if (!m_workSpaceName.isEmpty()) {
+        auto tab = ev->tabWidget();
         tab->setStyleSheet(
             QStringLiteral("QLabel {text-decoration: underline;}"));
     }
@@ -3097,7 +3093,4 @@ QString EditorView::infoFileName() const {
     return fileName;
 }
 
-QString EditorView::infoTooltip() const {
-    auto tab = this->tabWidget();
-    return tab->toolTip();
-}
+QString EditorView::infoTooltip() const { return this->tabWidget()->toolTip(); }

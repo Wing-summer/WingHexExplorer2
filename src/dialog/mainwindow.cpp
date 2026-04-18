@@ -250,13 +250,16 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     ret = openExtFile(ext, file, &editor);
                 }
 
-                if (ret == ErrFile::AlreadyOpened && editor != m_curEditor) {
-                    if (editor) {
+                if (ret == ErrFile::AlreadyOpened) {
+                    if (editor && editor != m_curEditor) {
                         editor->raise();
                         editor->setFocus();
                     }
                 } else {
-                    reportErrFileError(ret, {}, {}, {});
+                    if (reportErrFileError(ret, {}, {}, {})) {
+                        editor->setTabToolTip(
+                            RecentFileManager::getDisplayTooltip(rinfo, false));
+                    }
                 }
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
@@ -329,6 +332,15 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 m_scriptConsole->setMode(QConsoleWidget::Input);
 
                 auto &lsp = AngelLsp::instance();
+                // apply defines
+                for (auto &m : plg.scriptMarcos()) {
+                    lsp.defineMacroWord(m);
+                }
+                for (auto &&m :
+                     AsPreprocesser::defaultRuntimeMarcos().asKeyValueRange()) {
+                    lsp.defineMacroWord(m.first, m.second);
+                }
+                // then start the server
                 if (lsp.start()) {
                     auto ret = lsp.initializeSync();
                     if (!ret.isNull()) {
@@ -2060,11 +2072,12 @@ void MainWindow::on_openfile() {
             } else if (res == ErrFile::Permission) {
                 WingMessageBox::critical(this, tr("Error"),
                                          tr("FilePermission"));
-            } else if (res == ErrFile::AlreadyOpened && editor != m_curEditor) {
-                if (editor) {
+            } else if (res == ErrFile::AlreadyOpened) {
+                if (editor && editor != m_curEditor) {
                     editor->raise();
                     editor->setFocus();
                 }
+                addRecentFile(nullptr, filename);
             } else {
                 auto e = QMetaEnum::fromType<ErrFile>();
                 WingMessageBox::critical(
@@ -2072,10 +2085,9 @@ void MainWindow::on_openfile() {
                     tr("UnkownError") + QStringLiteral(" - ") +
                         QString::fromLatin1(e.valueToKey(int(res))));
             }
-            return;
+        } else {
+            addRecentFile(editor, filename);
         }
-
-        addRecentFile(filename);
     }
 }
 
@@ -2092,14 +2104,15 @@ void MainWindow::on_openworkspace() {
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
-    if (res == ErrFile::AlreadyOpened && editor != m_curEditor) {
-        if (editor) {
+    if (res == ErrFile::AlreadyOpened) {
+        if (editor && editor != m_curEditor) {
             editor->raise();
             editor->setFocus();
         }
+        addRecentFile(nullptr, filename, true);
     } else {
         if (reportErrFileError(res, {}, {}, {})) {
-            addRecentFile(filename, true);
+            addRecentFile(editor, filename, true);
         }
     }
     showStatus({});
@@ -2156,7 +2169,7 @@ void MainWindow::on_convpro() {
                                tr("ConvWorkSpaceSuccess"),
                                tr("ConvWorkSpaceFailed"))) {
             // add to history
-            addRecentFile(workspace, true);
+            addRecentFile(editor, workspace, true);
         }
     }
 }
@@ -3608,7 +3621,6 @@ void MainWindow::openFiles(const QStringList &files) {
         if (AppManager::instance()->openFile(file, true, true, &isWs)) {
             errof.append(file);
         } else {
-            addRecentFile(file, isWs);
             m_lastusedpath = Utilities::getAbsoluteDirPath(file);
         }
     }
@@ -3843,7 +3855,9 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
 
 void MainWindow::openScriptFile(const QString &filename, SplashDialog *splash) {
     createScriptDialog(splash);
-    m_scriptDialog->openFile(filename);
+    if (auto e = m_scriptDialog->openFile(filename)) {
+        m_scriptDialog->addRecentFile(e, filename);
+    }
     QTimer::singleShot(100, this, [this] { m_scriptDialog->raise(); });
 }
 
@@ -4331,10 +4345,15 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
     return err == WingHex::Success;
 }
 
-void MainWindow::addRecentFile(const QString &fileName, bool isWorkspace) {
+void MainWindow::addRecentFile(EditorView *editor, const QString &fileName,
+                               bool isWorkspace) {
     RecentFileManager::RecentInfo info;
     info.url = QUrl::fromLocalFile(fileName);
     info.isWorkSpace = isWorkspace;
+    if (editor) {
+        editor->setTabToolTip(
+            RecentFileManager::getDisplayTooltip(info, false));
+    }
     m_recentmanager->addRecentFile(info);
 }
 
@@ -4629,7 +4648,7 @@ bool MainWindow::__save(EditorView *editor) {
     if (reportErrFileError(res, NAMEICONRES(QStringLiteral("save")),
                            tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
         if (changedTo) {
-            addRecentFile(ws, true);
+            addRecentFile(editor, ws, true);
         }
         return true;
     }
@@ -4657,9 +4676,9 @@ bool MainWindow::__saveas(EditorView *editor) {
     if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
                            tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
         if (ws.isEmpty()) {
-            addRecentFile(filename, false);
+            addRecentFile(editor, filename, false);
         } else {
-            addRecentFile(ws, true);
+            addRecentFile(editor, ws, true);
         }
         return true;
     }

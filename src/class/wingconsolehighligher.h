@@ -45,6 +45,8 @@ public:
     void setBlockEditorMetaInfo(QTextBlock &block,
                                 const WingEditorMetaInfo &info);
 
+    bool isDefaultBlock(const QTextBlock &block) const;
+
     WingEditorMetaInfo blockEditorMetaInfo(const QTextBlock &block);
     int blockPrefixLength(const QTextBlock &block);
 

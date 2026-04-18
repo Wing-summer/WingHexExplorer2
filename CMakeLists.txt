@@ -17,7 +17,7 @@ else()
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.5")
+set(PROJECT_VERSION "2.3.6")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
@@ -158,8 +158,18 @@ set(SNIPPET_GRAMMAR
     src/grammar/Snippet/SnippetBaseVisitor.h
     src/grammar/Snippet/SnippetBaseVisitor.cpp)
 
+set(ANGELSCRIPTEXP_SRC
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.h
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.h
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.h
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.h
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.cpp)
+
 set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR}
-                   ${SNIPPET_GRAMMAR})
+                   ${SNIPPET_GRAMMAR} ${ANGELSCRIPTEXP_SRC})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -350,6 +360,8 @@ set(CLASS_SRC
     src/class/asbuilder.cpp
     src/class/aspreprocesser.h
     src/class/aspreprocesser.cpp
+    src/class/asexprevaluator.h
+    src/class/asexprevaluator.cpp
     src/class/layoutmanager.h
     src/class/layoutmanager.cpp
     src/class/cryptographichash.h

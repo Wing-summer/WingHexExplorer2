@@ -73,9 +73,9 @@ void angelscriptconsoleparserParserInitialize() {
       "'null'", "'true'", "'('", "')'", "'['", "']'", "'{'", "'}'", "'+'", 
       "'-'", "'*'", "'/'", "'%'", "'^'", "'&'", "'|'", "'~'", "'!'", "'='", 
       "'<'", "'>'", "'+='", "'-='", "'*='", "'/='", "'%='", "'^='", "'&='", 
-      "'|='", "'<<='", "'>>='", "'=='", "'!='", "'<='", "'>='", "'&&'", 
-      "'||'", "'++'", "'--'", "','", "'\\u003F'", "':'", "'::'", "';'", 
-      "'.'"
+      "'|='", "'<<='", "'>>='", "'>>>='", "'=='", "'!='", "'<='", "'>='", 
+      "'&&'", "'||'", "'++'", "'--'", "','", "'\\u003F'", "':'", "'::'", 
+      "';'", "'.'"
     },
     std::vector<std::string>{
       "", "IntegerLiteral", "CharacterLiteral", "FloatingLiteral", "StringLiteral", 
@@ -84,17 +84,17 @@ void angelscriptconsoleparserParserInitialize() {
       "LeftBrace", "RightBrace", "Plus", "Minus", "Star", "Div", "Mod", 
       "Xor", "And", "Or", "Tilde", "Not", "Assign", "Less", "Greater", "PlusAssign", 
       "MinusAssign", "StarAssign", "DivAssign", "ModAssign", "XorAssign", 
-      "AndAssign", "OrAssign", "LeftShiftAssign", "RightShiftAssign", "Equal", 
-      "NotEqual", "LessEqual", "GreaterEqual", "AndAnd", "OrOr", "PlusPlus", 
-      "MinusMinus", "Comma", "Question", "Colon", "Doublecolon", "Semi", 
-      "Dot", "Identifier", "DecimalLiteral", "OctalLiteral", "HexadecimalLiteral", 
+      "AndAssign", "OrAssign", "LeftShiftAssign", "RightShiftAssign", "ArithRightShiftAssign", 
+      "Equal", "NotEqual", "LessEqual", "GreaterEqual", "AndAnd", "OrOr", 
+      "PlusPlus", "MinusMinus", "Comma", "Question", "Colon", "Doublecolon", 
+      "Semi", "Dot", "Identifier", "DecimalLiteral", "OctalLiteral", "HexadecimalLiteral", 
       "BinaryLiteral", "Integersuffix", "UserDefinedIntegerLiteral", "UserDefinedFloatingLiteral", 
       "UserDefinedStringLiteral", "UserDefinedCharacterLiteral", "Whitespace", 
       "Newline", "BlockComment", "LineComment"
     }
   );
   static const int32_t serializedATNSegment[] = {
-  	4,1,68,511,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+  	4,1,69,514,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
   	7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,
   	14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,
   	21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,2,27,7,27,2,28,7,
@@ -124,52 +124,52 @@ void angelscriptconsoleparserParserInitialize() {
   	1,32,1,32,1,32,1,32,1,32,1,32,3,32,357,8,32,1,33,1,33,1,33,5,33,362,8,
   	33,10,33,12,33,365,9,33,1,34,1,34,1,34,5,34,370,8,34,10,34,12,34,373,
   	9,34,1,35,1,35,1,35,1,35,5,35,379,8,35,10,35,12,35,382,9,35,1,36,1,36,
-  	1,36,1,36,3,36,388,8,36,1,37,1,37,1,37,5,37,393,8,37,10,37,12,37,396,
-  	9,37,1,38,1,38,1,38,5,38,401,8,38,10,38,12,38,404,9,38,1,39,1,39,1,39,
-  	5,39,409,8,39,10,39,12,39,412,9,39,1,40,1,40,1,40,5,40,417,8,40,10,40,
-  	12,40,420,9,40,1,41,1,41,1,41,5,41,425,8,41,10,41,12,41,428,9,41,1,42,
-  	1,42,1,42,5,42,433,8,42,10,42,12,42,436,9,42,1,43,1,43,1,43,5,43,441,
-  	8,43,10,43,12,43,444,9,43,1,44,1,44,1,44,1,44,1,44,1,44,3,44,452,8,44,
-  	1,45,1,45,1,45,5,45,457,8,45,10,45,12,45,460,9,45,1,46,1,46,1,46,1,46,
-  	1,46,3,46,467,8,46,1,47,1,47,1,48,1,48,1,48,3,48,474,8,48,1,49,1,49,3,
-  	49,478,8,49,1,50,1,50,1,50,5,50,483,8,50,10,50,12,50,486,9,50,1,50,3,
-  	50,489,8,50,1,51,1,51,1,51,3,51,494,8,51,3,51,496,8,51,1,51,1,51,1,52,
-  	1,52,1,52,1,52,1,52,1,52,1,52,3,52,507,8,52,1,53,1,53,1,53,0,2,40,58,
-  	54,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,
-  	48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,
-  	94,96,98,100,102,104,106,0,10,1,0,47,48,2,0,18,20,24,27,1,0,20,22,1,0,
-  	18,19,2,0,29,30,43,44,1,0,41,42,2,0,28,28,31,40,2,0,14,14,16,16,2,0,15,
-  	15,17,17,2,0,9,9,11,11,527,0,111,1,0,0,0,2,116,1,0,0,0,4,123,1,0,0,0,
-  	6,126,1,0,0,0,8,130,1,0,0,0,10,132,1,0,0,0,12,134,1,0,0,0,14,148,1,0,
-  	0,0,16,152,1,0,0,0,18,154,1,0,0,0,20,159,1,0,0,0,22,167,1,0,0,0,24,169,
-  	1,0,0,0,26,177,1,0,0,0,28,181,1,0,0,0,30,188,1,0,0,0,32,200,1,0,0,0,34,
-  	204,1,0,0,0,36,206,1,0,0,0,38,208,1,0,0,0,40,211,1,0,0,0,42,227,1,0,0,
-  	0,44,229,1,0,0,0,46,231,1,0,0,0,48,238,1,0,0,0,50,241,1,0,0,0,52,262,
-  	1,0,0,0,54,265,1,0,0,0,56,269,1,0,0,0,58,303,1,0,0,0,60,343,1,0,0,0,62,
-  	345,1,0,0,0,64,356,1,0,0,0,66,358,1,0,0,0,68,366,1,0,0,0,70,374,1,0,0,
-  	0,72,387,1,0,0,0,74,389,1,0,0,0,76,397,1,0,0,0,78,405,1,0,0,0,80,413,
-  	1,0,0,0,82,421,1,0,0,0,84,429,1,0,0,0,86,437,1,0,0,0,88,445,1,0,0,0,90,
-  	453,1,0,0,0,92,466,1,0,0,0,94,468,1,0,0,0,96,473,1,0,0,0,98,477,1,0,0,
-  	0,100,479,1,0,0,0,102,490,1,0,0,0,104,506,1,0,0,0,106,508,1,0,0,0,108,
-  	110,3,4,2,0,109,108,1,0,0,0,110,113,1,0,0,0,111,109,1,0,0,0,111,112,1,
-  	0,0,0,112,114,1,0,0,0,113,111,1,0,0,0,114,115,5,0,0,1,115,1,1,0,0,0,116,
-  	117,5,53,0,0,117,3,1,0,0,0,118,119,3,6,3,0,119,120,3,24,12,0,120,121,
-  	5,53,0,0,121,124,1,0,0,0,122,124,3,2,1,0,123,118,1,0,0,0,123,122,1,0,
-  	0,0,124,5,1,0,0,0,125,127,3,8,4,0,126,125,1,0,0,0,127,128,1,0,0,0,128,
-  	126,1,0,0,0,128,129,1,0,0,0,129,7,1,0,0,0,130,131,3,10,5,0,131,9,1,0,
-  	0,0,132,133,3,14,7,0,133,11,1,0,0,0,134,136,5,14,0,0,135,137,3,22,11,
-  	0,136,135,1,0,0,0,136,137,1,0,0,0,137,138,1,0,0,0,138,139,5,15,0,0,139,
-  	13,1,0,0,0,140,144,3,16,8,0,141,143,3,12,6,0,142,141,1,0,0,0,143,146,
-  	1,0,0,0,144,142,1,0,0,0,144,145,1,0,0,0,145,149,1,0,0,0,146,144,1,0,0,
-  	0,147,149,5,8,0,0,148,140,1,0,0,0,148,147,1,0,0,0,149,15,1,0,0,0,150,
-  	153,5,55,0,0,151,153,3,18,9,0,152,150,1,0,0,0,152,151,1,0,0,0,153,17,
-  	1,0,0,0,154,155,5,55,0,0,155,156,5,29,0,0,156,157,3,20,10,0,157,158,5,
-  	30,0,0,158,19,1,0,0,0,159,164,3,16,8,0,160,161,5,49,0,0,161,163,3,16,
+  	1,36,1,36,1,36,1,36,1,36,3,36,391,8,36,1,37,1,37,1,37,5,37,396,8,37,10,
+  	37,12,37,399,9,37,1,38,1,38,1,38,5,38,404,8,38,10,38,12,38,407,9,38,1,
+  	39,1,39,1,39,5,39,412,8,39,10,39,12,39,415,9,39,1,40,1,40,1,40,5,40,420,
+  	8,40,10,40,12,40,423,9,40,1,41,1,41,1,41,5,41,428,8,41,10,41,12,41,431,
+  	9,41,1,42,1,42,1,42,5,42,436,8,42,10,42,12,42,439,9,42,1,43,1,43,1,43,
+  	5,43,444,8,43,10,43,12,43,447,9,43,1,44,1,44,1,44,1,44,1,44,1,44,3,44,
+  	455,8,44,1,45,1,45,1,45,5,45,460,8,45,10,45,12,45,463,9,45,1,46,1,46,
+  	1,46,1,46,1,46,3,46,470,8,46,1,47,1,47,1,48,1,48,1,48,3,48,477,8,48,1,
+  	49,1,49,3,49,481,8,49,1,50,1,50,1,50,5,50,486,8,50,10,50,12,50,489,9,
+  	50,1,50,3,50,492,8,50,1,51,1,51,1,51,3,51,497,8,51,3,51,499,8,51,1,51,
+  	1,51,1,52,1,52,1,52,1,52,1,52,1,52,1,52,3,52,510,8,52,1,53,1,53,1,53,
+  	0,2,40,58,54,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,
+  	42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,
+  	88,90,92,94,96,98,100,102,104,106,0,10,1,0,48,49,2,0,18,20,24,27,1,0,
+  	20,22,1,0,18,19,2,0,29,30,44,45,1,0,42,43,2,0,28,28,31,41,2,0,14,14,16,
+  	16,2,0,15,15,17,17,2,0,9,9,11,11,531,0,111,1,0,0,0,2,116,1,0,0,0,4,123,
+  	1,0,0,0,6,126,1,0,0,0,8,130,1,0,0,0,10,132,1,0,0,0,12,134,1,0,0,0,14,
+  	148,1,0,0,0,16,152,1,0,0,0,18,154,1,0,0,0,20,159,1,0,0,0,22,167,1,0,0,
+  	0,24,169,1,0,0,0,26,177,1,0,0,0,28,181,1,0,0,0,30,188,1,0,0,0,32,200,
+  	1,0,0,0,34,204,1,0,0,0,36,206,1,0,0,0,38,208,1,0,0,0,40,211,1,0,0,0,42,
+  	227,1,0,0,0,44,229,1,0,0,0,46,231,1,0,0,0,48,238,1,0,0,0,50,241,1,0,0,
+  	0,52,262,1,0,0,0,54,265,1,0,0,0,56,269,1,0,0,0,58,303,1,0,0,0,60,343,
+  	1,0,0,0,62,345,1,0,0,0,64,356,1,0,0,0,66,358,1,0,0,0,68,366,1,0,0,0,70,
+  	374,1,0,0,0,72,390,1,0,0,0,74,392,1,0,0,0,76,400,1,0,0,0,78,408,1,0,0,
+  	0,80,416,1,0,0,0,82,424,1,0,0,0,84,432,1,0,0,0,86,440,1,0,0,0,88,448,
+  	1,0,0,0,90,456,1,0,0,0,92,469,1,0,0,0,94,471,1,0,0,0,96,476,1,0,0,0,98,
+  	480,1,0,0,0,100,482,1,0,0,0,102,493,1,0,0,0,104,509,1,0,0,0,106,511,1,
+  	0,0,0,108,110,3,4,2,0,109,108,1,0,0,0,110,113,1,0,0,0,111,109,1,0,0,0,
+  	111,112,1,0,0,0,112,114,1,0,0,0,113,111,1,0,0,0,114,115,5,0,0,1,115,1,
+  	1,0,0,0,116,117,5,54,0,0,117,3,1,0,0,0,118,119,3,6,3,0,119,120,3,24,12,
+  	0,120,121,5,54,0,0,121,124,1,0,0,0,122,124,3,2,1,0,123,118,1,0,0,0,123,
+  	122,1,0,0,0,124,5,1,0,0,0,125,127,3,8,4,0,126,125,1,0,0,0,127,128,1,0,
+  	0,0,128,126,1,0,0,0,128,129,1,0,0,0,129,7,1,0,0,0,130,131,3,10,5,0,131,
+  	9,1,0,0,0,132,133,3,14,7,0,133,11,1,0,0,0,134,136,5,14,0,0,135,137,3,
+  	22,11,0,136,135,1,0,0,0,136,137,1,0,0,0,137,138,1,0,0,0,138,139,5,15,
+  	0,0,139,13,1,0,0,0,140,144,3,16,8,0,141,143,3,12,6,0,142,141,1,0,0,0,
+  	143,146,1,0,0,0,144,142,1,0,0,0,144,145,1,0,0,0,145,149,1,0,0,0,146,144,
+  	1,0,0,0,147,149,5,8,0,0,148,140,1,0,0,0,148,147,1,0,0,0,149,15,1,0,0,
+  	0,150,153,5,56,0,0,151,153,3,18,9,0,152,150,1,0,0,0,152,151,1,0,0,0,153,
+  	17,1,0,0,0,154,155,5,56,0,0,155,156,5,29,0,0,156,157,3,20,10,0,157,158,
+  	5,30,0,0,158,19,1,0,0,0,159,164,3,16,8,0,160,161,5,50,0,0,161,163,3,16,
   	8,0,162,160,1,0,0,0,163,166,1,0,0,0,164,162,1,0,0,0,164,165,1,0,0,0,165,
   	21,1,0,0,0,166,164,1,0,0,0,167,168,5,1,0,0,168,23,1,0,0,0,169,174,3,26,
-  	13,0,170,171,5,49,0,0,171,173,3,26,13,0,172,170,1,0,0,0,173,176,1,0,0,
+  	13,0,170,171,5,50,0,0,171,173,3,26,13,0,172,170,1,0,0,0,173,176,1,0,0,
   	0,174,172,1,0,0,0,174,175,1,0,0,0,175,25,1,0,0,0,176,174,1,0,0,0,177,
-  	179,5,55,0,0,178,180,3,30,15,0,179,178,1,0,0,0,179,180,1,0,0,0,180,27,
+  	179,5,56,0,0,178,180,3,30,15,0,179,178,1,0,0,0,179,180,1,0,0,0,180,27,
   	1,0,0,0,181,182,3,100,50,0,182,29,1,0,0,0,183,189,3,96,48,0,184,185,5,
   	12,0,0,185,186,3,28,14,0,186,187,5,13,0,0,187,189,1,0,0,0,188,183,1,0,
   	0,0,188,184,1,0,0,0,189,31,1,0,0,0,190,192,3,104,52,0,191,190,1,0,0,0,
@@ -177,21 +177,21 @@ void angelscriptconsoleparserParserInitialize() {
   	5,12,0,0,196,197,3,90,45,0,197,198,5,13,0,0,198,201,1,0,0,0,199,201,3,
   	34,17,0,200,191,1,0,0,0,200,195,1,0,0,0,200,199,1,0,0,0,201,33,1,0,0,
   	0,202,205,3,36,18,0,203,205,3,38,19,0,204,202,1,0,0,0,204,203,1,0,0,0,
-  	205,35,1,0,0,0,206,207,5,55,0,0,207,37,1,0,0,0,208,209,3,40,20,0,209,
+  	205,35,1,0,0,0,206,207,5,56,0,0,207,37,1,0,0,0,208,209,3,40,20,0,209,
   	210,3,36,18,0,210,39,1,0,0,0,211,215,6,20,-1,0,212,216,3,44,22,0,213,
   	216,3,48,24,0,214,216,3,46,23,0,215,212,1,0,0,0,215,213,1,0,0,0,215,214,
-  	1,0,0,0,215,216,1,0,0,0,216,217,1,0,0,0,217,218,5,52,0,0,218,224,1,0,
-  	0,0,219,220,10,1,0,0,220,221,5,55,0,0,221,223,5,52,0,0,222,219,1,0,0,
+  	1,0,0,0,215,216,1,0,0,0,216,217,1,0,0,0,217,218,5,53,0,0,218,224,1,0,
+  	0,0,219,220,10,1,0,0,220,221,5,56,0,0,221,223,5,53,0,0,222,219,1,0,0,
   	0,223,226,1,0,0,0,224,222,1,0,0,0,224,225,1,0,0,0,225,41,1,0,0,0,226,
-  	224,1,0,0,0,227,228,5,55,0,0,228,43,1,0,0,0,229,230,3,42,21,0,230,45,
+  	224,1,0,0,0,227,228,5,56,0,0,228,43,1,0,0,0,229,230,3,42,21,0,230,45,
   	1,0,0,0,231,234,5,12,0,0,232,235,3,90,45,0,233,235,5,7,0,0,234,232,1,
   	0,0,0,234,233,1,0,0,0,235,236,1,0,0,0,236,237,5,13,0,0,237,47,1,0,0,0,
-  	238,239,5,55,0,0,239,49,1,0,0,0,240,242,3,40,20,0,241,240,1,0,0,0,241,
+  	238,239,5,56,0,0,239,49,1,0,0,0,240,242,3,40,20,0,241,240,1,0,0,0,241,
   	242,1,0,0,0,242,243,1,0,0,0,243,244,3,48,24,0,244,51,1,0,0,0,245,247,
   	3,40,20,0,246,245,1,0,0,0,246,247,1,0,0,0,247,251,1,0,0,0,248,249,3,44,
-  	22,0,249,250,5,52,0,0,250,252,1,0,0,0,251,248,1,0,0,0,251,252,1,0,0,0,
+  	22,0,249,250,5,53,0,0,250,252,1,0,0,0,251,248,1,0,0,0,251,252,1,0,0,0,
   	252,253,1,0,0,0,253,254,5,26,0,0,254,263,3,44,22,0,255,256,3,40,20,0,
-  	256,257,5,52,0,0,257,258,5,26,0,0,258,259,3,44,22,0,259,263,1,0,0,0,260,
+  	256,257,5,53,0,0,257,258,5,26,0,0,258,259,3,44,22,0,259,263,1,0,0,0,260,
   	261,5,26,0,0,261,263,3,46,23,0,262,246,1,0,0,0,262,255,1,0,0,0,262,260,
   	1,0,0,0,263,53,1,0,0,0,264,266,3,10,5,0,265,264,1,0,0,0,266,267,1,0,0,
   	0,267,265,1,0,0,0,267,268,1,0,0,0,268,55,1,0,0,0,269,270,3,54,27,0,270,
@@ -209,11 +209,11 @@ void angelscriptconsoleparserParserInitialize() {
   	0,0,0,309,308,1,0,0,0,310,311,1,0,0,0,311,312,5,15,0,0,312,328,1,0,0,
   	0,313,314,10,6,0,0,314,316,5,12,0,0,315,317,3,28,14,0,316,315,1,0,0,0,
   	316,317,1,0,0,0,317,318,1,0,0,0,318,328,5,13,0,0,319,320,10,4,0,0,320,
-  	323,5,54,0,0,321,324,3,34,17,0,322,324,3,52,26,0,323,321,1,0,0,0,323,
+  	323,5,55,0,0,321,324,3,34,17,0,322,324,3,52,26,0,323,321,1,0,0,0,323,
   	322,1,0,0,0,324,328,1,0,0,0,325,326,10,3,0,0,326,328,7,0,0,0,327,305,
   	1,0,0,0,327,313,1,0,0,0,327,319,1,0,0,0,327,325,1,0,0,0,328,331,1,0,0,
   	0,329,327,1,0,0,0,329,330,1,0,0,0,330,59,1,0,0,0,331,329,1,0,0,0,332,
-  	344,3,58,29,0,333,337,5,47,0,0,334,337,5,48,0,0,335,337,3,62,31,0,336,
+  	344,3,58,29,0,333,337,5,48,0,0,334,337,5,49,0,0,335,337,3,62,31,0,336,
   	333,1,0,0,0,336,334,1,0,0,0,336,335,1,0,0,0,337,338,1,0,0,0,338,344,3,
   	60,30,0,339,340,5,12,0,0,340,341,3,56,28,0,341,342,5,13,0,0,342,344,1,
   	0,0,0,343,332,1,0,0,0,343,336,1,0,0,0,343,339,1,0,0,0,344,61,1,0,0,0,
@@ -227,45 +227,46 @@ void angelscriptconsoleparserParserInitialize() {
   	1,0,0,0,372,69,1,0,0,0,373,371,1,0,0,0,374,380,3,68,34,0,375,376,3,72,
   	36,0,376,377,3,68,34,0,377,379,1,0,0,0,378,375,1,0,0,0,379,382,1,0,0,
   	0,380,378,1,0,0,0,380,381,1,0,0,0,381,71,1,0,0,0,382,380,1,0,0,0,383,
-  	384,5,30,0,0,384,388,5,30,0,0,385,386,5,29,0,0,386,388,5,29,0,0,387,383,
-  	1,0,0,0,387,385,1,0,0,0,388,73,1,0,0,0,389,394,3,70,35,0,390,391,7,4,
-  	0,0,391,393,3,70,35,0,392,390,1,0,0,0,393,396,1,0,0,0,394,392,1,0,0,0,
-  	394,395,1,0,0,0,395,75,1,0,0,0,396,394,1,0,0,0,397,402,3,74,37,0,398,
-  	399,7,5,0,0,399,401,3,74,37,0,400,398,1,0,0,0,401,404,1,0,0,0,402,400,
-  	1,0,0,0,402,403,1,0,0,0,403,77,1,0,0,0,404,402,1,0,0,0,405,410,3,76,38,
-  	0,406,407,5,24,0,0,407,409,3,76,38,0,408,406,1,0,0,0,409,412,1,0,0,0,
-  	410,408,1,0,0,0,410,411,1,0,0,0,411,79,1,0,0,0,412,410,1,0,0,0,413,418,
-  	3,78,39,0,414,415,5,23,0,0,415,417,3,78,39,0,416,414,1,0,0,0,417,420,
-  	1,0,0,0,418,416,1,0,0,0,418,419,1,0,0,0,419,81,1,0,0,0,420,418,1,0,0,
-  	0,421,426,3,80,40,0,422,423,5,25,0,0,423,425,3,80,40,0,424,422,1,0,0,
-  	0,425,428,1,0,0,0,426,424,1,0,0,0,426,427,1,0,0,0,427,83,1,0,0,0,428,
-  	426,1,0,0,0,429,434,3,82,41,0,430,431,5,45,0,0,431,433,3,82,41,0,432,
-  	430,1,0,0,0,433,436,1,0,0,0,434,432,1,0,0,0,434,435,1,0,0,0,435,85,1,
-  	0,0,0,436,434,1,0,0,0,437,442,3,84,42,0,438,439,5,46,0,0,439,441,3,84,
-  	42,0,440,438,1,0,0,0,441,444,1,0,0,0,442,440,1,0,0,0,442,443,1,0,0,0,
-  	443,87,1,0,0,0,444,442,1,0,0,0,445,451,3,86,43,0,446,447,5,50,0,0,447,
-  	448,3,90,45,0,448,449,5,51,0,0,449,450,3,92,46,0,450,452,1,0,0,0,451,
-  	446,1,0,0,0,451,452,1,0,0,0,452,89,1,0,0,0,453,458,3,92,46,0,454,455,
-  	5,49,0,0,455,457,3,92,46,0,456,454,1,0,0,0,457,460,1,0,0,0,458,456,1,
-  	0,0,0,458,459,1,0,0,0,459,91,1,0,0,0,460,458,1,0,0,0,461,467,3,88,44,
-  	0,462,463,3,86,43,0,463,464,3,94,47,0,464,465,3,98,49,0,465,467,1,0,0,
-  	0,466,461,1,0,0,0,466,462,1,0,0,0,467,93,1,0,0,0,468,469,7,6,0,0,469,
-  	95,1,0,0,0,470,471,5,28,0,0,471,474,3,98,49,0,472,474,3,102,51,0,473,
-  	470,1,0,0,0,473,472,1,0,0,0,474,97,1,0,0,0,475,478,3,92,46,0,476,478,
-  	3,102,51,0,477,475,1,0,0,0,477,476,1,0,0,0,478,99,1,0,0,0,479,484,3,98,
-  	49,0,480,481,5,49,0,0,481,483,3,98,49,0,482,480,1,0,0,0,483,486,1,0,0,
-  	0,484,482,1,0,0,0,484,485,1,0,0,0,485,488,1,0,0,0,486,484,1,0,0,0,487,
-  	489,5,49,0,0,488,487,1,0,0,0,488,489,1,0,0,0,489,101,1,0,0,0,490,495,
-  	7,7,0,0,491,493,3,100,50,0,492,494,5,49,0,0,493,492,1,0,0,0,493,494,1,
-  	0,0,0,494,496,1,0,0,0,495,491,1,0,0,0,495,496,1,0,0,0,496,497,1,0,0,0,
-  	497,498,7,8,0,0,498,103,1,0,0,0,499,507,5,1,0,0,500,507,5,2,0,0,501,507,
-  	5,3,0,0,502,507,5,4,0,0,503,507,3,106,53,0,504,507,5,5,0,0,505,507,5,
-  	10,0,0,506,499,1,0,0,0,506,500,1,0,0,0,506,501,1,0,0,0,506,502,1,0,0,
-  	0,506,503,1,0,0,0,506,504,1,0,0,0,506,505,1,0,0,0,507,105,1,0,0,0,508,
-  	509,7,9,0,0,509,107,1,0,0,0,56,111,123,128,136,144,148,152,164,174,179,
-  	188,193,200,204,215,224,234,241,246,251,262,267,277,282,286,299,303,309,
-  	316,323,327,329,336,343,356,363,371,380,387,394,402,410,418,426,434,442,
-  	451,458,466,473,477,484,488,493,495,506
+  	384,5,30,0,0,384,385,5,30,0,0,385,391,5,30,0,0,386,387,5,30,0,0,387,391,
+  	5,30,0,0,388,389,5,29,0,0,389,391,5,29,0,0,390,383,1,0,0,0,390,386,1,
+  	0,0,0,390,388,1,0,0,0,391,73,1,0,0,0,392,397,3,70,35,0,393,394,7,4,0,
+  	0,394,396,3,70,35,0,395,393,1,0,0,0,396,399,1,0,0,0,397,395,1,0,0,0,397,
+  	398,1,0,0,0,398,75,1,0,0,0,399,397,1,0,0,0,400,405,3,74,37,0,401,402,
+  	7,5,0,0,402,404,3,74,37,0,403,401,1,0,0,0,404,407,1,0,0,0,405,403,1,0,
+  	0,0,405,406,1,0,0,0,406,77,1,0,0,0,407,405,1,0,0,0,408,413,3,76,38,0,
+  	409,410,5,24,0,0,410,412,3,76,38,0,411,409,1,0,0,0,412,415,1,0,0,0,413,
+  	411,1,0,0,0,413,414,1,0,0,0,414,79,1,0,0,0,415,413,1,0,0,0,416,421,3,
+  	78,39,0,417,418,5,23,0,0,418,420,3,78,39,0,419,417,1,0,0,0,420,423,1,
+  	0,0,0,421,419,1,0,0,0,421,422,1,0,0,0,422,81,1,0,0,0,423,421,1,0,0,0,
+  	424,429,3,80,40,0,425,426,5,25,0,0,426,428,3,80,40,0,427,425,1,0,0,0,
+  	428,431,1,0,0,0,429,427,1,0,0,0,429,430,1,0,0,0,430,83,1,0,0,0,431,429,
+  	1,0,0,0,432,437,3,82,41,0,433,434,5,46,0,0,434,436,3,82,41,0,435,433,
+  	1,0,0,0,436,439,1,0,0,0,437,435,1,0,0,0,437,438,1,0,0,0,438,85,1,0,0,
+  	0,439,437,1,0,0,0,440,445,3,84,42,0,441,442,5,47,0,0,442,444,3,84,42,
+  	0,443,441,1,0,0,0,444,447,1,0,0,0,445,443,1,0,0,0,445,446,1,0,0,0,446,
+  	87,1,0,0,0,447,445,1,0,0,0,448,454,3,86,43,0,449,450,5,51,0,0,450,451,
+  	3,90,45,0,451,452,5,52,0,0,452,453,3,92,46,0,453,455,1,0,0,0,454,449,
+  	1,0,0,0,454,455,1,0,0,0,455,89,1,0,0,0,456,461,3,92,46,0,457,458,5,50,
+  	0,0,458,460,3,92,46,0,459,457,1,0,0,0,460,463,1,0,0,0,461,459,1,0,0,0,
+  	461,462,1,0,0,0,462,91,1,0,0,0,463,461,1,0,0,0,464,470,3,88,44,0,465,
+  	466,3,86,43,0,466,467,3,94,47,0,467,468,3,98,49,0,468,470,1,0,0,0,469,
+  	464,1,0,0,0,469,465,1,0,0,0,470,93,1,0,0,0,471,472,7,6,0,0,472,95,1,0,
+  	0,0,473,474,5,28,0,0,474,477,3,98,49,0,475,477,3,102,51,0,476,473,1,0,
+  	0,0,476,475,1,0,0,0,477,97,1,0,0,0,478,481,3,92,46,0,479,481,3,102,51,
+  	0,480,478,1,0,0,0,480,479,1,0,0,0,481,99,1,0,0,0,482,487,3,98,49,0,483,
+  	484,5,50,0,0,484,486,3,98,49,0,485,483,1,0,0,0,486,489,1,0,0,0,487,485,
+  	1,0,0,0,487,488,1,0,0,0,488,491,1,0,0,0,489,487,1,0,0,0,490,492,5,50,
+  	0,0,491,490,1,0,0,0,491,492,1,0,0,0,492,101,1,0,0,0,493,498,7,7,0,0,494,
+  	496,3,100,50,0,495,497,5,50,0,0,496,495,1,0,0,0,496,497,1,0,0,0,497,499,
+  	1,0,0,0,498,494,1,0,0,0,498,499,1,0,0,0,499,500,1,0,0,0,500,501,7,8,0,
+  	0,501,103,1,0,0,0,502,510,5,1,0,0,503,510,5,2,0,0,504,510,5,3,0,0,505,
+  	510,5,4,0,0,506,510,3,106,53,0,507,510,5,5,0,0,508,510,5,10,0,0,509,502,
+  	1,0,0,0,509,503,1,0,0,0,509,504,1,0,0,0,509,505,1,0,0,0,509,506,1,0,0,
+  	0,509,507,1,0,0,0,509,508,1,0,0,0,510,105,1,0,0,0,511,512,7,9,0,0,512,
+  	107,1,0,0,0,56,111,123,128,136,144,148,152,164,174,179,188,193,200,204,
+  	215,224,234,241,246,251,262,267,277,282,286,299,303,309,316,323,327,329,
+  	336,343,356,363,371,380,390,397,405,413,421,429,437,445,454,461,469,476,
+  	480,487,491,496,498,509
   };
   staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
 
@@ -363,7 +364,7 @@ AngelscriptConsoleParser::ScriptContext* AngelscriptConsoleParser::script() {
     _errHandler->sync(this);
     _la = _input->LA(1);
     while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 45035996273705216) != 0)) {
+      ((1ULL << _la) & 90071992547410176) != 0)) {
       setState(108);
       scriptItem();
       setState(113);
@@ -2504,7 +2505,7 @@ AngelscriptConsoleParser::PostfixExpressionContext* AngelscriptConsoleParser::po
 
           _la = _input->LA(1);
           if ((((_la & ~ 0x3fULL) == 0) &&
-            ((1ULL << _la) & 40954609364983422) != 0)) {
+            ((1ULL << _la) & 81909218476383870) != 0)) {
             setState(281);
             expressionList();
           }
@@ -2650,7 +2651,7 @@ AngelscriptConsoleParser::PostfixExpressionContext* AngelscriptConsoleParser::po
 
           _la = _input->LA(1);
           if ((((_la & ~ 0x3fULL) == 0) &&
-            ((1ULL << _la) & 40954609364983422) != 0)) {
+            ((1ULL << _la) & 81909218476383870) != 0)) {
             setState(315);
             expressionList();
           }
@@ -3363,29 +3364,40 @@ AngelscriptConsoleParser::ShiftOperatorContext* AngelscriptConsoleParser::shiftO
     exitRule();
   });
   try {
-    setState(387);
+    setState(390);
     _errHandler->sync(this);
-    switch (_input->LA(1)) {
-      case AngelscriptConsoleParser::Greater: {
-        enterOuterAlt(_localctx, 1);
-        setState(383);
-        match(AngelscriptConsoleParser::Greater);
-        setState(384);
-        match(AngelscriptConsoleParser::Greater);
-        break;
-      }
+    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 38, _ctx)) {
+    case 1: {
+      enterOuterAlt(_localctx, 1);
+      setState(383);
+      match(AngelscriptConsoleParser::Greater);
+      setState(384);
+      match(AngelscriptConsoleParser::Greater);
+      setState(385);
+      match(AngelscriptConsoleParser::Greater);
+      break;
+    }
 
-      case AngelscriptConsoleParser::Less: {
-        enterOuterAlt(_localctx, 2);
-        setState(385);
-        match(AngelscriptConsoleParser::Less);
-        setState(386);
-        match(AngelscriptConsoleParser::Less);
-        break;
-      }
+    case 2: {
+      enterOuterAlt(_localctx, 2);
+      setState(386);
+      match(AngelscriptConsoleParser::Greater);
+      setState(387);
+      match(AngelscriptConsoleParser::Greater);
+      break;
+    }
+
+    case 3: {
+      enterOuterAlt(_localctx, 3);
+      setState(388);
+      match(AngelscriptConsoleParser::Less);
+      setState(389);
+      match(AngelscriptConsoleParser::Less);
+      break;
+    }
 
     default:
-      throw NoViableAltException(this);
+      break;
     }
    
   }
@@ -3471,26 +3483,26 @@ AngelscriptConsoleParser::RelationalExpressionContext* AngelscriptConsoleParser:
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(389);
+    setState(392);
     shiftExpression();
-    setState(394);
+    setState(397);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 26389889679360) != 0)) {
-      setState(390);
+      ((1ULL << _la) & 52778168745984) != 0)) {
+      setState(393);
       _la = _input->LA(1);
       if (!((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & 26389889679360) != 0))) {
+        ((1ULL << _la) & 52778168745984) != 0))) {
       _errHandler->recoverInline(this);
       }
       else {
         _errHandler->reportMatch(this);
         consume();
       }
-      setState(391);
+      setState(394);
       shiftExpression();
-      setState(396);
+      setState(399);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3562,15 +3574,15 @@ AngelscriptConsoleParser::EqualityExpressionContext* AngelscriptConsoleParser::e
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(397);
+    setState(400);
     relationalExpression();
-    setState(402);
+    setState(405);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::Equal
 
     || _la == AngelscriptConsoleParser::NotEqual) {
-      setState(398);
+      setState(401);
       _la = _input->LA(1);
       if (!(_la == AngelscriptConsoleParser::Equal
 
@@ -3581,9 +3593,9 @@ AngelscriptConsoleParser::EqualityExpressionContext* AngelscriptConsoleParser::e
         _errHandler->reportMatch(this);
         consume();
       }
-      setState(399);
+      setState(402);
       relationalExpression();
-      setState(404);
+      setState(407);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3647,17 +3659,17 @@ AngelscriptConsoleParser::AndExpressionContext* AngelscriptConsoleParser::andExp
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(405);
+    setState(408);
     equalityExpression();
-    setState(410);
+    setState(413);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::And) {
-      setState(406);
+      setState(409);
       match(AngelscriptConsoleParser::And);
-      setState(407);
+      setState(410);
       equalityExpression();
-      setState(412);
+      setState(415);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3721,17 +3733,17 @@ AngelscriptConsoleParser::ExclusiveOrExpressionContext* AngelscriptConsoleParser
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(413);
+    setState(416);
     andExpression();
-    setState(418);
+    setState(421);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::Xor) {
-      setState(414);
+      setState(417);
       match(AngelscriptConsoleParser::Xor);
-      setState(415);
+      setState(418);
       andExpression();
-      setState(420);
+      setState(423);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3795,17 +3807,17 @@ AngelscriptConsoleParser::InclusiveOrExpressionContext* AngelscriptConsoleParser
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(421);
+    setState(424);
     exclusiveOrExpression();
-    setState(426);
+    setState(429);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::Or) {
-      setState(422);
+      setState(425);
       match(AngelscriptConsoleParser::Or);
-      setState(423);
+      setState(426);
       exclusiveOrExpression();
-      setState(428);
+      setState(431);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3869,17 +3881,17 @@ AngelscriptConsoleParser::LogicalAndExpressionContext* AngelscriptConsoleParser:
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(429);
+    setState(432);
     inclusiveOrExpression();
-    setState(434);
+    setState(437);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::AndAnd) {
-      setState(430);
+      setState(433);
       match(AngelscriptConsoleParser::AndAnd);
-      setState(431);
+      setState(434);
       inclusiveOrExpression();
-      setState(436);
+      setState(439);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -3943,17 +3955,17 @@ AngelscriptConsoleParser::LogicalOrExpressionContext* AngelscriptConsoleParser::
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(437);
+    setState(440);
     logicalAndExpression();
-    setState(442);
+    setState(445);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::OrOr) {
-      setState(438);
+      setState(441);
       match(AngelscriptConsoleParser::OrOr);
-      setState(439);
+      setState(442);
       logicalAndExpression();
-      setState(444);
+      setState(447);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -4021,20 +4033,20 @@ AngelscriptConsoleParser::ConditionalExpressionContext* AngelscriptConsoleParser
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(445);
+    setState(448);
     logicalOrExpression();
-    setState(451);
+    setState(454);
     _errHandler->sync(this);
 
     _la = _input->LA(1);
     if (_la == AngelscriptConsoleParser::Question) {
-      setState(446);
-      match(AngelscriptConsoleParser::Question);
-      setState(447);
-      expression();
-      setState(448);
-      match(AngelscriptConsoleParser::Colon);
       setState(449);
+      match(AngelscriptConsoleParser::Question);
+      setState(450);
+      expression();
+      setState(451);
+      match(AngelscriptConsoleParser::Colon);
+      setState(452);
       assignmentExpression();
     }
    
@@ -4097,17 +4109,17 @@ AngelscriptConsoleParser::ExpressionContext* AngelscriptConsoleParser::expressio
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(453);
+    setState(456);
     assignmentExpression();
-    setState(458);
+    setState(461);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while (_la == AngelscriptConsoleParser::Comma) {
-      setState(454);
+      setState(457);
       match(AngelscriptConsoleParser::Comma);
-      setState(455);
+      setState(458);
       assignmentExpression();
-      setState(460);
+      setState(463);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
@@ -4169,23 +4181,23 @@ AngelscriptConsoleParser::AssignmentExpressionContext* AngelscriptConsoleParser:
     exitRule();
   });
   try {
-    setState(466);
+    setState(469);
     _errHandler->sync(this);
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 48, _ctx)) {
     case 1: {
       enterOuterAlt(_localctx, 1);
-      setState(461);
+      setState(464);
       conditionalExpression();
       break;
     }
 
     case 2: {
       enterOuterAlt(_localctx, 2);
-      setState(462);
+      setState(465);
       logicalOrExpression();
-      setState(463);
+      setState(466);
       assignmentOperator();
-      setState(464);
+      setState(467);
       initializerClause();
       break;
     }
@@ -4238,6 +4250,10 @@ tree::TerminalNode* AngelscriptConsoleParser::AssignmentOperatorContext::RightSh
   return getToken(AngelscriptConsoleParser::RightShiftAssign, 0);
 }
 
+tree::TerminalNode* AngelscriptConsoleParser::AssignmentOperatorContext::ArithRightShiftAssign() {
+  return getToken(AngelscriptConsoleParser::ArithRightShiftAssign, 0);
+}
+
 tree::TerminalNode* AngelscriptConsoleParser::AssignmentOperatorContext::LeftShiftAssign() {
   return getToken(AngelscriptConsoleParser::LeftShiftAssign, 0);
 }
@@ -4281,10 +4297,10 @@ AngelscriptConsoleParser::AssignmentOperatorContext* AngelscriptConsoleParser::a
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(468);
+    setState(471);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 2197144207360) != 0))) {
+      ((1ULL << _la) & 4396167462912) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -4345,14 +4361,14 @@ AngelscriptConsoleParser::BraceOrEqualInitializerContext* AngelscriptConsolePars
     exitRule();
   });
   try {
-    setState(473);
+    setState(476);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case AngelscriptConsoleParser::Assign: {
         enterOuterAlt(_localctx, 1);
-        setState(470);
+        setState(473);
         match(AngelscriptConsoleParser::Assign);
-        setState(471);
+        setState(474);
         initializerClause();
         break;
       }
@@ -4360,7 +4376,7 @@ AngelscriptConsoleParser::BraceOrEqualInitializerContext* AngelscriptConsolePars
       case AngelscriptConsoleParser::LeftBracket:
       case AngelscriptConsoleParser::LeftBrace: {
         enterOuterAlt(_localctx, 2);
-        setState(472);
+        setState(475);
         bracedInitList();
         break;
       }
@@ -4418,7 +4434,7 @@ AngelscriptConsoleParser::InitializerClauseContext* AngelscriptConsoleParser::in
     exitRule();
   });
   try {
-    setState(477);
+    setState(480);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case AngelscriptConsoleParser::IntegerLiteral:
@@ -4443,7 +4459,7 @@ AngelscriptConsoleParser::InitializerClauseContext* AngelscriptConsoleParser::in
       case AngelscriptConsoleParser::Doublecolon:
       case AngelscriptConsoleParser::Identifier: {
         enterOuterAlt(_localctx, 1);
-        setState(475);
+        setState(478);
         assignmentExpression();
         break;
       }
@@ -4451,7 +4467,7 @@ AngelscriptConsoleParser::InitializerClauseContext* AngelscriptConsoleParser::in
       case AngelscriptConsoleParser::LeftBracket:
       case AngelscriptConsoleParser::LeftBrace: {
         enterOuterAlt(_localctx, 2);
-        setState(476);
+        setState(479);
         bracedInitList();
         break;
       }
@@ -4519,28 +4535,28 @@ AngelscriptConsoleParser::InitializerListContext* AngelscriptConsoleParser::init
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(479);
+    setState(482);
     initializerClause();
-    setState(484);
+    setState(487);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 51, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
-        setState(480);
+        setState(483);
         match(AngelscriptConsoleParser::Comma);
-        setState(481);
+        setState(484);
         initializerClause(); 
       }
-      setState(486);
+      setState(489);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 51, _ctx);
     }
-    setState(488);
+    setState(491);
     _errHandler->sync(this);
 
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 52, _ctx)) {
     case 1: {
-      setState(487);
+      setState(490);
       match(AngelscriptConsoleParser::Comma);
       break;
     }
@@ -4616,7 +4632,7 @@ AngelscriptConsoleParser::BracedInitListContext* AngelscriptConsoleParser::brace
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(490);
+    setState(493);
     _la = _input->LA(1);
     if (!(_la == AngelscriptConsoleParser::LeftBracket
 
@@ -4627,24 +4643,24 @@ AngelscriptConsoleParser::BracedInitListContext* AngelscriptConsoleParser::brace
       _errHandler->reportMatch(this);
       consume();
     }
-    setState(495);
+    setState(498);
     _errHandler->sync(this);
 
     _la = _input->LA(1);
     if ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 40954609364983422) != 0)) {
-      setState(491);
+      ((1ULL << _la) & 81909218476383870) != 0)) {
+      setState(494);
       initializerList();
-      setState(493);
+      setState(496);
       _errHandler->sync(this);
 
       _la = _input->LA(1);
       if (_la == AngelscriptConsoleParser::Comma) {
-        setState(492);
+        setState(495);
         match(AngelscriptConsoleParser::Comma);
       }
     }
-    setState(497);
+    setState(500);
     _la = _input->LA(1);
     if (!(_la == AngelscriptConsoleParser::RightBracket
 
@@ -4725,33 +4741,33 @@ AngelscriptConsoleParser::LiteralContext* AngelscriptConsoleParser::literal() {
     exitRule();
   });
   try {
-    setState(506);
+    setState(509);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case AngelscriptConsoleParser::IntegerLiteral: {
         enterOuterAlt(_localctx, 1);
-        setState(499);
+        setState(502);
         match(AngelscriptConsoleParser::IntegerLiteral);
         break;
       }
 
       case AngelscriptConsoleParser::CharacterLiteral: {
         enterOuterAlt(_localctx, 2);
-        setState(500);
+        setState(503);
         match(AngelscriptConsoleParser::CharacterLiteral);
         break;
       }
 
       case AngelscriptConsoleParser::FloatingLiteral: {
         enterOuterAlt(_localctx, 3);
-        setState(501);
+        setState(504);
         match(AngelscriptConsoleParser::FloatingLiteral);
         break;
       }
 
       case AngelscriptConsoleParser::StringLiteral: {
         enterOuterAlt(_localctx, 4);
-        setState(502);
+        setState(505);
         match(AngelscriptConsoleParser::StringLiteral);
         break;
       }
@@ -4759,21 +4775,21 @@ AngelscriptConsoleParser::LiteralContext* AngelscriptConsoleParser::literal() {
       case AngelscriptConsoleParser::False_:
       case AngelscriptConsoleParser::True_: {
         enterOuterAlt(_localctx, 5);
-        setState(503);
+        setState(506);
         booleanLiteral();
         break;
       }
 
       case AngelscriptConsoleParser::UserDefinedLiteral: {
         enterOuterAlt(_localctx, 6);
-        setState(504);
+        setState(507);
         match(AngelscriptConsoleParser::UserDefinedLiteral);
         break;
       }
 
       case AngelscriptConsoleParser::Nullptr: {
         enterOuterAlt(_localctx, 7);
-        setState(505);
+        setState(508);
         match(AngelscriptConsoleParser::Nullptr);
         break;
       }
@@ -4833,7 +4849,7 @@ AngelscriptConsoleParser::BooleanLiteralContext* AngelscriptConsoleParser::boole
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(508);
+    setState(511);
     _la = _input->LA(1);
     if (!(_la == AngelscriptConsoleParser::False_
 

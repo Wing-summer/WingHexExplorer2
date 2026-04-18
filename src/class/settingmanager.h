@@ -146,7 +146,8 @@ public slots:
 public:
     void checkWriteableAndWarn();
 
-    QStringList readPluginRule(const QByteArray &data);
+    QStringList readPluginRule(const QByteArray &data,
+                               const QStringList &defaultValue);
     QByteArray savePluginRule(const QStringList &rules);
 
 signals:

@@ -26,10 +26,11 @@
 class ConsoleTextBlockUserData : public WingTextBlockUserData {
 public:
     enum class Type {
+        Default,
         TextOnly,
         TextWithFormat,
         CodeWithPrefix
-    } type = Type::CodeWithPrefix;
+    } type = Type::Default;
     int prefixLength = 0;
     QTextCharFormat fmt;
     WingEditorMetaInfo meta;
@@ -96,6 +97,14 @@ void WingConsoleHighligher::setBlockEditorMetaInfo(
     rehighlightBlock(block);
 }
 
+bool WingConsoleHighligher::isDefaultBlock(const QTextBlock &block) const {
+    auto data = dynamic_cast<ConsoleTextBlockUserData *>(block.userData());
+    if (data) {
+        return data->type == ConsoleTextBlockUserData::Type::Default;
+    }
+    return true;
+}
+
 WingEditorMetaInfo
 WingConsoleHighligher::blockEditorMetaInfo(const QTextBlock &block) {
     auto data =
@@ -129,6 +138,7 @@ void WingConsoleHighligher::applyFormat(
     }
 
     switch (data->type) {
+    case ConsoleTextBlockUserData::Type::Default:
     case ConsoleTextBlockUserData::Type::TextOnly:
         WingSyntaxHighlighter::applyFormat(offset, length,
                                            KSyntaxHighlighting::Format());

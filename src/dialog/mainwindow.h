@@ -242,7 +242,8 @@ public:
 
     void openFiles(const QStringList &files);
 
-    void addRecentFile(const QString &fileName, bool isWorkspace = false);
+    void addRecentFile(EditorView *editor, const QString &fileName,
+                       bool isWorkspace = false);
 
 private:
     void updateNumberTable(bool force);

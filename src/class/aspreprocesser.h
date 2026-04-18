@@ -138,6 +138,8 @@ public:
     void registerBuiltin(const QString &name,
                          std::function<QString(const SourcePos &)> cb);
 
+    static QHash<QString, QString> defaultRuntimeMarcos();
+
 private:
     void processBuffer(const QByteArray &buf, const QString &sourceName,
                        const QString &currentDir, QString &outText,
@@ -150,7 +152,16 @@ private:
 
 private:
     QString expandExpressionForIf(const QString &expr, const QString &file,
-                                  qint64 line, qint64 col);
+                                  qint64 line, qint64 col, bool *ok);
+
+    bool isBareIdentifierExpr(const QString &expr, QString *outIdent);
+
+    void expandMacroInCode(
+        const QString &name, const QString &expFile, int expLine, int expCol,
+        QStringList &visited,
+        std::function<void(const QString &rep, const QString &file,
+                           int fileLine, int fileCol)>
+            appendReplacementFromOrigin);
 
     std::optional<bool> evalExpression(const QString &expr, const QString &file,
                                        qint64 line, qint64 col);

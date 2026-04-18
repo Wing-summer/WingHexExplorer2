@@ -19,6 +19,7 @@
 
 #include "class/skinmanager.h"
 #include "class/wingmessagebox.h"
+#include "utilities.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -39,129 +40,6 @@
 #include <QGuiApplication>
 #include <QStyleHints>
 #endif
-
-static QString translateCharEscape(QStringView digits, int *advance) {
-    Q_ASSERT(digits.size() > 0);
-    Q_ASSERT(advance);
-
-    *advance = 0;
-    if (digits.at(0) == QLatin1Char('x')) {
-        // We only support exactly 2 hex bytes with \x format
-        if (digits.size() < 3)
-            return QString();
-        QByteArray number = digits.mid(1, 2).toLatin1();
-        char *end;
-        ulong ch = strtoul(number.constData(), &end, 16);
-        if (*end != '\0')
-            return QString();
-        *advance = 2;
-        return QString(QChar::fromLatin1(static_cast<char>(ch)));
-    } else if (digits.at(0) == QLatin1Char('u')) {
-        if (digits.size() < 5)
-            return QString();
-        QByteArray number = digits.mid(1, 4).toLatin1();
-        char *end;
-        ulong ch = strtoul(number.constData(), &end, 16);
-        if (*end != '\0')
-            return QString();
-        *advance = 4;
-        return QString(QChar(static_cast<ushort>(ch)));
-    } else if (digits.at(0) == QLatin1Char('U')) {
-        if (digits.size() < 9)
-            return QString();
-        QByteArray number = digits.mid(1, 8).toLatin1();
-        char *end;
-        ulong ch = strtoul(number.constData(), &end, 16);
-        if (*end != '\0')
-            return QString();
-
-        *advance = 8;
-        if (ch > 0xFFFFU) {
-            const QChar utf16[2] = {
-                QChar::highSurrogate(ch),
-                QChar::lowSurrogate(ch),
-            };
-            return QString(utf16, 2);
-        } else {
-            return QString(QChar(static_cast<ushort>(ch)));
-        }
-    } else {
-        // Octal no longer supported
-        qFatal("Unsupported character escape prefix");
-        return QString();
-    }
-}
-
-QString translateEscapes(const QString &text) {
-    QString result;
-    result.reserve(text.size());
-    int start = 0;
-    for (;;) {
-        int pos = text.indexOf(QLatin1Char('\\'), start);
-        if (pos < 0 || pos + 1 >= text.size())
-            break;
-
-        result.append(text.sliced(start, pos - start));
-        QChar next = text.at(pos + 1);
-        start = pos + 2;
-        switch (next.unicode()) {
-        case 'a':
-            result.append(QLatin1Char('\a'));
-            break;
-        case 'b':
-            result.append(QLatin1Char('\b'));
-            break;
-        case 'e':
-            result.append(QLatin1Char('\x1b'));
-            break;
-        case 'f':
-            result.append(QLatin1Char('\f'));
-            break;
-        case 'n':
-            result.append(QLatin1Char('\n'));
-            break;
-        case 'r':
-            result.append(QLatin1Char('\r'));
-            break;
-        case 't':
-            result.append(QLatin1Char('\t'));
-            break;
-        case 'v':
-            result.append(QLatin1Char('\v'));
-            break;
-        case '\\':
-        case '?':
-        case '\'':
-        case '"':
-            result.append(next);
-            break;
-        case 'x': // Hex byte
-        case 'u': // Unicode character (16-bit)
-        case 'U': // Unicode character (32-bit)
-        {
-            int advance;
-            const QString chars =
-                translateCharEscape(QStringView(text).mid(pos + 1), &advance);
-            if (chars.isEmpty()) {
-                // Translation failed
-                result.append(QLatin1Char('\\'));
-                result.append(next);
-            } else {
-                result.append(chars);
-                start += advance;
-            }
-        } break;
-        default:
-            // Just keep unrecognized sequences untranslated
-            result.append(QLatin1Char('\\'));
-            result.append(next);
-            break;
-        }
-    }
-
-    result.append(text.sliced(start));
-    return result;
-}
 
 SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     : CodeEditControlWidget(editor), m_editor(editor) {
@@ -266,7 +144,9 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     connect(m_searchText, &QLineEdit::textChanged, this,
             [this](const QString &text) {
                 m_searchParams.searchText =
-                    m_escapes->isChecked() ? translateEscapes(text) : text;
+                    m_escapes->isChecked()
+                        ? Utilities::translateStringEscapes(text)
+                        : text;
                 m_editor->setLiveSearch(m_searchParams);
             });
     connect(m_searchText, &QLineEdit::returnPressed, this,
@@ -335,7 +215,7 @@ void SearchReplaceWidget::replaceCurrent() {
 
     QString replaceText = m_replaceText->text();
     if (m_escapes->isChecked())
-        replaceText = translateEscapes(replaceText);
+        replaceText = Utilities::translateStringEscapes(replaceText);
 
     m_replaceCursor.beginEditBlock();
     m_replaceCursor.removeSelectedText();
@@ -378,7 +258,7 @@ void SearchReplaceWidget::performReplaceAll(ReplaceAllMode mode) {
 
     QString replaceText = m_replaceText->text();
     if (m_escapes->isChecked())
-        replaceText = translateEscapes(replaceText);
+        replaceText = Utilities::translateStringEscapes(replaceText);
 
     searchCursor.beginEditBlock();
     auto replaceCursor = searchCursor;

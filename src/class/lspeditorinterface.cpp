@@ -62,7 +62,13 @@ void LspEditorInterace::applySemanticTokens() {
             }
             auto theme = editor->theme();
 
-            tf.setForeground(QColor::fromRgb(theme.textColor(style)));
+            if (mods.contains("inactive")) {
+                auto palette = qApp->palette();
+                tf.setForeground(
+                    palette.color(QPalette::Disabled, QPalette::WindowText));
+            } else {
+                tf.setForeground(QColor::fromRgb(theme.textColor(style)));
+            }
 
             if (mods.contains("definition") || theme.isBold(style)) {
                 tf.setFontWeight(QFont::Bold);

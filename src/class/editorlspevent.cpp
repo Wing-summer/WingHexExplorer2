@@ -141,13 +141,15 @@ EditorLspEvent::semanticTokensToExtraSelections(
             continue;
         }
 
-        if (t.tokenType == QStringLiteral("keyword") ||
-            t.tokenType == QStringLiteral("operator") ||
-            t.tokenType == QStringLiteral("comment") ||
-            t.tokenType == QStringLiteral("string") ||
-            t.tokenType == QStringLiteral("number") ||
-            t.tokenType == QStringLiteral("regexp")) {
-            continue;
+        if (!t.modifiers.contains("inactive")) {
+            if (t.tokenType == QStringLiteral("keyword") ||
+                t.tokenType == QStringLiteral("operator") ||
+                t.tokenType == QStringLiteral("comment") ||
+                t.tokenType == QStringLiteral("string") ||
+                t.tokenType == QStringLiteral("number") ||
+                t.tokenType == QStringLiteral("regexp")) {
+                continue;
+            }
         }
 
         const int start =

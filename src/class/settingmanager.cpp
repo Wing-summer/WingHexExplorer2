@@ -147,13 +147,15 @@ void SettingManager::load() {
         auto data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
         if (data.isValid()) {
             auto rawRules = data.toByteArray();
-            m_enabledExtPlugins = readPluginRule(rawRules);
+            // automatic enable all internal plugins
+            // WingAngelAPI is controlled by SCRIPT_ENABLE
+            m_enabledExtPlugins = readPluginRule(rawRules, {"WingCStruct"});
         }
 
         data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
         if (data.isValid()) {
             auto rawRules = data.toByteArray();
-            m_enabledDevPlugins = readPluginRule(rawRules);
+            m_enabledDevPlugins = readPluginRule(rawRules, {});
         }
     }
 
@@ -418,7 +420,8 @@ void SettingManager::checkWriteableAndWarn() {
     }
 }
 
-QStringList SettingManager::readPluginRule(const QByteArray &data) {
+QStringList SettingManager::readPluginRule(const QByteArray &data,
+                                           const QStringList &defaultValue) {
     if (!data.isEmpty()) {
         auto up = qUncompress(data);
         if (!up.isEmpty()) {
@@ -430,7 +433,7 @@ QStringList SettingManager::readPluginRule(const QByteArray &data) {
             return rlist;
         }
     }
-    return {};
+    return defaultValue;
 }
 
 QByteArray SettingManager::savePluginRule(const QStringList &rules) {

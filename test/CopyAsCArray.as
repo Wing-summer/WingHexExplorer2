@@ -8,7 +8,7 @@ string icon = ":/com.wingsummer.winghex/images/copyhex.png";
 
 enum Message { LowVersion, NoFileEdit, NoCopy, CopyClipBoard }
 
-char toHexUpper(byte value) { return "0123456789ABCDEF"[value & 0xF]; }
+char toHexUpper(int value) { return "0123456789ABCDEF"[value & 0xF]; }
 
 string trMsg(Message msg) {
 #if __LANG__ == "zh_CN"
@@ -44,7 +44,7 @@ string toHex(byte value) {
 }
 
 bool check() {
-#if __WING_VERSION_MAJOR__ * 10000 + __WING_VERSION_MINOR__  * 100 + __WING_VERSION_PATCH__ >= 20203
+#if __WING_VERSION_MAJOR__ * 10000 + __WING_VERSION_MINOR__ * 100 + __WING_VERSION_PATCH__ >= 20203
     return true;
 #else
     return false;

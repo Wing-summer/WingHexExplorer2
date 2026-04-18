@@ -212,7 +212,6 @@ private:
     ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
     void updateWindowTitle();
-    void addRecentFile(const QString &fileName);
 
     void updateRunDebugMode(bool disable = false);
 
@@ -238,6 +237,8 @@ private:
 
 public:
     ScriptEditor *openFile(const QString &filename);
+
+    void addRecentFile(ScriptEditor *editor, const QString &fileName);
 
     bool try2CloseScriptViews(const QList<ScriptEditor *> views);
 

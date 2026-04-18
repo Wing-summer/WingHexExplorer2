@@ -176,7 +176,6 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     QJsonObject params;
     params["processId"] = QCoreApplication::applicationPid();
 
-    // capabilities minimal
     QJsonObject caps;
     QJsonObject workspace;
     workspace["configuration"] = false;
@@ -186,8 +185,9 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     QJsonObject sync;
     sync["dynamicRegistration"] = false;
     td["synchronization"] = sync;
+    td["semanticTokens"] = buildSemanticTokensClientCapability();
     caps["textDocument"] = td;
-    params["capabilities"] = buildSemanticTokensClientCapability();
+    params["capabilities"] = caps;
 
     auto r = sendRequestSync(QStringLiteral("initialize"), params, timeoutMs);
     updateSemanticTokensCapabilities(r["capabilities"]);
@@ -354,7 +354,7 @@ AngelLsp::decodeSemanticTokenData(const QVector<quint32> &raw,
 
         for (int bit = 0; bit < legend.tokenModifiers.size(); ++bit) {
             if (modifierMask & (1u << bit))
-                token.modifiers.append(legend.tokenModifiers[bit]);
+                token.modifiers.append(legend.tokenModifiers[bit + 1]);
         }
 
         out.push_back(std::move(token));
@@ -483,10 +483,10 @@ QJsonObject AngelLsp::buildSemanticTokensClientCapability() {
         "macro",         "label",     "comment",   "string",        "keyword",
         "number",        "regexp",    "operator",  "keywordControl"};
 
-    semanticTokens["tokenModifiers"] =
-        QJsonArray{"declaration",   "definition",    "readonly", "static",
-                   "deprecated",    "abstract",      "async",    "modification",
-                   "documentation", "defaultLibrary"};
+    semanticTokens["tokenModifiers"] = QJsonArray{
+        "declaration",   "definition",     "readonly", "static",
+        "deprecated",    "abstract",       "async",    "modification",
+        "documentation", "defaultLibrary", "inactive"};
 
     semanticTokens["formats"] = QJsonArray{QStringLiteral("relative")};
     semanticTokens["overlappingTokenSupport"] = false;
@@ -804,7 +804,7 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             o["suppressAnalyzerErrors"] = true;
             o["includePath"] = QJsonArray();
             o["implicitMutualInclusion"] = false;
-            o["hoistEnumParentScope"] = false;
+            o["hoistEnumParentScope"] = true;
             o["explicitPropertyAccessor"] = true;
             o["allowUnicodeIdentifiers"] = true;
             o["supportsForEach"] = true;
@@ -813,6 +813,19 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             o["supportsDigitSeparators"] = true;
             o["builtinStringType"] = "string";
             o["builtinArrayType"] = "array";
+            o["excludeDirectiveProcessPatterns"] =
+                QJsonArray{"dev://as_console", "dev://as_console_mt"};
+
+            QJsonArray syms;
+            for (auto &&sym : m_defines.asKeyValueRange()) {
+                if (sym.second.isEmpty()) {
+                    syms.append(sym.first);
+                } else {
+                    syms.append(QString(sym.first + '=' + sym.second));
+                }
+            }
+            o["definedSymbols"] = syms;
+
             QJsonObject fmt;
             fmt["maxBlankLines"] = 1;
             fmt["indentSpaces"] = _indentSpace;
@@ -824,9 +837,8 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             trace["server"] = e.valueToKey(int(_traceMode));
             o["trace"] = trace;
 
-            QJsonArray j;
-            j.append(Utilities::getASPredefPath());
-            o["forceIncludePredefined"] = j;
+            o["forceIncludePredefined"] =
+                QJsonArray{Utilities::getASPredefPath()};
 
             result.append(o);
 
@@ -1005,4 +1017,8 @@ void AngelLsp::setAutofmt(bool newAutofmt) {
         WRITE_CONFIG(LSP_AUTO_FMT, newAutofmt);
         _autofmt = newAutofmt;
     }
+}
+
+void AngelLsp::defineMacroWord(const QString &word, const QString &value) {
+    m_defines.insert(word, value);
 }

@@ -205,7 +205,8 @@ shiftExpression
     ;
 
 shiftOperator
-    : Greater Greater
+    : Greater Greater Greater
+    | Greater Greater 
     | Less Less
     ;
 
@@ -258,6 +259,7 @@ assignmentOperator
     | PlusAssign
     | MinusAssign
     | RightShiftAssign
+    | ArithRightShiftAssign
     | LeftShiftAssign
     | AndAssign
     | XorAssign

@@ -19,13 +19,14 @@ public:
     Mod = 22, Xor = 23, And = 24, Or = 25, Tilde = 26, Not = 27, Assign = 28, 
     Less = 29, Greater = 30, PlusAssign = 31, MinusAssign = 32, StarAssign = 33, 
     DivAssign = 34, ModAssign = 35, XorAssign = 36, AndAssign = 37, OrAssign = 38, 
-    LeftShiftAssign = 39, RightShiftAssign = 40, Equal = 41, NotEqual = 42, 
-    LessEqual = 43, GreaterEqual = 44, AndAnd = 45, OrOr = 46, PlusPlus = 47, 
-    MinusMinus = 48, Comma = 49, Question = 50, Colon = 51, Doublecolon = 52, 
-    Semi = 53, Dot = 54, Identifier = 55, DecimalLiteral = 56, OctalLiteral = 57, 
-    HexadecimalLiteral = 58, BinaryLiteral = 59, Integersuffix = 60, UserDefinedIntegerLiteral = 61, 
-    UserDefinedFloatingLiteral = 62, UserDefinedStringLiteral = 63, UserDefinedCharacterLiteral = 64, 
-    Whitespace = 65, Newline = 66, BlockComment = 67, LineComment = 68
+    LeftShiftAssign = 39, RightShiftAssign = 40, ArithRightShiftAssign = 41, 
+    Equal = 42, NotEqual = 43, LessEqual = 44, GreaterEqual = 45, AndAnd = 46, 
+    OrOr = 47, PlusPlus = 48, MinusMinus = 49, Comma = 50, Question = 51, 
+    Colon = 52, Doublecolon = 53, Semi = 54, Dot = 55, Identifier = 56, 
+    DecimalLiteral = 57, OctalLiteral = 58, HexadecimalLiteral = 59, BinaryLiteral = 60, 
+    Integersuffix = 61, UserDefinedIntegerLiteral = 62, UserDefinedFloatingLiteral = 63, 
+    UserDefinedStringLiteral = 64, UserDefinedCharacterLiteral = 65, Whitespace = 66, 
+    Newline = 67, BlockComment = 68, LineComment = 69
   };
 
   explicit AngelscriptConsoleLexer(antlr4::CharStream *input);

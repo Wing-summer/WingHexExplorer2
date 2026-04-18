@@ -108,6 +108,8 @@ LeftShiftAssign: '<<=';
 
 RightShiftAssign: '>>=';
 
+ArithRightShiftAssign: '>>>=';
+
 Equal: '==';
 
 NotEqual: '!=';

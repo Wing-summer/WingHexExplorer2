@@ -143,8 +143,12 @@ asIScriptContext *CContextMgr::SetMainFunction(asIScriptEngine *engine,
 
     // set this manager as user data so script helpers can find it
     ctx->SetUserData(this, AsUserDataType::UserData_ContextMgr);
+
+    // other properties
     ctx->SetUserData(const_cast<QString *>(&m_scriptName),
                      AsUserDataType::UserData_Section_StringPtr);
+    ctx->SetUserData(reinterpret_cast<void *>(1),
+                     AsUserDataType::UserData_NeedYeild);
 
     // store main context and ownership flag
     m_mainCtx = ctx;

@@ -212,6 +212,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                         m_menu->removeAction(a);
                         m_menu->insertAction(hitems.first(), a);
                         hitems.move(idx, 0);
+                        m_recents.move(idx, 0);
                     }
                     Q_EMIT triggered(f);
                 } else {
@@ -241,8 +242,8 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             auto a = hitems.at(o);
             m_menu->removeAction(a);
             m_menu->insertAction(hitems.first(), a);
-            m_recents.move(o, 0);
             hitems.move(o, 0);
+            m_recents.move(o, 0);
         }
     }
 }

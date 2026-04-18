@@ -123,8 +123,6 @@ AppManager::AppManager(int &argc, char *argv[])
                     if (openFile(param, true, false, &isWs) !=
                         WingHex::Success) {
                         failedFile.append(param);
-                    } else {
-                        _w->addRecentFile(param, isWs);
                     }
                 }
                 _w->show();
@@ -147,8 +145,6 @@ AppManager::AppManager(int &argc, char *argv[])
             bool isWs;
             if (openFile(file, true, false, &isWs) != WingHex::Success) {
                 failedFile.append(file);
-            } else {
-                _w->addRecentFile(file, isWs);
             }
         }
 
@@ -189,9 +185,7 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
     EditorView *editor = nullptr;
     Q_ASSERT(_w);
 
-    if (isWorkSpace) {
-        *isWorkSpace = false;
-    }
+    bool isWS = false;
 
     ErrFile ret = ErrFile::Error;
     if (autoDetect) {
@@ -200,8 +194,8 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
             auto suffix = finfo.suffix();
             if (suffix.compare(QStringLiteral("wingpro")) == 0) {
                 ret = _w->openWorkSpace(file, &editor);
-                if (isWorkSpace && ret == ErrFile::Success) {
-                    *isWorkSpace = true;
+                if (ret == ErrFile::Success) {
+                    isWS = true;
                 }
             } else if (!skipScripting &&
                        suffix.compare(QStringLiteral("as")) == 0) {
@@ -210,6 +204,7 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
             }
         }
     }
+
     if (ret == ErrFile::Error) {
         ret = _w->openFile(file, &editor);
 
@@ -222,6 +217,9 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
             }
 
             editor->setFocus();
+            _w->addRecentFile(nullptr, file);
+        } else if (ret == ErrFile::Success) {
+            _w->addRecentFile(editor, file);
         }
     } else if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
@@ -232,6 +230,11 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         }
 
         editor->setFocus();
+        _w->addRecentFile(nullptr, file, isWS);
+    }
+
+    if (isWorkSpace) {
+        *isWorkSpace = isWS;
     }
 
     return ret;
