@@ -53,7 +53,6 @@ public:
     bool editorShowLineNumber() const;
     bool editorFolding() const;
     bool editorShowGuideLine() const;
-    bool editorShowLineEdges() const;
     bool editorShowWhiteSpace() const;
     bool consoleShowWhiteSpace() const;
     bool editorAutoCloseChar() const;
@@ -77,7 +76,6 @@ public slots:
     void setEditorShowLineNumber(bool newEditorShowLineNumber);
     void setEditorFolding(bool newEditorFolding);
     void setEditorShowGuideLine(bool newEditorShowGuidLine);
-    void setEditorShowLineEdges(bool newEditorShowLineEdges);
     void setEditorShowWhiteSpace(bool newEditorShowWhiteSpace);
     void setConsoleShowWhiteSpace(bool newConsoleShowWhiteSpace);
     void setEditorAutoCloseChar(bool newEditorAutoCloseChar);
@@ -116,7 +114,6 @@ private:
     bool m_editorShowLineNumber = true;
     bool m_editorFolding = true;
     bool m_editorShowGuideLine = true;
-    bool m_editorShowLineEdges = false;
     bool m_editorAutoIden = true;
 
     bool m_editorShowWhiteSpace = false;

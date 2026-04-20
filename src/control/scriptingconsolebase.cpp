@@ -40,9 +40,6 @@ void ScriptingConsoleBase::stdOutLine(QString str,
         return;
     }
 
-    if (str.endsWith('\n')) {
-        str.chop(1);
-    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -61,9 +58,6 @@ void ScriptingConsoleBase::stdErrLine(QString str,
         return;
     }
 
-    if (str.endsWith('\n')) {
-        str.chop(1);
-    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -82,9 +76,6 @@ void ScriptingConsoleBase::stdWarnLine(QString str,
         return;
     }
 
-    if (str.endsWith('\n')) {
-        str.chop(1);
-    }
     auto olen = this->blockCount();
     auto id = write(str);
     auto nlen = this->blockCount();
@@ -118,7 +109,9 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     auto h = consoleHighligher();
     if (blk.isValid()) {
         if (!h->isDefaultBlock(blk)) {
-            newLine();
+            if (!blk.text().isEmpty()) {
+                newLine();
+            }
         }
     }
 

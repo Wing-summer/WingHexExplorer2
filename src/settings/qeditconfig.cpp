@@ -138,8 +138,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
             &CodeEdit::setShowFolding);
     connect(ui->chkShowIndentGuides, &QCheckBox::toggled, _edit,
             &CodeEdit::setShowIndentGuides);
-    connect(ui->chkLongLineEdge, &QCheckBox::toggled, _edit,
-            &CodeEdit::setShowLongLineEdge);
     connect(ui->chkWordWrap, &QCheckBox::toggled, _edit,
             &CodeEdit::setWordWrap);
     connect(ui->chkShowWhitespace, &QCheckBox::toggled, _edit,
@@ -156,7 +154,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         ui->chkShowFolding->setEnabled(false);
         ui->chkShowIndentGuides->setEnabled(false);
         ui->chkWordWrap->setEnabled(false);
-        ui->chkLongLineEdge->setEnabled(false);
         ui->chkAutoIden->setEnabled(false);
 
         _name = tr("Console");
@@ -231,8 +228,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 &ScriptSettings::setEditorShowGuideLine);
         connect(ui->chkWordWrap, &QCheckBox::toggled, set,
                 &ScriptSettings::setEditorWordWrap);
-        connect(ui->chkLongLineEdge, &QCheckBox::toggled, set,
-                &ScriptSettings::setEditorShowLineEdges);
         connect(ui->chkShowWhitespace, &QCheckBox::toggled, set,
                 &ScriptSettings::setEditorShowWhiteSpace);
         connect(ui->chkAutoCloseChar, &QCheckBox::toggled, set,
@@ -298,7 +293,6 @@ void QEditConfig::reload() {
         ui->chkShowFolding->setChecked(set.editorFolding());
         ui->chkShowIndentGuides->setChecked(set.editorShowGuideLine());
         ui->chkWordWrap->setChecked(set.editorWordWrap());
-        ui->chkLongLineEdge->setChecked(set.editorShowLineEdges());
         ui->chkMatchBraces->setChecked(set.editorMatchBraces());
         ui->chkShowWhitespace->setChecked(set.editorShowWhiteSpace());
         ui->chkAutoCloseChar->setChecked(set.editorAutoCloseChar());

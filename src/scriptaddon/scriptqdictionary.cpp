@@ -500,16 +500,23 @@ CScriptDictValue::CScriptDictValue(asIScriptEngine *engine, void *value,
 CScriptDictValue::~CScriptDictValue() { FreeValue(); }
 
 void CScriptDictValue::FreeValue() {
-    // If it is a handle or a ref counted object, call release
-    if (m_typeId & asTYPEID_MASK_OBJECT) {
-        // Let the engine release the object
-        m_engine->ReleaseScriptObject(m_valueObj,
-                                      m_engine->GetTypeInfoById(m_typeId));
-        m_valueObj = 0;
+    if (!m_engine) {
+        m_valueObj = nullptr;
         m_typeId = 0;
+        return;
     }
 
-    // For primitives, there's nothing to do
+    if ((m_typeId & asTYPEID_MASK_OBJECT) && m_valueObj) {
+        int actualTypeId =
+            m_typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+        asITypeInfo *ti = m_engine->GetTypeInfoById(actualTypeId);
+        if (ti) {
+            m_engine->ReleaseScriptObject(m_valueObj, ti);
+        }
+    }
+
+    m_valueObj = nullptr;
+    m_typeId = 0;
 }
 
 void CScriptDictValue::ReleaseReferences(asIScriptEngine *) { FreeValue(); }
@@ -584,666 +591,441 @@ void CScriptDictValue::Set(const double &value) {
     Set(const_cast<double *>(&value), asTYPEID_DOUBLE);
 }
 
-static inline void SetScriptExceptionRange() {
-    asIScriptContext *active = asGetActiveContext();
-    if (active)
-        active->SetException("Safe conversion failed: value out of range");
+namespace {
+
+enum NumericKind { nkSigned, nkUnsigned, nkFloat };
+
+struct NumericValue {
+    NumericKind kind;
+    union {
+        asINT64 s;
+        asQWORD u;
+        double f;
+    };
+};
+
+static int resolveBaseTypeId(asIScriptEngine *engine, int typeId) {
+    if (typeId > asTYPEID_DOUBLE && (typeId & asTYPEID_MASK_OBJECT) == 0) {
+        asITypeInfo *ti = engine->GetTypeInfoById(typeId);
+        if (ti) {
+            int underlying = ti->GetUnderlyingTypeId();
+            if (underlying != 0)
+                return underlying;
+        }
+    }
+
+    return typeId;
 }
 
+static bool readNumericValue(asIScriptEngine *engine, asQWORD storedInt,
+                             double storedFlt, int sourceTypeId,
+                             NumericValue &out) {
+    int baseTypeId = resolveBaseTypeId(engine, sourceTypeId);
+
+    out.kind = nkSigned;
+    out.s = 0;
+    out.u = 0;
+    out.f = 0.0L;
+
+    switch (baseTypeId) {
+    case asTYPEID_BOOL: {
+        char v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkSigned;
+        out.s = v ? 1 : 0;
+        return true;
+    }
+    case asTYPEID_INT8: {
+        asINT8 v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkSigned;
+        out.s = v;
+        return true;
+    }
+    case asTYPEID_INT16: {
+        asINT16 v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkSigned;
+        out.s = v;
+        return true;
+    }
+    case asTYPEID_INT32: {
+        asINT32 v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkSigned;
+        out.s = v;
+        return true;
+    }
+    case asTYPEID_INT64: {
+        asINT64 v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkSigned;
+        out.s = v;
+        return true;
+    }
+    case asTYPEID_UINT8: {
+        asBYTE v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkUnsigned;
+        out.u = v;
+        return true;
+    }
+    case asTYPEID_UINT16: {
+        asWORD v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkUnsigned;
+        out.u = v;
+        return true;
+    }
+    case asTYPEID_UINT32: {
+        asDWORD v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkUnsigned;
+        out.u = v;
+        return true;
+    }
+    case asTYPEID_UINT64: {
+        asQWORD v = 0;
+        std::memcpy(&v, &storedInt, sizeof(v));
+        out.kind = nkUnsigned;
+        out.u = v;
+        return true;
+    }
+    case asTYPEID_FLOAT: {
+        float v = float(storedFlt);
+        out.kind = nkFloat;
+        out.f = v;
+        return true;
+    }
+    case asTYPEID_DOUBLE: {
+        out.kind = nkFloat;
+        out.f = storedFlt;
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
+static bool writeNumericValue(void *value, asIScriptEngine *engine,
+                              int targetTypeId, const NumericValue &src) {
+    int baseTypeId = resolveBaseTypeId(engine, targetTypeId);
+
+    switch (baseTypeId) {
+    case asTYPEID_BOOL: {
+        bool v = false;
+        if (src.kind == nkFloat)
+            v = (src.f != 0.0L);
+        else if (src.kind == nkUnsigned)
+            v = (src.u != 0);
+        else
+            v = (src.s != 0);
+
+        *(bool *)value = v;
+        return true;
+    }
+
+    case asTYPEID_INT8: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < std::numeric_limits<asINT8>::min() ||
+                src.f > std::numeric_limits<asINT8>::max())
+                return false;
+            *(asINT8 *)value = asINT8(src.f);
+            return true;
+        }
+        if (src.kind == nkUnsigned) {
+            if (src.u > std::numeric_limits<asINT8>::max())
+                return false;
+            *(asINT8 *)value = asINT8(src.u);
+            return true;
+        }
+        if (src.s < std::numeric_limits<asINT8>::min() ||
+            src.s > std::numeric_limits<asINT8>::max())
+            return false;
+        *(asINT8 *)value = asINT8(src.s);
+        return true;
+    }
+
+    case asTYPEID_INT16: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < std::numeric_limits<asINT16>::min() ||
+                src.f > std::numeric_limits<asINT16>::max())
+                return false;
+            *(asINT16 *)value = asINT16(src.f);
+            return true;
+        }
+        if (src.kind == nkUnsigned) {
+            if (src.u > std::numeric_limits<asINT16>::max())
+                return false;
+            *(asINT16 *)value = asINT16(src.u);
+            return true;
+        }
+        if (src.s < std::numeric_limits<asINT16>::min() ||
+            src.s > std::numeric_limits<asINT16>::max())
+            return false;
+        *(asINT16 *)value = asINT16(src.s);
+        return true;
+    }
+
+    case asTYPEID_INT32: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < std::numeric_limits<asINT32>::min() ||
+                src.f > std::numeric_limits<asINT32>::max())
+                return false;
+            *(asINT32 *)value = asINT32(src.f);
+            return true;
+        }
+        if (src.kind == nkUnsigned) {
+            if (src.u > std::numeric_limits<asINT32>::max())
+                return false;
+            *(asINT32 *)value = asINT32(src.u);
+            return true;
+        }
+        if (src.s < std::numeric_limits<asINT32>::min() ||
+            src.s > std::numeric_limits<asINT32>::max())
+            return false;
+        *(asINT32 *)value = asINT32(src.s);
+        return true;
+    }
+
+    case asTYPEID_INT64: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < std::numeric_limits<asINT64>::min() ||
+                src.f > double(std::numeric_limits<asINT64>::max()))
+                return false;
+            *(asINT64 *)value = asINT64(src.f);
+            return true;
+        }
+        if (src.kind == nkUnsigned) {
+            if (src.u > std::numeric_limits<asINT64>::max())
+                return false;
+            *(asINT64 *)value = asINT64(src.u);
+            return true;
+        }
+        *(asINT64 *)value = src.s;
+        return true;
+    }
+
+    case asTYPEID_UINT8: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < 0.0L || src.f > std::numeric_limits<asBYTE>::max())
+                return false;
+            *(asBYTE *)value = asBYTE(src.f);
+            return true;
+        }
+        if (src.kind == nkSigned) {
+            if (src.s < 0 || src.s > std::numeric_limits<asBYTE>::max())
+                return false;
+            *(asBYTE *)value = asBYTE(src.s);
+            return true;
+        }
+        if (src.u > std::numeric_limits<asBYTE>::max())
+            return false;
+        *(asBYTE *)value = asBYTE(src.u);
+        return true;
+    }
+
+    case asTYPEID_UINT16: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < 0.0L || src.f > std::numeric_limits<asWORD>::max())
+                return false;
+            *(asWORD *)value = asWORD(src.f);
+            return true;
+        }
+        if (src.kind == nkSigned) {
+            if (src.s < 0 || src.s > std::numeric_limits<asWORD>::max())
+                return false;
+            *(asWORD *)value = asWORD(src.s);
+            return true;
+        }
+        if (src.u > std::numeric_limits<asWORD>::max())
+            return false;
+        *(asWORD *)value = asWORD(src.u);
+        return true;
+    }
+
+    case asTYPEID_UINT32: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < 0.0L || src.f > std::numeric_limits<asDWORD>::max())
+                return false;
+            *(asDWORD *)value = asDWORD(src.f);
+            return true;
+        }
+        if (src.kind == nkSigned) {
+            if (src.s < 0 || src.s > std::numeric_limits<asDWORD>::max())
+                return false;
+            *(asDWORD *)value = asDWORD(src.s);
+            return true;
+        }
+        if (src.u > std::numeric_limits<asDWORD>::max())
+            return false;
+        *(asDWORD *)value = asDWORD(src.u);
+        return true;
+    }
+
+    case asTYPEID_UINT64: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f)
+                return false;
+            if (src.f < 0.0L ||
+                src.f > double(std::numeric_limits<asQWORD>::max()))
+                return false;
+            *(asQWORD *)value = asQWORD(src.f);
+            return true;
+        }
+        if (src.kind == nkSigned) {
+            if (src.s < 0)
+                return false;
+            *(asQWORD *)value = asQWORD(src.s);
+            return true;
+        }
+        *(asQWORD *)value = src.u;
+        return true;
+    }
+
+    case asTYPEID_FLOAT: {
+        if (src.kind == nkFloat) {
+            if (src.f != src.f) {
+                *(float *)value = float(src.f); // preserve NaN
+                return true;
+            }
+            if (src.f < -std::numeric_limits<float>::max() ||
+                src.f > std::numeric_limits<float>::max())
+                return false;
+            *(float *)value = float(src.f);
+            return true;
+        }
+
+        double v = (src.kind == nkUnsigned) ? src.u : src.s;
+        if (v < -std::numeric_limits<float>::max() ||
+            v > std::numeric_limits<float>::max())
+            return false;
+
+        *(float *)value = float(v);
+        return true;
+    }
+
+    case asTYPEID_DOUBLE: {
+        if (src.kind == nkFloat)
+            *(double *)value = src.f;
+        else if (src.kind == nkUnsigned)
+            *(double *)value = src.u;
+        else
+            *(double *)value = src.s;
+        return true;
+    }
+
+    default:
+        return false;
+    }
+}
+} // namespace
+
 bool CScriptDictValue::Get(void *value, int typeId) const {
-    // ---------------------
-    // Helpers
-    // ---------------------
-    struct CastResult {
-        bool ok;
-        bool isFloat;
-        double dval;
-        asQWORD qword;
-        CastResult() : ok(false), isFloat(false), dval(0.0), qword(0) {}
-    };
-
-    // object or handle -> primitive via opImplConv / opConv
-    auto TryObjectToPrimitive = [this](asIScriptEngine *eng,
-                                       void *storedObjOrHandle,
-                                       int storedTypeId) -> CastResult {
-        CastResult res;
-        if (!eng || !storedObjOrHandle)
-            return res;
-        if ((storedTypeId & asTYPEID_MASK_OBJECT) == 0)
-            return res;
-
-        int actualTypeId = storedTypeId;
-        void *objPtr = nullptr;
-
-        // If stored as handle, dereference to actual object pointer
-        if (storedTypeId & asTYPEID_OBJHANDLE) {
-            actualTypeId =
-                storedTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-            void **maybePtr = reinterpret_cast<void **>(storedObjOrHandle);
-            if (!maybePtr)
-                return res;
-            objPtr = *maybePtr;
-            if (!objPtr)
-                return res;
-        } else {
-            objPtr = storedObjOrHandle;
-        }
-        if (!objPtr)
-            return res;
-
-        asITypeInfo *ti = eng->GetTypeInfoById(actualTypeId);
-        if (!ti)
-            return res;
-
-        // Find opImplConv() first, then opConv()
-        asIScriptFunction *chosen = nullptr;
-        asUINT methodCount = ti->GetMethodCount();
-        for (asUINT i = 0; i < methodCount; ++i) {
-            asIScriptFunction *mf = ti->GetMethodByIndex(i, true);
-            if (!mf)
-                continue;
-            const char *name = mf->GetName();
-            if (!name)
-                continue;
-            if (strcmp(name, "opImplConv") == 0 && mf->GetParamCount() == 0) {
-                chosen = mf;
-                break;
-            }
-        }
-        if (!chosen) {
-            for (asUINT i = 0; i < methodCount; ++i) {
-                asIScriptFunction *mf = ti->GetMethodByIndex(i, true);
-                if (!mf)
-                    continue;
-                const char *name = mf->GetName();
-                if (!name)
-                    continue;
-                if (strcmp(name, "opConv") == 0 && mf->GetParamCount() == 0) {
-                    chosen = mf;
-                    break;
-                }
-            }
-        }
-        if (!chosen)
-            return res;
-
-        asIScriptContext *ctx = eng->CreateContext();
-        if (!ctx)
-            return res;
-        if (ctx->Prepare(chosen) < 0) {
-            ctx->Release();
-            return res;
-        }
-        ctx->SetObject(objPtr);
-        int exec = ctx->Execute();
-        if (exec != asEXECUTION_FINISHED) {
-            asIScriptContext *active = asGetActiveContext();
-            if (active) {
-                const char *ex = ctx->GetExceptionString();
-                if (ex)
-                    active->SetException(ex);
-            }
-            ctx->Release();
-            return res;
-        }
-
-        int retTypeId = chosen->GetReturnTypeId(nullptr);
-        if (retTypeId & asTYPEID_MASK_OBJECT) {
-            ctx->Release();
-            return res;
-        }
-
-        if (retTypeId == asTYPEID_DOUBLE) {
-            res.dval = ctx->GetReturnDouble();
-            res.isFloat = true;
-            res.ok = true;
-        } else if (retTypeId == asTYPEID_FLOAT) {
-            res.dval = double(ctx->GetReturnFloat());
-            res.isFloat = true;
-            res.ok = true;
-        } else {
-            res.qword = ctx->GetReturnQWord();
-            res.isFloat = false;
-            res.ok = true;
-        }
-        ctx->Release();
-        return res;
-    };
-
-    // Read stored primitive into normalized container
-    struct StoredPrim {
-        bool isFloat;
-        double dval;
-        asINT64 sval;
-        asQWORD uval;
-    };
-    auto ReadStoredPrimitive = [this]() -> StoredPrim {
-        StoredPrim out;
-        out.isFloat = false;
-        out.dval = 0.0;
-        out.sval = 0;
-        out.uval = 0;
-        if (m_typeId == asTYPEID_DOUBLE) {
-            out.isFloat = true;
-            out.dval = m_valueFlt;
-            return out;
-        }
-        if (m_typeId == asTYPEID_FLOAT) {
-            out.isFloat = true;
-            out.dval = double(m_valueFlt);
-            return out;
-        }
-        if (m_typeId == asTYPEID_BOOL) {
-            char b;
-            memcpy(&b, &m_valueInt, sizeof(char));
-            out.sval = b ? 1 : 0;
-            out.uval = out.sval;
-            return out;
-        }
-        if (m_typeId == asTYPEID_INT64 || m_typeId == asTYPEID_UINT64) {
-            out.sval = m_valueInt;
-            out.uval = (asQWORD)m_valueInt;
-            return out;
-        }
-        if (m_typeId > asTYPEID_DOUBLE &&
-            (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-            int tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(int));
-            out.sval = (asINT64)tmp;
-            out.uval = (asQWORD)(uint32_t)tmp;
-            return out;
-        }
-        switch (m_typeId) {
-        case asTYPEID_INT32: {
-            int tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(int));
-            out.sval = tmp;
-            out.uval = (asQWORD)(uint32_t)tmp;
-            break;
-        }
-        case asTYPEID_UINT32: {
-            unsigned tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(unsigned));
-            out.sval = tmp;
-            out.uval = (asQWORD)tmp;
-            break;
-        }
-        case asTYPEID_INT16: {
-            int16_t tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(int16_t));
-            out.sval = (asINT64)tmp;
-            out.uval = (asQWORD)(uint16_t)tmp;
-            break;
-        }
-        case asTYPEID_UINT16: {
-            uint16_t tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(uint16_t));
-            out.sval = (asINT64)tmp;
-            out.uval = (asQWORD)tmp;
-            break;
-        }
-        case asTYPEID_INT8: {
-            int8_t tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(int8_t));
-            out.sval = (asINT64)tmp;
-            out.uval = (asQWORD)(uint8_t)tmp;
-            break;
-        }
-        case asTYPEID_UINT8: {
-            uint8_t tmp;
-            memcpy(&tmp, &m_valueInt, sizeof(uint8_t));
-            out.sval = (asINT64)tmp;
-            out.uval = (asQWORD)tmp;
-            break;
-        }
-        default: {
-            out.sval = m_valueInt;
-            out.uval = (asQWORD)m_valueInt;
-            break;
-        }
-        }
-        return out;
-    };
-
-    // ---------------------
-    // Main logic
-    // ---------------------
+    // Return the value
     if (typeId & asTYPEID_OBJHANDLE) {
+        // A handle can be retrieved if the stored type is a handle of same or
+        // compatible type or if the stored type is an object that implements
+        // the interface that the handle refer to.
         if ((m_typeId & asTYPEID_MASK_OBJECT)) {
+            // Don't allow the get if the stored handle is to a const, but the
+            // desired handle is not
             if ((m_typeId & asTYPEID_HANDLETOCONST) &&
                 !(typeId & asTYPEID_HANDLETOCONST))
                 return false;
+
+            // RefCastObject will increment the refcount if successful
             m_engine->RefCastObject(m_valueObj,
                                     m_engine->GetTypeInfoById(m_typeId),
                                     m_engine->GetTypeInfoById(typeId),
                                     reinterpret_cast<void **>(value));
+
             return true;
         }
     } else if (typeId & asTYPEID_MASK_OBJECT) {
-        // Requested an object type.
+        // Verify that the copy can be made
         bool isCompatible = false;
+
+        // Allow a handle to be value assigned if the wanted type is not a
+        // handle
         if ((m_typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) ==
                 typeId &&
             m_valueObj != 0)
             isCompatible = true;
+
+        // Copy the object into the given reference
         if (isCompatible) {
             m_engine->AssignScriptObject(value, m_valueObj,
                                          m_engine->GetTypeInfoById(typeId));
             return true;
         }
-
-        // If stored is primitive, try primitive -> object (factory -> opAssign)
-        if ((m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-            asITypeInfo *tgtTi = m_engine->GetTypeInfoById(typeId);
-            if (!tgtTi)
-                return false;
-            StoredPrim stored = ReadStoredPrimitive();
-
-            // Strategy 1: try factory functions (GetFactoryCount /
-            // GetFactoryByIndex)
-            asUINT facCount = tgtTi->GetFactoryCount();
-            for (asUINT fi = 0; fi < facCount; ++fi) {
-                asIScriptFunction *fac = tgtTi->GetFactoryByIndex(fi);
-                if (!fac)
-                    continue;
-                if (fac->GetParamCount() != 1)
-                    continue;
-
-                // Use GetParam to query param type (GetParam(index, &typeId,
-                // &flags, &name))
-                int paramTypeId = 0;
-                asDWORD paramFlags = 0;
-                fac->GetParam(0, &paramTypeId, &paramFlags, nullptr, nullptr);
-
-                // Skip object-typed params for this path
-                if (paramTypeId & asTYPEID_MASK_OBJECT)
-                    continue;
-
-                // Basic compatibility: numeric/bool -> numeric param allowed
-                auto isIntLike = [&](int tid) -> bool {
-                    if (tid == asTYPEID_INT8 || tid == asTYPEID_UINT8 ||
-                        tid == asTYPEID_INT16 || tid == asTYPEID_UINT16 ||
-                        tid == asTYPEID_INT32 || tid == asTYPEID_UINT32 ||
-                        tid == asTYPEID_INT64 || tid == asTYPEID_UINT64)
-                        return true;
-                    if (tid > asTYPEID_DOUBLE &&
-                        ((tid & asTYPEID_MASK_OBJECT) == 0))
-                        return true; // enum
-                    return false;
-                };
-                auto isFloatLike = [&](int tid) -> bool {
-                    return tid == asTYPEID_FLOAT || tid == asTYPEID_DOUBLE;
-                };
-
-                bool compatible = false;
-                if (paramTypeId == m_typeId)
-                    compatible = true;
-                else if (isIntLike(m_typeId) &&
-                         (isIntLike(paramTypeId) || isFloatLike(paramTypeId)))
-                    compatible = true;
-                else if (isFloatLike(m_typeId) && isFloatLike(paramTypeId))
-                    compatible = true;
-                else if (m_typeId == asTYPEID_BOOL && isIntLike(paramTypeId))
-                    compatible = true;
-                if (!compatible)
-                    continue;
-
-                // Prepare context and set arg
-                asIScriptContext *ctx = m_engine->CreateContext();
-                if (!ctx)
-                    continue;
-                if (ctx->Prepare(fac) < 0) {
-                    ctx->Release();
-                    continue;
-                }
-
-                // Set argument by type
-                if (paramTypeId == asTYPEID_DOUBLE)
-                    ctx->SetArgDouble(0, stored.isFloat ? stored.dval
-                                                        : double(stored.sval));
-                else if (paramTypeId == asTYPEID_FLOAT)
-                    ctx->SetArgFloat(0, stored.isFloat ? (float)stored.dval
-                                                       : (float)stored.sval);
-                else if (paramTypeId == asTYPEID_INT64 ||
-                         paramTypeId == asTYPEID_UINT64)
-                    ctx->SetArgQWord(0, (asQWORD)stored.sval);
-                else
-                    ctx->SetArgDWord(0,
-                                     (asDWORD)stored.sval); // 32-bit or smaller
-
-                int exec = ctx->Execute();
-                if (exec == asEXECUTION_FINISHED) {
-                    void *retObj = ctx->GetReturnObject();
-                    if (retObj) {
-                        m_engine->AssignScriptObject(value, retObj, tgtTi);
-                        ctx->Release();
-                        return true;
-                    }
-                } else {
-                    asIScriptContext *active = asGetActiveContext();
-                    if (active) {
-                        const char *ex = ctx->GetExceptionString();
-                        if (ex)
-                            active->SetException(ex);
-                    }
-                }
-                ctx->Release();
-            } // end factories
-
-            // Strategy 2: try opAssign on target type
-            asIScriptFunction *assignMethod = nullptr;
-            asUINT methodCount = tgtTi->GetMethodCount();
-            for (asUINT mi = 0; mi < methodCount; ++mi) {
-                asIScriptFunction *mf = tgtTi->GetMethodByIndex(mi, true);
-                if (!mf)
-                    continue;
-                const char *name = mf->GetName();
-                if (!name)
-                    continue;
-                if (strcmp(name, "opAssign") != 0)
-                    continue;
-                if (mf->GetParamCount() != 1)
-                    continue;
-                int ptype = 0;
-                asDWORD pflags = 0;
-                mf->GetParam(0, &ptype, &pflags, nullptr, nullptr);
-                if (ptype & asTYPEID_MASK_OBJECT)
-                    continue;
-
-                // same compatibility test as above
-                bool compatible = false;
-                if (ptype == m_typeId)
-                    compatible = true;
-                else {
-                    auto isI = [&](int tid) -> bool {
-                        if (tid == asTYPEID_INT8 || tid == asTYPEID_UINT8 ||
-                            tid == asTYPEID_INT16 || tid == asTYPEID_UINT16 ||
-                            tid == asTYPEID_INT32 || tid == asTYPEID_UINT32 ||
-                            tid == asTYPEID_INT64 || tid == asTYPEID_UINT64)
-                            return true;
-                        if (tid > asTYPEID_DOUBLE &&
-                            ((tid & asTYPEID_MASK_OBJECT) == 0))
-                            return true;
-                        return false;
-                    };
-                    auto isF = [&](int tid) -> bool {
-                        return tid == asTYPEID_FLOAT || tid == asTYPEID_DOUBLE;
-                    };
-                    if (isI(m_typeId) && (isI(ptype) || isF(ptype)))
-                        compatible = true;
-                    if (isF(m_typeId) && isF(ptype))
-                        compatible = true;
-                    if (m_typeId == asTYPEID_BOOL && isI(ptype))
-                        compatible = true;
-                }
-                if (compatible) {
-                    assignMethod = mf;
-                    break;
-                }
-            }
-
-            if (assignMethod) {
-                // Create default object
-                void *obj = m_engine->CreateScriptObject(tgtTi);
-                if (!obj)
-                    return false;
-                asIScriptContext *ctx = m_engine->CreateContext();
-                if (!ctx) {
-                    m_engine->ReleaseScriptObject(obj, tgtTi);
-                    return false;
-                }
-                if (ctx->Prepare(assignMethod) < 0) {
-                    ctx->Release();
-                    m_engine->ReleaseScriptObject(obj, tgtTi);
-                    return false;
-                }
-                ctx->SetObject(obj);
-                int ptype = 0;
-                asDWORD pflags = 0;
-                assignMethod->GetParam(0, &ptype, &pflags, nullptr, nullptr);
-                if (ptype == asTYPEID_DOUBLE)
-                    ctx->SetArgDouble(0, stored.isFloat ? stored.dval
-                                                        : double(stored.sval));
-                else if (ptype == asTYPEID_FLOAT)
-                    ctx->SetArgFloat(0, stored.isFloat ? (float)stored.dval
-                                                       : (float)stored.sval);
-                else if (ptype == asTYPEID_INT64 || ptype == asTYPEID_UINT64)
-                    ctx->SetArgQWord(0, (asQWORD)stored.sval);
-                else
-                    ctx->SetArgDWord(0, (asDWORD)stored.sval);
-
-                int exec = ctx->Execute();
-                if (exec == asEXECUTION_FINISHED) {
-                    m_engine->AssignScriptObject(value, obj, tgtTi);
-                    ctx->Release();
-                    m_engine->ReleaseScriptObject(obj,
-                                                  tgtTi); // release temporary
-                    return true;
-                } else {
-                    asIScriptContext *active = asGetActiveContext();
-                    if (active) {
-                        const char *ex = ctx->GetExceptionString();
-                        if (ex)
-                            active->SetException(ex);
-                    }
-                }
-                ctx->Release();
-                m_engine->ReleaseScriptObject(obj, tgtTi);
-            }
-
-            return false; // nothing matched
-        } // end primitive->object attempt
     } else {
-        // Requested primitive type
-        // 1) exact match
+        // Same type: direct copy
         if (m_typeId == typeId) {
-            int size = m_engine->GetSizeOfPrimitiveType(typeId);
-            memcpy(value, &m_valueInt, size);
+            int size = m_engine->GetSizeOfPrimitiveType(
+                resolveBaseTypeId(m_engine, typeId));
+            std::memcpy(value, &m_valueInt, size);
             return true;
         }
 
-        // 2) stored is object/handle: try object->primitive conversion
-        if (m_typeId & asTYPEID_MASK_OBJECT) {
-            CastResult cr =
-                TryObjectToPrimitive(m_engine, m_valueObj, m_typeId);
-            if (!cr.ok)
+        const bool sourceIsObject = (m_typeId & asTYPEID_MASK_OBJECT) != 0;
+
+        const int sourceBaseTypeId = resolveBaseTypeId(m_engine, m_typeId);
+        const int targetBaseTypeId = resolveBaseTypeId(m_engine, typeId);
+
+        // BOOL ~ DOUBLE and enum underlying types (resolved above) are treated
+        // as a single numeric conversion domain.
+        if (!sourceIsObject && sourceBaseTypeId >= asTYPEID_BOOL &&
+            sourceBaseTypeId <= asTYPEID_DOUBLE &&
+            targetBaseTypeId >= asTYPEID_BOOL &&
+            targetBaseTypeId <= asTYPEID_DOUBLE) {
+            NumericValue src;
+            if (!readNumericValue(m_engine, m_valueInt, m_valueFlt, m_typeId,
+                                  src)) {
                 return false;
-
-            // Convert CastResult -> requested primitive (truncate float->int)
-            if (typeId == asTYPEID_DOUBLE) {
-                *(double *)value =
-                    cr.isFloat ? cr.dval : double((asINT64)cr.qword);
-                return true;
-            }
-            if (typeId == asTYPEID_FLOAT) {
-                *(float *)value =
-                    cr.isFloat ? (float)cr.dval : (float)(asINT64)cr.qword;
-                return true;
-            }
-            if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64) {
-                *(asINT64 *)value =
-                    cr.isFloat ? (asINT64)cr.dval : (asINT64)cr.qword;
-                return true;
-            }
-            if (typeId == asTYPEID_BOOL) {
-                if (cr.isFloat)
-                    *(bool *)value = (cr.dval != 0.0);
-                else
-                    *(bool *)value = ((asINT64)cr.qword != 0);
-                return true;
             }
 
-            // smaller ints: range-check (float->int truncates)
-            asINT64 src = cr.isFloat ? (asINT64)cr.dval : (asINT64)cr.qword;
-            if (typeId == asTYPEID_INT32) {
-                if (src < INT32_MIN || src > INT32_MAX) {
-                    SetScriptExceptionRange();
-                    return false;
+            if (!writeNumericValue(value, m_engine, typeId, src)) {
+                asIScriptContext *active = asGetActiveContext();
+                if (active) {
+                    active->SetException("Dictionary value safe conversion "
+                                         "failed: value out of range");
                 }
-                *(int *)value = (int)src;
-                return true;
+                return false;
             }
-            if (typeId == asTYPEID_UINT32) {
-                if (src < 0 || (asQWORD)src > 0xFFFFFFFFULL) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(unsigned *)value = (unsigned)src;
-                return true;
-            }
-            if (typeId == asTYPEID_INT16) {
-                if (src < INT16_MIN || src > INT16_MAX) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(short *)value = (short)src;
-                return true;
-            }
-            if (typeId == asTYPEID_UINT16) {
-                if (src < 0 || src > 0xFFFF) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(uint16_t *)value = (uint16_t)src;
-                return true;
-            }
-            if (typeId == asTYPEID_INT8) {
-                if (src < INT8_MIN || src > INT8_MAX) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(int8_t *)value = (int8_t)src;
-                return true;
-            }
-            if (typeId == asTYPEID_UINT8) {
-                if (src < 0 || src > 0xFF) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(uint8_t *)value = (uint8_t)src;
-                return true;
-            }
-            if (typeId > asTYPEID_DOUBLE &&
-                (typeId & asTYPEID_MASK_OBJECT) == 0) {
-                if (src < INT32_MIN || src > INT32_MAX) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(int *)value = (int)src;
-                return true;
-            }
-            return false;
-        }
-
-        // 3) both are primitives: convert stored primitive -> requested
-        // primitive
-        StoredPrim stored = ReadStoredPrimitive();
-
-        if (typeId == asTYPEID_DOUBLE) {
-            if (stored.isFloat)
-                *(double *)value = stored.dval;
-            else
-                *(double *)value = double(stored.sval);
             return true;
         }
-        if (typeId == asTYPEID_FLOAT) {
-            if (stored.isFloat)
-                *(float *)value = (float)stored.dval;
-            else
-                *(float *)value = (float)stored.sval;
-            return true;
-        }
-        if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64) {
-            if (stored.isFloat)
-                *(asINT64 *)value = (asINT64)stored.dval;
-            else
-                *(asINT64 *)value = stored.sval;
-            return true;
-        }
+
+        // Do not treat objects or handles as bool.
         if (typeId == asTYPEID_BOOL) {
-            if (stored.isFloat)
-                *(bool *)value = (stored.dval != 0.0);
-            else
-                *(bool *)value = (stored.sval != 0);
-            return true;
-        }
+            if (m_typeId & asTYPEID_MASK_OBJECT) {
+                *(bool *)value = false;
+                return false;
+            }
 
-        // smaller ints with range checks (float->int truncates)
-        if (typeId == asTYPEID_INT32) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < INT32_MIN || v > INT32_MAX) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(int *)value = (int)v;
-            return true;
-        }
-        if (typeId == asTYPEID_UINT32) {
-            if (stored.isFloat) {
-                asINT64 v = (asINT64)stored.dval;
-                if (v < 0 || (asQWORD)v > 0xFFFFFFFFULL) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(unsigned *)value = (unsigned)v;
-                return true;
-            } else {
-                if (stored.uval > 0xFFFFFFFFULL) {
-                    SetScriptExceptionRange();
-                    return false;
-                }
-                *(unsigned *)value = (unsigned)stored.uval;
-                return true;
-            }
-        }
-        if (typeId == asTYPEID_INT16) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < INT16_MIN || v > INT16_MAX) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(short *)value = (short)v;
-            return true;
-        }
-        if (typeId == asTYPEID_UINT16) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < 0 || v > 0xFFFF) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(uint16_t *)value = (uint16_t)v;
-            return true;
-        }
-        if (typeId == asTYPEID_INT8) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < INT8_MIN || v > INT8_MAX) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(int8_t *)value = (int8_t)v;
-            return true;
-        }
-        if (typeId == asTYPEID_UINT8) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < 0 || v > 0xFF) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(uint8_t *)value = (uint8_t)v;
-            return true;
-        }
-        if (typeId > asTYPEID_DOUBLE && (typeId & asTYPEID_MASK_OBJECT) == 0) {
-            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
-            if (v < INT32_MIN || v > INT32_MAX) {
-                SetScriptExceptionRange();
-                return false;
-            }
-            *(int *)value = (int)v;
+            // Primitive values keep the current numeric truthiness behavior.
+            asQWORD zero = 0;
+            int size = m_engine->GetSizeOfPrimitiveType(m_typeId);
+            *(bool *)value = std::memcmp(&m_valueInt, &zero, size) != 0;
             return true;
         }
     }
 
-    // Could not retrieve as requested type
+    // It was not possible to retrieve the value using the desired typeId
     return false;
 }
 

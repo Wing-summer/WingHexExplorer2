@@ -41,8 +41,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_LINENUMBER,
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_FOLDING, ("codeedit.folding"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_INDENTGUIDES,
                           ("codeedit.indentguides"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_LONGLINEEDGE,
-                          ("codeedit.longlineedge"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_WHITESPACE,
                           ("codeedit.whitespace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_AUTO_CLOSE_CHAR,
@@ -113,7 +111,6 @@ void ScriptSettings::load() {
     READ_CONFIG_BOOL(m_editorShowLineNumber, CODEEDIT_SHOW_LINENUMBER, true);
     READ_CONFIG_BOOL(m_editorFolding, CODEEDIT_SHOW_FOLDING, true);
     READ_CONFIG_BOOL(m_editorShowGuideLine, CODEEDIT_SHOW_INDENTGUIDES, true);
-    READ_CONFIG_BOOL(m_editorShowLineEdges, CODEEDIT_SHOW_LONGLINEEDGE, false);
     READ_CONFIG_BOOL(m_editorAutoIden, CODEEDIT_AUTO_IDEN, true);
 
     READ_CONFIG_BOOL(m_editorShowWhiteSpace, CODEEDIT_SHOW_WHITESPACE, false);
@@ -141,7 +138,6 @@ void ScriptSettings::__reset(SETTINGS cat) {
         WRITE_CONFIG(CODEEDIT_SHOW_LINENUMBER, true);
         WRITE_CONFIG(CODEEDIT_SHOW_FOLDING, true);
         WRITE_CONFIG(CODEEDIT_SHOW_INDENTGUIDES, true);
-        WRITE_CONFIG(CODEEDIT_SHOW_LONGLINEEDGE, false);
         WRITE_CONFIG(CODEEDIT_SHOW_WHITESPACE, false);
         WRITE_CONFIG(CODEEDIT_AUTO_CLOSE_CHAR, true);
         WRITE_CONFIG(CODEEDIT_AUTO_IDEN, true);
@@ -223,19 +219,6 @@ void ScriptSettings::setEditorShowWhiteSpace(bool newEditorShowWhiteSpace) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_WHITESPACE, newEditorShowWhiteSpace);
         m_editorShowWhiteSpace = newEditorShowWhiteSpace;
-        Q_EMIT editorSettingsUpdate();
-    }
-}
-
-bool ScriptSettings::editorShowLineEdges() const {
-    return m_editorShowLineEdges;
-}
-
-void ScriptSettings::setEditorShowLineEdges(bool newEditorShowLineEdges) {
-    if (m_editorShowLineEdges != newEditorShowLineEdges) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(CODEEDIT_SHOW_LONGLINEEDGE, newEditorShowLineEdges);
-        m_editorShowLineEdges = newEditorShowLineEdges;
         Q_EMIT editorSettingsUpdate();
     }
 }

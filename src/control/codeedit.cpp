@@ -336,7 +336,6 @@ void CodeEdit::applyEditorSetStyle() {
     this->setShowFolding(set.editorFolding());
     this->setShowIndentGuides(set.editorShowGuideLine());
     this->setWordWrap(set.editorWordWrap());
-    this->setShowLongLineEdge(set.editorShowLineEdges());
     this->setMatchBraces(set.editorMatchBraces());
     this->setShowWhitespace(set.editorShowWhiteSpace());
     this->setAutoCloseChar(set.editorAutoCloseChar());

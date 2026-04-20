@@ -573,6 +573,9 @@ public:
     // clear the cache context and call Resume.
     virtual void SetAction(asIDBAction new_action);
 
+    // show exception infomation when debugger receives
+    virtual void ShowExceptionInfo(asIScriptContext *ctx);
+
 protected:
     // called when the debugger is being asked to pause.
     // don't call directly, use DebugBreak.

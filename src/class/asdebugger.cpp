@@ -156,6 +156,10 @@ void asDebugger::Suspend() {
 
 void asDebugger::Resume() { resume = true; }
 
+void asDebugger::ShowExceptionInfo(asIScriptContext *ctx) {
+    ScriptMachine::instance().exceptionCallback(ctx);
+}
+
 std::unique_ptr<asIDBCache> asDebugger::CreateCache(asIScriptContext *ctx) {
     return std::make_unique<asWingCache>(*this, ctx);
 }

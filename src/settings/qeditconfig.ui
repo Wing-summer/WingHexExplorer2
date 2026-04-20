@@ -80,7 +80,7 @@
         </property>
         <property name="currentFont">
          <font>
-          <family>Tahoma</family>
+          <family>Noto Sans CJK SC</family>
          </font>
         </property>
        </widget>
@@ -161,46 +161,6 @@
       <string>Options</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="2">
-       <widget class="QCheckBox" name="chkMatchBraces">
-        <property name="text">
-         <string>MatchBraces</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QCheckBox" name="chkAutoCloseChar">
-        <property name="text">
-         <string>AutoCloseChar</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="chkShowFolding">
-        <property name="text">
-         <string>Folding</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QCheckBox" name="chkShowWhitespace">
-        <property name="text">
-         <string>Whitespace</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QCheckBox" name="chkShowLineNumber">
         <property name="text">
@@ -221,10 +181,40 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="chkLongLineEdge">
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="chkShowFolding">
         <property name="text">
-         <string>LongLineEdge</string>
+         <string>Folding</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QCheckBox" name="chkAutoCloseChar">
+        <property name="text">
+         <string>AutoCloseChar</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="chkShowWhitespace">
+        <property name="text">
+         <string>Whitespace</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="chkAutoIden">
+        <property name="text">
+         <string>AutoIden</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -241,10 +231,10 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="chkAutoIden">
+      <item row="2" column="2">
+       <widget class="QCheckBox" name="chkMatchBraces">
         <property name="text">
-         <string>AutoIden</string>
+         <string>MatchBraces</string>
         </property>
         <property name="checked">
          <bool>false</bool>

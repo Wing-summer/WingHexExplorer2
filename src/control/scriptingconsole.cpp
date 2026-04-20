@@ -177,8 +177,7 @@ void ScriptingConsole::clearConsole() {
     setEditMode(Input);
     replaceCommandLine(lastCmd);
     cur = this->textCursor();
-    cur.movePosition(QTextCursor::EndOfBlock);
-    cur.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, dis);
+    cur.movePosition(QTextCursor::End);
     setTextCursor(cur);
 }
 

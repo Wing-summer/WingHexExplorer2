@@ -188,47 +188,47 @@
 <context>
     <name>CodeEdit</name>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="484"/>
+        <location filename="../../src/control/codeedit.cpp" line="483"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="486"/>
+        <location filename="../../src/control/codeedit.cpp" line="485"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="488"/>
+        <location filename="../../src/control/codeedit.cpp" line="487"/>
         <source>Paste</source>
         <translation>粘貼</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="492"/>
+        <location filename="../../src/control/codeedit.cpp" line="491"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="496"/>
+        <location filename="../../src/control/codeedit.cpp" line="495"/>
         <source>Replace</source>
         <translation>替換</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="499"/>
+        <location filename="../../src/control/codeedit.cpp" line="498"/>
         <source>Goto</source>
         <translation>跳轉</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="504"/>
+        <location filename="../../src/control/codeedit.cpp" line="503"/>
         <source>Comment/UnComment</source>
         <translation>注釋/取消注釋</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="508"/>
+        <location filename="../../src/control/codeedit.cpp" line="507"/>
         <source>Fold/UnFold</source>
         <translation>折疊/展開</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="515"/>
+        <location filename="../../src/control/codeedit.cpp" line="514"/>
         <source>FoldAll</source>
         <translation>折疊所有</translation>
     </message>
@@ -2816,32 +2816,32 @@
         <translation>選項</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="207"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="167"/>
         <source>LineNumber</source>
         <translation>行號</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="217"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="177"/>
         <source>WordWrap</source>
         <translation>換行</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="247"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="217"/>
         <source>AutoIden</source>
         <translation>自動縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="197"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="207"/>
         <source>Whitespace</source>
         <translation>空格可見</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="177"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="197"/>
         <source>AutoCloseChar</source>
         <translation>匹配填充</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="167"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="237"/>
         <source>MatchBraces</source>
         <translation>括號匹配</translation>
     </message>
@@ -2852,11 +2852,6 @@
     </message>
     <message>
         <location filename="../../src/settings/qeditconfig.ui" line="227"/>
-        <source>LongLineEdge</source>
-        <translation>長線邊緣</translation>
-    </message>
-    <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="237"/>
         <source>IndentGuides</source>
         <translation>縮進線</translation>
     </message>
@@ -2866,32 +2861,32 @@
         <translation>跳位字元寬度</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="310"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="304"/>
         <source>Default</source>
         <translation>默認</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="323"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="317"/>
         <source>IndentMixed</source>
         <translation>混合縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="320"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="314"/>
         <source>IndentSpaces</source>
         <translation>空格縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="162"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="159"/>
         <source>Console</source>
         <translation>控制台</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="321"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="315"/>
         <source>IndentTabs</source>
         <translation>定位字元縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="166"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="163"/>
         <source>Edit</source>
         <translation>編輯</translation>
     </message>
@@ -3163,68 +3158,68 @@
         <translation>控制臺-多行輸入</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="238"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="237"/>
         <source>[Info]</source>
         <translation>【資訊】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="245"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="244"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="252"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="251"/>
         <source>[Error]</source>
         <translation>【錯誤】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="357"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="356"/>
         <source>InvalidDelCmd</source>
         <translation>無效刪除指令</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="372"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="371"/>
         <source>NotFoundIgnore:</source>
         <translation>變數未找到，忽略：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="443"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="442"/>
         <source>[Console]</source>
         <translation>【控制臺】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="652"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="651"/>
         <source>MultiCodeCanNotUndo</source>
         <translation>多行代碼粘貼後將不能修改</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="871"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="875"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="874"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="880"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
         <source>Paste</source>
         <translation>粘貼</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="885"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="916"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="884"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="915"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="891"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="890"/>
         <source>MutiConsole</source>
         <translation>多行控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="905"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="904"/>
         <source>AbortScript</source>
         <translation>終止腳本</translation>
     </message>
@@ -3232,12 +3227,12 @@
 <context>
     <name>ScriptingConsoleBase</name>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="105"/>
+        <location filename="../../src/control/scriptingconsolebase.cpp" line="96"/>
         <source>Scripting console for WingHexExplorer</source>
         <translation>羽雲十六進制編輯器腳本控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="107"/>
+        <location filename="../../src/control/scriptingconsolebase.cpp" line="98"/>
         <source>&gt;&gt;&gt;&gt; Powered by AngelScript &lt;&lt;&lt;&lt;</source>
         <translation>&gt;&gt;&gt;&gt; 由 AngelScript 引擎提供支持 &lt;&lt;&lt;&lt;</translation>
     </message>
@@ -3376,7 +3371,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="469"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2074"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2073"/>
         <source>Goto</source>
         <translation>跳轉</translation>
     </message>
@@ -3550,7 +3545,7 @@
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1600"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1629"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1655"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2036"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
@@ -3576,7 +3571,7 @@
         <translation>目的檔案被修改，是否重新載入？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2036"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
         <source>BusyRunScript</source>
         <translation>腳本運行繁忙</translation>
     </message>
@@ -3646,25 +3641,25 @@
         <translation>保存失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1728"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1727"/>
         <source>FormatCodeFailed</source>
         <translation>代碼格式化失敗</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1783"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1782"/>
         <source>LayoutRestoreBreak</source>
         <translation>編輯視圖不在同一區域，恢復佈局會破壞現有的同時可見編輯視圖的佈局，恢復後會合並，確認繼續？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1823"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1851"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1822"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1850"/>
         <source>CannotSave2RunScript</source>
         <translation>無法保存，故無法繼續運行腳本。</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="986"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1233"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1922"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1921"/>
         <source>ScriptStillRunning</source>
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>

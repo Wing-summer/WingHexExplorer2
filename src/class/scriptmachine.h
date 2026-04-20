@@ -214,6 +214,8 @@ private:
 public:
     std::string stringify_helper(const void *ref, int typeId);
 
+    void exceptionCallback(asIScriptContext *context);
+
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);
 
@@ -234,8 +236,6 @@ private:
     static void debug_break();
     static quint64 debug_elapsedTime();
     static QString debug_backtrace();
-
-    void exceptionCallback(asIScriptContext *context);
 
 private:
     void attachDebugBreak(asIScriptContext *ctx);

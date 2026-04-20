@@ -54,6 +54,8 @@ public:
     virtual void Suspend() override;
     virtual void Resume() override;
 
+    virtual void ShowExceptionInfo(asIScriptContext *ctx) override;
+
     void reset();
 signals:
     void onAdjustBreakPointLine(const QString &file, int oldLineNbr,

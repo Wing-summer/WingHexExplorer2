@@ -1299,8 +1299,10 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
 
 /*static*/ void asIDBDebugger::ExceptionCallback(asIScriptContext *ctx,
                                                  asIDBDebugger *debugger) {
-    if (!debugger->internal_execution)
+    if (!debugger->internal_execution) {
+        debugger->ShowExceptionInfo(ctx);
         debugger->DebugBreak(ctx);
+    }
 }
 
 void asIDBDebugger::HookContext(asIScriptContext *ctx, bool has_work) {
@@ -1382,3 +1384,5 @@ void asIDBDebugger::SetAction(asIDBAction new_action) {
 
     Resume();
 }
+
+void asIDBDebugger::ShowExceptionInfo(asIScriptContext *) {}
