@@ -12,9 +12,9 @@
 class  SnippetLexer : public antlr4::Lexer {
 public:
   enum {
-    TEXT_CONTENT = 1, ESCAPED_CHAR = 2, VARIABLE = 3, VARIABLE_WITH_DEFAULT = 4, 
-    PLACEHOLDER = 5, TABSTOP = 6, TABSTOP_WITH_DEFAULT = 7, CHOICE = 8, 
-    WS = 9
+    TEXT_CONTENT = 1, ESCAPED_CHAR = 2, VARIABLE = 3, VARIABLE_BRACED = 4, 
+    VARIABLE_WITH_DEFAULT = 5, PLACEHOLDER = 6, TABSTOP = 7, TABSTOP_BRACED = 8, 
+    TABSTOP_WITH_DEFAULT = 9, CHOICE = 10, WS = 11
   };
 
   explicit SnippetLexer(antlr4::CharStream *input);

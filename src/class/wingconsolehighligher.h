@@ -25,6 +25,10 @@ struct WingEditorMetaInfo {
     QString section;
     int goToLine = -1;
     int goToCol = -1;
+
+    inline bool canGoto() const {
+        return isClickable && !section.isEmpty() && goToLine > 0 && goToCol > 0;
+    }
 };
 
 class WingConsoleHighligher : public WingSyntaxHighlighter {

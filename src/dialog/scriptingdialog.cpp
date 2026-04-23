@@ -1940,9 +1940,22 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     FramelessMainWindow::closeEvent(event);
 }
 
+void ScriptingDialog::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Alt) {
+        setLinkVisible(true);
+    }
+}
+
+void ScriptingDialog::keyReleaseEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Alt) {
+        setLinkVisible(false);
+    }
+}
+
 bool ScriptingDialog::eventFilter(QObject *watched, QEvent *event) {
+    auto type = event->type();
     if (watched == m_consoleout->viewport()) {
-        if (event->type() == QEvent::MouseButtonPress) {
+        if (type == QEvent::MouseButtonPress) {
             auto e = static_cast<QMouseEvent *>(event);
             if (e->modifiers() == Qt::AltModifier) {
                 auto cursor = m_consoleout->cursorForPosition(e->pos());
@@ -1955,7 +1968,7 @@ bool ScriptingDialog::eventFilter(QObject *watched, QEvent *event) {
                         if (!view) {
                             view = openFile(info.section);
                         }
-                        if (view) {
+                        if (view && info.canGoto()) {
                             editorGotoPos(view, info.goToLine, info.goToCol);
                         }
                     }
@@ -2031,6 +2044,28 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
     updateEditModeEnabled();
 }
 
+void ScriptingDialog::setLinkVisible(bool b) {
+    auto h = m_consoleout->consoleHighligher();
+    const auto blks = m_consoleout->visibleTextBlocks();
+    for (const auto &blk : blks) {
+        auto info = h->blockEditorMetaInfo(blk);
+        if (info.isClickable && info.canGoto()) {
+            QTextCursor cursor(blk);
+            cursor.select(QTextCursor::BlockUnderCursor);
+            auto fmt = cursor.charFormat();
+            fmt.setFontUnderline(b);
+            cursor.setCharFormat(fmt);
+        }
+    }
+
+    auto view = m_consoleout->viewport();
+    if (b) {
+        view->setCursor(Qt::PointingHandCursor);
+    } else {
+        view->unsetCursor();
+    }
+}
+
 void ScriptingDialog::reportBusyScriptRun() {
     WingMessageBox::critical(this, tr("Error"), tr("BusyRunScript"));
 }
@@ -2057,23 +2092,4 @@ void ScriptingDialog::discard(EditorInfo *info) {
     }
 
     destoryEditor(editor);
-}
-
-void ScriptingDialog::keyPressEvent(QKeyEvent *event) {
-    if (event->modifiers() == Qt::AltModifier) {
-        auto pos = QCursor::pos();
-        auto rpos = m_consoleout->mapFromGlobal(pos);
-        if (rpos.x() >= 0 && rpos.y() >= 0) {
-            auto cursor = m_consoleout->cursorForPosition(rpos);
-            auto block = cursor.block();
-            auto h = m_consoleout->consoleHighligher();
-            if (h) {
-                auto info = h->blockEditorMetaInfo(block);
-                if (info.isClickable) {
-                    QToolTip::showText(pos, tr("Goto"), nullptr, {}, 3000);
-                }
-            }
-        }
-    }
-    FramelessMainWindow::keyPressEvent(event);
 }

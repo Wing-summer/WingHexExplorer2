@@ -344,6 +344,7 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
         msg.mode = mode;
         msg.row = context->GetExceptionLineNumber(&col, &section);
         msg.col = col;
+        msg.section = QString::fromUtf8(section);
         msg.type = MessageType::Error;
         msg.message = message;
 
@@ -503,6 +504,11 @@ void ScriptMachine::__outputfmt(MessageType type, asIScriptGeneric *args) {
             info.type = type;
             info.message = QString::fromStdString(r);
         } catch (const std::exception &ex) {
+            auto sectionPtr = static_cast<QString *>(context->GetUserData(
+                AsUserDataType::UserData_Section_StringPtr));
+            if (sectionPtr) {
+                info.section = *sectionPtr;
+            }
             info.type = MessageType::Error;
             info.message = QString::fromStdString(ex.what());
         }

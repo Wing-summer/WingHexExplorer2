@@ -30,14 +30,20 @@ public:
     virtual std::any visitSnippet(SnippetParser::SnippetContext *ctx) override;
     virtual std::any visitText(SnippetParser::TextContext *ctx) override;
     virtual std::any
+    visitWhiteSpace(SnippetParser::WhiteSpaceContext *ctx) override;
+    virtual std::any
     visitEscapedChar(SnippetParser::EscapedCharContext *ctx) override;
     virtual std::any
     visitVariable(SnippetParser::VariableContext *ctx) override;
+    virtual std::any
+    visitBracedVariable(SnippetParser::BracedVariableContext *ctx) override;
     virtual std::any visitVariableWithDefault(
         SnippetParser::VariableWithDefaultContext *ctx) override;
     virtual std::any
     visitPlaceholder(SnippetParser::PlaceholderContext *ctx) override;
     virtual std::any visitTabstop(SnippetParser::TabstopContext *ctx) override;
+    virtual std::any
+    visitBracedTabstop(SnippetParser::BracedTabstopContext *ctx) override;
     virtual std::any visitTabstopWithDefault(
         SnippetParser::TabstopWithDefaultContext *ctx) override;
     virtual std::any visitChoice(SnippetParser::ChoiceContext *ctx) override;
@@ -48,6 +54,7 @@ public:
 private:
     QString result_;
     qsizetype cursorOffset_;
+    QHash<QString, QString> defaultValues_;
     SnippetProcessor::Resolver resolver_;
 
     QString processEscapedChar(const QString &escaped);
@@ -72,36 +79,52 @@ SnippetExpansionVisitor::visitSnippet(SnippetParser::SnippetContext *ctx) {
 
 std::any SnippetExpansionVisitor::visitText(SnippetParser::TextContext *ctx) {
     result_.append(QString::fromStdString(ctx->TEXT_CONTENT()->getText()));
-    return defaultResult();
+    return visitChildren(ctx);
+}
+
+std::any SnippetExpansionVisitor::visitWhiteSpace(
+    SnippetParser::WhiteSpaceContext *ctx) {
+    result_.append(QString::fromStdString(ctx->WS()->getText()));
+    return visitChildren(ctx);
 }
 
 std::any SnippetExpansionVisitor::visitEscapedChar(
     SnippetParser::EscapedCharContext *ctx) {
     auto escaped = QString::fromStdString(ctx->ESCAPED_CHAR()->getText());
     result_.append(processEscapedChar(escaped));
-    return defaultResult();
+    return visitChildren(ctx);
 }
 
 std::any
 SnippetExpansionVisitor::visitVariable(SnippetParser::VariableContext *ctx) {
-    QString varText = QString::fromStdString(ctx->VARIABLE()->getText());
-    varText.slice(1);
-    result_.append(resolver_(varText));
-    return defaultResult();
+    const std::string varText = ctx->VARIABLE()->getText();
+    QString var = QString::fromUtf8(varText.data() + 1, varText.length() - 1);
+    result_.append(resolver_(var));
+    return visitChildren(ctx);
+}
+
+std::any SnippetExpansionVisitor::visitBracedVariable(
+    SnippetParser::BracedVariableContext *ctx) {
+    const std::string varText = ctx->VARIABLE_BRACED()->getText();
+    QString var = QString::fromUtf8(varText.data() + 2, varText.length() - 3);
+    result_.append(resolver_(var));
+    return visitChildren(ctx);
 }
 
 std::any SnippetExpansionVisitor::visitVariableWithDefault(
     SnippetParser::VariableWithDefaultContext *ctx) {
-    std::string varText = ctx->VARIABLE_WITH_DEFAULT()->getText();
+    const std::string varText = ctx->VARIABLE_WITH_DEFAULT()->getText();
 
     size_t colonPos = varText.find(':');
     if (colonPos != std::string::npos) {
         auto varName = varText.substr(2, colonPos - 2);
-        auto defaultValue =
-            varText.substr(colonPos + 1, varText.length() - colonPos - 2);
+        auto defaultValue = QString::fromUtf8(varText.data() + colonPos + 1,
+                                              varText.length() - colonPos - 2);
         result_.append(defaultValue);
+        auto id = QString::fromUtf8(varText.data() + 2, colonPos - 2);
+        defaultValues_.insert(id, defaultValue);
     }
-    return nullptr;
+    return visitChildren(ctx);
 }
 
 std::any SnippetExpansionVisitor::visitPlaceholder(
@@ -109,13 +132,24 @@ std::any SnippetExpansionVisitor::visitPlaceholder(
     if (cursorOffset_ < 0) {
         cursorOffset_ = result_.length();
     }
-    return defaultResult();
+    return visitChildren(ctx);
 }
 
 std::any
 SnippetExpansionVisitor::visitTabstop(SnippetParser::TabstopContext *ctx) {
-    // do nothing...
-    return defaultResult();
+    auto tabstopText = ctx->TABSTOP()->getText();
+    auto name =
+        QString::fromUtf8(tabstopText.data() + 1, tabstopText.length() - 1);
+    result_.append(defaultValues_.value(name));
+    return visitChildren(ctx);
+}
+std::any SnippetExpansionVisitor::visitBracedTabstop(
+    SnippetParser::BracedTabstopContext *ctx) {
+    auto tabstopText = ctx->TABSTOP_BRACED()->getText();
+    auto name =
+        QString::fromUtf8(tabstopText.data() + 2, tabstopText.length() - 3);
+    result_.append(defaultValues_.value(name));
+    return visitChildren(ctx);
 }
 
 std::any SnippetExpansionVisitor::visitTabstopWithDefault(
@@ -127,15 +161,18 @@ std::any SnippetExpansionVisitor::visitTabstopWithDefault(
             QString::fromUtf8(tabstopText.data() + colonPos + 1,
                               tabstopText.length() - colonPos - 2);
         result_.append(defaultValue);
+
+        auto id = QString::fromUtf8(tabstopText.data() + 2, colonPos - 2);
+        defaultValues_.insert(id, defaultValue);
     }
-    return defaultResult();
+    return visitChildren(ctx);
 }
 
 std::any
 SnippetExpansionVisitor::visitChoice(SnippetParser::ChoiceContext *ctx) {
     auto choice = QString::fromStdString(ctx->CHOICE()->getText());
     result_.append(extractChoiceFirstOption(choice));
-    return defaultResult();
+    return visitChildren(ctx);
 }
 
 QString SnippetExpansionVisitor::processEscapedChar(const QString &escaped) {

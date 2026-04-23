@@ -19,15 +19,18 @@ grammar Snippet;
 
 snippet: part* EOF;
 
-part:
-    TEXT_CONTENT          # Text
-    | ESCAPED_CHAR        # EscapedChar
-    | VARIABLE            # Variable
-    | VARIABLE_WITH_DEFAULT # VariableWithDefault
-    | PLACEHOLDER         # Placeholder
-    | TABSTOP             # Tabstop
-    | TABSTOP_WITH_DEFAULT # TabstopWithDefault
-    | CHOICE              # Choice
+part
+    : TEXT_CONTENT            # Text
+    | WS                      # WhiteSpace
+    | ESCAPED_CHAR            # EscapedChar
+    | VARIABLE                # Variable
+    | VARIABLE_BRACED         # BracedVariable
+    | VARIABLE_WITH_DEFAULT   # VariableWithDefault
+    | PLACEHOLDER             # Placeholder
+    | TABSTOP                 # Tabstop
+    | TABSTOP_BRACED          # BracedTabstop
+    | TABSTOP_WITH_DEFAULT    # TabstopWithDefault
+    | CHOICE                  # Choice
     ;
 
 TEXT_CONTENT: ~[$\r\n\\]+;
@@ -36,11 +39,15 @@ ESCAPED_CHAR: '\\' [${}[\]\\];
 
 VARIABLE: '$' IDENTIFIER;
 
+VARIABLE_BRACED: '${' IDENTIFIER '}';
+
 VARIABLE_WITH_DEFAULT: '${' IDENTIFIER ':' ~[}]* '}';
 
 PLACEHOLDER: '$0';
 
 TABSTOP: '$' [1-9] [0-9]*;
+
+TABSTOP_BRACED: '${' [1-9] [0-9]* '}';
 
 TABSTOP_WITH_DEFAULT: '${' [1-9] [0-9]* ':' ~[}]* '}';
 
@@ -50,5 +57,4 @@ fragment CHOICE_OPTIONS: ~[|}\r\n]+ (',' ~[|}\r\n]+)*;
 
 fragment IDENTIFIER: [a-zA-Z_] [a-zA-Z0-9_]*;
 
-WS: [ \t\r\n]+ -> skip;
-
+WS: [ \t\r\n]+;

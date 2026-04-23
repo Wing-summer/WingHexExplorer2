@@ -45,6 +45,8 @@ public:
     bool isTerminal() const;
     void setIsTerminal(bool newIsTerminal);
 
+    QList<QTextBlock> visibleTextBlocks() const;
+
 public:
     virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;

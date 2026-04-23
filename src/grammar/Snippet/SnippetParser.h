@@ -12,9 +12,9 @@
 class  SnippetParser : public antlr4::Parser {
 public:
   enum {
-    TEXT_CONTENT = 1, ESCAPED_CHAR = 2, VARIABLE = 3, VARIABLE_WITH_DEFAULT = 4, 
-    PLACEHOLDER = 5, TABSTOP = 6, TABSTOP_WITH_DEFAULT = 7, CHOICE = 8, 
-    WS = 9
+    TEXT_CONTENT = 1, ESCAPED_CHAR = 2, VARIABLE = 3, VARIABLE_BRACED = 4, 
+    VARIABLE_WITH_DEFAULT = 5, PLACEHOLDER = 6, TABSTOP = 7, TABSTOP_BRACED = 8, 
+    TABSTOP_WITH_DEFAULT = 9, CHOICE = 10, WS = 11
   };
 
   enum {
@@ -96,11 +96,29 @@ public:
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
+  class  BracedTabstopContext : public PartContext {
+  public:
+    BracedTabstopContext(PartContext *ctx);
+
+    antlr4::tree::TerminalNode *TABSTOP_BRACED();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
   class  EscapedCharContext : public PartContext {
   public:
     EscapedCharContext(PartContext *ctx);
 
     antlr4::tree::TerminalNode *ESCAPED_CHAR();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  BracedVariableContext : public PartContext {
+  public:
+    BracedVariableContext(PartContext *ctx);
+
+    antlr4::tree::TerminalNode *VARIABLE_BRACED();
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
@@ -128,6 +146,15 @@ public:
     TabstopContext(PartContext *ctx);
 
     antlr4::tree::TerminalNode *TABSTOP();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  WhiteSpaceContext : public PartContext {
+  public:
+    WhiteSpaceContext(PartContext *ctx);
+
+    antlr4::tree::TerminalNode *WS();
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };

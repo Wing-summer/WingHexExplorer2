@@ -23,11 +23,19 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitWhiteSpace(SnippetParser::WhiteSpaceContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitEscapedChar(SnippetParser::EscapedCharContext *ctx) override {
     return visitChildren(ctx);
   }
 
   virtual std::any visitVariable(SnippetParser::VariableContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitBracedVariable(SnippetParser::BracedVariableContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -40,6 +48,10 @@ public:
   }
 
   virtual std::any visitTabstop(SnippetParser::TabstopContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitBracedTabstop(SnippetParser::BracedTabstopContext *ctx) override {
     return visitChildren(ctx);
   }
 

@@ -3193,33 +3193,33 @@
         <translation>多行代碼粘貼後將不能修改</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="871"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="899"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="874"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="902"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="907"/>
         <source>Paste</source>
         <translation>粘貼</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="884"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="915"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="912"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="943"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="890"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="918"/>
         <source>MutiConsole</source>
         <translation>多行控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="904"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="932"/>
         <source>AbortScript</source>
         <translation>終止腳本</translation>
     </message>
@@ -3371,7 +3371,6 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="469"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2073"/>
         <source>Goto</source>
         <translation>跳轉</translation>
     </message>
@@ -3545,7 +3544,7 @@
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1600"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1629"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1655"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2070"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
@@ -3571,7 +3570,7 @@
         <translation>目的檔案被修改，是否重新載入？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2070"/>
         <source>BusyRunScript</source>
         <translation>腳本運行繁忙</translation>
     </message>

@@ -61,6 +61,11 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
             if (timeOut && mode) {
                 auto timeOut = tr("ScriptTimedOut");
                 ScriptMachine::MessageInfo info;
+                auto sectionPtr = static_cast<QString *>(ctx->GetUserData(
+                    AsUserDataType::UserData_Section_StringPtr));
+                if (sectionPtr) {
+                    info.section = *sectionPtr;
+                }
                 info.message = timeOut;
                 info.mode = ScriptMachine::ConsoleMode(mode);
                 info.type = ScriptMachine::MessageType::Error;

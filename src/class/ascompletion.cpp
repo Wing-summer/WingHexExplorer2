@@ -252,15 +252,6 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         editor->showFunctionTip(ss);
     } else {
         auto comp = v.completion();
-        if (v.isSnippet()) {
-            static constexpr auto resolver = [](const QString &) -> QString {
-                static QString str('w'); // any char is ok
-                return str;
-            };
-            SnippetProcessor snipt(resolver);
-            auto r = snipt.process(comp);
-            comp = r.expandedText;
-        }
         if (comp.endsWith(*DBL_COLON_TRIGGER)) {
             trigger(*DBL_COLON_TRIGGER, comp,
                     editor->editorPtr()->cursorRect());

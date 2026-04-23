@@ -767,6 +767,34 @@ void ScriptingConsole::setIsTerminal(bool newIsTerminal) {
     _isTerminal = newIsTerminal;
 }
 
+QList<QTextBlock> ScriptingConsole::visibleTextBlocks() const {
+    QList<QTextBlock> blocks;
+
+    auto first = firstVisibleBlock();
+    if (!first.isValid()) {
+        return {};
+    }
+
+    auto block = first;
+    auto rect = viewport()->rect();
+    auto bottom = rect.bottom();
+    while (block.isValid()) {
+        auto blockRect =
+            blockBoundingGeometry(block).translated(contentOffset()).toRect();
+
+        if (blockRect.top() > bottom)
+            break;
+
+        if (blockRect.intersects(rect)) {
+            blocks.append(block);
+        }
+
+        block = block.next();
+    }
+
+    return blocks;
+}
+
 const WingCodeEdit *ScriptingConsole::editorPtr() const { return this; }
 
 QString ScriptingConsole::lspFileNameURL() const { return lspURL(); }

@@ -288,6 +288,7 @@ private slots:
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
@@ -296,6 +297,8 @@ private:
     void destoryFakeEditor();
 
     void destoryEditor(ScriptEditor *editor);
+
+    void setLinkVisible(bool b);
 
     void reportBusyScriptRun();
 

@@ -481,7 +481,7 @@ QJsonObject AngelLsp::buildSemanticTokensClientCapability() {
         "typeParameter", "type",      "parameter", "variable",      "property",
         "enumMember",    "decorator", "event",     "function",      "method",
         "macro",         "label",     "comment",   "string",        "keyword",
-        "number",        "regexp",    "operator",  "keywordControl"};
+        "number",        "regexp",    "operator",  "controlKeyword"};
 
     semanticTokens["tokenModifiers"] = QJsonArray{
         "declaration",   "definition",     "readonly", "static",
@@ -797,14 +797,12 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             return;
         }
         if (method == QStringLiteral("workspace/configuration")) {
-            QJsonArray result;
-
             QJsonObject o;
 
             o["suppressAnalyzerErrors"] = true;
-            o["includePath"] = QJsonArray();
+            o["includePath"] = QJsonArray{};
             o["implicitMutualInclusion"] = false;
-            o["hoistEnumParentScope"] = true;
+            o["hoistEnumParentScope"] = false;
             o["explicitPropertyAccessor"] = true;
             o["allowUnicodeIdentifiers"] = true;
             o["supportsForEach"] = true;
@@ -825,27 +823,22 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
                 }
             }
             o["definedSymbols"] = syms;
-
-            QJsonObject fmt;
-            fmt["maxBlankLines"] = 1;
-            fmt["indentSpaces"] = _indentSpace;
-            fmt["useTabIndent"] = _useTabIndent;
-            o["formatter"] = fmt;
+            o["completion"] =
+                QJsonObject{{"builtinKeywords", true}, {"snippets", true}};
+            o["formatter"] = QJsonObject{{"maxBlankLines", 1},
+                                         {"indentSpaces", _indentSpace},
+                                         {"useTabIndent", _useTabIndent}};
 
             auto e = QMetaEnum::fromType<TraceMode>();
-            QJsonObject trace;
-            trace["server"] = e.valueToKey(int(_traceMode));
-            o["trace"] = trace;
+            o["trace"] = QJsonObject{{"server", e.valueToKey(int(_traceMode))}};
 
             o["forceIncludePredefined"] =
                 QJsonArray{Utilities::getASPredefPath()};
 
-            result.append(o);
-
             QJsonObject resp;
             resp["jsonrpc"] = "2.0";
             resp["id"] = id;
-            resp["result"] = result;
+            resp["result"] = QJsonArray{o};
             sendMessage(resp);
             return;
         }

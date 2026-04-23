@@ -23,15 +23,21 @@ public:
 
     virtual std::any visitText(SnippetParser::TextContext *context) = 0;
 
+    virtual std::any visitWhiteSpace(SnippetParser::WhiteSpaceContext *context) = 0;
+
     virtual std::any visitEscapedChar(SnippetParser::EscapedCharContext *context) = 0;
 
     virtual std::any visitVariable(SnippetParser::VariableContext *context) = 0;
+
+    virtual std::any visitBracedVariable(SnippetParser::BracedVariableContext *context) = 0;
 
     virtual std::any visitVariableWithDefault(SnippetParser::VariableWithDefaultContext *context) = 0;
 
     virtual std::any visitPlaceholder(SnippetParser::PlaceholderContext *context) = 0;
 
     virtual std::any visitTabstop(SnippetParser::TabstopContext *context) = 0;
+
+    virtual std::any visitBracedTabstop(SnippetParser::BracedTabstopContext *context) = 0;
 
     virtual std::any visitTabstopWithDefault(SnippetParser::TabstopWithDefaultContext *context) = 0;
 

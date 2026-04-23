@@ -3193,33 +3193,33 @@
         <translation>Multiple lines of code cannot be modified after pasting.</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="871"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="899"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="874"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="902"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="907"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="884"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="915"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="912"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="943"/>
         <source>Clear</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="890"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="918"/>
         <source>MutiConsole</source>
         <translation>Multi-line Console</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="904"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="932"/>
         <source>AbortScript</source>
         <translation>Terminate script</translation>
     </message>
@@ -3377,7 +3377,6 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="469"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2073"/>
         <source>Goto</source>
         <translation>Go to</translation>
     </message>
@@ -3631,7 +3630,7 @@
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1600"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1629"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1655"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2070"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
@@ -3679,7 +3678,7 @@
         <translation>Access denied due to file permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2035"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2070"/>
         <source>BusyRunScript</source>
         <translation>Script running busy</translation>
     </message>

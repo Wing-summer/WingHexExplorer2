@@ -55,22 +55,24 @@ void snippetParserInitialize() {
       "snippet", "part"
     },
     std::vector<std::string>{
-      "", "", "", "", "", "'$0'"
+      "", "", "", "", "", "", "'$0'"
     },
     std::vector<std::string>{
-      "", "TEXT_CONTENT", "ESCAPED_CHAR", "VARIABLE", "VARIABLE_WITH_DEFAULT", 
-      "PLACEHOLDER", "TABSTOP", "TABSTOP_WITH_DEFAULT", "CHOICE", "WS"
+      "", "TEXT_CONTENT", "ESCAPED_CHAR", "VARIABLE", "VARIABLE_BRACED", 
+      "VARIABLE_WITH_DEFAULT", "PLACEHOLDER", "TABSTOP", "TABSTOP_BRACED", 
+      "TABSTOP_WITH_DEFAULT", "CHOICE", "WS"
     }
   );
   static const int32_t serializedATNSegment[] = {
-  	4,1,9,23,2,0,7,0,2,1,7,1,1,0,5,0,6,8,0,10,0,12,0,9,9,0,1,0,1,0,1,1,1,
-  	1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,21,8,1,1,1,0,0,2,0,2,0,0,28,0,7,1,0,0,0,
-  	2,20,1,0,0,0,4,6,3,2,1,0,5,4,1,0,0,0,6,9,1,0,0,0,7,5,1,0,0,0,7,8,1,0,
-  	0,0,8,10,1,0,0,0,9,7,1,0,0,0,10,11,5,0,0,1,11,1,1,0,0,0,12,21,5,1,0,0,
-  	13,21,5,2,0,0,14,21,5,3,0,0,15,21,5,4,0,0,16,21,5,5,0,0,17,21,5,6,0,0,
-  	18,21,5,7,0,0,19,21,5,8,0,0,20,12,1,0,0,0,20,13,1,0,0,0,20,14,1,0,0,0,
-  	20,15,1,0,0,0,20,16,1,0,0,0,20,17,1,0,0,0,20,18,1,0,0,0,20,19,1,0,0,0,
-  	21,3,1,0,0,0,2,7,20
+  	4,1,11,26,2,0,7,0,2,1,7,1,1,0,5,0,6,8,0,10,0,12,0,9,9,0,1,0,1,0,1,1,1,
+  	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,24,8,1,1,1,0,0,2,0,2,0,0,34,
+  	0,7,1,0,0,0,2,23,1,0,0,0,4,6,3,2,1,0,5,4,1,0,0,0,6,9,1,0,0,0,7,5,1,0,
+  	0,0,7,8,1,0,0,0,8,10,1,0,0,0,9,7,1,0,0,0,10,11,5,0,0,1,11,1,1,0,0,0,12,
+  	24,5,1,0,0,13,24,5,11,0,0,14,24,5,2,0,0,15,24,5,3,0,0,16,24,5,4,0,0,17,
+  	24,5,5,0,0,18,24,5,6,0,0,19,24,5,7,0,0,20,24,5,8,0,0,21,24,5,9,0,0,22,
+  	24,5,10,0,0,23,12,1,0,0,0,23,13,1,0,0,0,23,14,1,0,0,0,23,15,1,0,0,0,23,
+  	16,1,0,0,0,23,17,1,0,0,0,23,18,1,0,0,0,23,19,1,0,0,0,23,20,1,0,0,0,23,
+  	21,1,0,0,0,23,22,1,0,0,0,24,3,1,0,0,0,2,7,23
   };
   staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
 
@@ -168,7 +170,7 @@ SnippetParser::SnippetContext* SnippetParser::snippet() {
     _errHandler->sync(this);
     _la = _input->LA(1);
     while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 510) != 0)) {
+      ((1ULL << _la) & 4094) != 0)) {
       setState(4);
       part();
       setState(9);
@@ -248,6 +250,21 @@ std::any SnippetParser::ChoiceContext::accept(tree::ParseTreeVisitor *visitor) {
   else
     return visitor->visitChildren(this);
 }
+//----------------- BracedTabstopContext ------------------------------------------------------------------
+
+tree::TerminalNode* SnippetParser::BracedTabstopContext::TABSTOP_BRACED() {
+  return getToken(SnippetParser::TABSTOP_BRACED, 0);
+}
+
+SnippetParser::BracedTabstopContext::BracedTabstopContext(PartContext *ctx) { copyFrom(ctx); }
+
+
+std::any SnippetParser::BracedTabstopContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SnippetVisitor*>(visitor))
+    return parserVisitor->visitBracedTabstop(this);
+  else
+    return visitor->visitChildren(this);
+}
 //----------------- EscapedCharContext ------------------------------------------------------------------
 
 tree::TerminalNode* SnippetParser::EscapedCharContext::ESCAPED_CHAR() {
@@ -260,6 +277,21 @@ SnippetParser::EscapedCharContext::EscapedCharContext(PartContext *ctx) { copyFr
 std::any SnippetParser::EscapedCharContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SnippetVisitor*>(visitor))
     return parserVisitor->visitEscapedChar(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- BracedVariableContext ------------------------------------------------------------------
+
+tree::TerminalNode* SnippetParser::BracedVariableContext::VARIABLE_BRACED() {
+  return getToken(SnippetParser::VARIABLE_BRACED, 0);
+}
+
+SnippetParser::BracedVariableContext::BracedVariableContext(PartContext *ctx) { copyFrom(ctx); }
+
+
+std::any SnippetParser::BracedVariableContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SnippetVisitor*>(visitor))
+    return parserVisitor->visitBracedVariable(this);
   else
     return visitor->visitChildren(this);
 }
@@ -308,6 +340,21 @@ std::any SnippetParser::TabstopContext::accept(tree::ParseTreeVisitor *visitor) 
   else
     return visitor->visitChildren(this);
 }
+//----------------- WhiteSpaceContext ------------------------------------------------------------------
+
+tree::TerminalNode* SnippetParser::WhiteSpaceContext::WS() {
+  return getToken(SnippetParser::WS, 0);
+}
+
+SnippetParser::WhiteSpaceContext::WhiteSpaceContext(PartContext *ctx) { copyFrom(ctx); }
+
+
+std::any SnippetParser::WhiteSpaceContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SnippetVisitor*>(visitor))
+    return parserVisitor->visitWhiteSpace(this);
+  else
+    return visitor->visitChildren(this);
+}
 //----------------- TabstopWithDefaultContext ------------------------------------------------------------------
 
 tree::TerminalNode* SnippetParser::TabstopWithDefaultContext::TABSTOP_WITH_DEFAULT() {
@@ -335,7 +382,7 @@ SnippetParser::PartContext* SnippetParser::part() {
     exitRule();
   });
   try {
-    setState(20);
+    setState(23);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case SnippetParser::TEXT_CONTENT: {
@@ -346,58 +393,82 @@ SnippetParser::PartContext* SnippetParser::part() {
         break;
       }
 
-      case SnippetParser::ESCAPED_CHAR: {
-        _localctx = _tracker.createInstance<SnippetParser::EscapedCharContext>(_localctx);
+      case SnippetParser::WS: {
+        _localctx = _tracker.createInstance<SnippetParser::WhiteSpaceContext>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(13);
+        match(SnippetParser::WS);
+        break;
+      }
+
+      case SnippetParser::ESCAPED_CHAR: {
+        _localctx = _tracker.createInstance<SnippetParser::EscapedCharContext>(_localctx);
+        enterOuterAlt(_localctx, 3);
+        setState(14);
         match(SnippetParser::ESCAPED_CHAR);
         break;
       }
 
       case SnippetParser::VARIABLE: {
         _localctx = _tracker.createInstance<SnippetParser::VariableContext>(_localctx);
-        enterOuterAlt(_localctx, 3);
-        setState(14);
+        enterOuterAlt(_localctx, 4);
+        setState(15);
         match(SnippetParser::VARIABLE);
+        break;
+      }
+
+      case SnippetParser::VARIABLE_BRACED: {
+        _localctx = _tracker.createInstance<SnippetParser::BracedVariableContext>(_localctx);
+        enterOuterAlt(_localctx, 5);
+        setState(16);
+        match(SnippetParser::VARIABLE_BRACED);
         break;
       }
 
       case SnippetParser::VARIABLE_WITH_DEFAULT: {
         _localctx = _tracker.createInstance<SnippetParser::VariableWithDefaultContext>(_localctx);
-        enterOuterAlt(_localctx, 4);
-        setState(15);
+        enterOuterAlt(_localctx, 6);
+        setState(17);
         match(SnippetParser::VARIABLE_WITH_DEFAULT);
         break;
       }
 
       case SnippetParser::PLACEHOLDER: {
         _localctx = _tracker.createInstance<SnippetParser::PlaceholderContext>(_localctx);
-        enterOuterAlt(_localctx, 5);
-        setState(16);
+        enterOuterAlt(_localctx, 7);
+        setState(18);
         match(SnippetParser::PLACEHOLDER);
         break;
       }
 
       case SnippetParser::TABSTOP: {
         _localctx = _tracker.createInstance<SnippetParser::TabstopContext>(_localctx);
-        enterOuterAlt(_localctx, 6);
-        setState(17);
+        enterOuterAlt(_localctx, 8);
+        setState(19);
         match(SnippetParser::TABSTOP);
+        break;
+      }
+
+      case SnippetParser::TABSTOP_BRACED: {
+        _localctx = _tracker.createInstance<SnippetParser::BracedTabstopContext>(_localctx);
+        enterOuterAlt(_localctx, 9);
+        setState(20);
+        match(SnippetParser::TABSTOP_BRACED);
         break;
       }
 
       case SnippetParser::TABSTOP_WITH_DEFAULT: {
         _localctx = _tracker.createInstance<SnippetParser::TabstopWithDefaultContext>(_localctx);
-        enterOuterAlt(_localctx, 7);
-        setState(18);
+        enterOuterAlt(_localctx, 10);
+        setState(21);
         match(SnippetParser::TABSTOP_WITH_DEFAULT);
         break;
       }
 
       case SnippetParser::CHOICE: {
         _localctx = _tracker.createInstance<SnippetParser::ChoiceContext>(_localctx);
-        enterOuterAlt(_localctx, 8);
-        setState(19);
+        enterOuterAlt(_localctx, 11);
+        setState(22);
         match(SnippetParser::CHOICE);
         break;
       }
