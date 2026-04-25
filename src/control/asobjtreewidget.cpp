@@ -200,3 +200,8 @@ void ASObjTreeWidget::addClassCompletion(
         c[ns].append(cls);
     }
 }
+
+void ASObjTreeWidget::focusOutEvent(QFocusEvent *event) {
+    clearSelection();
+    QTreeWidget::focusOutEvent(event);
+}

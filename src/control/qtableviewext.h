@@ -29,6 +29,10 @@ public:
 
 signals:
     void modelChanged();
+
+    // QWidget interface
+protected:
+    virtual void focusOutEvent(QFocusEvent *event) override;
 };
 
 #endif // QTABLEVIEWEXT_H

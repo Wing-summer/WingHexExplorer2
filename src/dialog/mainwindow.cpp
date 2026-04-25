@@ -251,12 +251,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 }
 
                 if (ret == ErrFile::AlreadyOpened) {
-                    if (editor && editor != m_curEditor) {
-                        editor->raise();
-                        editor->setFocus();
-                    }
-                } else {
-                    if (reportErrFileError(ret, {}, {}, {})) {
+                    editor->raise();
+                }
+                if (reportErrFileError(ret, {}, {}, {})) {
+                    if (ret != ErrFile::AlreadyOpened) {
                         editor->setTabToolTip(
                             RecentFileManager::getDisplayTooltip(rinfo, false));
                     }
@@ -509,14 +507,13 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
     CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
                                 true);
-    CDockManager::setConfigFlag(CDockManager::DontLoadInternalStyle, true);
+    CDockManager::setConfigFlag(CDockManager::DisableStylesheet, true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
     ads::CDockComponentsFactory::setFactory(new DockComponentsFactory);
 
     m_dock = new CDockManager;
-    m_dock->setStyleSheet(QString());
     m_dock->setParent(this);
     connect(m_dock, &CDockManager::focusedDockWidgetChanged, this,
             [this](CDockWidget *old, CDockWidget *now) {
@@ -2104,14 +2101,15 @@ void MainWindow::on_openworkspace() {
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
+
     if (res == ErrFile::AlreadyOpened) {
-        if (editor && editor != m_curEditor) {
+        if (editor) {
             editor->raise();
-            editor->setFocus();
         }
         addRecentFile(nullptr, filename, true);
-    } else {
-        if (reportErrFileError(res, {}, {}, {})) {
+    }
+    if (reportErrFileError(res, {}, {}, {})) {
+        if (res != ErrFile::AlreadyOpened) {
             addRecentFile(editor, filename, true);
         }
     }
@@ -4300,10 +4298,12 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         if (!okMsg.isEmpty()) {
             Toast::toast(this, toastIcon, okMsg);
         }
+        return true;
     } break;
     case WingHex::AlreadyOpened: {
         Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
                      tr("AlreadyOpened"));
+        return true;
     } break;
     case WingHex::DevNotFound: {
         WingMessageBox::critical(this, tr("Error"), tr("DevNotFound"));
@@ -4342,7 +4342,7 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
     } break;
     }
 
-    return err == WingHex::Success;
+    return false;
 }
 
 void MainWindow::addRecentFile(EditorView *editor, const QString &fileName,

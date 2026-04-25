@@ -861,12 +861,11 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
     CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
                                 true);
-    CDockManager::setConfigFlag(CDockManager::DontLoadInternalStyle, true);
+    CDockManager::setConfigFlag(CDockManager::DisableStylesheet, true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
     m_dock = new CDockManager;
-    m_dock->setStyleSheet(QString());
     m_dock->setParent(this);
     connect(m_dock, &CDockManager::focusedDockWidgetChanged, this,
             [this](CDockWidget *old, CDockWidget *now) {
@@ -1019,7 +1018,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
         auto e = editor->editor();
         e->setContentModified(true);
-        if (currentEditor() == editor &&
+        if (isVisible() && currentEditor() == editor &&
             !_curDbgData.contains(editor->fileName())) {
             reloadEditor(editor);
         } else {
@@ -1112,11 +1111,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     updateCursorPosition();
 
     if (cur && !_curDbgData.contains(cur->fileName())) {
-        auto needReload = cur->property("__RELOAD__").toBool();
-        if (needReload) {
-            reloadEditor(cur);
-            cur->setProperty("__RELOAD__", false);
-        }
+        try2ReloadEditor(cur);
     }
 }
 
@@ -1203,7 +1198,8 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
     auto e = findEditorView(filename);
     if (e) {
         e->raise();
-        e->setFocus();
+        Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
+                     tr("AlreadyOpened"));
         return e;
     }
 
@@ -1484,8 +1480,7 @@ void ScriptingDialog::updateCursorPosition() {
 }
 
 void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
-    activateWindow();
-    raise();
+    editor->raise();
     editor->editor()->document()->setModified();
     if (QFile::exists(editor->fileName())) {
         auto ret = WingMessageBox::question(this, tr("Reload"),
@@ -1499,6 +1494,19 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
                                          tr("ReloadUnSuccessfully"));
             }
         }
+    }
+}
+
+void ScriptingDialog::try2ReloadEditor(ScriptEditor *editor) {
+    Q_ASSERT(editor);
+    auto needReload = editor->property("__RELOAD__").toBool();
+    if (needReload) {
+        if (!isVisible()) {
+            show();
+            activateWindow();
+        }
+        reloadEditor(editor);
+        editor->setProperty("__RELOAD__", false);
     }
 }
 
@@ -1912,6 +1920,13 @@ void ScriptingDialog::on_removebreakpoint() {
         auto e = editor->editor();
         removeBreakPoint(editor, e->textCursor().blockNumber() + 1);
     }
+}
+
+void ScriptingDialog::showEvent(QShowEvent *event) {
+    if (m_curEditor) {
+        try2ReloadEditor(m_curEditor);
+    }
+    FramelessMainWindow::showEvent(event);
 }
 
 void ScriptingDialog::closeEvent(QCloseEvent *event) {

@@ -20,6 +20,7 @@
 #include "QHexView/document/buffer/qfilebuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 
+#include "WingPlugin/wingplugincalls_p.h"
 #include "class/compositeiconengine.h"
 #include "class/logger.h"
 #include "class/pluginsystem.h"
@@ -170,9 +171,11 @@ EditorView::EditorView(QWidget *parent)
             }
 #endif
 
-            _viewFns.insert(msig, m);
+            _api._fnTable.insert(msig, m);
         }
     }
+
+    _api._fnCaller = this;
 
     // checksum table data
     _checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
@@ -200,7 +203,7 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
     view->setProperty(VIEW_PROPERTY, quintptr(this));
     view->setProperty(VIEW_ID_PROPERTY, id);
     view->installEventFilter(this);
-    applyFunctionTables(view, _viewFns);
+    applyFunctionTables(view);
 
     if (!isCloneFile()) {
         connect(view, &WingEditorViewWidget::savedStateChanged, this,
@@ -1051,10 +1054,9 @@ FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
     }
 }
 
-void EditorView::applyFunctionTables(WingEditorViewWidget *view,
-                                     const CallTable &fns) {
-    view->setProperty("__CALL_TABLE__", QVariant::fromValue(fns));
-    view->setProperty("__CALL_POINTER__", quintptr(this));
+void EditorView::applyFunctionTables(WingEditorViewWidget *view) {
+    CallTableEvent ev(&_api);
+    QApplication::sendEvent(view, &ev);
 }
 
 QByteArray EditorView::computeFileFingerprint(QIODevice *device) {

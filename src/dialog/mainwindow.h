@@ -23,7 +23,6 @@
 #include "framelessmainwindow.h"
 
 #include <QFutureWatcher>
-#include <QListView>
 #include <QMainWindow>
 #include <QPixmap>
 #include <QReadWriteLock>

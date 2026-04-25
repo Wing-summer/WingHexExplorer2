@@ -48,6 +48,10 @@ private:
 
     void addClassCompletion(asIScriptEngine *engine,
                             QHash<QString, QList<CodeInfoTip>> &c);
+
+    // QWidget interface
+protected:
+    virtual void focusOutEvent(QFocusEvent *event) override;
 };
 
 #endif // ASOBJTREEWIDGET_H

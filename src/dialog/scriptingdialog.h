@@ -230,6 +230,7 @@ private:
     void updateCursorPosition();
 
     void reloadEditor(ScriptEditor *editor);
+    void try2ReloadEditor(ScriptEditor *editor);
 
     void updateUI();
 
@@ -286,6 +287,7 @@ private slots:
     void on_removebreakpoint();
 
 protected:
+    virtual void showEvent(QShowEvent *event) override;
     virtual void closeEvent(QCloseEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;

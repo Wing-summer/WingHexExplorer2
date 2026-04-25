@@ -26,6 +26,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
+#include "WingPlugin/wingplugincalls_p.h"
 #include "class/cryptographichash.h"
 #include "class/editorinfo.h"
 #include "class/editorviewcontext.h"
@@ -264,8 +265,7 @@ private:
     FindResultModel::FindInfo readContextFinding(qsizetype offset,
                                                  qsizetype findSize);
 
-    void applyFunctionTables(WingHex::WingEditorViewWidget *view,
-                             const CallTable &fns);
+    void applyFunctionTables(WingHex::WingEditorViewWidget *view);
 
     QByteArray computeFileFingerprint(QIODevice *device);
 
@@ -615,7 +615,7 @@ private:
     QUrl m_fileName;
 
     QReadWriteLock _rwlock;
-    CallTable _viewFns;
+    WingPluginCallsCorePrivate _api;
 
 private:
     inline static QList<EditorView *> m_instances;

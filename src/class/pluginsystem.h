@@ -32,6 +32,7 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
+#include "WingPlugin/wingplugincalls_p.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 
@@ -197,8 +198,8 @@ private:
     void loadDevicePlugin();
 
     template <typename T>
-    std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
-                                         const QDir &setdir);
+    QPair<std::optional<PluginInfo>, bool> loadPlugin(const QFileInfo &filename,
+                                                      const QDir &setdir);
 
     static QString packLoadPlgMessage(const QString &header,
                                       const QString &content);
@@ -231,7 +232,7 @@ private:
 
     void registerHexContextMenu(IWingHexEditorInterface *inter);
 
-    void applyFunctionTables(QObject *plg, const CallTable &fns);
+    void applyFunctionTables(QObject *plg);
 
     bool isPluginLoaded(const WingDependency &d);
 
@@ -267,8 +268,8 @@ public:
     // fpr crash checking
     QString currentLoadingPlugin() const;
 
-    QList<PluginInfo> blockedPlugins() const;
-    QList<PluginInfo> blockedDevPlugins() const;
+    const QList<PluginInfo> &blockedPlugins() const;
+    const QList<PluginInfo> &blockedDevPlugins() const;
 
     DependencyMap generatePluginsDepMap() const;
 
@@ -640,7 +641,7 @@ private:
                                                const char *func);
 
 private:
-    CallTable _plgFns;
+    WingPluginCallsCorePrivate _api;
 
 private:
     MainWindow *_win = nullptr;

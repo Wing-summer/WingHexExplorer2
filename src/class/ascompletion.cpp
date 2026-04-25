@@ -190,8 +190,8 @@ bool AsCompletion::processTrigger(const QString &trigger,
 QList<CodeInfoTip> AsCompletion::parseMarcos() {
     static QList<CodeInfoTip> marcos;
     if (marcos.isEmpty()) {
-        QStringList m{"if",     "else",    "endif", "ifdef",
-                      "ifndef", "include", "pragma"};
+        static QStringList m{"if",     "else",    "endif", "ifdef",
+                             "ifndef", "include", "pragma"};
         for (const auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;

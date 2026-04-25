@@ -298,8 +298,6 @@ set(CONTROL_SRC
     src/control/huecolorpickerslider.cpp
     src/control/qtableviewext.h
     src/control/qtableviewext.cpp
-    src/control/qlistviewext.h
-    src/control/qlistviewext.cpp
     src/control/asobjtreewidget.h
     src/control/asobjtreewidget.cpp
     src/control/dockwidgettab.h

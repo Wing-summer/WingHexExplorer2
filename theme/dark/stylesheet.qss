@@ -481,6 +481,7 @@ QAbstractItemView
     color: #eff0f1;
     border: 0.09em solid #202326;
     border-radius: 0.09em;
+    outline: none;
 }
 
 QTabWidget:focus,

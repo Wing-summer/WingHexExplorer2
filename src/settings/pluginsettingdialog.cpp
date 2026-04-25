@@ -79,7 +79,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     ui->plglist->clear();
 
     const auto &plugins = plgsys.plugins();
-    const auto total = plugins.size();
+    auto total = plugins.size();
     const auto deps = plgsys.generatePluginsDepMap();
     for (qsizetype i = 0; i < total; ++i) {
         auto p = plugins.at(i);
@@ -108,14 +108,22 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     }
 
     pico = ICONRES("plugindis");
-    const auto blkplgs = plgsys.blockedPlugins();
-    for (const auto &meta : blkplgs) {
+    const auto &blkplgs = plgsys.blockedPlugins();
+    const auto istart = total;
+    total = blkplgs.size();
+    for (int i = 0; i < total; ++i) {
+        auto meta = blkplgs.at(i);
         auto lwi = new QListWidgetItem(pico, meta.id);
         auto flags = lwi->flags();
         flags.setFlag(Qt::ItemIsUserCheckable);
         lwi->setFlags(flags);
         lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
         lwi->setCheckState(Qt::Unchecked);
+        auto ridx = istart + i;
+        lwi->setData(PLUGIN_DEPENDENCY_HOST,
+                     QVariant::fromValue(deps.host.at(ridx)));
+        lwi->setData(PLUGIN_DEPENDENCY_DEP,
+                     QVariant::fromValue(deps.dep.at(ridx)));
         ui->plglist->addItem(lwi);
     }
 

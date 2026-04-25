@@ -52,3 +52,8 @@ void QTableViewExt::setModel(QAbstractItemModel *model) {
 
     Q_EMIT modelChanged();
 }
+
+void QTableViewExt::focusOutEvent(QFocusEvent *event) {
+    clearSelection();
+    QTableView::focusOutEvent(event);
+}

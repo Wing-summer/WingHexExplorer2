@@ -86,7 +86,7 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
                 msig.types.append(mt);
             }
 #endif
-            _plgFns.insert(msig, m);
+            _api._fnTable.insert(msig, m);
         }
     }
 
@@ -114,6 +114,8 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
             d->Release();
         }
     };
+
+    _api._fnCaller = this;
 }
 
 PluginSystem::~PluginSystem() {}
@@ -2299,23 +2301,44 @@ IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
     return nullptr;
 }
 
-QList<PluginInfo> PluginSystem::blockedDevPlugins() const { return _blkdevs; }
+const QList<PluginInfo> &PluginSystem::blockedDevPlugins() const {
+    return _blkdevs;
+}
 
 PluginSystem::DependencyMap PluginSystem::generatePluginsDepMap() const {
-    const auto total = _loadedplgs.size();
+    const auto ltotal = _loadedplgs.size();
+    const auto btotal = _blkplgs.size();
+    const auto total = ltotal + btotal;
+
+    QList<QList<WingDependency>> cachedDeps;
+    QStringList cachedIds;
+    cachedDeps.reserve(total);
+    cachedIds.reserve(total);
+
+    for (int i = 0; i < ltotal; ++i) {
+        const auto &p = _loadedplgs.at(i);
+        const auto &info = _pinfos.value(p);
+        cachedIds.append(info.id);
+        cachedDeps.append(info.dependencies);
+    }
+
+    for (int i = 0; i < btotal; ++i) {
+        const auto &info = _blkplgs.at(i);
+        cachedIds.append(info.id);
+        cachedDeps.append(info.dependencies);
+    }
+
     DependencyMap ret;
     ret.host.resize(total);
     ret.dep.resize(total);
 
     for (qsizetype hi = 0; hi < total; ++hi) {
-        const auto &p = _loadedplgs.at(hi);
-        const auto &info = _pinfos.value(p);
-        const auto &deps = info.dependencies;
+        const auto &deps = cachedDeps.at(hi);
         QList<int> map(deps.size());
 
         const auto total = deps.size();
         for (qsizetype i = 0; i < total; ++i) {
-            auto pidx = _enabledExtIDs.indexOf(deps.at(i).puid);
+            auto pidx = cachedIds.indexOf(deps.at(i).puid);
             ret.dep[pidx].append(hi);
             map[i] = pidx;
         }
@@ -2326,7 +2349,9 @@ PluginSystem::DependencyMap PluginSystem::generatePluginsDepMap() const {
     return ret;
 }
 
-QList<PluginInfo> PluginSystem::blockedPlugins() const { return _blkplgs; }
+const QList<PluginInfo> &PluginSystem::blockedPlugins() const {
+    return _blkplgs;
+}
 
 void PluginSystem::doneRegisterScriptObj() {
     Q_ASSERT(_angelplg);
@@ -2561,7 +2586,7 @@ void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
 
 void PluginSystem::scriptPragmaBegin() { _pragmaedPlg.clear(); }
 
-qsizetype PluginSystem::pluginAPICount() const { return _plgFns.size(); }
+qsizetype PluginSystem::pluginAPICount() const { return _api._fnTable.size(); }
 
 const QList<IWingPlugin *> &PluginSystem::plugins() const {
     return _loadedplgs;
@@ -2580,8 +2605,8 @@ IWingDevice *PluginSystem::device(qsizetype index) const {
 }
 
 template <typename T>
-std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
-                                                   const QDir &setdir) {
+QPair<std::optional<PluginInfo>, bool>
+PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
 
     if (fileinfo.exists()) {
@@ -2610,22 +2635,21 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
             // OK and success
             break;
         case PluginStatus::LackDependencies: {
-            _lazyplgs.append(fileName);
-            return meta;
+            // do it later
         } break;
         case PluginStatus::InvalidID:
             Logger::critical(packLoadPlgMessage(fName, tr("InvalidPluginID")));
-            return std::nullopt;
+            return {meta, true};
         case PluginStatus::DupID:
             Logger::critical(packLoadPlgMessage(fName, tr("InvalidDupPlugin")));
-            return std::nullopt;
+            return {meta, true};
         case PluginStatus::SDKVersion:
             Logger::critical(
                 packLoadPlgMessage(fName, tr("ErrLoadPluginSDKVersion")));
-            return std::nullopt;
+            return {meta, true};
         case PluginStatus::InvalidPlugin:
             Logger::critical(packLoadPlgMessage(fName, tr("InvalidPlugin")));
-            return std::nullopt;
+            return {meta, true};
         }
 
         auto m = meta.value();
@@ -2633,14 +2657,17 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
             auto idx = _enabledExtIDs.lastIndexOf(m.id);
             if (idx < 0) {
                 _blkplgs.append(m);
-                return std::nullopt;
+                return {meta, false};
+            } else if (cret == PluginStatus::LackDependencies) {
+                _lazyplgs.append(fileName);
+                return {meta, true};
             }
             _enabledExtIDs.move(idx, _loadedplgs.size());
         } else if constexpr (std::is_same_v<T, IWingDevice>) {
             auto idx = _enabledDevIDs.lastIndexOf(m.id);
             if (idx < 0) {
                 _blkdevs.append(m);
-                return std::nullopt;
+                return {meta, false};
             }
         }
 
@@ -2648,6 +2675,11 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
         auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(packLoadPlgMessage(fName, loader.errorString()));
+            if constexpr (std::is_same_v<T, IWingPlugin>) {
+                _blkplgs.append(m);
+            } else if constexpr (std::is_same_v<T, IWingDevice>) {
+                _blkdevs.append(m);
+            }
         } else {
             retranslateMetadata(p, m);
             loadPlugin(p, m, setdir);
@@ -2655,7 +2687,7 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
         Logger::newLine();
     }
 
-    return std::nullopt;
+    return {std::nullopt, true};
 }
 
 WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
@@ -3119,8 +3151,8 @@ void PluginSystem::loadExtPlugin() {
 
         for (const auto &item : std::as_const(lazyplgs)) {
             auto r = loadPlugin<IWingPlugin>(QFileInfo(item), udir);
-            if (r) {
-                errorplg.append(r.value());
+            if (r.first && r.second) {
+                errorplg.append(r.first.value());
             }
         }
     }
@@ -3134,14 +3166,20 @@ void PluginSystem::loadExtPlugin() {
             Logger::critical(tr("- Dependencies:"));
             for (const auto &d : lplg.dependencies) {
                 Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
-                Logger::critical(QString(4, ' ') + tr("Version:") +
-                                 d.version.toString());
+                if (!d.version.isNull()) {
+                    Logger::critical(QString(4, ' ') + tr("Version:") +
+                                     d.version.toString());
+                }
             }
         }
         _lazyplgs.clear();
     }
 
-    Logger::info(tr("PluginLoadingFinished"));
+    if (_loadedplgs.size() != _enabledExtIDs.size()) {
+        qsizetype idx = _angelplg ? 1 : 0;
+        SettingManager::instance().setEnabledExtPlugins(
+            _enabledExtIDs.sliced(idx, _loadedplgs.size() - idx));
+    }
 }
 
 void PluginSystem::loadDevicePlugin() {
@@ -3164,6 +3202,11 @@ void PluginSystem::loadDevicePlugin() {
 
     for (const auto &item : plgs) {
         loadPlugin<IWingDevice>(item, udir);
+    }
+
+    if (_loadeddevs.size() != _enabledDevIDs.size()) {
+        SettingManager::instance().setEnabledDevPlugins(
+            _enabledDevIDs.first(_loadeddevs.size()));
     }
 }
 
@@ -3263,9 +3306,9 @@ void PluginSystem::registerHexContextMenu(IWingHexEditorInterface *inter) {
     }
 }
 
-void PluginSystem::applyFunctionTables(QObject *plg, const CallTable &fns) {
-    plg->setProperty("__CALL_TABLE__", QVariant::fromValue(fns));
-    plg->setProperty("__CALL_POINTER__", quintptr(this));
+void PluginSystem::applyFunctionTables(QObject *plg) {
+    CallTableEvent ev(&_api);
+    QApplication::sendEvent(plg, &ev);
 }
 
 QString PluginSystem::getPUID(IWingPluginBase *p) {
@@ -3311,7 +3354,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
-        applyFunctionTables(p, _plgFns);
+        applyFunctionTables(p);
 
         {
             std::unique_ptr<QSettings> setp(nullptr);
@@ -3360,6 +3403,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
         if (p_tr) {
             p_tr->deleteLater();
         }
+        _blkplgs.append(meta);
     }
 }
 
@@ -3378,7 +3422,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
-        applyFunctionTables(p, _plgFns);
+        applyFunctionTables(p);
 
         {
             std::unique_ptr<QSettings> setp(nullptr);
@@ -3421,17 +3465,13 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 auto ext = getPluginID(p);
                 auto res = _win->openExtFile(ext, file, &view);
 
-                if (res == ErrFile::AlreadyOpened &&
-                    view != _win->m_curEditor) {
+                if (res == ErrFile::AlreadyOpened) {
                     view->raise();
-                    view->setFocus();
-                    return;
-                } else {
-                    if (_win->reportErrFileError(res, {}, {}, {})) {
-                        RecentFileManager::RecentInfo info;
-                        info.url = Utilities::getDeviceFileName(ext, file);
-                        _win->m_recentmanager->addRecentFile(info);
-                    }
+                }
+                if (_win->reportErrFileError(res, {}, {}, {})) {
+                    RecentFileManager::RecentInfo info;
+                    info.url = Utilities::getDeviceFileName(ext, file);
+                    _win->m_recentmanager->addRecentFile(info);
                 }
             }));
 
@@ -3440,6 +3480,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
         if (p_tr) {
             p_tr->deleteLater();
         }
+        _blkdevs.append(meta);
     }
 }
 
@@ -3696,11 +3737,12 @@ void PluginSystem::loadAllPlugins() {
             if (enableplg) {
                 loadExtPlugin();
             }
+
+            Logger::info(tr("PluginLoadingFinished"));
         }
         Logger::newLine();
     }
 
-    _lazyplgs.squeeze();
     _curLoadingPlg.clear();
     _lazyplgs.squeeze();
 }
