@@ -115,6 +115,16 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     _tmenu = new QMenu(QStringLiteral("TestPlugin"));
     auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
     _tmenu->setIcon(micon);
+    _tmenu->addAction(QStringLiteral("Raise Plugin View"), this, [this]() {
+        if (_curContext) {
+            auto ws = _curContext->currentPluginEditorWidgets();
+            if (!ws.isEmpty()) {
+                auto w = ws.first();
+                w->raiseView();
+            }
+        }
+    });
+    _tmenu->addSeparator();
     for (int i = 0; i < 5; ++i) {
         auto a = new QAction(
             micon, QStringLiteral("Test - ") + QString::number(i), _tmenu);
@@ -718,4 +728,12 @@ void TestPlugin::onPaintHexEditorView(QPainter *painter, QWidget *w,
     auto rect = w->rect();
     painter->drawText(rect.right() - len - padding, height + padding, str);
     painter->restore();
+}
+
+void TestPlugin::prepareCallEditorContext(WingHex::HexEditorContext *context) {
+    _curContext = context;
+}
+
+void TestPlugin::finishCallEditorContext(WingHex::HexEditorContext *) {
+    _curContext = nullptr;
 }

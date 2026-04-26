@@ -18,16 +18,18 @@
 #ifndef EDITORVIEWCONTEXT_H
 #define EDITORVIEWCONTEXT_H
 
-#include "QHexView/qhexview.h"
 #include "WingPlugin/hexeditorcontext.h"
+
+class EditorView;
+class QHexView;
 
 class EditorViewContext : public WingHex::HexEditorContext {
 public:
-    explicit EditorViewContext(QHexView *view);
+    explicit EditorViewContext(EditorView *view);
 
     // HexEditorPalette interface
 public:
-    virtual QString docFileName() const override;
+    virtual QUrl docFileName() const override; // TODO
     virtual QFontMetricsF fontMetrics() const override;
     virtual QColor headerColor() const override;
     virtual QColor addressColor() const override;
@@ -99,14 +101,23 @@ public slots:
     virtual void update(const QRegion &r) override;
 
 public:
+    virtual QList<WingHex::WingEditorViewWidget *>
+    currentPluginEditorWidgets() const override;
+
+public:
     void setBeginLine(qsizetype newBeginLine);
     void setEndLine(qsizetype newEndLine);
     void setFirstVisibleLine(qsizetype newFirstVisibleLine);
     void setCurrentHorizontalOffset(int horizontalOffset);
+    void setCurrentPluginEditorWidget(const QStringList &ids);
+
+    EditorView *view() const;
 
 private:
-    QHexView *_view;
+    EditorView *_view;
+    QHexView *_hex;
 
+    QList<WingHex::WingEditorViewWidget *> _currentPluginEditorWidgets;
     qsizetype _beginLine = 0;
     qsizetype _endLine = 0;
     qsizetype _firstVisibleLine = 0;

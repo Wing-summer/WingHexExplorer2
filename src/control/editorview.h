@@ -254,6 +254,9 @@ public:
 
     void switchViewStackLoop(bool next);
 
+    QList<WingHex::WingEditorViewWidget *>
+    editorViewWidgets(const QStringList &ids) const;
+
 private:
     inline qsizetype findAvailCloneIndex();
 

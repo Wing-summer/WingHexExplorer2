@@ -167,9 +167,6 @@ public:
 
     void cleanUpEditorViewHandle(EditorView *view);
 
-    bool dispatchEvent(IWingPlugin::RegisteredEvent event,
-                       const QVariantList &params);
-
     WingHex::PragmaResult processPragma(const QString &section,
                                         const QString &plgId,
                                         const QStringList &params);
@@ -177,6 +174,31 @@ public:
     IWingDevice *ext2Device(const QString &ext);
 
     QStringList scriptMarcos() const;
+
+public:
+    void dispatchSelectionChangedEvent(const QByteArrayList &selections,
+                                       bool isPreview);
+    void dispatchCursorPositionChangedEvent(const QHexPosition &pos);
+    void dispatchFileOpenedEvent(WingAngelAPI::FileType type,
+                                 const QUrl &newfileName);
+    void dispatchFileClosedEvent(WingAngelAPI::FileType type,
+                                 const QUrl &fileName);
+    void dispatchFileSavedEvent(WingAngelAPI::FileType type,
+                                const QUrl &newfileName,
+                                const QUrl &oldfileName, bool isExported);
+    void dispatchFileSwitchedEvent(const QUrl &newfileName,
+                                   const QUrl &oldfileName);
+    void dispatchAppReadyEvent();
+    void dispatchPluginFileOpenedEvent(IWingPlugin *plg,
+                                       WingAngelAPI::FileType type,
+                                       const QUrl &fileName, int id);
+    void dispatchPluginFileClosedEvent(IWingPlugin *plg,
+                                       WingAngelAPI::FileType type,
+                                       const QUrl &fileName, int id);
+    bool dispatchAppClosingEvent();
+
+    void dispatchHexEditorViewPaintEvent(QPainter *painter, QWidget *w,
+                                         HexEditorContext *palette);
 
 public:
     QSet<int> scriptHandles() const;
@@ -230,7 +252,7 @@ private:
 private:
     void registerEvents(IWingPlugin *plg);
 
-    void registerHexContextMenu(IWingHexEditorInterface *inter);
+    void registerHexContextMenu(IWingPlugin *plg);
 
     void applyFunctionTables(QObject *plg);
 
@@ -260,8 +282,7 @@ private:
 
 private:
     void registerRibbonTools(const QList<WingRibbonToolBoxInfo> &tools);
-    void registeredSettingPages(const QVariant &itptr,
-                                const QList<SettingPage *> &pages);
+    void registeredSettingPages(IWingPlugin *p);
     void registerPluginDockWidgets(IWingPluginBase *p);
 
 public:
@@ -272,6 +293,8 @@ public:
     const QList<PluginInfo> &blockedDevPlugins() const;
 
     DependencyMap generatePluginsDepMap() const;
+
+    void setSwitchingContext(bool newSwitchingContext);
 
 signals:
     void pluginLoading(const QString &plgName);
@@ -671,11 +694,16 @@ private:
 
     bool _handleDirty = false;
     bool _unloading = false;
+    bool _switchingContext = false;
 
 private:
     QString _curLoadingPlg;
 
     Q_DISABLE_COPY_MOVE(PluginSystem)
+
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 };
 
 #endif // PLUGINSYSTEM_H

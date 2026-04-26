@@ -1022,7 +1022,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             !_curDbgData.contains(editor->fileName())) {
             reloadEditor(editor);
         } else {
-            editor->setProperty("__RELOAD__", true);
+            editor->setReloadLater(true);
         }
     });
 
@@ -1499,14 +1499,13 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
 
 void ScriptingDialog::try2ReloadEditor(ScriptEditor *editor) {
     Q_ASSERT(editor);
-    auto needReload = editor->property("__RELOAD__").toBool();
-    if (needReload) {
+    if (editor->reloadLater()) {
         if (!isVisible()) {
             show();
             activateWindow();
         }
         reloadEditor(editor);
-        editor->setProperty("__RELOAD__", false);
+        editor->setReloadLater(false);
     }
 }
 

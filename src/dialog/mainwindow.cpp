@@ -683,7 +683,6 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     _findResultModel = new FindResultModel(this);
     m_findresult = new QTableViewExt(this);
-    m_findresult->setProperty("EditorView", quintptr(0));
 
     Utilities::applyTableViewProperty(m_findresult);
     m_findresult->setContextMenuPolicy(
@@ -1111,7 +1110,6 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
     m_txtDecode = new QTextBrowser(this);
     m_txtDecode->setUndoRedoEnabled(false);
     m_txtDecode->setPlaceholderText(tr("PleaseSelectBytes"));
-    m_txtDecode->setProperty("__NAME__", tr("DecodeText"));
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
                               tr("DecodeText") + QStringLiteral(" (ASCII)"),
                               m_txtDecode);
@@ -1882,7 +1880,8 @@ void MainWindow::buildUpSettingDialog() {
         // check
         if (id.isEmpty()) {
             id = name;
-            auto plg = page->property("__plg__").value<IWingPlugin *>();
+            auto plg = reinterpret_cast<IWingPlugin *>(
+                page->property("__PLG__").value<quintptr>());
             Logger::warning(QStringLiteral("[") +
                             QString::fromUtf8(plg->metaObject()->className()) +
                             QStringLiteral("::") + name + QStringLiteral("] ") +
@@ -1891,7 +1890,8 @@ void MainWindow::buildUpSettingDialog() {
         }
 
         if (usedIDs.contains(id, Qt::CaseInsensitive)) {
-            auto plg = page->property("__plg__").value<IWingPlugin *>();
+            auto plg = reinterpret_cast<IWingPlugin *>(
+                page->property("__PLG__").value<quintptr>());
             Logger::critical(QStringLiteral("[") +
                              QString::fromUtf8(plg->metaObject()->className()) +
                              QStringLiteral("::") + name +
@@ -2405,9 +2405,8 @@ void MainWindow::on_encoding() {
     EncodingDialog d;
     if (d.exec()) {
         m_encoding = d.getResult();
-        m_txtDecode->setWindowTitle(
-            m_txtDecode->property("__NAME__").toString() +
-            QStringLiteral(" (") + m_encoding + QStringLiteral(")"));
+        m_txtDecode->setWindowTitle(tr("DecodeText") + QStringLiteral(" (") +
+                                    m_encoding + QStringLiteral(")"));
         on_selectionChanged();
     }
 }
@@ -2879,17 +2878,15 @@ void MainWindow::on_locChanged() {
 
     auto cursor = hexeditor->cursor();
 
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::CursorPositionChanged,
-        {QVariant::fromValue(cursor->position())});
+    PluginSystem::instance().dispatchCursorPositionChangedEvent(
+        cursor->position());
 }
 
 void MainWindow::on_selectionChanged() {
     on_locChanged();
     auto pair = updateStringDec();
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::SelectionChanged,
-        {QVariant::fromValue(pair.first), pair.second});
+    PluginSystem::instance().dispatchSelectionChangedEvent(pair.first,
+                                                           pair.second);
 }
 
 void MainWindow::on_editableAreaClicked(int area) {
@@ -3220,6 +3217,14 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
          p != m_editorViewWidgets.constKeyValueEnd(); p++) {
         for (const auto &w : p->second) {
             auto v = w->create(editor);
+            if (v->creator() != w) {
+                Logger::warning(
+                    QStringLiteral(
+                        "[%1|%2] No matching creator with eidtor view widget")
+                        .arg(w->id(), w->name()));
+                v->deleteLater();
+                continue;
+            }
             auto id = w->id();
             auto icon = w->icon();
             if (icon.isNull()) {
@@ -3304,10 +3309,8 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     menu->addAction(ta);
     ev->setEnabled(true);
 
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileOpened,
-        {editor->fileNameUrl(),
-         QVariant::fromValue(getEditorViewFileType(editor))});
+    PluginSystem::instance().dispatchFileOpenedEvent(
+        getEditorViewFileType(editor), editor->fileNameUrl());
 }
 
 void MainWindow::registerClonedEditorView(EditorView *editor) {
@@ -3533,9 +3536,12 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
     _hashModel->updateCheckSumData(cur->checkSumResult());
 
+    auto &plgsys = PluginSystem::instance();
+    plgsys.setSwitchingContext(true);
     for (const auto &menu : std::as_const(m_hexContextMenu)) {
         menu->setProperty("__CONTEXT__", quintptr(cur->editorContext()));
     }
+    plgsys.setSwitchingContext(false);
 
     _undoView->setStack(doc->undoStack());
 
@@ -3574,9 +3580,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
     }
 
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileSwitched,
-        {cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl())});
+    PluginSystem::instance().dispatchFileSwitchedEvent(
+        cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl()));
 
     _editorLock.unlock();
 }
@@ -3800,10 +3805,9 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
         if (editor->isCloneFile()) {
             editor = editor->cloneParent();
         }
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::FileSaved,
-            {QUrl::fromLocalFile(newName), url, isExport,
-             QVariant::fromValue(getEditorViewFileType(editor))});
+        PluginSystem::instance().dispatchFileSavedEvent(
+            getEditorViewFileType(editor), QUrl::fromLocalFile(newName), url,
+            isExport);
     }
     return ret;
 }
@@ -3845,9 +3849,7 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
                                                                 0);
     adjustEditorFocus(editor);
 
-    plgsys.dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileClosed,
-        {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
+    plgsys.dispatchFileClosedEvent(getEditorViewFileType(editor), fileName);
     return ErrFile::Success;
 }
 
@@ -3895,9 +3897,12 @@ void MainWindow::updateEditModeEnabled() {
             doc->canUndo());
         updateWindowTitle(editor);
     } else {
+        auto &plgsys = PluginSystem::instance();
+        plgsys.setSwitchingContext(true);
         for (const auto &menu : std::as_const(m_hexContextMenu)) {
             menu->setProperty("__CONTEXT__", {});
         }
+        plgsys.setSwitchingContext(false);
         _findResultModel->reset();
         _bookMarkModel->setDocument(nullptr);
         _metadataModel->setDocument(nullptr);
@@ -4484,8 +4489,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     // plugin first checking
-    auto closing = PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::AppClosing, {});
+    auto closing = PluginSystem::instance().dispatchAppClosingEvent();
     if (!closing) {
         event->ignore();
         return;
@@ -4559,8 +4563,7 @@ void MainWindow::showEvent(QShowEvent *event) {
             },
             Qt::SingleShotConnection);
 
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::AppReady, {});
+        PluginSystem::instance().dispatchAppReadyEvent();
         firstInit = false;
     }
 }

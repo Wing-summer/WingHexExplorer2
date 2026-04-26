@@ -1,6 +1,6 @@
 {
     "Id": "TestPlugin",
-    "SDK": 20,
+    "SDK": 21,
     "Version": "0.0.1",
     "Vendor": "WingCloudStudio",
     "Dependencies": [

@@ -96,7 +96,7 @@ QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
 }
 
 QString AsCompletion::wordSeperators() const {
-    static QString eow(QStringLiteral("~!@$%^&*()_+{}|\"<>?,/;'[]\\-="));
+    static QString eow(QStringLiteral("~!@$%^&*()+{}|\"<>?,/;'[]\\-="));
     return eow;
 }
 

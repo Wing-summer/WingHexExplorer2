@@ -72,6 +72,13 @@ public:
     onPaintHexEditorView(QPainter *painter, QWidget *w,
                          WingHex::HexEditorContext *context) override;
 
+    // IWingHexEditorInterface interface
+public:
+    virtual void
+    prepareCallEditorContext(WingHex::HexEditorContext *context) override;
+    virtual void
+    finishCallEditorContext(WingHex::HexEditorContext *context) override;
+
 private:
     QVariant test_a(const QVariantList &params);
     QVariant test_b(const QVariantList &params);
@@ -142,6 +149,7 @@ private:
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
     QList<WingHex::SettingPage *> _setpages;
     QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
+    WingHex::HexEditorContext *_curContext = nullptr;
 };
 
 #endif // TESTPLUGIN_H

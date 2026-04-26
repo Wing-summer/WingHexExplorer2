@@ -107,6 +107,7 @@ private:
     ResettableTimer *_tokentimer;
     bool _ok = true;
     bool _lastSent = true;
+    bool _reloadLater = false;
 
     QFileSystemWatcher _watcher;
 
@@ -115,6 +116,8 @@ public:
     virtual QIcon editorIcon() const override;
     virtual QString infoFileName() const override;
     virtual QString infoTooltip() const override;
+    bool reloadLater() const;
+    void setReloadLater(bool newReloadLater);
 };
 
 #endif // SCRIPTEDITOR_H

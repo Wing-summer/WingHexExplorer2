@@ -426,6 +426,12 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
+bool ScriptEditor::reloadLater() const { return _reloadLater; }
+
+void ScriptEditor::setReloadLater(bool newReloadLater) {
+    _reloadLater = newReloadLater;
+}
+
 const QList<ScriptEditor *> &ScriptEditor::instances() { return m_instances; }
 
 bool ScriptEditor::isAllClosed() {

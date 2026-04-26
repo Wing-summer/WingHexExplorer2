@@ -36,9 +36,6 @@
 
 constexpr auto CLONE_LIMIT = 3;
 
-constexpr auto VIEW_PROPERTY = "__VIEW__";
-constexpr auto VIEW_ID_PROPERTY = "__ID__";
-
 EditorView::EditorView(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
@@ -57,7 +54,7 @@ EditorView::EditorView(QWidget *parent)
     hexLayout->setSpacing(0);
     hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView(this);
-    _context = new EditorViewContext(m_hex);
+    _context = new EditorViewContext(this);
 
     connect(m_hex, &QHexView::onPaintCustomEvent, this,
             [this](int XOffset, qsizetype firstVisible, qsizetype begin,
@@ -71,9 +68,7 @@ EditorView::EditorView(QWidget *parent)
                 _context->setBeginLine(begin);
                 _context->setEndLine(end);
 
-                plgsys.dispatchEvent(
-                    IWingPlugin::RegisteredEvent::HexEditorViewPaint,
-                    {quintptr(&painter), quintptr(vp), quintptr(_context)});
+                plgsys.dispatchHexEditorViewPaintEvent(&painter, vp, _context);
             });
 
     hexLayout->addWidget(m_hex, 1);
@@ -200,8 +195,6 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
     Q_ASSERT(view);
     m_others.insert(id, view);
     m_stack->addWidget(view);
-    view->setProperty(VIEW_PROPERTY, quintptr(this));
-    view->setProperty(VIEW_ID_PROPERTY, id);
     view->installEventFilter(this);
     applyFunctionTables(view);
 
@@ -1005,6 +998,22 @@ void EditorView::switchViewStackLoop(bool next) {
         curIdx = 0;
     }
     m_stack->setCurrentIndex(curIdx);
+}
+
+QList<WingEditorViewWidget *>
+EditorView::editorViewWidgets(const QStringList &ids) const {
+    if (ids.isEmpty()) {
+        return {};
+    }
+    QList<WingEditorViewWidget *> ws;
+    ws.reserve(ids.size());
+    for (auto &id : ids) {
+        auto w = m_others.value(id);
+        if (w) {
+            ws.append(w);
+        }
+    }
+    return ws;
 }
 
 FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
@@ -2925,7 +2934,6 @@ EditorView *EditorView::clone() {
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
 
-    ev->m_hex->setWindowFilePath(m_hex->windowFilePath());
     ev->setWindowTitle(this->windowTitle() + QStringLiteral(" : ") +
                        QString::number(cloneIndex + 1));
 
@@ -3021,13 +3029,7 @@ QUrl EditorView::fileNameUrl() const {
 
 bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     auto type = event->type();
-    if (type == QEvent::DynamicPropertyChange) {
-        auto e = static_cast<QDynamicPropertyChangeEvent *>(event);
-        if (e->propertyName() == VIEW_PROPERTY ||
-            e->propertyName() == VIEW_ID_PROPERTY) {
-            std::abort();
-        }
-    } else if (type == QEvent::Wheel) {
+    if (type == QEvent::Wheel) {
         if (watched == this->tabWidget()) {
             auto e = static_cast<QWheelEvent *>(event);
             if (e->modifiers() == Qt::ControlModifier) {

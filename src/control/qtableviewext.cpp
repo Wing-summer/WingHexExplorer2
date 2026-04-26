@@ -23,8 +23,8 @@ QTableViewExt::QTableViewExt(QWidget *parent) : QTableView(parent) {
     connect(verticalScrollBar(), &QScrollBar::rangeChanged, this, [this] {
         auto model = this->model();
         if (model) {
-            auto barv = model->property("barv").toInt();
-            auto selv = model->property("selv").value<QItemSelection>();
+            auto barv = model->property("__BAR__").toInt();
+            auto selv = model->property("__SEL__").value<QItemSelection>();
             verticalScrollBar()->setValue(barv);
             selectionModel()->select(selv, QItemSelectionModel::SelectCurrent);
         }
@@ -37,10 +37,10 @@ void QTableViewExt::setModel(QAbstractItemModel *model) {
 
     auto old = this->model();
     if (old) {
-        old->setProperty("barv", barv);
+        old->setProperty("__BAR__", barv);
         auto selmod = this->selectionModel();
         auto selv = selmod->selection();
-        old->setProperty("selv", QVariant::fromValue(selv));
+        old->setProperty("__SEL__", QVariant::fromValue(selv));
     }
 
     // reset to default range without signal emited

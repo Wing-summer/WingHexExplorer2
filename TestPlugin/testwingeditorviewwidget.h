@@ -21,7 +21,7 @@
 #ifndef TESTWINGEDITORVIEWWIDGET_H
 #define TESTWINGEDITORVIEWWIDGET_H
 
-#include "WingPlugin/iwingplugin.h"
+#include "WingPlugin/wingeditorviewwidget.h"
 
 #include <QLabel>
 
@@ -40,12 +40,13 @@ public:
 
     public:
         virtual WingEditorViewWidget *create(QWidget *parent) const override {
-            return new TestWingEditorViewWidget(parent);
+            return new TestWingEditorViewWidget(this, parent);
         }
     };
 
 public:
-    explicit TestWingEditorViewWidget(QWidget *parent = nullptr);
+    explicit TestWingEditorViewWidget(const Creator *creator,
+                                      QWidget *parent = nullptr);
     virtual ~TestWingEditorViewWidget();
 
     void setEnableMeta(bool b);
