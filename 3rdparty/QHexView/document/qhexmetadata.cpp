@@ -405,7 +405,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
                 }
                 if (meta.begin <= offset && meta.end > offset) {
                     if (meta.begin > meta.end - length) {
-                        meta.flag = true;
+                        meta.adjflag = true;
                     } else {
                         meta.end -= length;
                     }
@@ -415,7 +415,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
                 }
             });
 
-        auto rmfn = [](const QHexMetadataItem &meta) { return meta.flag; };
+        auto rmfn = [](const QHexMetadataItem &meta) { return meta.adjflag; };
 
         std::copy_if(
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -435,7 +435,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
         Q_EMIT metadataChanged();
 
         QtConcurrent::blockingMap(
-            rmmetas, [](QHexMetadataItem &meta) { meta.flag = false; });
+            rmmetas, [](QHexMetadataItem &meta) { meta.adjflag = false; });
     }
 
     return rmmetas;
@@ -550,7 +550,6 @@ void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
     for (const auto &idx : r.inserted) {
         addMetaLines(m_metadata.at(idx));
     }
-    addMetaLines(mi);
 }
 
 void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {

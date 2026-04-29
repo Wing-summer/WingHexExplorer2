@@ -37,8 +37,7 @@ int BookMarkAddCommand::id() const { return UndoID_BookMarkAdd; }
 bool BookMarkAddCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const BookMarkAddCommand *>(other);
     if (ucmd) {
-        if (this->m_pos == ucmd->m_pos) {
-            this->m_comment = m_comment;
+        if (this->m_pos == ucmd->m_pos && this->m_comment == m_comment) {
             return true;
         }
     }

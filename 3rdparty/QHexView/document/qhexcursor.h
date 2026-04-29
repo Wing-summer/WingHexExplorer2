@@ -80,7 +80,7 @@ struct QHexPosition {
 };
 Q_DECLARE_METATYPE(QHexPosition)
 
-struct QHexSelection : QHexRegionObject<QHexPosition, QHexSelection> {
+struct QHexSelection final : QHexRegionObject<QHexPosition, QHexSelection> {
     inline QHexSelection() = default;
 
     inline explicit QHexSelection(const QHexPosition &begin,

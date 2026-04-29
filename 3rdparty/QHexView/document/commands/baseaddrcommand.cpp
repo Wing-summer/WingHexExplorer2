@@ -41,9 +41,7 @@ int BaseAddrCommand::id() const { return UndoID_SetBaseAddr; }
 
 bool BaseAddrCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const BaseAddrCommand *>(other);
-    if (ucmd && ucmd->m_doc == this->m_doc) {
-        this->m_new = ucmd->m_new;
-        setText(constructText(this->m_old, this->m_new));
+    if (ucmd && this->m_new == ucmd->m_new) {
         return true;
     }
     return false;

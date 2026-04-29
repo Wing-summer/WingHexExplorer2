@@ -21,6 +21,7 @@
 
 #include "metaremovecommand.h"
 
+namespace {
 inline QString constructText(const QHexMetadataItem &meta) {
     auto buffer = QStringLiteral("[M-] {pos: %1-0x%2} ")
                       .arg(QString::number(meta.begin),
@@ -36,6 +37,7 @@ inline QString constructText(const QHexMetadataItem &meta) {
     }
     return buffer;
 }
+} // namespace
 
 MetaRemoveCommand::MetaRemoveCommand(QHexMetadata *hexmeta,
                                      const QHexMetadataItem &meta,
@@ -49,7 +51,8 @@ int MetaRemoveCommand::id() const { return UndoID_MetaRemove; }
 bool MetaRemoveCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const MetaRemoveCommand *>(other);
     if (ucmd) {
-        return this->m_meta == ucmd->m_meta;
+        return this->m_meta.begin == ucmd->m_meta.begin &&
+               this->m_meta.end == ucmd->m_meta.end;
     }
     return false;
 }

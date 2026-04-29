@@ -95,18 +95,24 @@ struct QHexRegionObject {
 private:
     bool _valid = true;
 
-protected:
-    T next(const T &obj) const {
+public:
+    inline static T next(const T &obj) {
         T ret(obj);
         ++ret;
         return ret;
     }
 
-public:
-    T begin;
-    T end;
+    inline static T prev(const T &obj) {
+        T ret(obj);
+        --ret;
+        return ret;
+    }
 
-    void normalize(QMutex *locker = nullptr) {
+public:
+    T begin{};
+    T end{};
+
+    inline void normalize(QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         if (locker) {
             locker->lock();
@@ -119,30 +125,30 @@ public:
         }
     }
 
-    qsizetype length() const {
+    inline qsizetype length() const {
         Q_ASSERT(isValid());
         return qAbs(end - begin) + 1;
     }
 
-    bool contains(const P &sel) const {
+    inline bool contains(const P &sel) const {
         static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         return this->begin <= sel.begin && this->end >= sel.end;
     }
 
-    bool contains(const T &offset) const {
+    inline bool contains(const T &offset) const {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         return this->begin <= offset && this->end >= offset;
     }
 
-    bool isNormalized() const {
+    inline bool isNormalized() const {
         Q_ASSERT(isValid());
         return end >= begin;
     }
 
-    P normalized() const {
+    inline P normalized() const {
         static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
         Q_ASSERT(isValid());
         P sel = *reinterpret_cast<const P *>(this);
@@ -152,20 +158,20 @@ public:
         return sel;
     }
 
-    bool isIntersected(const P &sel) const {
+    inline bool isIntersected(const P &sel) const {
         static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         return !(sel.end < begin || sel.begin > end);
     }
 
-    bool canMerge(const P &sel) const {
+    inline bool canMerge(const P &sel) const {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         return !(next(sel.end) < this->begin || sel.begin > next(this->end));
     }
 
-    bool intersect(const P &sel, QMutex *locker = nullptr) {
+    inline bool intersect(const P &sel, QMutex *locker = nullptr) {
         static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
@@ -186,7 +192,7 @@ public:
         return true;
     }
 
-    Q_REQUIRED_RESULT virtual std::variant<bool, P>
+    inline virtual std::variant<bool, P>
     removeRegion(const P &sel, QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
@@ -236,8 +242,8 @@ public:
         return result;
     }
 
-    virtual std::variant<bool, P> mergeRegion(const P &sel,
-                                              QMutex *locker = nullptr) {
+    inline virtual std::variant<bool, P> mergeRegion(const P &sel,
+                                                     QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         if (!canMerge(sel)) {
@@ -257,9 +263,11 @@ public:
         return true;
     };
 
-    bool isValid() const { return _valid; }
+    inline bool isValid() const { return _valid; }
 
-    bool operator<(const Super &item) const { return begin < item.begin; }
+    inline bool operator<(const Super &item) const {
+        return begin < item.begin;
+    }
 };
 
 #include <QtConcurrent/QtConcurrentMap>
@@ -277,116 +285,169 @@ public:
     };
 
 public:
-    QHexRegionObjectList() = default;
+    inline QHexRegionObjectList() = default;
 
-    void mergeRemove(const P &sel) {
+    inline void mergeRemove(const P &sel) {
         Q_ASSERT(sel.isNormalized());
 
-        QList<P> buffer;
-        QMutex locker;
-        QtConcurrent::blockingMap(*this, [&buffer, &locker, &sel](P &s) {
+        QVector<P> buffer;
+        QMutex mutex;
+        QtConcurrent::blockingMap(*this, [&](P &s) {
             auto r = s.removeRegion(sel);
             if (std::holds_alternative<P>(r)) {
-                auto region = std::get<P>(r);
-                QMutexLocker l(&locker);
-                buffer.append(region);
+                QMutexLocker lock(&mutex);
+                buffer.append(std::get<P>(r));
             }
         });
 
-        // clean up invalid selections
-        auto cleanup = [](const P &s) { return !s.isValid(); };
-        this->removeIf(cleanup);
-        QtConcurrent::blockingMap(
-            buffer, [&locker, this](P &s) { mergeAdd(s, &locker); });
+        this->removeIf([](const P &s) { return !s.isValid(); });
+        for (const auto &fragment : std::as_const(buffer)) {
+            mergeAdd(fragment);
+        }
     }
 
-    MergeAddItem mergeAdd(const P &sel, QMutex *locker = nullptr) {
+    inline MergeAddItem mergeAdd(const P &sel, QMutex *locker = nullptr) {
         Q_ASSERT(sel.isNormalized());
+        if (locker) {
+            QMutexLocker lock(locker);
+            return mergeAddImpl(sel);
+        }
+        return mergeAddImpl(sel);
+    }
+
+private:
+    inline MergeAddItem mergeAddImpl(const P &sel) {
         MergeAddItem ret;
+        const qsizetype n = this->size();
+        if (n == 0) {
+            this->append(sel);
+            ret.inserted.append(0);
+            return ret;
+        }
 
-        P sel0 = sel;
-        qsizetype removedSoFar = 0;
-        QList<P> regionSlices;
-        QList<P> insertsFromRemoved;
-        qsizetype i = 0;
-        while (i < this->size()) {
-            auto &p = this->operator[](i);
+        auto it = std::lower_bound(
+            this->begin(), this->end(), sel,
+            [](const P &a, const P &b) { return a.begin < b.begin; });
+        qsizetype pos = std::distance(this->begin(), it);
 
-            if (sel0.contains(p)) {
-                qsizetype origIndex = static_cast<qsizetype>(i) +
-                                      static_cast<qsizetype>(removedSoFar);
-                ret.removed.append(origIndex);
+        P merged = sel;
+        qsizetype left = pos, right = pos;
+        QVector<bool> touched(n, false);
 
-                this->takeAt(i);
-                ++removedSoFar;
-                continue;
-            }
-
-            auto r = p.mergeRegion(sel0, locker);
-            if (std::holds_alternative<bool>(r)) {
-                bool flag = std::get<bool>(r);
-                qsizetype origIndex = static_cast<qsizetype>(i) +
-                                      static_cast<qsizetype>(removedSoFar);
-
-                ret.removed.append(origIndex);
-
-                P taken = this->takeAt(i);
-                ++removedSoFar;
-
-                if (flag) {
-                    sel0 = taken;
-                    continue;
+        bool changed = true;
+        while (changed) {
+            changed = false;
+            while (left > 0) {
+                qsizetype i = left - 1;
+                const P &candidate = this->at(i);
+                if (candidate.end < P::prev(merged.begin))
+                    break;
+                P tmp = candidate;
+                auto res = tmp.mergeRegion(merged, nullptr);
+                if (std::holds_alternative<bool>(res) && std::get<bool>(res) &&
+                    tmp.isValid()) {
+                    merged = tmp.normalized();
+                    touched[i] = true;
+                    --left;
+                    changed = true;
                 } else {
-                    insertsFromRemoved.append(taken);
-                    continue;
-                }
-            } else {
-                auto v = std::get<P>(r);
-                regionSlices.append(v);
-                break;
-            }
-        }
-
-        QVector<P> toInsert;
-        for (const auto &v : regionSlices)
-            toInsert.append(v);
-        for (const auto &v : insertsFromRemoved)
-            toInsert.append(v);
-
-        auto equal_by_less = [](const P &a, const P &b) -> bool {
-            return !(a < b) && !(b < a);
-        };
-        bool sel_present = false;
-        for (const auto &e : toInsert) {
-            if (equal_by_less(e, sel0)) {
-                sel_present = true;
-                break;
-            }
-        }
-        if (!sel_present)
-            toInsert.append(sel0);
-
-        QVector<P> finalInsert;
-        for (const auto &v : toInsert) {
-            bool found = false;
-            for (const auto &u : finalInsert) {
-                if (equal_by_less(u, v)) {
-                    found = true;
                     break;
                 }
             }
-            if (!found)
-                finalInsert.append(v);
+            while (right < n) {
+                qsizetype i = right;
+                const P &candidate = this->at(i);
+                if (candidate.begin > P::next(merged.end))
+                    break;
+                P tmp = candidate;
+                auto res = tmp.mergeRegion(merged, nullptr);
+                if (std::holds_alternative<bool>(res) && std::get<bool>(res) &&
+                    tmp.isValid()) {
+                    merged = tmp.normalized();
+                    touched[i] = true;
+                    ++right;
+                    changed = true;
+                } else {
+                    break;
+                }
+            }
         }
 
-        for (const auto &v : finalInsert) {
-            auto it = std::upper_bound(this->constBegin(), this->constEnd(), v);
-            qsizetype idx =
-                static_cast<qsizetype>(std::distance(this->constBegin(), it));
-            this->insert(idx, v);
-            ret.inserted.append(idx);
+        qsizetype anchor = -1;
+        for (qsizetype i = left; i < right; ++i) {
+            if (this->at(i).begin == merged.begin &&
+                this->at(i).end == merged.end) {
+                anchor = i;
+                break;
+            }
         }
 
+        qsizetype carveLeft = left;
+        qsizetype carveRight = right;
+        if (left > 0 && this->at(left - 1).isIntersected(merged))
+            --carveLeft;
+        if (right < n && this->at(right).isIntersected(merged))
+            ++carveRight;
+
+        struct Node {
+            P item;
+            bool inserted;
+        };
+        QVector<Node> leftFrag, rightFrag;
+
+        for (qsizetype i = carveLeft; i < carveRight; ++i) {
+            if (i >= left && i < right && touched[i]) {
+                if (i != anchor)
+                    ret.removed.append(i);
+                continue;
+            }
+
+            const P old = this->at(i);
+            if (old.end < merged.begin) {
+                leftFrag.append({old, false});
+            } else if (old.begin > merged.end) {
+                rightFrag.append({old, false});
+            } else {
+                P cur = old;
+                auto r = cur.removeRegion(merged, nullptr);
+                ret.removed.append(i);
+                if (cur.isValid())
+                    leftFrag.append({cur, true});
+                if (std::holds_alternative<P>(r))
+                    rightFrag.append({std::get<P>(r), true});
+            }
+        }
+
+        QVector<P> out;
+        out.reserve(carveLeft + leftFrag.size() + 1 + rightFrag.size() +
+                    (n - carveRight));
+
+        for (qsizetype i = 0; i < carveLeft; ++i)
+            out.append(this->at(i));
+
+        for (const auto &node : leftFrag) {
+            if (node.inserted)
+                ret.inserted.append(out.size());
+            out.append(node.item);
+        }
+
+        if (anchor >= 0) {
+            out.append(this->at(anchor));
+        } else {
+            ret.inserted.append(out.size());
+            out.append(merged);
+        }
+
+        for (const auto &node : rightFrag) {
+            if (node.inserted)
+                ret.inserted.append(out.size());
+            out.append(node.item);
+        }
+
+        for (qsizetype i = carveRight; i < n; ++i)
+            out.append(this->at(i));
+
+        this->swap(out);
         return ret;
     }
 };

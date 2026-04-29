@@ -21,6 +21,7 @@
 
 #include "metaaddcommand.h"
 
+namespace {
 inline QString constructText(const QHexMetadataItem &meta) {
     auto buffer = QStringLiteral("[M+] {pos: %1-0x%2} {len: %3-0x%4} ")
                       .arg(QString::number(meta.begin),
@@ -38,6 +39,7 @@ inline QString constructText(const QHexMetadataItem &meta) {
     }
     return buffer;
 }
+} // namespace
 
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,
@@ -55,22 +57,14 @@ int MetaAddCommand::id() const { return UndoID_MetaAdd; }
 bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const MetaAddCommand *>(other);
     if (ucmd) {
-        if (this->m_meta.foreground == ucmd->m_meta.foreground &&
-            this->m_meta.background == ucmd->m_meta.background &&
-            this->m_meta.comment == ucmd->m_meta.comment) {
-            auto r = this->m_meta.mergeRegionWithoutMetaCheck(ucmd->m_meta);
-            if (r) {
-                setText(constructText(this->m_meta));
-            }
-            return r;
-        }
+        return this->m_meta == ucmd->m_meta;
     }
     return false;
 }
 
 void MetaAddCommand::undo() {
     m_hexmeta->removeMetadata(m_meta.begin, m_meta.end);
-    for (const auto &meta : _brokenMetas) {
+    for (const auto &meta : std::as_const(_brokenMetas)) {
         m_hexmeta->metadata(meta.begin, meta.end, meta.foreground,
                             meta.background, meta.comment);
     }

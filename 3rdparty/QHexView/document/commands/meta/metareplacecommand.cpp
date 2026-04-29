@@ -21,6 +21,7 @@
 
 #include "metareplacecommand.h"
 
+namespace {
 inline QString constructText(const QHexMetadataItem &meta,
                              const QHexMetadataItem &oldmeta) {
     auto buffer = QStringLiteral("[M*] {pos: %1-0x%2} ")
@@ -62,6 +63,7 @@ inline QString constructText(const QHexMetadataItem &meta,
 
     return buffer;
 }
+} // namespace
 
 MetaReplaceCommand::MetaReplaceCommand(QHexMetadata *hexmeta,
                                        const QHexMetadataItem &meta,
@@ -79,9 +81,7 @@ int MetaReplaceCommand::id() const { return UndoID_MetaReplace; }
 bool MetaReplaceCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const MetaReplaceCommand *>(other);
     if (ucmd) {
-        if (this->m_old == ucmd->m_old) {
-            this->m_meta = ucmd->m_meta;
-            setText(constructText(this->m_meta, this->m_old));
+        if (this->m_meta == ucmd->m_meta) {
             return true;
         }
     }

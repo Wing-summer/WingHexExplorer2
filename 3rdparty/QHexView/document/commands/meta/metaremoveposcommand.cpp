@@ -21,10 +21,12 @@
 
 #include "metaremoveposcommand.h"
 
+namespace {
 inline QString constructText(qsizetype pos) {
     return QStringLiteral("[M-] {pos: %1-0x%2} ")
         .arg(QString::number(pos), QString::number(pos, 16).toUpper());
 }
+} // namespace
 
 MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
@@ -42,9 +44,7 @@ int MetaRemovePosCommand::id() const { return UndoID_MetaRemovePos; }
 bool MetaRemovePosCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const MetaRemovePosCommand *>(other);
     if (ucmd) {
-        if (this->m_pos == ucmd->m_pos) {
-            return true;
-        }
+        return this->m_pos == ucmd->m_pos;
     }
     return false;
 }

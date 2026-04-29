@@ -34,26 +34,27 @@
 
 using qhash_result_t = size_t;
 
-struct QHexMetadataItem : QHexRegionObject<qsizetype, QHexMetadataItem> {
+struct QHexMetadataItem final : QHexRegionObject<qsizetype, QHexMetadataItem> {
     QColor foreground, background;
     QString comment;
-    bool flag = false;
+    bool adjflag = false;
 
-    QHexMetadataItem() {
+    inline QHexMetadataItem() {
         this->begin = -1;
         this->end = -1;
     }
 
-    explicit QHexMetadataItem(qsizetype begin, qsizetype end,
-                              const QColor &foreground,
-                              const QColor &background, const QString &comment)
+    explicit inline QHexMetadataItem(qsizetype begin, qsizetype end,
+                                     const QColor &foreground,
+                                     const QColor &background,
+                                     const QString &comment)
         : foreground(foreground), background(background), comment(comment) {
         this->begin = begin;
         this->end = end;
     }
 
     // added by wingsummer
-    bool operator==(const QHexMetadataItem &item) const {
+    inline bool operator==(const QHexMetadataItem &item) const {
         return begin == item.begin && end == item.end &&
                foreground == item.foreground && background == item.background &&
                comment == item.comment;
@@ -62,8 +63,9 @@ struct QHexMetadataItem : QHexRegionObject<qsizetype, QHexMetadataItem> {
     // QHexRegionObject interface
 public:
     // true: merged successfully
-    // false: not merge yet
-    std::variant<bool, QHexMetadataItem>
+    // false: cannot merge yet
+    // QHexMetadataItem: merge is ok, but cut a slice to be re-inserted
+    inline std::variant<bool, QHexMetadataItem>
     mergeRegion(const QHexMetadataItem &sel,
                 QMutex *locker = nullptr) override {
         if (sel.foreground == this->foreground &&
@@ -83,8 +85,8 @@ public:
         }
     }
 
-    bool mergeRegionWithoutMetaCheck(const QHexMetadataItem &sel,
-                                     QMutex *locker = nullptr) {
+    inline bool mergeRegionWithoutMetaCheck(const QHexMetadataItem &sel,
+                                            QMutex *locker = nullptr) {
         Q_ASSERT(sel.foreground == this->foreground &&
                  sel.background == this->background &&
                  sel.comment == this->comment);
@@ -116,7 +118,7 @@ class QHexMetadata : public QObject {
     Q_OBJECT
 
 public:
-    struct MetaInfo : QHexRegionObject<qsizetype, MetaInfo> {
+    struct MetaInfo final : QHexRegionObject<qsizetype, MetaInfo> {
         QColor foreground;
         QColor background;
         QString comment;

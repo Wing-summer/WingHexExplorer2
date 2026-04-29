@@ -39,7 +39,7 @@ public:
     virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
-    const QVector<QHexMetadataItem> _brokenMetas;
+    QVector<QHexMetadataItem> _brokenMetas;
 };
 
 #endif // METAADDCOMMAND_H
