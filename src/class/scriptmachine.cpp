@@ -20,7 +20,6 @@
 #include "grammar/ASConsole/AngelscriptConsoleLexer.h"
 #include "grammar/ASConsole/AngelscriptConsoleParser.h"
 
-#include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/sdk/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
@@ -1363,28 +1362,14 @@ void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
     // The string type must be available
     ASSERT(engine->GetTypeInfoByDecl("string"));
 
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
-        r = engine->RegisterGlobalFunction("void assert(bool expression)",
-                                           asFUNCTION(scriptAssert),
-                                           asCALL_CDECL);
-        ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("void assert(bool expression)",
+                                       asFUNCTION(scriptAssert), asCALL_CDECL);
+    ASSERT(r >= 0);
 
-        r = engine->RegisterGlobalFunction(
-            "void assert_x(bool expression, const string &in msg)",
-            asFUNCTION(scriptAssert_X), asCALL_CDECL);
-        ASSERT(r >= 0);
-
-    } else {
-        r = engine->RegisterGlobalFunction("void assert(bool expression)",
-                                           WRAP_FN(scriptAssert),
-                                           asCALL_GENERIC);
-        ASSERT(r >= 0);
-
-        r = engine->RegisterGlobalFunction(
-            "void assert_x(bool expression, const string &in msg)",
-            WRAP_FN(scriptAssert_X), asCALL_GENERIC);
-        ASSERT(r >= 0);
-    }
+    r = engine->RegisterGlobalFunction(
+        "void assert_x(bool expression, const string &in msg)",
+        asFUNCTION(scriptAssert_X), asCALL_CDECL);
+    ASSERT(r >= 0);
 }
 
 void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
@@ -1394,44 +1379,22 @@ void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
     // The string type must be available
     ASSERT(engine->GetTypeInfoByDecl("string"));
 
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
-        r = engine->RegisterGlobalFunction(
-            "void setText(const string &in text)", asFUNCTION(clip_setText),
-            asCALL_CDECL);
-        ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("void setText(const string &in text)",
+                                       asFUNCTION(clip_setText), asCALL_CDECL);
+    ASSERT(r >= 0);
 
-        r = engine->RegisterGlobalFunction(
-            "string text()", asFUNCTION(clip_getText), asCALL_CDECL);
-        ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("string text()",
+                                       asFUNCTION(clip_getText), asCALL_CDECL);
+    ASSERT(r >= 0);
 
-        r = engine->RegisterGlobalFunction(
-            "void setBinary(const uint8[]@ data)", asFUNCTION(clip_setBinary),
-            asCALL_CDECL);
-        ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("void setBinary(const uint8[]@ data)",
+                                       asFUNCTION(clip_setBinary),
+                                       asCALL_CDECL);
+    ASSERT(r >= 0);
 
-        r = engine->RegisterGlobalFunction(
-            "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
-        ASSERT(r >= 0);
-
-    } else {
-        r = engine->RegisterGlobalFunction(
-            "void setText(const string &in text)", WRAP_FN(clip_setText),
-            asCALL_GENERIC);
-        ASSERT(r >= 0);
-
-        r = engine->RegisterGlobalFunction(
-            "string text()", asFUNCTION(clip_getText), asCALL_GENERIC);
-        ASSERT(r >= 0);
-
-        r = engine->RegisterGlobalFunction(
-            "void setBinary(const uint8[]@ data)", WRAP_FN(clip_setBinary),
-            asCALL_GENERIC);
-        ASSERT(r >= 0);
-
-        r = engine->RegisterGlobalFunction(
-            "uint8[]@ getBinary()", WRAP_FN(clip_getBinary), asCALL_GENERIC);
-        ASSERT(r >= 0);
-    }
+    r = engine->RegisterGlobalFunction(
+        "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }
@@ -1806,26 +1769,12 @@ void ScriptMachine::registerExceptionRoutines(asIScriptEngine *engine) {
     // The string type must be available
     ASSERT(engine->GetTypeInfoByDecl("string"));
 
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
-        r = engine->RegisterGlobalFunction("void throw(const string &in)",
-                                           asFUNCTION(scriptThrow),
-                                           asCALL_CDECL);
-        ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("void throw(const string &in)",
+                                       asFUNCTION(scriptThrow), asCALL_CDECL);
+    ASSERT(r >= 0);
 
-        r = engine->RegisterGlobalFunction("string getExceptionInfo()",
-                                           asFUNCTION(scriptGetExceptionInfo),
-                                           asCALL_CDECL);
-        ASSERT(r >= 0);
-
-    } else {
-        r = engine->RegisterGlobalFunction("void throw(const string &in)",
-                                           WRAP_FN(scriptThrow),
-                                           asCALL_GENERIC);
-        ASSERT(r >= 0);
-
-        r = engine->RegisterGlobalFunction("string getExceptionInfo()",
-                                           WRAP_FN(scriptGetExceptionInfo),
-                                           asCALL_GENERIC);
-        ASSERT(r >= 0);
-    }
+    r = engine->RegisterGlobalFunction("string getExceptionInfo()",
+                                       asFUNCTION(scriptGetExceptionInfo),
+                                       asCALL_CDECL);
+    ASSERT(r >= 0);
 }

@@ -670,7 +670,7 @@ endif()
 
 # emit marco in Qt conflicts with antlr4-cpp
 target_compile_definitions(WingHexExplorer2 PRIVATE QT_NO_EMIT)
-# for QStrign contraction optimization
+# for QString contraction optimization
 target_compile_definitions(WingHexExplorer2 PRIVATE QT_USE_QSTRINGBUILDER)
 
 target_include_directories(

@@ -2217,9 +2217,8 @@ QString WingAngelAPI::_InputBox_getItem(const QString &title,
     bool o = false;
     auto ret = cArray2QStringList(items, &o);
     if (o) {
-        return WingInputDialog::getItem(nullptr, title, label, ret, current,
-                                        editable, ok,
-                                        Qt::InputMethodHints(inputMethodHints));
+        return dlgGetItem(nullptr, title, label, ret, current, editable, ok,
+                          Qt::InputMethodHints(inputMethodHints));
     } else {
         if (ok) {
             *ok = false;
@@ -2266,9 +2265,9 @@ CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
     if (ctx) {
         return retArrayWrapperFunction(
             [&]() -> QStringList {
-                return WingFileDialog::getOpenFileNames(
-                    nullptr, caption, dir, filter, selectedFilter,
-                    QFileDialog::Options(options));
+                return dlgGetOpenFileNames(nullptr, caption, dir, filter,
+                                           selectedFilter,
+                                           QFileDialog::Options(options));
             },
             static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
                 AsUserDataType::UserData_StringListTypeInfo)));
