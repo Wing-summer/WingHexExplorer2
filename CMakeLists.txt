@@ -18,6 +18,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_VERSION "2.3.6")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
@@ -702,18 +703,6 @@ qt6_generate_deploy_app_script(TARGET WingHexExplorer2 OUTPUT_SCRIPT
 install(SCRIPT ${deploy_script})
 
 add_subdirectory(WingPlugin)
-
-include(CheckIPOSupported)
-check_ipo_supported(
-    RESULT ipo_supported
-    OUTPUT ipo_error
-    LANGUAGES CXX)
-if(ipo_supported)
-    set_property(TARGET WingHexExplorer2 PROPERTY INTERPROCEDURAL_OPTIMIZATION
-                                                  ON)
-else()
-    message(WARNING "IPO is not supported: ${ipo_error}")
-endif()
 
 target_compile_options(
     WingHexExplorer2

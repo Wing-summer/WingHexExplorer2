@@ -855,7 +855,7 @@ void QHexRenderer::drawHeader(QPainter *painter) {
     auto len = this->hexLineWidth();
     QString hexheader;
     hexheader.reserve(len * 3);
-    for (quint8 i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         hexheader.append(toHexUpper(i >> 4));
         hexheader.append(toHexUpper(i & 0xf));
         hexheader.append(' ');
@@ -883,7 +883,7 @@ void QHexRenderer::drawHeader(QPainter *painter) {
 
     if (m_addressVisible)
         painter->drawText(addressrect, Qt::AlignHCenter | Qt::AlignVCenter,
-                          QString("Offset"));
+                          QStringLiteral("Offset"));
 
     // align left for maximum consistency with drawHex() which prints from the
     // left. so hex and positions are aligned vertically
