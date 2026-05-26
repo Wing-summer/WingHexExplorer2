@@ -30,7 +30,9 @@
 #include "qhexdocument.h"
 #include <QPainter>
 #include <QPalette>
+#include <QStringConverter>
 #include <QTextDocument>
+#include <QVector>
 
 class QHexRenderer : public QObject {
     Q_OBJECT
@@ -59,6 +61,11 @@ public:
     bool addressVisible();
     void setHeaderVisible(bool b);
     bool headerVisible();
+    void setStringEncoding(QStringConverter::Encoding encoding);
+
+    QStringConverter::Encoding stringEncoding() const;
+
+    QString stringEncodingName() const;
 
     void switchDoc(QHexDocument *doc);
 
@@ -107,11 +114,11 @@ public:
 
     QHexCursor *cursor() const;
     void setCursor(QHexCursor *newCursor);
+    bool asciiCellAt(qsizetype line, int column, int *start,
+                     int *length) const;
 
 private:
     QString hexString(qsizetype line, QByteArray *rawline = nullptr) const;
-
-    QString decodeString(qsizetype line, QByteArray *rawline = nullptr) const;
 
     QByteArray getLine(qsizetype line) const;
     qsizetype rendererLength() const;
@@ -128,6 +135,23 @@ public:
 private:
     static QByteArray toHexSequence(const QByteArray &arr);
     static char toHexUpper(uint value) noexcept;
+
+    struct AsciiCell {
+        int start = 0;
+        int length = 1;
+        QString text;
+    };
+
+    struct AsciiCellFormat {
+        QColor foreground;
+        QColor background;
+        QColor outline;
+        bool fillBackground = false;
+        bool underline = false;
+        bool bold = false;
+        bool italic = false;
+        bool strikeOut = false;
+    };
 
 private:
     // modified by wingsummer
@@ -154,6 +178,32 @@ private:
     void applyBookMark(QPainter *painter, QTextCursor &textcursor,
                        qsizetype line, Factor factor);
 
+    QVector<AsciiCell> buildAsciiCells(const QByteArray &rawline) const;
+    QVector<AsciiCell> buildAsciiCellsLatin1(const QByteArray &rawline) const;
+    QVector<AsciiCell> buildAsciiCellsUtf8(const QByteArray &rawline) const;
+    QVector<AsciiCell> buildAsciiCellsUtf16(const QByteArray &rawline,
+                                            bool littleEndian,
+                                            bool useBom) const;
+    QVector<AsciiCell> buildAsciiCellsUtf32(const QByteArray &rawline,
+                                            bool littleEndian,
+                                            bool useBom) const;
+    AsciiCellFormat asciiCellFormat(qsizetype line, int column,
+                                    uchar value) const;
+    bool selectionCoversByte(const QHexSelection &selection, qsizetype line,
+                             int column) const;
+    bool asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
+                                    const QVector<AsciiCellFormat> &formats) const;
+    bool isByteSelected(qsizetype line, int column, bool *strikeOut,
+                        bool *hasSelection) const;
+    bool hasBookmark(qsizetype line, int column) const;
+    static bool decodeUtf8At(const QByteArray &rawline, int index, int *length,
+                             char32_t *codepoint);
+    static bool decodeUtf16At(const QByteArray &rawline, int index, bool littleEndian,
+                              int *length, char32_t *codepoint);
+    static bool decodeUtf32At(const QByteArray &rawline, int index, bool littleEndian,
+                              int *length, char32_t *codepoint);
+    static quint16 readUInt16(const QByteArray &rawline, int index, bool littleEndian);
+    static quint32 readUInt32(const QByteArray &rawline, int index, bool littleEndian);
     void applyCursorAscii(QTextCursor &textcursor, qsizetype line) const;
     void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
@@ -175,6 +225,8 @@ private:
     bool m_asciiVisible;
     bool m_addressVisible;
     bool m_headerVisible;
+    QStringConverter::Encoding m_stringEncoding =
+        QStringConverter::Encoding::Latin1;
 
     // color
     QColor m_headerColor = Qt::cyan;

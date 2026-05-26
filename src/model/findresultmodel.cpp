@@ -152,11 +152,12 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-QString FindResultModel::encoding() const {
-    return m_data ? m_data->encoding : QString{};
+QStringConverter::Encoding FindResultModel::encoding() const {
+    return m_data ? m_data->encoding : QStringConverter::Encoding ::Latin1;
 }
 
-void FindResultModel::setEncoding(const QString &newEncoding) {
+void FindResultModel::setEncoding(
+    const QStringConverter::Encoding &newEncoding) {
     if (m_data && m_data->encoding != newEncoding) {
         m_data->encoding = newEncoding;
         Q_EMIT dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));

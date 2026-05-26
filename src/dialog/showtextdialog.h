@@ -122,7 +122,7 @@ private slots:
     void on_updateDefs();
 
 private:
-    void setEncoding(const QString &enc);
+    void setEncoding(QStringConverter::Encoding enc);
 
     // QWidget interface
 protected:

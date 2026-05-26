@@ -20,20 +20,16 @@
 */
 
 #include "qhexrenderer.h"
+
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
+#include <QStringDecoder>
 #include <QTextCharFormat>
 #include <QTextCursor>
 #include <QWidget>
 #include <cctype>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QStringDecoder>
-#else
-#include <QTextCodec>
-#endif
-
-#define HEX_UNPRINTABLE_CHAR '.'
+constexpr char HEX_UNPRINTABLE_CHAR = '.';
 
 constexpr qreal CONTRASTING_COLOR_BORDER = 0.35;
 
@@ -52,6 +48,41 @@ bool QHexRenderer::headerVisible() { return m_headerVisible; }
 void QHexRenderer::setHeaderVisible(bool b) {
     m_headerVisible = b;
     Q_EMIT m_document->documentChanged();
+}
+
+void QHexRenderer::setStringEncoding(QStringConverter::Encoding encoding) {
+    if (m_stringEncoding == encoding) {
+        return;
+    }
+
+    m_stringEncoding = encoding;
+    Q_EMIT m_document->documentChanged();
+}
+
+QStringConverter::Encoding QHexRenderer::stringEncoding() const {
+    return m_stringEncoding;
+}
+
+QString QHexRenderer::stringEncodingName() const {
+    switch (m_stringEncoding) {
+    case QStringConverter::Encoding::Utf16:
+        return QStringLiteral("UTF-16");
+    case QStringConverter::Encoding::Utf16LE:
+        return QStringLiteral("UTF-16LE");
+    case QStringConverter::Encoding::Utf16BE:
+        return QStringLiteral("UTF-16BE");
+    case QStringConverter::Encoding::Utf32:
+        return QStringLiteral("UTF-32");
+    case QStringConverter::Encoding::Utf32LE:
+        return QStringLiteral("UTF-32LE");
+    case QStringConverter::Encoding::Utf32BE:
+        return QStringLiteral("UTF-32BE");
+    case QStringConverter::Encoding::Utf8:
+        return QStringLiteral("UTF-8");
+    case QStringConverter::Encoding::Latin1:
+    default:
+        return QStringLiteral("ASCII");
+    }
 }
 
 bool QHexRenderer::addressVisible() { return m_addressVisible; }
@@ -221,6 +252,30 @@ int QHexRenderer::selectedArea() const { return m_selectedarea; }
 bool QHexRenderer::editableArea(int area) const {
     return (area == QHexRenderer::HexArea || area == QHexRenderer::AsciiArea);
 }
+
+bool QHexRenderer::asciiCellAt(qsizetype line, int column, int *start,
+                               int *length) const {
+    const QByteArray rawline = getLine(line);
+    if (column < 0 || column >= rawline.size()) {
+        return false;
+    }
+
+    const auto cells = buildAsciiCells(rawline);
+    for (const auto &cell : cells) {
+        if (column >= cell.start && column < cell.start + cell.length) {
+            if (start) {
+                *start = cell.start;
+            }
+            if (length) {
+                *length = cell.length;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
 qsizetype QHexRenderer::documentLastLine() const {
     return this->documentLines() - 1;
 }
@@ -264,17 +319,6 @@ QString QHexRenderer::hexString(qsizetype line, QByteArray *rawline) const {
         str.append(QByteArrayLiteral("\t\t "));
     }
     return str;
-}
-
-// modified by wingsummer
-QString QHexRenderer::decodeString(qsizetype line, QByteArray *rawline) const {
-    QByteArray lrawline = this->getLine(line);
-    if (rawline)
-        *rawline = lrawline;
-
-    QByteArray ascii = lrawline;
-    this->unprintableChars(ascii);
-    return ascii;
 }
 
 QByteArray QHexRenderer::getLine(qsizetype line) const {
@@ -335,6 +379,327 @@ void QHexRenderer::unprintableChars(QByteArray &ascii) const {
     }
 }
 
+QVector<QHexRenderer::AsciiCell>
+QHexRenderer::buildAsciiCells(const QByteArray &rawline) const {
+    switch (m_stringEncoding) {
+    case QStringConverter::Encoding::Utf8:
+        return buildAsciiCellsUtf8(rawline);
+    case QStringConverter::Encoding::Utf16:
+        return buildAsciiCellsUtf16(rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian,
+                                    true);
+    case QStringConverter::Encoding::Utf16LE:
+        return buildAsciiCellsUtf16(rawline, true, false);
+    case QStringConverter::Encoding::Utf16BE:
+        return buildAsciiCellsUtf16(rawline, false, false);
+    case QStringConverter::Encoding::Utf32:
+        return buildAsciiCellsUtf32(rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian,
+                                    true);
+    case QStringConverter::Encoding::Utf32LE:
+        return buildAsciiCellsUtf32(rawline, true, false);
+    case QStringConverter::Encoding::Utf32BE:
+        return buildAsciiCellsUtf32(rawline, false, false);
+    case QStringConverter::Encoding::Latin1:
+    default:
+        return buildAsciiCellsLatin1(rawline);
+    }
+}
+
+QVector<QHexRenderer::AsciiCell>
+QHexRenderer::buildAsciiCellsLatin1(const QByteArray &rawline) const {
+    QVector<AsciiCell> cells;
+    cells.reserve(rawline.size());
+
+    for (int i = 0; i < rawline.size(); ++i) {
+        uchar value = static_cast<uchar>(rawline.at(i));
+        AsciiCell cell;
+        cell.start = i;
+        cell.length = 1;
+        cell.text = std::isprint(value) ? QString(QChar::fromLatin1(value))
+                                        : QString(HEX_UNPRINTABLE_CHAR);
+        cells.append(cell);
+    }
+
+    return cells;
+}
+
+QVector<QHexRenderer::AsciiCell>
+QHexRenderer::buildAsciiCellsUtf16(const QByteArray &rawline, bool littleEndian,
+                                   bool useBom) const {
+    QVector<AsciiCell> cells;
+    cells.reserve(rawline.size());
+
+    for (int i = 0; i < rawline.size();) {
+        if (useBom && i + 1 < rawline.size()) {
+            const quint16 markerLE = readUInt16(rawline, i, true);
+            if (markerLE == 0xFEFF) {
+                AsciiCell cell;
+                cell.start = i;
+                cell.length = 2;
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cells.append(cell);
+                i += 2;
+                continue;
+            }
+
+            if (markerLE == 0xFFFE) {
+                AsciiCell cell;
+                cell.start = i;
+                cell.length = 2;
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cells.append(cell);
+                i += 2;
+                continue;
+            }
+        }
+
+        int length = 0;
+        char32_t codepoint = 0;
+        if (decodeUtf16At(rawline, i, littleEndian, &length, &codepoint)) {
+            AsciiCell cell;
+            cell.start = i;
+            cell.length = length;
+            if (codepoint < 0x20 || codepoint == 0x7F) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+            } else {
+                cell.text = QString::fromUcs4(&codepoint, 1);
+            }
+            if (cell.text.isEmpty()) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cell.length = 2;
+            }
+            cells.append(cell);
+            i += cell.length;
+            continue;
+        }
+
+        AsciiCell cell;
+        cell.start = i;
+        cell.length = qMin(2, rawline.size() - i);
+        cell.text = QString(HEX_UNPRINTABLE_CHAR);
+        cells.append(cell);
+        i += cell.length;
+    }
+
+    return cells;
+}
+
+QVector<QHexRenderer::AsciiCell>
+QHexRenderer::buildAsciiCellsUtf32(const QByteArray &rawline, bool littleEndian,
+                                   bool useBom) const {
+    QVector<AsciiCell> cells;
+    cells.reserve(rawline.size());
+
+    for (int i = 0; i < rawline.size();) {
+        if (useBom && i + 3 < rawline.size()) {
+            const quint32 markerLE = readUInt32(rawline, i, true);
+            if (markerLE == 0x0000FEFFU || markerLE == 0xFFFE0000U) {
+                AsciiCell cell;
+                cell.start = i;
+                cell.length = 4;
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cells.append(cell);
+                i += 4;
+                continue;
+            }
+        }
+
+        int length = 0;
+        char32_t codepoint = 0;
+        if (decodeUtf32At(rawline, i, littleEndian, &length, &codepoint)) {
+            AsciiCell cell;
+            cell.start = i;
+            cell.length = length;
+            if (codepoint < 0x20 || codepoint == 0x7F) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+            } else {
+                cell.text = QString::fromUcs4(&codepoint, 1);
+            }
+            if (cell.text.isEmpty()) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cell.length = 4;
+            }
+            cells.append(cell);
+            i += cell.length;
+            continue;
+        }
+
+        AsciiCell cell;
+        cell.start = i;
+        cell.length = qMin(4, rawline.size() - i);
+        cell.text = QString(HEX_UNPRINTABLE_CHAR);
+        cells.append(cell);
+        i += cell.length;
+    }
+
+    return cells;
+}
+
+QVector<QHexRenderer::AsciiCell>
+QHexRenderer::buildAsciiCellsUtf8(const QByteArray &rawline) const {
+    QVector<AsciiCell> cells;
+    cells.reserve(rawline.size());
+
+    for (int i = 0; i < rawline.size();) {
+        int length = 0;
+        char32_t codepoint = 0;
+
+        if (decodeUtf8At(rawline, i, &length, &codepoint)) {
+            AsciiCell cell;
+            cell.start = i;
+            cell.length = length;
+            if (length == 1 && codepoint < 0x80 &&
+                !std::isprint(static_cast<unsigned char>(codepoint))) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+            } else {
+                cell.text = QString::fromUcs4(&codepoint, 1);
+            }
+            if (cell.text.isEmpty()) {
+                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                cell.length = 1;
+            }
+
+            cells.append(cell);
+            i += cell.length;
+            continue;
+        }
+
+        AsciiCell cell;
+        cell.start = i;
+        cell.length = 1;
+        cell.text = QString(HEX_UNPRINTABLE_CHAR);
+        cells.append(cell);
+        ++i;
+    }
+
+    return cells;
+}
+
+bool QHexRenderer::decodeUtf8At(const QByteArray &rawline, int index,
+                                int *length, char32_t *codepoint) {
+    if (index < 0 || index >= rawline.size()) {
+        return false;
+    }
+
+    const uchar lead = static_cast<uchar>(rawline.at(index));
+    if (lead < 0x80) {
+        *length = 1;
+        *codepoint = lead;
+        return true;
+    }
+
+    int expected = 0;
+    char32_t value = 0;
+    char32_t minValue = 0;
+
+    if ((lead & 0xE0U) == 0xC0U) {
+        expected = 2;
+        value = lead & 0x1FU;
+        minValue = 0x80;
+    } else if ((lead & 0xF0U) == 0xE0U) {
+        expected = 3;
+        value = lead & 0x0FU;
+        minValue = 0x800;
+    } else if ((lead & 0xF8U) == 0xF0U) {
+        expected = 4;
+        value = lead & 0x07U;
+        minValue = 0x10000;
+    } else {
+        return false;
+    }
+
+    if (index + expected > rawline.size()) {
+        return false;
+    }
+
+    for (int i = 1; i < expected; ++i) {
+        const uchar next = static_cast<uchar>(rawline.at(index + i));
+        if ((next & 0xC0U) != 0x80U) {
+            return false;
+        }
+
+        value = (value << 6) | (next & 0x3FU);
+    }
+
+    if (value < minValue || value > 0x10FFFF ||
+        (value >= 0xD800 && value <= 0xDFFF)) {
+        return false;
+    }
+
+    *length = expected;
+    *codepoint = value;
+    return true;
+}
+
+quint16 QHexRenderer::readUInt16(const QByteArray &rawline, int index,
+                                 bool littleEndian) {
+    const uchar b0 = static_cast<uchar>(rawline.at(index));
+    const uchar b1 = static_cast<uchar>(rawline.at(index + 1));
+    return littleEndian ? quint16(b0 | (b1 << 8)) : quint16((b0 << 8) | b1);
+}
+
+quint32 QHexRenderer::readUInt32(const QByteArray &rawline, int index,
+                                 bool littleEndian) {
+    const uchar b0 = static_cast<uchar>(rawline.at(index));
+    const uchar b1 = static_cast<uchar>(rawline.at(index + 1));
+    const uchar b2 = static_cast<uchar>(rawline.at(index + 2));
+    const uchar b3 = static_cast<uchar>(rawline.at(index + 3));
+    if (littleEndian) {
+        return quint32(b0) | (quint32(b1) << 8) | (quint32(b2) << 16) |
+               (quint32(b3) << 24);
+    }
+    return (quint32(b0) << 24) | (quint32(b1) << 16) | (quint32(b2) << 8) |
+           quint32(b3);
+}
+
+bool QHexRenderer::decodeUtf16At(const QByteArray &rawline, int index,
+                                 bool littleEndian, int *length,
+                                 char32_t *codepoint) {
+    if (index + 1 >= rawline.size()) {
+        return false;
+    }
+
+    const quint16 first = readUInt16(rawline, index, littleEndian);
+    if (first >= 0xD800 && first <= 0xDBFF) {
+        if (index + 3 >= rawline.size()) {
+            return false;
+        }
+
+        const quint16 second = readUInt16(rawline, index + 2, littleEndian);
+        if (second < 0xDC00 || second > 0xDFFF) {
+            return false;
+        }
+
+        *length = 4;
+        *codepoint = 0x10000 + (((first - 0xD800) << 10) | (second - 0xDC00));
+        return true;
+    }
+
+    if (first >= 0xDC00 && first <= 0xDFFF) {
+        return false;
+    }
+
+    *length = 2;
+    *codepoint = first;
+    return true;
+}
+
+bool QHexRenderer::decodeUtf32At(const QByteArray &rawline, int index,
+                                 bool littleEndian, int *length,
+                                 char32_t *codepoint) {
+    if (index + 3 >= rawline.size()) {
+        return false;
+    }
+
+    const quint32 value = readUInt32(rawline, index, littleEndian);
+    if (value > 0x10FFFF || (value >= 0xD800 && value <= 0xDFFF)) {
+        return false;
+    }
+
+    *length = 4;
+    *codepoint = value;
+    return true;
+}
+
 QByteArray QHexRenderer::toHexSequence(const QByteArray &arr) {
     if (arr.isEmpty()) {
         return QByteArray(1, '\t');
@@ -379,12 +744,14 @@ void QHexRenderer::applyBasicStyle(QTextCursor &textcursor,
     QColor color = m_bytesColor;
 
     if (color.lightness() < 50) {
-        if (color == Qt::black)
+        if (color == Qt::black) {
             color = Qt::gray;
-        else
+        } else {
             color = color.darker();
-    } else
+        }
+    } else {
         color = color.lighter();
+    }
 
     QTextCharFormat charformat;
     charformat.setForeground(color);
@@ -617,6 +984,164 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
     }
 }
 
+bool QHexRenderer::isByteSelected(qsizetype line, int column, bool *strikeOut,
+                                  bool *hasSelection) const {
+    if (strikeOut) {
+        *strikeOut = false;
+    }
+    if (hasSelection) {
+        *hasSelection = false;
+    }
+
+    bool internalSelected = false;
+    for (int i = 0; i < m_cursor->selectionCount(); ++i) {
+        if (selectionCoversByte(m_cursor->selection(i), line, column)) {
+            internalSelected = true;
+            break;
+        }
+    }
+
+    bool selected = internalSelected;
+    if (m_cursor->hasPreviewSelection() &&
+        selectionCoversByte(m_cursor->previewSelection(), line, column)) {
+        selected = true;
+
+        if (m_cursor->previewSelectionMode() == QHexCursor::SelectionRemove) {
+            if (strikeOut) {
+                *strikeOut = true;
+            }
+        } else if (m_cursor->previewSelectionMode() ==
+                       QHexCursor::SelectionNormal &&
+                   internalSelected) {
+            if (hasSelection) {
+                *hasSelection = true;
+            }
+        }
+    }
+
+    return selected;
+}
+
+bool QHexRenderer::selectionCoversByte(const QHexSelection &selection,
+                                       qsizetype line, int column) const {
+    if (!selection.isLineSelected(line)) {
+        return false;
+    }
+
+    const QHexSelection normalized = selection.normalized();
+    const QHexPosition &startsel = normalized.begin;
+    const QHexPosition &endsel = normalized.end;
+
+    qsizetype begin;
+    qsizetype end;
+
+    if (startsel.line == endsel.line) {
+        begin = startsel.column;
+        end = endsel.column;
+    } else {
+        begin = (line == startsel.line) ? startsel.column : 0;
+        end = (line == endsel.line) ? endsel.column : (startsel.lineWidth - 1);
+    }
+
+    return begin <= qsizetype(column) && qsizetype(column) <= end;
+}
+
+bool QHexRenderer::hasBookmark(qsizetype line, int column) const {
+    return m_document->bookMarkExists(line * hexLineWidth() + column);
+}
+
+QHexRenderer::AsciiCellFormat
+QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
+    AsciiCellFormat fmt;
+    fmt.foreground = m_bytesColor;
+
+    if (value == 0x00 || value == 0xFF) {
+        if (fmt.foreground.lightness() < 50) {
+            fmt.foreground =
+                fmt.foreground == Qt::black ? Qt::gray : fmt.foreground.darker();
+        } else {
+            fmt.foreground = fmt.foreground.lighter();
+        }
+    }
+
+    auto meta = m_document->metadata()->get(line * hexLineWidth() + column);
+    if (meta.has_value()) {
+        if (m_document->metabgVisible() && meta->background.isValid() &&
+            meta->background.alpha()) {
+            fmt.background = meta->background;
+            fmt.fillBackground = true;
+        }
+        if (m_document->metafgVisible() && meta->foreground.isValid() &&
+            meta->foreground.alpha()) {
+            fmt.foreground = meta->foreground;
+        }
+        if (m_document->metaCommentVisible() && !meta->comment.isEmpty()) {
+            fmt.underline = true;
+        }
+    }
+
+    bool strikeOut = false;
+    bool hasSelection = false;
+    if (isByteSelected(line, column, &strikeOut, &hasSelection)) {
+        fmt.background = (strikeOut || hasSelection)
+                             ? m_selBackgroundColor.darker()
+                             : m_selBackgroundColor;
+        fmt.foreground =
+            strikeOut ? m_selectionColor.darker() : m_selectionColor;
+        fmt.fillBackground = true;
+        fmt.strikeOut = strikeOut;
+        fmt.italic = strikeOut;
+    }
+
+    if (line == m_cursor->currentLine() && column == m_cursor->currentColumn() &&
+        m_cursorenabled) {
+        if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
+            (m_selectedarea != QHexRenderer::AsciiArea)) {
+            fmt.foreground = m_bytesBackground;
+            fmt.background = (m_selectedarea == QHexRenderer::AsciiArea)
+                                 ? m_bytesColor
+                                 : m_bytesColor.lighter(250);
+            fmt.fillBackground = true;
+            fmt.underline = false;
+        } else {
+            fmt.underline = true;
+        }
+    }
+
+    QColor bg = fmt.fillBackground
+                    ? fmt.background
+                    : (line % 2 ? m_bytesBackground : m_bytesAlterBackground);
+    if (!QHexMetadata::areColorsContrast(bg, fmt.foreground)) {
+        fmt.bold = true;
+        fmt.outline = QHexMetadata::generateContrastingColor(bg);
+    }
+
+    return fmt;
+}
+
+bool QHexRenderer::asciiCellNeedsByteFallback(
+    qsizetype, const AsciiCell &cell,
+    const QVector<AsciiCellFormat> &formats) const {
+    if (cell.length <= 1 || formats.isEmpty()) {
+        return false;
+    }
+
+    const auto &base = formats.constFirst();
+    for (int i = 1; i < formats.size(); ++i) {
+        const auto &fmt = formats.at(i);
+        if (fmt.foreground != base.foreground ||
+            fmt.background != base.background ||
+            fmt.outline != base.outline ||
+            fmt.fillBackground != base.fillBackground ||
+            fmt.underline != base.underline || fmt.bold != base.bold ||
+            fmt.italic != base.italic || fmt.strikeOut != base.strikeOut) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,
                                     qsizetype line) const {
     if ((line != m_cursor->currentLine()) || !m_cursorenabled)
@@ -814,37 +1339,251 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
 
 void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
                               qsizetype line) {
-    QTextDocument textdocument;
-    QTextCursor textcursor(&textdocument);
     QByteArray rawline;
-    // modified by wingsummer
-    textcursor.insertText(this->decodeString(line, &rawline));
-
-    if (line == this->documentLastLine())
-        textcursor.insertText(" ");
+    rawline = this->getLine(line);
 
     QRect asciirect = linerect;
     asciirect.setX(this->getAsciiColumnX() + this->borderSize());
-
-    this->applyDocumentStyles(painter, &textdocument);
-    this->applyBasicStyle(textcursor, rawline, String);
-
-    auto dis = !m_document->metabgVisible() && !m_document->metafgVisible() &&
-               !m_document->metaCommentVisible();
-    if (!dis)
-        this->applyMetadata(textcursor, line, String);
-
-    this->applySelection(textcursor, line, String);
-    this->applyCursorAscii(textcursor, line);
+    asciirect.setWidth(this->getNCellsWidth(hexLineWidth()));
 
     painter->save();
     painter->translate(asciirect.topLeft());
+    painter->setClipRect(QRect(QPoint(0, 0), asciirect.size()));
 
-    QAbstractTextDocumentLayout::PaintContext ctx;
-    ctx.palette.setColor(QPalette::Text, m_bytesColor);
-    textdocument.documentLayout()->draw(painter, ctx);
+    const auto cells = buildAsciiCells(rawline);
+    const qreal cellWidth = getCellWidth();
+    const int height = lineHeight();
+    QVector<AsciiCellFormat> lineFormats;
+    lineFormats.reserve(rawline.size());
+    for (int i = 0; i < rawline.size(); ++i) {
+        lineFormats.append(
+            asciiCellFormat(line, i, static_cast<uchar>(rawline.at(i))));
+    }
 
-    this->applyBookMark(painter, textcursor, line, String);
+    for (const auto &cell : cells) {
+        const int startX = qRound(cell.start * cellWidth);
+        const int width = qRound(cell.length * cellWidth);
+        QRect cellRect(startX, 0, width, height);
+
+        QVector<AsciiCellFormat> formats;
+        formats.reserve(cell.length);
+        for (int i = 0; i < cell.length; ++i) {
+            formats.append(lineFormats.at(cell.start + i));
+        }
+
+        bool cellSelected = false;
+        bool cellStrikeOut = false;
+        bool cellHasSelection = false;
+        int selectedByteCount = 0;
+        bool cursorInCell = line == m_cursor->currentLine() && m_cursorenabled &&
+                            m_cursor->currentColumn() >= cell.start &&
+                            m_cursor->currentColumn() < (cell.start + cell.length);
+        for (int i = 0; i < cell.length; ++i) {
+            bool strikeOut = false;
+            bool hasSelection = false;
+            if (isByteSelected(line, cell.start + i, &strikeOut, &hasSelection)) {
+                cellSelected = true;
+                cellStrikeOut = cellStrikeOut || strikeOut;
+                cellHasSelection = cellHasSelection || hasSelection;
+                ++selectedByteCount;
+            }
+        }
+
+        if (cellSelected && selectedByteCount == cell.length) {
+            const QColor background =
+                (cellStrikeOut || cellHasSelection)
+                    ? m_selBackgroundColor.darker()
+                    : m_selBackgroundColor;
+            const QColor foreground =
+                cellStrikeOut ? m_selectionColor.darker() : m_selectionColor;
+            for (auto &fmt : formats) {
+                fmt.background = background;
+                fmt.foreground = foreground;
+                fmt.fillBackground = true;
+                fmt.strikeOut = cellStrikeOut;
+                fmt.italic = cellStrikeOut;
+            }
+        }
+
+        if (cursorInCell) {
+            const bool overwrite =
+                (m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
+                (m_selectedarea != QHexRenderer::AsciiArea);
+            for (auto &fmt : formats) {
+                if (overwrite) {
+                    fmt.foreground = m_bytesBackground;
+                    fmt.background = (m_selectedarea == QHexRenderer::AsciiArea)
+                                         ? m_bytesColor
+                                         : m_bytesColor.lighter(250);
+                    fmt.fillBackground = true;
+                    fmt.underline = false;
+                } else {
+                    fmt.underline = true;
+                }
+            }
+        }
+
+        for (int i = 0; i < cell.length; ++i) {
+            lineFormats[cell.start + i] = formats.at(i);
+        }
+
+        for (int i = 0; i < cell.length; ++i) {
+            const int byteX = qRound((cell.start + i) * cellWidth);
+            const int byteWidth =
+                qRound((cell.start + i + 1) * cellWidth) - byteX;
+            QRect byteRect(byteX, 0, byteWidth, height);
+            const auto &fmt = formats.at(i);
+            if (fmt.fillBackground) {
+                painter->fillRect(byteRect, fmt.background);
+            }
+        }
+
+        if (asciiCellNeedsByteFallback(line, cell, formats)) {
+            for (int i = 0; i < cell.length; ++i) {
+                const int byteX = qRound((cell.start + i) * cellWidth);
+                const int byteWidth =
+                    qRound((cell.start + i + 1) * cellWidth) - byteX;
+                QRect byteRect(byteX, 0, byteWidth, height);
+                const auto &fmt = formats.at(i);
+                auto font = painter->font();
+                font.setBold(fmt.bold);
+                font.setItalic(fmt.italic);
+                font.setStrikeOut(fmt.strikeOut);
+                font.setUnderline(false);
+                painter->setFont(font);
+                painter->setPen(fmt.foreground);
+
+                const QString text(HEX_UNPRINTABLE_CHAR);
+                if (fmt.outline.isValid()) {
+                    painter->save();
+                    painter->setPen(QPen(fmt.outline, CONTRASTING_COLOR_BORDER,
+                                         Qt::SolidLine));
+                    painter->drawText(byteRect.adjusted(0, 0, 0, -1),
+                                      Qt::AlignCenter, text);
+                    painter->restore();
+                    painter->setPen(fmt.foreground);
+                }
+
+                painter->drawText(byteRect.adjusted(0, 0, 0, -1),
+                                  Qt::AlignCenter, text);
+            }
+
+            for (int i = 0; i < cell.length; ++i) {
+                if (!hasBookmark(line, cell.start + i)) {
+                    continue;
+                }
+
+                const int byteX = qRound((cell.start + i) * cellWidth);
+                const int byteWidth =
+                    qRound((cell.start + i + 1) * cellWidth) - byteX;
+                QColor markColor = formats.at(i).foreground;
+                if (!markColor.isValid()) {
+                    markColor = m_bytesColor;
+                }
+                markColor.setAlpha(180);
+                painter->setPen(QPen(markColor, 1, Qt::DotLine));
+                painter->setBrush(Qt::NoBrush);
+                painter->drawRect(byteX + 1, 1, qMax(0, byteWidth - 2),
+                                  qMax(0, height - 3));
+            }
+
+            continue;
+        }
+
+        AsciiCellFormat merged = formats.constFirst();
+        for (int i = 1; i < formats.size(); ++i) {
+            const auto &fmt = formats.at(i);
+            if (fmt.fillBackground) {
+                merged.background = fmt.background;
+                merged.fillBackground = true;
+            }
+            if (fmt.foreground != merged.foreground) {
+                merged.foreground = fmt.foreground;
+            }
+            merged.underline = merged.underline || fmt.underline;
+            merged.bold = merged.bold || fmt.bold;
+            merged.italic = merged.italic || fmt.italic;
+            merged.strikeOut = merged.strikeOut || fmt.strikeOut;
+            if (!fmt.outline.isValid()) {
+                continue;
+            }
+            merged.outline = fmt.outline;
+        }
+
+        auto font = painter->font();
+        font.setBold(merged.bold);
+        font.setItalic(merged.italic);
+        font.setStrikeOut(merged.strikeOut);
+        font.setUnderline(false);
+        painter->setFont(font);
+        painter->setPen(merged.foreground);
+
+        QRect textRect = cellRect.adjusted(0, 0, 0, -1);
+        QString text = cell.text;
+
+        if (merged.outline.isValid()) {
+            painter->save();
+            painter->setPen(QPen(merged.outline, CONTRASTING_COLOR_BORDER,
+                                 Qt::SolidLine));
+            painter->drawText(textRect, Qt::AlignCenter, text);
+            painter->restore();
+            painter->setPen(merged.foreground);
+        }
+
+        painter->drawText(textRect, Qt::AlignCenter, text);
+
+        for (int i = 0; i < cell.length; ++i) {
+            if (!hasBookmark(line, cell.start + i)) {
+                continue;
+            }
+
+            const int byteX = qRound((cell.start + i) * cellWidth);
+            const int byteWidth =
+                qRound((cell.start + i + 1) * cellWidth) - byteX;
+            QColor markColor = formats.at(i).foreground;
+            if (!markColor.isValid()) {
+                markColor = m_bytesColor;
+            }
+            markColor.setAlpha(180);
+            painter->setPen(QPen(markColor, 1, Qt::DotLine));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(byteX + 1, 1, qMax(0, byteWidth - 2),
+                              qMax(0, height - 3));
+        }
+    }
+
+    const int underlineY = qMax(1, height - 2);
+    auto lineFormatsCount = lineFormats.size();
+    for (int i = 0; i < lineFormatsCount;) {
+        auto fmt = lineFormats.at(i);
+        if (!fmt.underline) {
+            ++i;
+            continue;
+        }
+
+        const QColor color =
+            fmt.foreground.isValid() ? fmt.foreground : m_bytesColor;
+        int start = i;
+        int end = i;
+        while (end + 1 < lineFormatsCount) {
+            const auto &nextFormat = lineFormats.at(end + 1);
+
+            if (!nextFormat.underline || nextFormat.foreground != color)
+                break;
+
+            ++end;
+        }
+
+        const int startX = qRound(start * cellWidth);
+        const int endX = qRound((end + 1) * cellWidth) - 1;
+        painter->save();
+        painter->setPen(QPen(color, 1, Qt::SolidLine));
+        painter->drawLine(startX, underlineY, endX, underlineY);
+        painter->restore();
+
+        i = end + 1;
+    }
+
     painter->restore();
 }
 
@@ -891,7 +1630,7 @@ void QHexRenderer::drawHeader(QPainter *painter) {
 
     if (m_asciiVisible)
         painter->drawText(asciirect, Qt::AlignHCenter | Qt::AlignVCenter,
-                          QStringLiteral("ASCII"));
+                          stringEncodingName());
     painter->restore();
 }
 

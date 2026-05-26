@@ -37,7 +37,7 @@ public:
 
         // for searching info
         bool isStringFind;
-        QString encoding;
+        QStringConverter::Encoding encoding;
         QString value;
     };
 
@@ -46,7 +46,7 @@ public:
         bool isSel;
 
         // for searching info
-        QString encoding;
+        QStringConverter::Encoding encoding;
         QString findValue;
     };
 

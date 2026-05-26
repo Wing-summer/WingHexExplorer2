@@ -17,7 +17,7 @@
 
 #include "encodingdialog.h"
 
-#include "../utilities.h"
+#include "utilities.h"
 #include <QAction>
 #include <QLabel>
 #include <QListWidgetItem>
@@ -25,7 +25,8 @@
 #include <QShortcut>
 #include <QVBoxLayout>
 
-EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialogBase(parent) {
+EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
+    : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
@@ -35,7 +36,7 @@ EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialogBase(parent) {
     layout->addSpacing(5);
     enclist = new QListWidget(this);
     enclist->addItems(Utilities::getEncodings());
-    enclist->setCurrentRow(0);
+    enclist->setCurrentRow(enc);
 
     layout->addWidget(enclist);
     layout->addSpacing(10);
@@ -51,15 +52,16 @@ EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialogBase(parent) {
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
+    this->setWindowIcon(ICONRES(QStringLiteral("encoding")));
     this->setWindowTitle(tr("Encoding"));
 }
 
-QString EncodingDialog::getResult() { return result; }
+QStringConverter::Encoding EncodingDialog::getResult() { return result; }
 
 void EncodingDialog::on_accept() {
-    auto s = enclist->selectedItems();
-    if (s.count() > 0) {
-        result = s.first()->text();
+    auto row = enclist->currentRow();
+    if (row >= 0) {
+        result = QStringConverter::Encoding(row);
         done(1);
     } else {
         done(0);

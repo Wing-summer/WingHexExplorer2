@@ -131,7 +131,7 @@ void QHexView::getStatus() {
 void QHexView::establishSignal(QHexDocument *doc) {
     connect(doc, &QHexDocument::documentChanged, this, [this]() {
         this->adjustScrollBars();
-        this->viewport()->update();
+        update();
     });
 
     connect(doc, &QHexDocument::canUndoChanged, this,
@@ -151,8 +151,7 @@ void QHexView::establishSignal(QHexDocument *doc) {
         Q_EMIT metaCommentVisibleChanged(b);
         Q_EMIT metaStatusChanged();
     });
-    connect(doc, &QHexDocument::metaDataChanged, this,
-            [=] { this->viewport()->update(); });
+    connect(doc, &QHexDocument::metaDataChanged, this, [=] { update(); });
     connect(doc, &QHexDocument::documentKeepSize, this,
             &QHexView::documentKeepSize);
     connect(doc, &QHexDocument::documentLockedFile, this,

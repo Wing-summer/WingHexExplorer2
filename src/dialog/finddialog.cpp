@@ -57,7 +57,8 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     if (info.isStringFind) {
         m_lineeditor->setMode(HexLineEdit::TextMode);
-        m_findMode->setCurrentText(info.encoding);
+        m_findMode->setCurrentText(
+            Utilities::stringEncodingName(info.encoding));
         m_lineeditor->setText(info.findValue);
     } else {
         m_lineeditor->setMode(HexLineEdit::HexMode);
@@ -156,11 +157,13 @@ void FindDialog::on_accept() {
 
     if (_result.isStringFind) {
         _result.value = m_lineeditor->text();
+        _result.encoding =
+            QStringConverter::Encoding(m_findMode->currentIndex() - 1);
     } else {
         _result.value = m_lineeditor->rawHexText();
+        _result.encoding = {};
     }
 
-    _result.encoding = m_findMode->currentText();
     done(1);
 }
 

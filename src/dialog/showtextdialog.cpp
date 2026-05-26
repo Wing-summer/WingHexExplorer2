@@ -140,7 +140,7 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString &mime,
     }
 
     this->buffer = buffer->read(qsizetype(0), buffer->length());
-    setEncoding(enc);
+    setEncoding(Utilities::encodingForName(encoding));
     setSyntax(WingCodeEdit::syntaxRepo().definitionForMimeType(mime));
 }
 
@@ -191,7 +191,7 @@ void ShowTextDialog::on_findfile() {
 void ShowTextDialog::on_gotoline() { m_edit->showGotoBar(true); }
 
 void ShowTextDialog::on_encoding() {
-    EncodingDialog d;
+    EncodingDialog d(QStringConverter::Encoding::Utf8);
     if (d.exec()) {
         auto res = d.getResult();
         setEncoding(res);
@@ -207,14 +207,12 @@ void ShowTextDialog::on_updateDefs() {
     downloadDialog->activateWindow();
 }
 
-void ShowTextDialog::setEncoding(const QString &enc) {
+void ShowTextDialog::setEncoding(QStringConverter::Encoding enc) {
     m_cancelButton->setVisible(true);
     m_continue = true;
 
-    auto e = Utilities::realEncodingName(enc);
-    auto en = QStringConverter::encodingForName(e.toUtf8());
     QTextStream ss(this->buffer);
-    ss.setEncoding(en.value_or(QStringConverter::Utf8)); // fallback to UTF-8
+    ss.setEncoding(enc);
     ss.setAutoDetectUnicode(false);
     auto total = this->buffer.size();
     m_edit->clear();
@@ -238,7 +236,7 @@ void ShowTextDialog::setEncoding(const QString &enc) {
     auto cursor = m_edit->textCursor();
     cursor.setPosition(0);
     m_edit->setTextCursor(cursor);
-    m_status->showMessage(enc);
+    m_status->showMessage(Utilities::stringEncodingName(enc));
 }
 
 void ShowTextDialog::closeEvent(QCloseEvent *event) {

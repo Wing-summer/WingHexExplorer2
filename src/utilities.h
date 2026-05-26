@@ -112,6 +112,12 @@ public:
         return QStringLiteral("%1 TB").arg(av);
     }
 
+    inline static QStringConverter::Encoding
+    encodingForName(const QString &encoding) {
+        auto en = QStringConverter::encodingForName(encoding.toUtf8());
+        return en.value_or(QStringConverter::Encoding ::Latin1);
+    }
+
     inline static QStringList getEncodings() {
         static QStringList encodings;
 
@@ -270,49 +276,42 @@ public:
         }
     }
 
-    inline static QByteArray encodingString(const QString &str,
-                                            const QString &enc = {}) {
-        auto encoding = enc;
-        if (encoding.isEmpty() || encoding.compare(QStringLiteral("ASCII"),
-                                                   Qt::CaseInsensitive) == 0) {
-            encoding = QStringLiteral("ISO-8859-1");
-        }
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        auto en = QStringConverter::encodingForName(encoding.toUtf8());
-        Q_ASSERT(en.has_value());
-        QStringEncoder e(en.value());
+    inline static QByteArray
+    encodingString(const QString &str,
+                   const QStringConverter::Encoding &enc =
+                       QStringConverter::Encoding ::Latin1) {
+        QStringEncoder e(enc);
         return e.encode(str);
-#else
-        auto en = QTextCodec::codecForName(encoding.toUtf8());
-        auto e = en->makeEncoder();
-        return e->fromUnicode(str);
-#endif
     }
 
-    inline static QString realEncodingName(const QString &enc = {}) {
-        if (enc.isEmpty() ||
-            enc.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive) == 0) {
-            return QStringLiteral("ISO-8859-1");
-        }
-        return enc;
-    }
-
-    inline static QString decodingString(const QByteArray &buffer,
-                                         const QString &enc = {}) {
-        auto encoding = realEncodingName(enc);
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        auto en = QStringConverter::encodingForName(encoding.toUtf8());
-        Q_ASSERT(en.has_value());
-        QStringDecoder dec(en.value());
-
+    inline static QString
+    decodingString(const QByteArray &buffer,
+                   const QStringConverter::Encoding &enc =
+                       QStringConverter::Encoding ::Latin1) {
+        QStringDecoder dec(enc);
         return dec.decode(buffer);
-#else
-        auto en = QTextCodec::codecForName(encoding.toUtf8());
-        auto dec = en->makeDecoder();
-        return dec->toUnicode(buffer);
-#endif
+    }
+
+    static QString stringEncodingName(QStringConverter::Encoding encoding) {
+        switch (encoding) {
+        case QStringConverter::Encoding::Utf16:
+            return QStringLiteral("UTF-16");
+        case QStringConverter::Encoding::Utf16LE:
+            return QStringLiteral("UTF-16LE");
+        case QStringConverter::Encoding::Utf16BE:
+            return QStringLiteral("UTF-16BE");
+        case QStringConverter::Encoding::Utf32:
+            return QStringLiteral("UTF-32");
+        case QStringConverter::Encoding::Utf32LE:
+            return QStringLiteral("UTF-32LE");
+        case QStringConverter::Encoding::Utf32BE:
+            return QStringLiteral("UTF-32BE");
+        case QStringConverter::Encoding::Utf8:
+            return QStringLiteral("UTF-8");
+        case QStringConverter::Encoding::Latin1:
+        default:
+            return QStringLiteral("ASCII");
+        }
     }
 
     inline static bool isValidIdentifier(const QString &str) {

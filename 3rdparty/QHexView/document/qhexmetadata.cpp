@@ -338,7 +338,7 @@ void QHexMetadata::setLineWidth(quint8 width) {
 
         m_linemeta.clear();
         for (const auto &item : std::as_const(m_metadata)) {
-            addMetadata(item);
+            addMetaLines(item);
         }
 
         Q_EMIT metadataChanged();
@@ -485,7 +485,7 @@ double QHexMetadata::calculateLuminance(const QColor &color) {
     double b = color.blueF();
 
     // Apply gamma correction
-    auto gammaCorrect = [](double value) {
+    static constexpr auto gammaCorrect = [](double value) {
         return (value <= 0.03928) ? (value / 12.92)
                                   : std::pow((value + 0.055) / 1.055, 2.4);
     };

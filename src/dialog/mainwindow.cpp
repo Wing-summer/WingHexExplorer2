@@ -690,9 +690,10 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
 
     static auto se = [this]() {
         if (_findResultModel->isValid()) {
-            m_find->setWindowTitle(tr("FindResult") + QStringLiteral(" (") +
-                                   _findResultModel->encoding() +
-                                   QStringLiteral(")"));
+            m_find->setWindowTitle(
+                tr("FindResult") + QStringLiteral(" (") +
+                Utilities::stringEncodingName(_findResultModel->encoding()) +
+                QStringLiteral(")"));
         } else {
             m_find->setWindowTitle(tr("FindResult"));
         }
@@ -702,30 +703,29 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     menu->setIcon(ICONRES(QStringLiteral("encoding")));
     auto aGroup = new QActionGroup(menu);
     aGroup->setParent(menu);
-    const auto langs = Utilities::getEncodings();
-    for (const auto &l : langs) {
-        auto a = newCheckableAction(menu, l, [this, l]() {
-            _findResultModel->setEncoding(l);
-            se();
-        });
+
+    m_findEncoding.resize(QStringConverter::Encoding::LastEncoding);
+    for (auto e = 0; e < QStringConverter::Encoding::LastEncoding; ++e) {
+        auto l = QStringConverter::Encoding(e);
+        auto a = newCheckableAction(menu, Utilities::stringEncodingName(l),
+                                    [this, l]() {
+                                        _findResultModel->setEncoding(l);
+                                        se();
+                                    });
         a->setActionGroup(aGroup);
         menu->addAction(a);
-        m_findEncoding.insert(l, a);
-    }
-    if (langs.isEmpty()) {
-        aGroup->deleteLater();
+        m_findEncoding[l] = a;
     }
 
-    connect(_findResultModel, &FindResultModel::modelReset, menu,
-            [this, menu]() {
-                auto r = _findResultModel->isValid();
-                menu->setEnabled(r);
-                if (r) {
-                    m_findEncoding.value(_findResultModel->encoding())
-                        ->setChecked(true);
-                }
-                se();
-            });
+    connect(
+        _findResultModel, &FindResultModel::modelReset, menu, [this, menu]() {
+            auto r = _findResultModel->isValid();
+            menu->setEnabled(r);
+            if (r) {
+                m_findEncoding[_findResultModel->encoding()]->setChecked(true);
+            }
+            se();
+        });
 
     m_menuFind = new QMenu(m_findresult);
     auto em = new QAction(tr("ShowDec"), this);
@@ -1113,19 +1113,6 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
                               tr("DecodeText") + QStringLiteral(" (ASCII)"),
                               m_txtDecode);
-
-    auto a = newAction(
-        ICONRES("copy"), tr("Copy"), [this]() { m_logbrowser->copy(); },
-        QKeySequence::Copy);
-    a->setShortcutContext(Qt::WidgetShortcut);
-    m_txtDecode->addAction(a);
-    a = new QAction(tr("Encoding"), this);
-    a->setIcon(ICONRES(QStringLiteral("encoding")));
-    connect(a, &QAction::triggered, this, &MainWindow::on_encoding);
-    m_txtDecode->addAction(a);
-
-    m_txtDecode->setContextMenuPolicy(Qt::ActionsContextMenu);
-
     connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
             &QDockWidget::setWindowTitle);
     m_txtDecode->installEventFilter(this);
@@ -1652,6 +1639,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                     }
                 }
             });
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("encoding"), tr("Encoding"),
+            &MainWindow::on_encoding);
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("mColInfo"), tr("SetColInfo"), [this]() {
                 auto hexeditor = currentHexView();
@@ -2402,12 +2392,16 @@ void MainWindow::on_gotoline() {
 }
 
 void MainWindow::on_encoding() {
-    EncodingDialog d;
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+
+    auto render = hexeditor->renderer();
+    EncodingDialog d(render->stringEncoding());
     if (d.exec()) {
-        m_encoding = d.getResult();
-        m_txtDecode->setWindowTitle(tr("DecodeText") + QStringLiteral(" (") +
-                                    m_encoding + QStringLiteral(")"));
-        on_selectionChanged();
+        render->setStringEncoding(d.getResult());
+        updateStringDec();
     }
 }
 
@@ -3246,7 +3240,6 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     editor->setCopyLimit(set.copylimit());
     editor->setFontSize(set.editorfontSize());
 
-    connectEditorView(editor);
     connect(editor, &EditorView::closeRequested, this, [this] {
         auto editor = qobject_cast<EditorView *>(sender());
         Q_ASSERT(editor);
@@ -3331,19 +3324,69 @@ void MainWindow::registerClonedEditorView(EditorView *editor) {
     });
 }
 
-void MainWindow::connectEditorView(EditorView *editor) {
-    Q_ASSERT(editor);
-    connect(editor, &EditorView::sigOnFill, this, &MainWindow::on_fill);
-    connect(editor, &EditorView::sigOnCutHex, this, &MainWindow::on_cuthex);
-    connect(editor, &EditorView::sigOnDelete, this, &MainWindow::on_delete);
-    connect(editor, &EditorView::sigOnCopyHex, this, &MainWindow::on_copyhex);
-    connect(editor, &EditorView::sigOnCutFile, this, &MainWindow::on_cutfile);
-    connect(editor, &EditorView::sigOnBookMark, this, &MainWindow::on_bookmark);
-    connect(editor, &EditorView::sigOnCheckSum, this, &MainWindow::on_checksum);
-    connect(editor, &EditorView::sigOnCopyFile, this, &MainWindow::on_copyfile);
-    connect(editor, &EditorView::sigOnFindFile, this, &MainWindow::on_findfile);
-    connect(editor, &EditorView::sigOnGoToLine, this, &MainWindow::on_gotoline);
-    connect(editor, &EditorView::sigOnMetadata, this, [this] {
+void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
+    if (old == cur) {
+        return;
+    }
+
+    if (!m_curConnections.isEmpty()) {
+        for (const auto &c : std::as_const(m_curConnections)) {
+            disconnect(c);
+        }
+        m_curConnections.clear();
+    }
+
+    if (old) {
+        auto &dbp = old->scrollPoints();
+        dbp[int(EditorView::ScrollPoint::FindResult)] =
+            QPoint(m_findresult->horizontalScrollBar()->value(),
+                   m_findresult->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::CheckSum)] =
+            QPoint(m_hash->horizontalScrollBar()->value(),
+                   m_hash->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::UndoStack)] =
+            QPoint(_undoView->horizontalScrollBar()->value(),
+                   _undoView->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::BookMark)] =
+            QPoint(m_bookMark->horizontalScrollBar()->value(),
+                   m_bookMark->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::MetaData)] =
+            QPoint(m_metadata->horizontalScrollBar()->value(),
+                   m_metadata->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::DecodeStr)] =
+            QPoint(m_txtDecode->horizontalScrollBar()->value(),
+                   m_txtDecode->verticalScrollBar()->value());
+    }
+
+    if (cur == nullptr) {
+        return;
+    }
+
+    _editorLock.lockForWrite();
+
+    m_curConnections << connect(cur, &EditorView::sigOnFill, this,
+                                &MainWindow::on_fill);
+    m_curConnections << connect(cur, &EditorView::sigOnCutHex, this,
+                                &MainWindow::on_cuthex);
+    m_curConnections << connect(cur, &EditorView::sigOnDelete, this,
+                                &MainWindow::on_delete);
+    m_curConnections << connect(cur, &EditorView::sigOnCopyHex, this,
+                                &MainWindow::on_copyhex);
+    m_curConnections << connect(cur, &EditorView::sigOnCutFile, this,
+                                &MainWindow::on_cutfile);
+    m_curConnections << connect(cur, &EditorView::sigOnBookMark, this,
+                                &MainWindow::on_bookmark);
+    m_curConnections << connect(cur, &EditorView::sigOnEncoding, this,
+                                &MainWindow::on_encoding);
+    m_curConnections << connect(cur, &EditorView::sigOnCheckSum, this,
+                                &MainWindow::on_checksum);
+    m_curConnections << connect(cur, &EditorView::sigOnCopyFile, this,
+                                &MainWindow::on_copyfile);
+    m_curConnections << connect(cur, &EditorView::sigOnFindFile, this,
+                                &MainWindow::on_findfile);
+    m_curConnections << connect(cur, &EditorView::sigOnGoToLine, this,
+                                &MainWindow::on_gotoline);
+    m_curConnections << connect(cur, &EditorView::sigOnMetadata, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
@@ -3400,50 +3443,11 @@ void MainWindow::connectEditorView(EditorView *editor) {
             }
         }
     });
-    connect(editor, &EditorView::sigOnPasteHex, this, &MainWindow::on_pastehex);
-    connect(editor, &EditorView::sigOnPasteFile, this,
-            &MainWindow::on_pastefile);
-}
+    m_curConnections << connect(cur, &EditorView::sigOnPasteHex, this,
+                                &MainWindow::on_pastehex);
+    m_curConnections << connect(cur, &EditorView::sigOnPasteFile, this,
+                                &MainWindow::on_pastefile);
 
-void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
-    if (old == cur) {
-        return;
-    }
-
-    if (!m_curConnections.isEmpty()) {
-        for (const auto &c : std::as_const(m_curConnections)) {
-            disconnect(c);
-        }
-        m_curConnections.clear();
-    }
-
-    if (old) {
-        auto &dbp = old->scrollPoints();
-        dbp[int(EditorView::ScrollPoint::FindResult)] =
-            QPoint(m_findresult->horizontalScrollBar()->value(),
-                   m_findresult->verticalScrollBar()->value());
-        dbp[int(EditorView::ScrollPoint::CheckSum)] =
-            QPoint(m_hash->horizontalScrollBar()->value(),
-                   m_hash->verticalScrollBar()->value());
-        dbp[int(EditorView::ScrollPoint::UndoStack)] =
-            QPoint(_undoView->horizontalScrollBar()->value(),
-                   _undoView->verticalScrollBar()->value());
-        dbp[int(EditorView::ScrollPoint::BookMark)] =
-            QPoint(m_bookMark->horizontalScrollBar()->value(),
-                   m_bookMark->verticalScrollBar()->value());
-        dbp[int(EditorView::ScrollPoint::MetaData)] =
-            QPoint(m_metadata->horizontalScrollBar()->value(),
-                   m_metadata->verticalScrollBar()->value());
-        dbp[int(EditorView::ScrollPoint::DecodeStr)] =
-            QPoint(m_txtDecode->horizontalScrollBar()->value(),
-                   m_txtDecode->verticalScrollBar()->value());
-    }
-
-    if (cur == nullptr) {
-        return;
-    }
-
-    _editorLock.lockForWrite();
     auto hexeditor = cur->hexEditor();
     m_curConnections << connect(hexeditor, &QHexView::cursorLocationChanged,
                                 this, &MainWindow::on_locChanged);
@@ -4189,12 +4193,18 @@ void MainWindow::updateNumberTable(bool force) {
 }
 
 QPair<QByteArrayList, bool> MainWindow::updateStringDec() {
-    if (!m_txtDecode->isVisible()) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        m_txtDecode->setWindowTitle(tr("DecodeText"));
         return {};
     }
 
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
+    auto enc = hexeditor->renderer()->stringEncoding();
+    m_txtDecode->setWindowTitle(tr("DecodeText") + QStringLiteral(" (") +
+                                Utilities::stringEncodingName(enc) +
+                                QStringLiteral(")"));
+
+    if (!m_txtDecode->isVisible()) {
         return {};
     }
 
@@ -4226,8 +4236,7 @@ QPair<QByteArrayList, bool> MainWindow::updateStringDec() {
         }
 
         if (buffer.length() <= 1024 * 1024 * _decstrlim) {
-            m_txtDecode->insertPlainText(
-                Utilities::decodingString(b, m_encoding));
+            m_txtDecode->insertPlainText(Utilities::decodingString(b, enc));
             m_txtDecode->insertPlainText(QStringLiteral("\n"));
         } else {
             m_txtDecode->insertHtml(

@@ -118,6 +118,8 @@ EditorView::EditorView(QWidget *parent)
     newAction(m_menu, QStringLiteral("bookmark"), tr("BookMark"),
               &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
+    newAction(m_menu, QStringLiteral("encoding"), tr("Encoding"),
+              &EditorView::sigOnEncoding);
     newAction(m_menu, QStringLiteral("sum"), tr("CheckSum"),
               &EditorView::sigOnCheckSum);
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -1601,7 +1603,8 @@ QString EditorView::readString(const QObject *caller, qsizetype offset,
         return {};
     }
     auto buffer = doc->read(offset, len);
-    return Utilities::decodingString(buffer, encoding);
+    return Utilities::decodingString(buffer,
+                                     Utilities::encodingForName(encoding));
 }
 
 QByteArray EditorView::readBytes(const QObject *caller, qsizetype offset,
@@ -1913,7 +1916,8 @@ bool EditorView::writeString(const QObject *caller, qsizetype offset,
     }
 
     auto doc = m_hex->document();
-    auto unicode = Utilities::encodingString(value, encoding);
+    auto unicode =
+        Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeReplace(nullptr, m_hex->cursor(), offset, unicode);
     if (cmd) {
         QWriteLocker l(&_rwlock);
@@ -2072,7 +2076,8 @@ bool EditorView::insertString(const QObject *caller, qsizetype offset,
     }
 
     auto doc = m_hex->document();
-    auto unicode = Utilities::encodingString(value, encoding);
+    auto unicode =
+        Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeInsert(nullptr, m_hex->cursor(), offset, unicode);
     if (cmd) {
         QWriteLocker l(&_rwlock);
@@ -2221,7 +2226,8 @@ bool EditorView::appendString(const QObject *caller, const QString &value,
     }
 
     auto doc = m_hex->document();
-    auto unicode = Utilities::encodingString(value, encoding);
+    auto unicode =
+        Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeAppend(nullptr, m_hex->cursor(), unicode);
     if (cmd) {
         QWriteLocker l(&_rwlock);
@@ -2927,6 +2933,7 @@ EditorView *EditorView::clone() {
     connect(ev, &EditorView::sigOnFill, this, &EditorView::sigOnFill);
     connect(ev, &EditorView::sigOnMetadata, this, &EditorView::sigOnMetadata);
     connect(ev, &EditorView::sigOnBookMark, this, &EditorView::sigOnBookMark);
+    connect(ev, &EditorView::sigOnEncoding, this, &EditorView::sigOnEncoding);
     connect(ev, &EditorView::sigOnCheckSum, this, &EditorView::sigOnCheckSum);
 
     auto doc = m_hex->document();

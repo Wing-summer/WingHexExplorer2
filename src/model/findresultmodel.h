@@ -45,7 +45,8 @@ public:
             return QString::fromLatin1(buffer);
         }
 
-        inline QString generateDecoding(const QString &encoding) const {
+        inline QString
+        generateDecoding(const QStringConverter::Encoding &encoding) const {
             QString buffer = Utilities::decodingString(cheader, encoding);
             if (!hbuffer.isEmpty()) {
                 buffer += Utilities::decodingString(hbuffer);
@@ -71,7 +72,8 @@ public:
         QList<FindResult> results;
         QList<FindInfo> findData;
         QPair<QString, qsizetype> lastFindData;
-        QString encoding = QStringLiteral("ASCII");
+        QStringConverter::Encoding encoding =
+            QStringConverter::Encoding::Latin1;
 
         inline void clear() {
             results.clear();
@@ -107,8 +109,8 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation,
                                 int role) const override;
 
-    QString encoding() const;
-    void setEncoding(const QString &newEncoding);
+    QStringConverter::Encoding encoding() const;
+    void setEncoding(const QStringConverter::Encoding &newEncoding);
 
 private:
     FindData *m_data = nullptr;

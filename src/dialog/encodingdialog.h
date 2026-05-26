@@ -22,13 +22,12 @@
 
 #include <QDialogButtonBox>
 #include <QListWidget>
-#include <QMainWindow>
 
 class EncodingDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
-    EncodingDialog(QWidget *parent = nullptr);
-    QString getResult();
+    EncodingDialog(QStringConverter::Encoding enc, QWidget *parent = nullptr);
+    QStringConverter::Encoding getResult();
 
 private:
     void on_accept();
@@ -36,7 +35,7 @@ private:
 
 private:
     QListWidget *enclist;
-    QString result;
+    QStringConverter::Encoding result;
 };
 
 #endif // ENCODINGDIALOG_H

@@ -265,7 +265,6 @@ private:
     void registerEditorView(EditorView *editor, const QString &ws = {});
     void registerClonedEditorView(EditorView *editor);
 
-    void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
     void updateWindowTitle(EditorView *view);
 
@@ -457,9 +456,6 @@ private:
     QLabel *_status = nullptr;
     QLabel *_editArea = nullptr;
 
-    // for show text
-    QString m_encoding;
-
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
     QPlainTextEdit *m_bgScriptOutput = nullptr;
@@ -470,7 +466,8 @@ private:
     ads::CDockWidget *m_hashtable = nullptr;
     ads::CDockWidget *m_console = nullptr;
     QMenu *m_menuFind = nullptr;
-    QHash<QString, QAction *> m_findEncoding;
+    QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
+        m_findEncoding;
 
     QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findResultModel = nullptr;

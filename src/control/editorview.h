@@ -575,6 +575,7 @@ signals:
     void sigOnFill();
     void sigOnMetadata();
     void sigOnBookMark();
+    void sigOnEncoding();
     void sigOnCheckSum();
 
 public:
