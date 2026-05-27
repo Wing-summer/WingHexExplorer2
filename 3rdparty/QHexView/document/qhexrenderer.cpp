@@ -23,6 +23,8 @@
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
+#include <QPainterPath>
+#include <QPainterPathStroker>
 #include <QStringDecoder>
 #include <QTextCharFormat>
 #include <QTextCursor>
@@ -385,15 +387,15 @@ QHexRenderer::buildAsciiCells(const QByteArray &rawline) const {
     case QStringConverter::Encoding::Utf8:
         return buildAsciiCellsUtf8(rawline);
     case QStringConverter::Encoding::Utf16:
-        return buildAsciiCellsUtf16(rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian,
-                                    true);
+        return buildAsciiCellsUtf16(
+            rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
     case QStringConverter::Encoding::Utf16LE:
         return buildAsciiCellsUtf16(rawline, true, false);
     case QStringConverter::Encoding::Utf16BE:
         return buildAsciiCellsUtf16(rawline, false, false);
     case QStringConverter::Encoding::Utf32:
-        return buildAsciiCellsUtf32(rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian,
-                                    true);
+        return buildAsciiCellsUtf32(
+            rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
     case QStringConverter::Encoding::Utf32LE:
         return buildAsciiCellsUtf32(rawline, true, false);
     case QStringConverter::Encoding::Utf32BE:
@@ -1057,8 +1059,9 @@ QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
 
     if (value == 0x00 || value == 0xFF) {
         if (fmt.foreground.lightness() < 50) {
-            fmt.foreground =
-                fmt.foreground == Qt::black ? Qt::gray : fmt.foreground.darker();
+            fmt.foreground = fmt.foreground == Qt::black
+                                 ? Qt::gray
+                                 : fmt.foreground.darker();
         } else {
             fmt.foreground = fmt.foreground.lighter();
         }
@@ -1090,11 +1093,11 @@ QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
             strikeOut ? m_selectionColor.darker() : m_selectionColor;
         fmt.fillBackground = true;
         fmt.strikeOut = strikeOut;
-        fmt.italic = strikeOut;
+        fmt.italic = meta.has_value() || strikeOut;
     }
 
-    if (line == m_cursor->currentLine() && column == m_cursor->currentColumn() &&
-        m_cursorenabled) {
+    if (line == m_cursor->currentLine() &&
+        column == m_cursor->currentColumn() && m_cursorenabled) {
         if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
             (m_selectedarea != QHexRenderer::AsciiArea)) {
             fmt.foreground = m_bytesBackground;
@@ -1130,8 +1133,7 @@ bool QHexRenderer::asciiCellNeedsByteFallback(
     for (int i = 1; i < formats.size(); ++i) {
         const auto &fmt = formats.at(i);
         if (fmt.foreground != base.foreground ||
-            fmt.background != base.background ||
-            fmt.outline != base.outline ||
+            fmt.background != base.background || fmt.outline != base.outline ||
             fmt.fillBackground != base.fillBackground ||
             fmt.underline != base.underline || fmt.bold != base.bold ||
             fmt.italic != base.italic || fmt.strikeOut != base.strikeOut) {
@@ -1337,10 +1339,107 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
     painter->restore();
 }
 
+QRect QHexRenderer::byteRectAt(qreal cellWidth, int height,
+                               int byteIndex) const {
+    const int x = qRound(byteIndex * cellWidth);
+    const int w = qRound((byteIndex + 1) * cellWidth) - x;
+    return QRect(x, 0, w, height);
+}
+
+void QHexRenderer::drawBookmarkRect(QPainter *painter, qreal cellWidth,
+                                    int height, int byteIndex,
+                                    const QColor &fallbackColor) const {
+    QRect byteRect = byteRectAt(cellWidth, height, byteIndex);
+    QColor markColor = fallbackColor.isValid() ? fallbackColor : m_bytesColor;
+    markColor.setAlpha(180);
+    painter->save();
+    painter->setPen(QPen(markColor, 1, Qt::DotLine));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(QRect(byteRect.x() + 1, byteRect.y() + 1,
+                            qMax(0, byteRect.width() - 2),
+                            qMax(0, byteRect.height() - 3)));
+    painter->restore();
+}
+
+QHexRenderer::AsciiCellFormat
+QHexRenderer::mergeCellFormat(const QVector<AsciiCellFormat> &formats) const {
+    AsciiCellFormat merged = formats.constFirst();
+
+    for (int i = 1; i < formats.size(); ++i) {
+        const auto &fmt = formats.at(i);
+
+        if (fmt.fillBackground) {
+            merged.background = fmt.background;
+            merged.fillBackground = true;
+        }
+
+        if (fmt.foreground != merged.foreground) {
+            merged.foreground = fmt.foreground;
+        }
+
+        merged.underline = merged.underline || fmt.underline;
+
+        merged.bold = merged.bold || fmt.bold;
+
+        merged.italic = merged.italic || fmt.italic;
+
+        merged.strikeOut = merged.strikeOut || fmt.strikeOut;
+
+        if (fmt.outline.isValid()) {
+            merged.outline = fmt.outline;
+        }
+    }
+
+    return merged;
+}
+
+void QHexRenderer::drawAsciiText(QPainter *painter, const QRect &rect,
+                                 const QString &text,
+                                 const AsciiCellFormat &fmt) const {
+    QFont font = painter->font();
+    font.setBold(fmt.bold);
+    font.setItalic(fmt.italic);
+    font.setStrikeOut(fmt.strikeOut);
+    font.setUnderline(false);
+
+    painter->save();
+    painter->setFont(font);
+    painter->setRenderHint(QPainter::TextAntialiasing, true);
+
+    const QFontMetricsF fm(font);
+    const QRectF inkRect = fm.tightBoundingRect(text);
+
+    const qreal baselineY =
+        rect.y() + (rect.height() + fm.ascent() - fm.descent()) / 2.0;
+    qreal textX =
+        rect.x() + (rect.width() - inkRect.width()) / 2.0 - inkRect.x();
+
+    const QPointF pos(textX, baselineY);
+
+    if (fmt.outline.isValid()) {
+        painter->setPen(fmt.outline);
+        constexpr qreal d = CONTRASTING_COLOR_BORDER;
+        const QPointF offsets[] = {
+            QPointF(-d, 0.0),
+            QPointF(d, 0.0),
+            QPointF(0.0, -d),
+            QPointF(0.0, d),
+        };
+
+        for (const QPointF &offset : offsets) {
+            painter->drawText(pos + offset, text);
+        }
+    }
+
+    painter->setPen(fmt.foreground);
+    painter->drawText(pos, text);
+
+    painter->restore();
+}
+
 void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
                               qsizetype line) {
-    QByteArray rawline;
-    rawline = this->getLine(line);
+    const QByteArray rawline = this->getLine(line);
 
     QRect asciirect = linerect;
     asciirect.setX(this->getAsciiColumnX() + this->borderSize());
@@ -1348,11 +1447,12 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
 
     painter->save();
     painter->translate(asciirect.topLeft());
-    painter->setClipRect(QRect(QPoint(0, 0), asciirect.size()));
+    painter->setClipRect(0, 0, asciirect.width(), asciirect.height());
 
     const auto cells = buildAsciiCells(rawline);
     const qreal cellWidth = getCellWidth();
     const int height = lineHeight();
+
     QVector<AsciiCellFormat> lineFormats;
     lineFormats.reserve(rawline.size());
     for (int i = 0; i < rawline.size(); ++i) {
@@ -1360,202 +1460,84 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
             asciiCellFormat(line, i, static_cast<uchar>(rawline.at(i))));
     }
 
-    for (const auto &cell : cells) {
-        const int startX = qRound(cell.start * cellWidth);
-        const int width = qRound(cell.length * cellWidth);
-        QRect cellRect(startX, 0, width, height);
-
+    struct PreparedCell {
+        AsciiCell cell;
         QVector<AsciiCellFormat> formats;
-        formats.reserve(cell.length);
+        bool fallback = false;
+    };
+
+    QVector<PreparedCell> preparedCells;
+    preparedCells.reserve(cells.size());
+
+    for (const auto &cell : cells) {
+        PreparedCell prepared;
+        prepared.cell = cell;
+        prepared.formats.reserve(cell.length);
         for (int i = 0; i < cell.length; ++i) {
-            formats.append(lineFormats.at(cell.start + i));
+            prepared.formats.append(lineFormats.at(cell.start + i));
         }
+        prepared.fallback =
+            asciiCellNeedsByteFallback(line, cell, prepared.formats);
+        preparedCells.append(std::move(prepared));
+    }
 
-        bool cellSelected = false;
-        bool cellStrikeOut = false;
-        bool cellHasSelection = false;
-        int selectedByteCount = 0;
-        bool cursorInCell = line == m_cursor->currentLine() && m_cursorenabled &&
-                            m_cursor->currentColumn() >= cell.start &&
-                            m_cursor->currentColumn() < (cell.start + cell.length);
-        for (int i = 0; i < cell.length; ++i) {
-            bool strikeOut = false;
-            bool hasSelection = false;
-            if (isByteSelected(line, cell.start + i, &strikeOut, &hasSelection)) {
-                cellSelected = true;
-                cellStrikeOut = cellStrikeOut || strikeOut;
-                cellHasSelection = cellHasSelection || hasSelection;
-                ++selectedByteCount;
-            }
-        }
-
-        if (cellSelected && selectedByteCount == cell.length) {
-            const QColor background =
-                (cellStrikeOut || cellHasSelection)
-                    ? m_selBackgroundColor.darker()
-                    : m_selBackgroundColor;
-            const QColor foreground =
-                cellStrikeOut ? m_selectionColor.darker() : m_selectionColor;
-            for (auto &fmt : formats) {
-                fmt.background = background;
-                fmt.foreground = foreground;
-                fmt.fillBackground = true;
-                fmt.strikeOut = cellStrikeOut;
-                fmt.italic = cellStrikeOut;
-            }
-        }
-
-        if (cursorInCell) {
-            const bool overwrite =
-                (m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-                (m_selectedarea != QHexRenderer::AsciiArea);
-            for (auto &fmt : formats) {
-                if (overwrite) {
-                    fmt.foreground = m_bytesBackground;
-                    fmt.background = (m_selectedarea == QHexRenderer::AsciiArea)
-                                         ? m_bytesColor
-                                         : m_bytesColor.lighter(250);
-                    fmt.fillBackground = true;
-                    fmt.underline = false;
-                } else {
-                    fmt.underline = true;
-                }
-            }
-        }
-
-        for (int i = 0; i < cell.length; ++i) {
-            lineFormats[cell.start + i] = formats.at(i);
-        }
-
-        for (int i = 0; i < cell.length; ++i) {
-            const int byteX = qRound((cell.start + i) * cellWidth);
-            const int byteWidth =
-                qRound((cell.start + i + 1) * cellWidth) - byteX;
-            QRect byteRect(byteX, 0, byteWidth, height);
-            const auto &fmt = formats.at(i);
+    for (const auto &prepared : preparedCells) {
+        for (int i = 0; i < prepared.cell.length; ++i) {
+            const auto &fmt = prepared.formats.at(i);
             if (fmt.fillBackground) {
-                painter->fillRect(byteRect, fmt.background);
+                painter->fillRect(
+                    byteRectAt(cellWidth, height, prepared.cell.start + i),
+                    fmt.background);
             }
         }
+    }
 
-        if (asciiCellNeedsByteFallback(line, cell, formats)) {
-            for (int i = 0; i < cell.length; ++i) {
-                const int byteX = qRound((cell.start + i) * cellWidth);
-                const int byteWidth =
-                    qRound((cell.start + i + 1) * cellWidth) - byteX;
-                QRect byteRect(byteX, 0, byteWidth, height);
-                const auto &fmt = formats.at(i);
-                auto font = painter->font();
-                font.setBold(fmt.bold);
-                font.setItalic(fmt.italic);
-                font.setStrikeOut(fmt.strikeOut);
-                font.setUnderline(false);
-                painter->setFont(font);
-                painter->setPen(fmt.foreground);
+    for (const auto &prepared : preparedCells) {
+        const int startX = qRound(prepared.cell.start * cellWidth);
+        const int width = qRound(prepared.cell.length * cellWidth);
+        const QRect cellRect(startX, 0, width, height);
 
-                const QString text(HEX_UNPRINTABLE_CHAR);
-                if (fmt.outline.isValid()) {
-                    painter->save();
-                    painter->setPen(QPen(fmt.outline, CONTRASTING_COLOR_BORDER,
-                                         Qt::SolidLine));
-                    painter->drawText(byteRect.adjusted(0, 0, 0, -1),
-                                      Qt::AlignCenter, text);
-                    painter->restore();
-                    painter->setPen(fmt.foreground);
-                }
-
-                painter->drawText(byteRect.adjusted(0, 0, 0, -1),
-                                  Qt::AlignCenter, text);
+        if (prepared.fallback) {
+            for (int i = 0; i < prepared.cell.length; ++i) {
+                const int byteIndex = prepared.cell.start + i;
+                drawAsciiText(painter,
+                              byteRectAt(cellWidth, height, byteIndex)
+                                  .adjusted(0, 0, 0, -1),
+                              QString(HEX_UNPRINTABLE_CHAR),
+                              prepared.formats.at(i));
             }
 
-            for (int i = 0; i < cell.length; ++i) {
-                if (!hasBookmark(line, cell.start + i)) {
+            for (int i = 0; i < prepared.cell.length; ++i) {
+                const int byteIndex = prepared.cell.start + i;
+                if (!hasBookmark(line, byteIndex)) {
                     continue;
                 }
-
-                const int byteX = qRound((cell.start + i) * cellWidth);
-                const int byteWidth =
-                    qRound((cell.start + i + 1) * cellWidth) - byteX;
-                QColor markColor = formats.at(i).foreground;
-                if (!markColor.isValid()) {
-                    markColor = m_bytesColor;
-                }
-                markColor.setAlpha(180);
-                painter->setPen(QPen(markColor, 1, Qt::DotLine));
-                painter->setBrush(Qt::NoBrush);
-                painter->drawRect(byteX + 1, 1, qMax(0, byteWidth - 2),
-                                  qMax(0, height - 3));
+                drawBookmarkRect(painter, cellWidth, height, byteIndex,
+                                 prepared.formats.at(i).foreground);
             }
 
             continue;
         }
 
-        AsciiCellFormat merged = formats.constFirst();
-        for (int i = 1; i < formats.size(); ++i) {
-            const auto &fmt = formats.at(i);
-            if (fmt.fillBackground) {
-                merged.background = fmt.background;
-                merged.fillBackground = true;
-            }
-            if (fmt.foreground != merged.foreground) {
-                merged.foreground = fmt.foreground;
-            }
-            merged.underline = merged.underline || fmt.underline;
-            merged.bold = merged.bold || fmt.bold;
-            merged.italic = merged.italic || fmt.italic;
-            merged.strikeOut = merged.strikeOut || fmt.strikeOut;
-            if (!fmt.outline.isValid()) {
+        const AsciiCellFormat merged = mergeCellFormat(prepared.formats);
+
+        drawAsciiText(painter, cellRect.adjusted(0, 0, 0, -1),
+                      prepared.cell.text, merged);
+
+        for (int i = 0; i < prepared.cell.length; ++i) {
+            const int byteIndex = prepared.cell.start + i;
+            if (!hasBookmark(line, byteIndex)) {
                 continue;
             }
-            merged.outline = fmt.outline;
-        }
-
-        auto font = painter->font();
-        font.setBold(merged.bold);
-        font.setItalic(merged.italic);
-        font.setStrikeOut(merged.strikeOut);
-        font.setUnderline(false);
-        painter->setFont(font);
-        painter->setPen(merged.foreground);
-
-        QRect textRect = cellRect.adjusted(0, 0, 0, -1);
-        QString text = cell.text;
-
-        if (merged.outline.isValid()) {
-            painter->save();
-            painter->setPen(QPen(merged.outline, CONTRASTING_COLOR_BORDER,
-                                 Qt::SolidLine));
-            painter->drawText(textRect, Qt::AlignCenter, text);
-            painter->restore();
-            painter->setPen(merged.foreground);
-        }
-
-        painter->drawText(textRect, Qt::AlignCenter, text);
-
-        for (int i = 0; i < cell.length; ++i) {
-            if (!hasBookmark(line, cell.start + i)) {
-                continue;
-            }
-
-            const int byteX = qRound((cell.start + i) * cellWidth);
-            const int byteWidth =
-                qRound((cell.start + i + 1) * cellWidth) - byteX;
-            QColor markColor = formats.at(i).foreground;
-            if (!markColor.isValid()) {
-                markColor = m_bytesColor;
-            }
-            markColor.setAlpha(180);
-            painter->setPen(QPen(markColor, 1, Qt::DotLine));
-            painter->setBrush(Qt::NoBrush);
-            painter->drawRect(byteX + 1, 1, qMax(0, byteWidth - 2),
-                              qMax(0, height - 3));
+            drawBookmarkRect(painter, cellWidth, height, byteIndex,
+                             prepared.formats.at(i).foreground);
         }
     }
 
     const int underlineY = qMax(1, height - 2);
-    auto lineFormatsCount = lineFormats.size();
-    for (int i = 0; i < lineFormatsCount;) {
-        auto fmt = lineFormats.at(i);
+    const int count = lineFormats.size();
+    for (int i = 0; i < count;) {
+        const auto fmt = lineFormats.at(i);
         if (!fmt.underline) {
             ++i;
             continue;
@@ -1563,19 +1545,20 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
 
         const QColor color =
             fmt.foreground.isValid() ? fmt.foreground : m_bytesColor;
+
         int start = i;
         int end = i;
-        while (end + 1 < lineFormatsCount) {
-            const auto &nextFormat = lineFormats.at(end + 1);
-
-            if (!nextFormat.underline || nextFormat.foreground != color)
+        while (end + 1 < count) {
+            const auto &next = lineFormats.at(end + 1);
+            if (!next.underline || next.foreground != color) {
                 break;
-
+            }
             ++end;
         }
 
         const int startX = qRound(start * cellWidth);
         const int endX = qRound((end + 1) * cellWidth) - 1;
+
         painter->save();
         painter->setPen(QPen(color, 1, Qt::SolidLine));
         painter->drawLine(startX, underlineY, endX, underlineY);

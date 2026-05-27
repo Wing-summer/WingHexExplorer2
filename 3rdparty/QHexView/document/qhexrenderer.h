@@ -114,8 +114,7 @@ public:
 
     QHexCursor *cursor() const;
     void setCursor(QHexCursor *newCursor);
-    bool asciiCellAt(qsizetype line, int column, int *start,
-                     int *length) const;
+    bool asciiCellAt(qsizetype line, int column, int *start, int *length) const;
 
 private:
     QString hexString(qsizetype line, QByteArray *rawline = nullptr) const;
@@ -191,25 +190,39 @@ private:
                                     uchar value) const;
     bool selectionCoversByte(const QHexSelection &selection, qsizetype line,
                              int column) const;
-    bool asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
-                                    const QVector<AsciiCellFormat> &formats) const;
+    bool
+    asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
+                               const QVector<AsciiCellFormat> &formats) const;
     bool isByteSelected(qsizetype line, int column, bool *strikeOut,
                         bool *hasSelection) const;
     bool hasBookmark(qsizetype line, int column) const;
     static bool decodeUtf8At(const QByteArray &rawline, int index, int *length,
                              char32_t *codepoint);
-    static bool decodeUtf16At(const QByteArray &rawline, int index, bool littleEndian,
-                              int *length, char32_t *codepoint);
-    static bool decodeUtf32At(const QByteArray &rawline, int index, bool littleEndian,
-                              int *length, char32_t *codepoint);
-    static quint16 readUInt16(const QByteArray &rawline, int index, bool littleEndian);
-    static quint32 readUInt32(const QByteArray &rawline, int index, bool littleEndian);
+    static bool decodeUtf16At(const QByteArray &rawline, int index,
+                              bool littleEndian, int *length,
+                              char32_t *codepoint);
+    static bool decodeUtf32At(const QByteArray &rawline, int index,
+                              bool littleEndian, int *length,
+                              char32_t *codepoint);
+    static quint16 readUInt16(const QByteArray &rawline, int index,
+                              bool littleEndian);
+    static quint32 readUInt32(const QByteArray &rawline, int index,
+                              bool littleEndian);
     void applyCursorAscii(QTextCursor &textcursor, qsizetype line) const;
     void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawString(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHeader(QPainter *painter);
+
+private:
+    QRect byteRectAt(qreal cellWidth, int height, int byteIndex) const;
+    void drawBookmarkRect(QPainter *painter, qreal cellWidth, int height,
+                          int byteIndex, const QColor &fallbackColor) const;
+    void drawAsciiText(QPainter *painter, const QRect &rect,
+                       const QString &text, const AsciiCellFormat &fmt) const;
+    AsciiCellFormat
+    mergeCellFormat(const QVector<AsciiCellFormat> &formats) const;
 
 private:
     QHexDocument *m_document;
