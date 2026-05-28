@@ -74,7 +74,6 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
 
     if (_toast) {
         _toast->hide();
-        _toast->destroy();
         _toast->deleteLater();
     }
 
@@ -82,16 +81,17 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
     auto str = strContent;
     str.remove(regex);
     _toast = new Toast(str, icon, nToastInterval, parent);
-    connect(_toast, &Toast::destroyed, _toast, [&] {
-        _toast->parent()->removeEventFilter(_toast);
-        _toast = nullptr;
-    });
     parent->installEventFilter(_toast);
     qApp->installEventFilter(_toast);
     _toast->show();
 }
 
-Toast::~Toast() {}
+Toast::~Toast() {
+    parent()->removeEventFilter(this);
+    if (_toast == this) {
+        _toast = nullptr;
+    }
+}
 
 QSize Toast::calculateTextSize() {
     QFontMetrics metrice(displayFont());
