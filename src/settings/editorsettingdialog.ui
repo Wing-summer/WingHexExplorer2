@@ -45,22 +45,22 @@
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="horizontalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="verticalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
@@ -99,13 +99,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>DecStrLimit</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="1">
        <widget class="QSpinBox" name="sbDecStrLimit">
         <property name="suffix">
@@ -116,6 +109,13 @@
         </property>
         <property name="maximum">
          <number>1024</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>DecStrLimit</string>
         </property>
        </widget>
       </item>
@@ -135,20 +135,40 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
        <number>8</number>
       </property>
+      <item>
+       <layout class="QFormLayout" name="formLayout_2">
+        <property name="horizontalSpacing">
+         <number>8</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>8</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="lblHexWidth">
+          <property name="text">
+           <string>HexWidth</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="cbHexWidth"/>
+        </item>
+       </layout>
+      </item>
       <item>
        <widget class="QCheckBox" name="cbShowaddr">
         <property name="text">

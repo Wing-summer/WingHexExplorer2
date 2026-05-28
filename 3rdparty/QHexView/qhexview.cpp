@@ -710,7 +710,7 @@ void QHexView::mouseMoveEvent(QMouseEvent *e) {
     if (e->buttons() != Qt::NoButton)
         return;
 
-    int hittest = m_renderer->hitTestArea(abspos);
+    auto hittest = m_renderer->hitTestArea(abspos);
 
     if (m_renderer->editableArea(hittest))
         this->setCursor(Qt::IBeamCursor);
@@ -732,6 +732,16 @@ void QHexView::mouseReleaseEvent(QMouseEvent *e) {
     }
 
     e->accept();
+}
+
+void QHexView::mouseDoubleClickEvent(QMouseEvent *e) {
+    QAbstractScrollArea::mouseDoubleClickEvent(e);
+
+    QPoint abspos = absolutePosition(e->pos());
+    if (m_renderer->hitTestArea(abspos) == QHexRenderer::Areas::HeaderArea) {
+        auto r = m_renderer->hitTestColArea(abspos);
+        emit headerAreaClicked(r);
+    }
 }
 
 void QHexView::focusInEvent(QFocusEvent *e) {
@@ -845,12 +855,13 @@ void QHexView::moveNext(bool select) {
     bool lastcell = (line >= m_renderer->documentLastLine()) &&
                     (column >= m_renderer->documentLastColumn());
 
-    if ((m_renderer->selectedArea() == QHexRenderer::AsciiArea) && lastcell)
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::AsciiArea) &&
+        lastcell)
         return;
 
     int nibbleindex = cur->currentNibble();
 
-    if (m_renderer->selectedArea() == QHexRenderer::HexArea) {
+    if (m_renderer->selectedArea() == QHexRenderer::Areas::HexArea) {
         if (lastcell && !nibbleindex)
             return;
 
@@ -858,7 +869,7 @@ void QHexView::moveNext(bool select) {
             return;
     }
 
-    if ((m_renderer->selectedArea() == QHexRenderer::HexArea)) {
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::HexArea)) {
         nibbleindex++;
         nibbleindex %= 2;
 
@@ -889,16 +900,17 @@ void QHexView::movePrevious(bool select) {
     auto column = cur->currentColumn();
     bool firstcell = !line && !column;
 
-    if ((m_renderer->selectedArea() == QHexRenderer::AsciiArea) && firstcell)
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::AsciiArea) &&
+        firstcell)
         return;
 
     int nibbleindex = cur->currentNibble();
 
-    if ((m_renderer->selectedArea() == QHexRenderer::HexArea) && firstcell &&
-        nibbleindex)
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::HexArea) &&
+        firstcell && nibbleindex)
         return;
 
-    if ((m_renderer->selectedArea() == QHexRenderer::HexArea)) {
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::HexArea)) {
         nibbleindex--;
         nibbleindex %= 2;
         if (!nibbleindex)
@@ -968,14 +980,14 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
                 else if (e->matches(QKeySequence::Redo))
                     m_document->redo();
                 else if (e->matches(QKeySequence::Cut))
-                    this->Cut(
-                        (m_renderer->selectedArea() == QHexRenderer::HexArea));
+                    this->Cut((m_renderer->selectedArea() ==
+                               QHexRenderer::Areas::HexArea));
                 else if (e->matches(QKeySequence::Copy))
-                    this->copy(
-                        (m_renderer->selectedArea() == QHexRenderer::HexArea));
+                    this->copy((m_renderer->selectedArea() ==
+                                QHexRenderer::Areas::HexArea));
                 else if (e->matches(QKeySequence::Paste))
-                    this->Paste(
-                        (m_renderer->selectedArea() == QHexRenderer::HexArea));
+                    this->Paste((m_renderer->selectedArea() ==
+                                 QHexRenderer::Areas::HexArea));
                 else
                     return false;
 
@@ -1128,7 +1140,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
 
     uchar key = static_cast<uchar>(text[0].toLatin1());
 
-    if ((m_renderer->selectedArea() == QHexRenderer::HexArea)) {
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::HexArea)) {
         if (!((key >= '0' && key <= '9') ||
               (key >= 'a' && key <= 'f'))) // Check if is a Hex Char
             return false;
@@ -1155,7 +1167,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
         return true;
     }
 
-    if ((m_renderer->selectedArea() == QHexRenderer::AsciiArea)) {
+    if ((m_renderer->selectedArea() == QHexRenderer::Areas::AsciiArea)) {
         if (!(key >= 0x20 && key <= 0x7E)) // Check if is a Printable Char
             return false;
 

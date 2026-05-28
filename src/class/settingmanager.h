@@ -51,6 +51,7 @@ public:
     bool enablePlgInRoot() const;
     int appfontSize() const;
     int editorfontSize() const;
+    int editorHexLineWidth() const;
     bool editorShowcol() const;
     bool editorShowtext() const;
     qsizetype copylimit() const;
@@ -103,6 +104,7 @@ public slots:
     void setEnablePlgInRoot(bool newEnablePlgInRoot);
     void setAppfontSize(int newAppfontSize);
     void setEditorfontSize(int newEditorfontSize);
+    void setEditorHexLineWidth(int newEditorHexLineWidth);
     void setEditorShowcol(bool newEditorShowcol);
     void setEditorShowtext(bool newEditorShowtext);
     void setCopylimit(qsizetype newCopylimit);
@@ -185,6 +187,7 @@ private:
 
     QStringList m_watchExpressions;
 
+    int m_editorHexLineWidth = 16;
     bool m_editorShowHeader = true;
     bool m_editorShowcol = true;
     bool m_editorShowtext = true;

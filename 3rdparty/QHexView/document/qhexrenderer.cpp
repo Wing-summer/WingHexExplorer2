@@ -105,7 +105,7 @@ QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
                            const QFontMetricsF &fontmetrics, QObject *parent)
     : QObject(parent), m_document(document), m_cursor(cursor),
       m_fontmetrics(fontmetrics) {
-    m_selectedarea = QHexRenderer::HexArea;
+    m_selectedarea = Areas::HexArea;
     m_cursorenabled = false;
 
     /*===================================*/
@@ -187,7 +187,7 @@ void QHexRenderer::updateMetrics(const QFontMetricsF &fm) {
 void QHexRenderer::enableCursor(bool b) { m_cursorenabled = b; }
 
 void QHexRenderer::selectArea(const QPoint &pt) {
-    int area = this->hitTestArea(pt);
+    auto area = this->hitTestArea(pt);
     if (!this->editableArea(area))
         return;
 
@@ -196,7 +196,7 @@ void QHexRenderer::selectArea(const QPoint &pt) {
 
 bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
                            qsizetype firstline) const {
-    int area = this->hitTestArea(pt);
+    auto area = this->hitTestArea(pt);
     if (!this->editableArea(area))
         return false;
 
@@ -207,7 +207,7 @@ bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
 
     auto hspace = m_fontmetrics.horizontalAdvance(' ') / 2;
 
-    if (area == QHexRenderer::HexArea) {
+    if (area == Areas::HexArea) {
         auto relx =
             pt.x() - hspace - this->getHexColumnX() - this->borderSize();
         int column = int(relx / this->getCellWidth());
@@ -231,28 +231,34 @@ bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
     return true;
 }
 
-int QHexRenderer::hitTestArea(const QPoint &pt) const {
+QHexRenderer::Areas QHexRenderer::hitTestArea(const QPoint &pt) const {
     if (pt.y() < headerLineCount() * lineHeight())
-        return QHexRenderer::HeaderArea;
+        return Areas::HeaderArea;
 
+    return hitTestColArea(pt);
+}
+
+QHexRenderer::Areas QHexRenderer::hitTestColArea(const QPoint &pt) const {
     if ((pt.x() >= this->borderSize()) &&
         (pt.x() <= (this->getHexColumnX() - this->borderSize())))
-        return QHexRenderer::AddressArea;
+        return Areas::AddressArea;
 
     if ((pt.x() > (this->getHexColumnX() + this->borderSize())) &&
         (pt.x() < (this->getAsciiColumnX() - this->borderSize())))
-        return QHexRenderer::HexArea;
+        return Areas::HexArea;
 
     if ((pt.x() > (this->getAsciiColumnX() + this->borderSize())) &&
         (pt.x() < (this->getEndColumnX() - this->borderSize())))
-        return QHexRenderer::AsciiArea;
+        return Areas::AsciiArea;
 
-    return QHexRenderer::ExtraArea;
+    return Areas::ExtraArea;
 }
 
-int QHexRenderer::selectedArea() const { return m_selectedarea; }
-bool QHexRenderer::editableArea(int area) const {
-    return (area == QHexRenderer::HexArea || area == QHexRenderer::AsciiArea);
+QHexRenderer::Areas QHexRenderer::selectedArea() const {
+    return m_selectedarea;
+}
+bool QHexRenderer::editableArea(QHexRenderer::Areas area) const {
+    return (area == Areas::HexArea || area == Areas::AsciiArea);
 }
 
 bool QHexRenderer::asciiCellAt(qsizetype line, int column, int *start,
@@ -1099,9 +1105,9 @@ QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
     if (line == m_cursor->currentLine() &&
         column == m_cursor->currentColumn() && m_cursorenabled) {
         if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-            (m_selectedarea != QHexRenderer::AsciiArea)) {
+            (m_selectedarea != Areas::AsciiArea)) {
             fmt.foreground = m_bytesBackground;
-            fmt.background = (m_selectedarea == QHexRenderer::AsciiArea)
+            fmt.background = (m_selectedarea == Areas::AsciiArea)
                                  ? m_bytesColor
                                  : m_bytesColor.lighter(250);
             fmt.fillBackground = true;
@@ -1156,9 +1162,9 @@ void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,
     QTextCharFormat charformat;
 
     if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-        (m_selectedarea != QHexRenderer::AsciiArea)) {
+        (m_selectedarea != Areas::AsciiArea)) {
         charformat.setForeground(m_bytesBackground);
-        if (m_selectedarea == QHexRenderer::AsciiArea)
+        if (m_selectedarea == Areas::AsciiArea)
             charformat.setBackground(m_bytesColor);
         else
             charformat.setBackground(m_bytesColor.lighter(250));
@@ -1179,7 +1185,7 @@ void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
     auto col = m_cursor->currentColumn();
     textcursor.setPosition(col * Factor::Hex);
 
-    if (m_selectedarea == QHexRenderer::HexArea) {
+    if (m_selectedarea == Areas::HexArea) {
         if (m_cursor->currentNibble()) {
             textcursor.movePosition(QTextCursor::Right,
                                     QTextCursor::MoveAnchor);
@@ -1191,14 +1197,14 @@ void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
 
     textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
 
-    if (m_selectedarea == QHexRenderer::AsciiArea)
+    if (m_selectedarea == Areas::AsciiArea)
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
     QTextCharFormat charformat;
 
     if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-        (m_selectedarea != QHexRenderer::HexArea)) {
+        (m_selectedarea != Areas::HexArea)) {
         charformat.setForeground(m_bytesBackground);
-        if (m_selectedarea == QHexRenderer::HexArea)
+        if (m_selectedarea == Areas::HexArea)
             charformat.setBackground(m_bytesColor);
         else
             charformat.setBackground(m_bytesColor.lighter(250));

@@ -39,22 +39,22 @@
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="horizontalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="verticalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <item row="0" column="0">
        <widget class="QLabel" name="lblLanguage">
@@ -92,22 +92,22 @@
      </property>
      <layout class="QFormLayout" name="formLayout_2">
       <property name="horizontalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="verticalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <item row="0" column="0">
        <widget class="QLabel" name="lblFont">
@@ -162,22 +162,22 @@
      </property>
      <layout class="QFormLayout" name="formLayout_3">
       <property name="horizontalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="verticalSpacing">
-       <number>5</number>
+       <number>8</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <item row="2" column="0">
        <widget class="QLabel" name="label_6">

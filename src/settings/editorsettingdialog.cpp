@@ -24,8 +24,9 @@
 EditorSettingDialog::EditorSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::EditorSettingDialog) {
     ui->setupUi(this);
-    reload();
+    ui->cbHexWidth->addItems(Utilities::hexLineWidthStrings());
 
+    reload();
     auto sm = &SettingManager::instance();
     connect(ui->cbShowaddr, &QCheckBox::toggled, sm,
             &SettingManager::setEditorShowHeader);
@@ -39,12 +40,20 @@ EditorSettingDialog::EditorSettingDialog(QWidget *parent)
             &SettingManager::setDecodeStrlimit);
     connect(ui->sbCopyLimit, &QSpinBox::valueChanged, sm,
             &SettingManager::setCopylimit);
+    connect(ui->cbHexWidth, &QComboBox::currentIndexChanged, this,
+            [](int index) {
+                auto values = Utilities::hexLineValues();
+                SettingManager::instance().setEditorHexLineWidth(
+                    *std::next(values.begin(), index));
+            });
 }
 
 EditorSettingDialog::~EditorSettingDialog() { delete ui; }
 
 void EditorSettingDialog::reload() {
     auto &set = SettingManager::instance();
+    ui->cbHexWidth->setCurrentIndex(
+        Utilities::hexLineWidthIdx(set.editorHexLineWidth()));
     ui->cbShowaddr->setChecked(set.editorShowHeader());
     ui->cbShowcol->setChecked(set.editorShowcol());
     ui->cbShowtext->setChecked(set.editorShowtext());

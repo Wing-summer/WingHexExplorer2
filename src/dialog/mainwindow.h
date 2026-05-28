@@ -18,7 +18,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "dialog/showtextdialog.h"
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
@@ -169,6 +168,8 @@ private slots:
     void on_encoding();
     void on_checksum();
     void on_fileInfo();
+    void on_baseAddr();
+    void on_hexWidth();
 
     void on_cuthex();
     void on_copyhex();
@@ -195,9 +196,8 @@ private slots:
     void on_exportfindresult();
     void on_locChanged();
     void on_selectionChanged();
-    void on_editableAreaClicked(int area);
+    void on_editableAreaClicked(QHexRenderer::Areas area);
 
-    void on_viewtxt();
     void on_fullScreen();
     void on_saveLayout();
     void on_delLayout();
@@ -536,8 +536,6 @@ private:
     QToolButton *m_sReadWrite = nullptr;
     QToolButton *m_sLocked = nullptr;
     QToolButton *m_sCanOver = nullptr;
-
-    ShowTextDialog *_showtxt = nullptr;
 
     // cache icon
     QIcon _infoSaved, _infoUnsaved;

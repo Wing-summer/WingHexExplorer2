@@ -49,6 +49,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_EXT, ("plugin.ext"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_DEV, ("plugin.dev"))
 
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_HEXLINE, ("editor.hexline"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FONTSIZE, ("editor.fontsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_ADDR, ("editor.showaddr"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_COL, ("editor.showcol"))
@@ -162,6 +163,14 @@ void SettingManager::load() {
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, EDITOR_FONTSIZE,
                              defaultFontSize);
     m_editorfontSize = qBound(5, m_editorfontSize, 25);
+
+    READ_CONFIG_INT_POSITIVE(m_editorHexLineWidth, EDITOR_HEXLINE, 16);
+
+    const auto &hexline = Utilities::hexLineValues();
+    if (std::find(hexline.begin(), hexline.end(), m_editorHexLineWidth) ==
+        hexline.end()) {
+        m_editorHexLineWidth = 16;
+    }
     READ_CONFIG_BOOL(m_editorShowHeader, EDITOR_SHOW_ADDR, true);
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
@@ -268,6 +277,16 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+int SettingManager::editorHexLineWidth() const { return m_editorHexLineWidth; }
+
+void SettingManager::setEditorHexLineWidth(int newEditorHexLineWidth) {
+    HANDLE_CONFIG;
+    if (m_editorHexLineWidth != newEditorHexLineWidth) {
+        WRITE_CONFIG(EDITOR_HEXLINE, newEditorHexLineWidth);
+        m_editorHexLineWidth = newEditorHexLineWidth;
+    }
 }
 
 QVector<bool> SettingManager::metaHeaderHidden() const {
@@ -649,6 +668,7 @@ void SettingManager::__reset(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::EDITOR)) {
         WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG(EDITOR_HEXLINE, 16);
         WRITE_CONFIG(EDITOR_SHOW_ADDR, true);
         WRITE_CONFIG(EDITOR_SHOW_COL, true);
         WRITE_CONFIG(EDITOR_SHOW_TEXT, true);

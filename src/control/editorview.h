@@ -577,6 +577,8 @@ signals:
     void sigOnBookMark();
     void sigOnEncoding();
     void sigOnCheckSum();
+    void sigOnHexWidth();
+    void sigOnAddress();
 
 public:
     virtual void saveState(QXmlStreamWriter &Stream) const override;

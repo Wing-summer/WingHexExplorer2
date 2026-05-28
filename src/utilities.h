@@ -345,6 +345,53 @@ public:
         return QStringLiteral("wdrv://") + ext + QStringLiteral("/") + file;
     }
 
+    inline static QMap<QString, int> hexLineWidthMap() {
+        static QMap<QString, int> caches{
+            {"8", 8}, {"16", 16}, {"20", 20}, {"24", 24}, {"32", 32}};
+        return caches;
+    }
+
+    inline static std::initializer_list<int> hexLineValues() {
+        static auto hexline = std::initializer_list{8, 16, 20, 24, 32};
+        return hexline;
+    }
+
+    inline static QStringList hexLineWidthStrings() {
+        static QStringList caches{"8", "16", "20", "24", "32"};
+        return caches;
+    }
+
+    inline static int hexLineWidthIdx(int value) {
+        int idx;
+        switch (value) {
+        case 8:
+            idx = 0;
+            break;
+        case 20:
+            idx = 2;
+            break;
+        case 24:
+            idx = 3;
+            break;
+        case 32:
+            idx = 4;
+            break;
+        default:
+            idx = 1;
+            break;
+        }
+        return idx;
+    }
+
+    inline static int hexLineWidthValue(const QString &value) {
+        return hexLineWidthMap().value(value, 16);
+    }
+
+    inline static int hexLineWidthIdxFromValue(const QString &value) {
+        auto v = hexLineWidthValue(value);
+        return hexLineWidthIdx(v);
+    }
+
     inline static QString translateCharEscape(QStringView digits,
                                               int *advance) {
         Q_ASSERT(digits.size() > 0);

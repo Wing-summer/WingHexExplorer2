@@ -88,6 +88,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         splash->setInfoText(tr("SetupUI"));
     }
 
+    m_editStateWidgets.reserve(52);
+    m_curConnections.reserve(32);
+
     // build up UI
     m_recentMenu = new QMenu(this); // used in buildUpRibbonBar
     buildUpRibbonBar();
@@ -1111,8 +1114,7 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
     m_txtDecode->setUndoRedoEnabled(false);
     m_txtDecode->setPlaceholderText(tr("PleaseSelectBytes"));
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
-                              tr("DecodeText") + QStringLiteral(" (ASCII)"),
-                              m_txtDecode);
+                              tr("DecodeText"), m_txtDecode);
     connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
             &QDockWidget::setWindowTitle);
     m_txtDecode->installEventFilter(this);
@@ -1506,9 +1508,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("scalereset"), tr("ResetScale"),
             [this] { this->setCurrentHexEditorScale(1.0); });
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("viewtxt"),
-                                              tr("ViewText"),
-                                              &MainWindow::on_viewtxt);
     }
 
     {
@@ -1612,33 +1611,12 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("HexEditorLayout"));
+        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("mAddr"),
+                                              tr("SetBaseAddr"),
+                                              &MainWindow::on_baseAddr);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("mAddr"), tr("SetBaseAddr"), [this]() {
-                auto hexeditor = currentHexView();
-                if (hexeditor == nullptr) {
-                    return;
-                }
-                bool b;
-                auto num = WingInputDialog::getText(
-                    this, tr("addressBase"), tr("inputAddressBase"),
-                    QLineEdit::Normal, QString(), &b);
-                if (b) {
-                    quintptr qnum = num.toULongLong(&b, 0);
-                    if (b) {
-                        auto r = qnum + quintptr(hexeditor->documentBytes());
-                        if (qnum > r ||
-                            quintptr(hexeditor->documentBytes()) > r) {
-                            Toast::toast(this,
-                                         NAMEICONRES(QStringLiteral("mAddr")),
-                                         tr("WarnBigBaseAddress"));
-                        }
-                        hexeditor->setAddressBase(qnum);
-                    } else {
-                        Toast::toast(this, NAMEICONRES(QStringLiteral("mAddr")),
-                                     tr("ErrBaseAddress"));
-                    }
-                }
-            });
+            pannel, QStringLiteral("hexwidth"), tr("HexWidth"),
+            &MainWindow::on_hexWidth);
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("encoding"), tr("Encoding"),
             &MainWindow::on_encoding);
@@ -2455,6 +2433,48 @@ void MainWindow::on_fileInfo() {
     d.exec();
 }
 
+void MainWindow::on_baseAddr() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+    bool b;
+    auto num = WingInputDialog::getText(this, tr("addressBase"),
+                                        tr("inputAddressBase"),
+                                        QLineEdit::Normal, QString(), &b);
+    if (b) {
+        quintptr qnum = num.toULongLong(&b, 0);
+        if (b) {
+            auto r = qnum + quintptr(hexeditor->documentBytes());
+            if (qnum > r || quintptr(hexeditor->documentBytes()) > r) {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("mAddr")),
+                             tr("WarnBigBaseAddress"));
+            }
+            hexeditor->setAddressBase(qnum);
+        } else {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("mAddr")),
+                         tr("ErrBaseAddress"));
+        }
+    }
+}
+
+void MainWindow::on_hexWidth() {
+    auto view = currentHexView();
+    if (view == nullptr) {
+        return;
+    }
+    bool ok;
+    auto doc = view->document();
+    auto r = WingInputDialog::getItem(
+        this, tr("HexWidth"), tr("PleaseChoose"),
+        Utilities::hexLineWidthStrings(),
+        Utilities::hexLineWidthIdx(doc->hexLineWidth()), false, &ok);
+    if (ok) {
+        auto v = Utilities::hexLineWidthValue(r);
+        doc->setHexLineWidth(v);
+    }
+}
+
 void MainWindow::on_cuthex() {
     auto hexeditor = currentHexView();
     if (hexeditor == nullptr) {
@@ -2883,37 +2903,12 @@ void MainWindow::on_selectionChanged() {
                                                            pair.second);
 }
 
-void MainWindow::on_editableAreaClicked(int area) {
-    if (area == QHexRenderer::AsciiArea) {
+void MainWindow::on_editableAreaClicked(QHexRenderer::Areas area) {
+    if (area == QHexRenderer::Areas::AsciiArea) {
         _editArea->setText(QStringLiteral("ASCII"));
     } else {
         _editArea->setText(QStringLiteral("HEX"));
     }
-}
-
-void MainWindow::on_viewtxt() {
-    auto editor = currentEditor();
-    if (editor == nullptr) {
-        return;
-    }
-    auto hexeditor = editor->hexEditor();
-    QMimeDatabase db;
-    auto mime = db.mimeTypeForData(hexeditor->document()->buffer()->ioDevice());
-    auto ret = Utilities::isTextFile(mime);
-    if (!ret) {
-        auto ret = WingMessageBox::warning(
-            this, tr("Warn"), tr("NoTextFileMayInvalid"),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-        if (ret == QMessageBox::No) {
-            return;
-        }
-    }
-    if (_showtxt == nullptr) {
-        _showtxt = new ShowTextDialog(this);
-        connect(_showtxt, &ShowTextDialog::destroyed, this,
-                [this]() { _showtxt = nullptr; });
-    }
-    _showtxt->load(hexeditor->document()->buffer(), mime.name());
 }
 
 void MainWindow::on_fullScreen() {
@@ -3239,6 +3234,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     auto &set = SettingManager::instance();
     editor->setCopyLimit(set.copylimit());
     editor->setFontSize(set.editorfontSize());
+    editor->hexEditor()->document()->setHexLineWidth(set.editorHexLineWidth());
 
     connect(editor, &EditorView::closeRequested, this, [this] {
         auto editor = qobject_cast<EditorView *>(sender());
@@ -3447,6 +3443,10 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                                 &MainWindow::on_pastehex);
     m_curConnections << connect(cur, &EditorView::sigOnPasteFile, this,
                                 &MainWindow::on_pastefile);
+    m_curConnections << connect(cur, &EditorView::sigOnAddress, this,
+                                &MainWindow::on_baseAddr);
+    m_curConnections << connect(cur, &EditorView::sigOnHexWidth, this,
+                                &MainWindow::on_hexWidth);
 
     auto hexeditor = cur->hexEditor();
     m_curConnections << connect(hexeditor, &QHexView::cursorLocationChanged,
@@ -3907,6 +3907,7 @@ void MainWindow::updateEditModeEnabled() {
             menu->setProperty("__CONTEXT__", {});
         }
         plgsys.setSwitchingContext(false);
+        updateStringDec();
         _findResultModel->reset();
         _bookMarkModel->setDocument(nullptr);
         _metadataModel->setDocument(nullptr);
@@ -3919,7 +3920,7 @@ void MainWindow::updateEditModeEnabled() {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
-        on_editableAreaClicked(-1);
+        on_editableAreaClicked(QHexRenderer::Areas::ExtraArea);
         updateWindowTitle(nullptr);
     }
 }

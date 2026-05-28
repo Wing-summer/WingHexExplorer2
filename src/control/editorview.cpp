@@ -56,6 +56,21 @@ EditorView::EditorView(QWidget *parent)
     m_hex = new QHexView(this);
     _context = new EditorViewContext(this);
 
+    connect(m_hex, &QHexView::headerAreaClicked, this,
+            [this](QHexRenderer::Areas area) {
+                switch (area) {
+                case QHexRenderer::Areas::AddressArea:
+                    Q_EMIT sigOnAddress();
+                    break;
+                case QHexRenderer::Areas::HexArea: {
+                    Q_EMIT sigOnHexWidth();
+                } break;
+                case QHexRenderer::Areas::AsciiArea:
+                    Q_EMIT sigOnEncoding();
+                default:
+                    break;
+                }
+            });
     connect(m_hex, &QHexView::onPaintCustomEvent, this,
             [this](int XOffset, qsizetype firstVisible, qsizetype begin,
                    qsizetype end) {

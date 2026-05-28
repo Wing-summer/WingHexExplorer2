@@ -17,7 +17,7 @@ else()
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.6")
+set(PROJECT_VERSION "2.3.7")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
@@ -258,13 +258,9 @@ set(DIALOG_SRC
     src/dialog/crashreport.h
     src/dialog/crashreport.cpp
     src/dialog/crashreport.ui
-    src/dialog/showtextdialog.cpp
-    src/dialog/showtextdialog.h
     src/dialog/mutisavedialog.h
     src/dialog/mutisavedialog.cpp
-    src/dialog/mutisavedialog.ui
-    src/dialog/definitiondownload.cpp
-    src/dialog/definitiondownload.h)
+    src/dialog/mutisavedialog.ui)
 
 set(STRUCT_LIB_SRC
     src/structlib/cstructerrorlistener.cpp
@@ -305,8 +301,6 @@ set(CONTROL_SRC
     src/control/dockwidgettab.cpp
     src/control/hexlineedit.h
     src/control/hexlineedit.cpp
-    src/control/popupactionwidget.h
-    src/control/popupactionwidget.cpp
     src/control/settingspopup.cpp
     src/control/settingspopup.h
     src/control/searchreplacewidget.cpp

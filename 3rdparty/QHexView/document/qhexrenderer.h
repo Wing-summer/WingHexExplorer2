@@ -38,7 +38,7 @@ class QHexRenderer : public QObject {
     Q_OBJECT
 
 public:
-    enum { HeaderArea, AddressArea, HexArea, AsciiArea, ExtraArea };
+    enum class Areas { HeaderArea, AddressArea, HexArea, AsciiArea, ExtraArea };
 
 public:
     explicit QHexRenderer(QHexDocument *document, QHexCursor *cursor,
@@ -75,9 +75,10 @@ public:
     void blinkCursor();
     bool hitTest(const QPoint &pt, QHexPosition *position,
                  qsizetype firstline) const;
-    int hitTestArea(const QPoint &pt) const;
-    int selectedArea() const;
-    bool editableArea(int area) const;
+    Areas hitTestArea(const QPoint &pt) const;
+    Areas hitTestColArea(const QPoint &pt) const;
+    Areas selectedArea() const;
+    bool editableArea(Areas area) const;
     qsizetype documentLastLine() const;
     qsizetype documentLastColumn() const;
     qsizetype documentLines() const;
@@ -229,7 +230,7 @@ private:
     QHexCursor *m_cursor;
     QFontMetricsF m_fontmetrics;
 
-    int m_selectedarea;
+    QHexRenderer::Areas m_selectedarea;
     bool m_cursorenabled;
 
     /*==============================*/

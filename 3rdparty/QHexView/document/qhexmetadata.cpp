@@ -417,16 +417,10 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
 
         auto rmfn = [](const QHexMetadataItem &meta) { return meta.adjflag; };
 
-        std::copy_if(
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-            m_metadata.begin(), m_metadata.end(),
-#else
-            m_metadata.constBegin(), m_metadata.constEnd(),
-#endif
-            std::back_inserter(rmmetas), rmfn);
+        std::copy_if(m_metadata.constBegin(), m_metadata.constEnd(),
+                     std::back_inserter(rmmetas), rmfn);
 
-        m_metadata.erase(
-            std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
+        m_metadata.removeIf(rmfn);
 
         for (const auto &meta : std::as_const(m_metadata)) {
             addMetaLines(meta);
