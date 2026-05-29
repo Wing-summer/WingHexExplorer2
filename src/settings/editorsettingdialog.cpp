@@ -34,6 +34,8 @@ EditorSettingDialog::EditorSettingDialog(QWidget *parent)
             &SettingManager::setEditorShowcol);
     connect(ui->cbShowtext, &QCheckBox::toggled, sm,
             &SettingManager::setEditorShowtext);
+    connect(ui->cbCursorSync, &QCheckBox::toggled, sm,
+            &SettingManager::setEditorCursorSync);
     connect(ui->sbFontSize, &QSpinBox::valueChanged, sm,
             &SettingManager::setEditorfontSize);
     connect(ui->sbDecStrLimit, &QSpinBox::valueChanged, sm,
@@ -57,6 +59,7 @@ void EditorSettingDialog::reload() {
     ui->cbShowaddr->setChecked(set.editorShowHeader());
     ui->cbShowcol->setChecked(set.editorShowcol());
     ui->cbShowtext->setChecked(set.editorShowtext());
+    ui->cbCursorSync->setChecked(set.editorCursorSync());
     ui->sbFontSize->setValue(set.appfontSize());
     ui->sbDecStrLimit->setValue(set.decodeStrlimit());
     ui->sbCopyLimit->setValue(set.copylimit());

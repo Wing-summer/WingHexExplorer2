@@ -114,6 +114,7 @@ QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
     m_asciiVisible = true;
     m_addressVisible = true;
     m_headerVisible = true;
+    m_cursorSync = true;
 
     /*===================================*/
 }
@@ -375,7 +376,7 @@ qreal QHexRenderer::getCellWidth() const {
 }
 
 int QHexRenderer::getNCellsWidth(int n) const {
-    return qRound(n * getCellWidth());
+    return qCeil(n * getCellWidth());
 }
 
 void QHexRenderer::unprintableChars(QByteArray &ascii) const {
@@ -1104,16 +1105,28 @@ QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
 
     if (line == m_cursor->currentLine() &&
         column == m_cursor->currentColumn() && m_cursorenabled) {
-        if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-            (m_selectedarea != Areas::AsciiArea)) {
-            fmt.foreground = m_bytesBackground;
-            fmt.background = (m_selectedarea == Areas::AsciiArea)
-                                 ? m_bytesColor
-                                 : m_bytesColor.lighter(250);
+        if (m_cursorSync || m_selectedarea == Areas::AsciiArea) {
+            if (m_selectedarea == Areas::HexArea) {
+                if (m_bytesBackground.lightnessF() < 0.5) {
+                    fmt.foreground = m_bytesBackground.lighter(95);
+                } else {
+                    fmt.foreground = m_bytesBackground.darker(125);
+                }
+                if (m_bytesColor.lightnessF() < 0.5) {
+                    fmt.background = m_bytesColor.lighter(95);
+                } else {
+                    fmt.background = m_bytesColor.darker(125);
+                }
+            } else {
+                fmt.foreground = m_bytesBackground;
+                fmt.background = m_bytesColor;
+            }
             fmt.fillBackground = true;
-            fmt.underline = false;
-        } else {
-            fmt.underline = true;
+            if (m_cursor->insertionMode() == QHexCursor::OverwriteMode) {
+                fmt.underline = false;
+            } else {
+                fmt.underline = true;
+            }
         }
     }
 
@@ -1150,34 +1163,10 @@ bool QHexRenderer::asciiCellNeedsByteFallback(
     return false;
 }
 
-void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,
-                                    qsizetype line) const {
-    if ((line != m_cursor->currentLine()) || !m_cursorenabled)
-        return;
-
-    textcursor.clearSelection();
-    textcursor.setPosition(m_cursor->currentColumn());
-    textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-
-    QTextCharFormat charformat;
-
-    if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-        (m_selectedarea != Areas::AsciiArea)) {
-        charformat.setForeground(m_bytesBackground);
-        if (m_selectedarea == Areas::AsciiArea)
-            charformat.setBackground(m_bytesColor);
-        else
-            charformat.setBackground(m_bytesColor.lighter(250));
-    } else
-        charformat.setUnderlineStyle(
-            QTextCharFormat::UnderlineStyle::SingleUnderline);
-
-    textcursor.mergeCharFormat(charformat);
-}
-
 void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
                                   qsizetype line) const {
-    if ((line != m_cursor->currentLine()) || !m_cursorenabled)
+    if ((line != m_cursor->currentLine()) || !m_cursorenabled ||
+        (!m_cursorSync && m_selectedarea != Areas::HexArea))
         return;
 
     textcursor.clearSelection();
@@ -1185,33 +1174,35 @@ void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
     auto col = m_cursor->currentColumn();
     textcursor.setPosition(col * Factor::Hex);
 
-    if (m_selectedarea == Areas::HexArea) {
-        if (m_cursor->currentNibble()) {
-            textcursor.movePosition(QTextCursor::Right,
-                                    QTextCursor::MoveAnchor);
-        } else {
-            textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
-                                    2);
-        }
+    if (m_cursor->currentNibble()) {
+        textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor);
+    } else {
+        textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, 2);
     }
 
     textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
 
-    if (m_selectedarea == Areas::AsciiArea)
-        textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
     QTextCharFormat charformat;
 
-    if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
-        (m_selectedarea != Areas::HexArea)) {
+    if (m_selectedarea == Areas::AsciiArea) {
+        if (m_bytesBackground.lightnessF() < 0.5) {
+            charformat.setForeground(m_bytesBackground.lighter(95));
+        } else {
+            charformat.setForeground(m_bytesBackground.darker(125));
+        }
+        if (m_bytesColor.lightnessF() < 0.5) {
+            charformat.setBackground(m_bytesColor.lighter(95));
+        } else {
+            charformat.setBackground(m_bytesColor.darker(125));
+        }
+    } else {
         charformat.setForeground(m_bytesBackground);
-        if (m_selectedarea == Areas::HexArea)
-            charformat.setBackground(m_bytesColor);
-        else
-            charformat.setBackground(m_bytesColor.lighter(250));
-    } else
+        charformat.setBackground(m_bytesColor);
+    }
+    if (m_cursor->insertionMode() == QHexCursor::InsertMode) {
         charformat.setUnderlineStyle(
             QTextCharFormat::UnderlineStyle::SingleUnderline);
-
+    }
     textcursor.setCharFormat(charformat);
 }
 
@@ -1443,6 +1434,12 @@ void QHexRenderer::drawAsciiText(QPainter *painter, const QRect &rect,
     painter->restore();
 }
 
+bool QHexRenderer::cursorSync() const { return m_cursorSync; }
+
+void QHexRenderer::setCursorSync(bool newCursorSync) {
+    m_cursorSync = newCursorSync;
+}
+
 void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
                               qsizetype line) {
     const QByteArray rawline = this->getLine(line);
@@ -1453,7 +1450,6 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
 
     painter->save();
     painter->translate(asciirect.topLeft());
-    painter->setClipRect(0, 0, asciirect.width(), asciirect.height());
 
     const auto cells = buildAsciiCells(rawline);
     const qreal cellWidth = getCellWidth();
@@ -1563,7 +1559,7 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
         }
 
         const int startX = qRound(start * cellWidth);
-        const int endX = qRound((end + 1) * cellWidth) - 1;
+        const int endX = qRound((end + 1) * cellWidth);
 
         painter->save();
         painter->setPen(QPen(color, 1, Qt::SolidLine));

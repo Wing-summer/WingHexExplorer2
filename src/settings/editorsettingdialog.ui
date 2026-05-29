@@ -19,19 +19,7 @@
   <property name="windowTitle">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="sizePolicy">
@@ -133,22 +121,7 @@
      <property name="title">
       <string>Layout</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <property name="spacing">
-       <number>8</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>8</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <layout class="QFormLayout" name="formLayout_2">
         <property name="horizontalSpacing">
@@ -170,34 +143,48 @@
        </layout>
       </item>
       <item>
-       <widget class="QCheckBox" name="cbShowaddr">
-        <property name="text">
-         <string>ShowAddr</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="cbShowcol">
-        <property name="text">
-         <string>ShowCol</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="cbShowtext">
-        <property name="text">
-         <string>ShowText</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="cbShowaddr">
+          <property name="text">
+           <string>ShowAddr</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QCheckBox" name="cbShowtext">
+          <property name="text">
+           <string>ShowText</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="cbShowcol">
+          <property name="text">
+           <string>ShowCol</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QCheckBox" name="cbCursorSync">
+          <property name="text">
+           <string>CursorSync</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>

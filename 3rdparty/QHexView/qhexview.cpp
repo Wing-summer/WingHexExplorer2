@@ -235,8 +235,10 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
         this->viewport()->update();
         Q_EMIT cursorSelectionChanged();
     });
-    connect(m_cursor, &QHexCursor::insertionModeChanged, this,
-            &QHexView::renderCurrentLine);
+    connect(m_cursor, &QHexCursor::insertionModeChanged, this, [this]() {
+        renderCurrentLine();
+        Q_EMIT insertionModeChanged();
+    });
 
     this->adjustScrollBars();
     this->viewport()->update();
@@ -333,10 +335,16 @@ QPoint QHexView::absolutePosition(const QPoint &pos) const {
 
 QHexCursor *QHexView::cursor() const { return m_cursor; }
 
+bool QHexView::cursorSync() const { return m_renderer->cursorSync(); }
+
 qsizetype QHexView::copyLimit() const { return m_copylimit; }
 
 void QHexView::setCopyLimit(qsizetype newCopylimit) {
     m_copylimit = newCopylimit;
+}
+
+void QHexView::setCursorSync(bool newCursorSync) {
+    m_renderer->setCursorSync(newCursorSync);
 }
 
 qreal QHexView::scaleRate() const { return m_scaleRate; }
@@ -1019,9 +1027,7 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
         }
 
     } else if (e->key() == Qt::Key_Insert) {
-        if (!isKeepSize()) {
-            cur->switchInsertionMode();
-        }
+        cur->switchInsertionMode();
     } else
         return false;
 

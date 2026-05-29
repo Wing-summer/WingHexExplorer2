@@ -54,6 +54,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FONTSIZE, ("editor.fontsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_ADDR, ("editor.showaddr"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_COL, ("editor.showcol"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_TEXT, ("editor.showtext"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_CURSOR_SYNC, ("editor.cursorsync"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FIND_MAXCOUNT,
                           ("editor.findmaxcount"))
@@ -279,11 +280,22 @@ QVariantList SettingManager::getVarList(
     return varlist;
 }
 
+bool SettingManager::editorCursorSync() const { return m_editorCursorSync; }
+
+void SettingManager::setEditorCursorSync(bool newEditorCursorSync) {
+    if (m_editorCursorSync != newEditorCursorSync) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_CURSOR_SYNC, newEditorCursorSync);
+        m_editorCursorSync = newEditorCursorSync;
+        Q_EMIT sigHexCursorSync(newEditorCursorSync);
+    }
+}
+
 int SettingManager::editorHexLineWidth() const { return m_editorHexLineWidth; }
 
 void SettingManager::setEditorHexLineWidth(int newEditorHexLineWidth) {
-    HANDLE_CONFIG;
     if (m_editorHexLineWidth != newEditorHexLineWidth) {
+        HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_HEXLINE, newEditorHexLineWidth);
         m_editorHexLineWidth = newEditorHexLineWidth;
     }
@@ -307,15 +319,19 @@ void SettingManager::setMetaHeaderHidden(
 }
 
 void SettingManager::setScriptFileEnableOverwrite(bool b) {
-    HANDLE_CONFIG;
-    WRITE_CONFIG(SCRIPT_ENABLE_FILE_OVERWRITE, b);
-    m_scriptFileEnableOverwrite = b;
+    if (m_scriptFileEnableOverwrite != b) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_ENABLE_FILE_OVERWRITE, b);
+        m_scriptFileEnableOverwrite = b;
+    }
 }
 
 void SettingManager::setScriptFileSystemWrite(bool b) {
-    HANDLE_CONFIG;
-    WRITE_CONFIG(SCRIPT_ENABLE_FILESYS_WRITE, b);
-    m_scriptFileSystemWrite = b;
+    if (m_scriptFileSystemWrite != b) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_ENABLE_FILESYS_WRITE, b);
+        m_scriptFileSystemWrite = b;
+    }
 }
 
 bool SettingManager::findStrDecShow() const { return m_findStrDecShow; }

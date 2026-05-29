@@ -105,6 +105,7 @@ public:
 
     qsizetype copyLimit() const;
     QHexCursor *cursor() const;
+    bool cursorSync() const;
 
 public slots:
     void setDocument(const QSharedPointer<QHexDocument> &document,
@@ -146,6 +147,7 @@ public slots:
     void Replace(qsizetype offset, const QByteArray &data, int nibbleindex = 0);
 
     void setCopyLimit(qsizetype newCopylimit);
+    void setCursorSync(bool newCursorSync);
 
 private:
     void establishSignal(QHexDocument *doc);
@@ -159,6 +161,7 @@ signals:
     void documentLockedFile(bool locked);
     void documentKeepSize(bool keep);
     void editableAreaClicked(QHexRenderer::Areas area);
+    void insertionModeChanged();
 
     void metafgVisibleChanged(bool b);
     void metabgVisibleChanged(bool b);

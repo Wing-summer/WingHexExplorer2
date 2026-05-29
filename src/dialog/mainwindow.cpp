@@ -383,6 +383,12 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     p->setFontSize(qreal(v));
                 }
             });
+    connect(&set, &SettingManager::sigHexCursorSync, this, [this](bool b) {
+        const auto &views = EditorView::instances();
+        for (const auto &p : views) {
+            p->hexEditor()->setCursorSync(b);
+        }
+    });
     connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
         const auto &views = EditorView::instances();
         for (const auto &p : views) {
@@ -2909,6 +2915,7 @@ void MainWindow::on_editableAreaClicked(QHexRenderer::Areas area) {
     } else {
         _editArea->setText(QStringLiteral("HEX"));
     }
+    updateOverwriteIndicator();
 }
 
 void MainWindow::on_fullScreen() {
@@ -3455,6 +3462,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                                 this, &MainWindow::on_selectionChanged);
     m_curConnections << connect(hexeditor, &QHexView::editableAreaClicked, this,
                                 &MainWindow::on_editableAreaClicked);
+    m_curConnections << connect(hexeditor, &QHexView::insertionModeChanged,
+                                this, &MainWindow::updateOverwriteIndicator);
     m_curConnections << connect(
         hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
             m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
@@ -4265,6 +4274,17 @@ void MainWindow::createScriptDialog(SplashDialog *d) {
     }
     m_scriptDialog->show();
     m_scriptDialog->raise();
+}
+
+void MainWindow::updateOverwriteIndicator() {
+    bool underline = false;
+    auto view = currentHexView();
+    if (view) {
+        underline = view->cursor()->insertionMode() == QHexCursor::InsertMode;
+    }
+    auto font = _editArea->font();
+    font.setUnderline(underline);
+    _editArea->setFont(font);
 }
 
 QHexView *MainWindow::currentHexView() {

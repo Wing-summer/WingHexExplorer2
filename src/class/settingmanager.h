@@ -65,6 +65,7 @@ public:
     bool enablePlugin() const;
     bool enableHexExt() const;
     bool editorShowHeader() const;
+    bool editorCursorSync() const;
     QString appFontFamily() const;
     QList<RecentFileManager::RecentInfo> recentScriptFiles() const;
 
@@ -107,6 +108,7 @@ public slots:
     void setEditorHexLineWidth(int newEditorHexLineWidth);
     void setEditorShowcol(bool newEditorShowcol);
     void setEditorShowtext(bool newEditorShowtext);
+    void setEditorCursorSync(bool newEditorCursorSync);
     void setCopylimit(qsizetype newCopylimit);
     void setDecodeStrlimit(qsizetype newDecodeStrlimit);
     void setDefaultWinState(Qt::WindowState newDefaultWinState);
@@ -156,6 +158,7 @@ signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
     void sigCopylimitChanged(int v);
+    void sigHexCursorSync(bool b);
 
     void logLevelChanged();
 
@@ -191,6 +194,7 @@ private:
     bool m_editorShowHeader = true;
     bool m_editorShowcol = true;
     bool m_editorShowtext = true;
+    bool m_editorCursorSync = true;
 
     qsizetype m_copylimit = 100;
     qsizetype m_decodeStrlimit = 10;

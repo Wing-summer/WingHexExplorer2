@@ -113,6 +113,9 @@ public:
     QColor borderColor() const;
     void setBorderColor(const QColor &newBorderColor);
 
+    bool cursorSync() const;
+    void setCursorSync(bool newCursorSync);
+
     QHexCursor *cursor() const;
     void setCursor(QHexCursor *newCursor);
     bool asciiCellAt(qsizetype line, int column, int *start, int *length) const;
@@ -209,7 +212,6 @@ private:
                               bool littleEndian);
     static quint32 readUInt32(const QByteArray &rawline, int index,
                               bool littleEndian);
-    void applyCursorAscii(QTextCursor &textcursor, qsizetype line) const;
     void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
@@ -239,6 +241,7 @@ private:
     bool m_asciiVisible;
     bool m_addressVisible;
     bool m_headerVisible;
+    bool m_cursorSync;
     QStringConverter::Encoding m_stringEncoding =
         QStringConverter::Encoding::Latin1;
 

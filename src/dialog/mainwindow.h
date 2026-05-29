@@ -251,6 +251,8 @@ private:
 
     void createScriptDialog(SplashDialog *d);
 
+    void updateOverwriteIndicator();
+
 private:
     IWingPlugin::FileType getEditorViewFileType(EditorView *view);
 
