@@ -67,6 +67,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     layout->addSpacing(2);
 
     m_comment = new QLineEdit(this);
+    m_comment->setMaxLength(QHEXVIEW_COMMENT_LIMIT);
     layout->addWidget(m_comment);
     m_comment->setEnabled(false);
 

@@ -27,7 +27,8 @@
 class BookMarkReplaceCommand : public BookMarkCommand {
 public:
     explicit BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos,
-                                    QString comment, QString oldcomment,
+                                    const QString &comment,
+                                    const QString &oldcomment,
                                     QUndoCommand *parent = nullptr);
 
     // QUndoCommand interface

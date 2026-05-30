@@ -264,6 +264,7 @@ private:
     EditorView *findEditorView(const QUrl &filename);
 
     bool newOpenFileSafeCheck();
+    void bindWorkSpaceEditorView(EditorView *editor);
     void registerEditorView(EditorView *editor, const QString &ws = {});
     void registerClonedEditorView(EditorView *editor);
 
@@ -453,73 +454,21 @@ signals:
     void closed();
 
 private:
-    Ribbon *m_ribbon = nullptr;
-    ads::CDockManager *m_dock = nullptr;
-    QLabel *_status = nullptr;
-    QLabel *_editArea = nullptr;
-
-    ScriptingDialog *m_scriptDialog = nullptr;
-    ScriptingConsole *m_scriptConsole = nullptr;
-    QPlainTextEdit *m_bgScriptOutput = nullptr;
-
-    ConsoleHighlighAnim *_hlAnim = nullptr;
-
-    ads::CDockWidget *m_find = nullptr;
-    ads::CDockWidget *m_hashtable = nullptr;
-    ads::CDockWidget *m_console = nullptr;
-    QMenu *m_menuFind = nullptr;
-    QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
-        m_findEncoding;
-
-    QTableViewExt *m_findresult = nullptr;
-    FindResultModel *_findResultModel = nullptr;
-    QTableViewExt *m_hash = nullptr;
-    CheckSumModel *_hashModel = nullptr;
-    QTableViewExt *m_bookMark = nullptr;
-    BookMarksModel *_bookMarkModel = nullptr;
-    QTableViewExt *m_metadata = nullptr;
-    MetaDataModel *_metadataModel = nullptr;
-
-    QTableViewExt *m_numshowtable = nullptr;
-    NumShowModel *_numsitem = nullptr;
-
-    QTextBrowser *m_logbrowser = nullptr;
-    QTextBrowser *m_txtDecode = nullptr;
-
-    QUndoView *_undoView = nullptr;
-    asIDBTreeView *_scriptObjView = nullptr;
-
     QVector<QToolButton *> m_toolBtneditors;
-
-    QAction *m_aDelBookMark = nullptr;
-    QAction *m_aDelMetaData = nullptr;
-
-    std::function<void()> _showEvents;
-
-    //===================================================
-
     QList<QWidget *> m_editStateWidgets;
-    QList<QWidget *> m_driverStateWidgets;
-
-    qsizetype _decstrlim = 10;
-
-    QByteArray _defaultLayout;
-    size_t m_newIndex = 1;
-
     QReadWriteLock _editorLock;
     EditorView *m_curEditor = nullptr;
     QList<QMetaObject::Connection> m_curConnections;
 
-    SettingDialog *m_setdialog = nullptr;
-    SettingDialog *m_scriptsetdlg = nullptr;
-    RecentFileManager *m_recentmanager = nullptr;
-    QMenu *m_recentMenu = nullptr;
+    bool m_islittle = true;
+    bool m_unsignedHex = false;
 
-    RibbonButtonGroup *m_scriptDBGroup = nullptr;
-    RibbonButtonGroup *m_pluginSettingsGroup = nullptr;
-    QList<QMenu *> _scriptContexts;
-
-    //===================================================
+    ads::CDockManager *m_dock = nullptr;
+    QLabel *_editArea = nullptr;
+    QLabel *_status = nullptr;
+    QTextBrowser *m_logbrowser = nullptr;
+    QTextBrowser *m_txtDecode = nullptr;
+    QUndoView *_undoView = nullptr;
 
     QLabel *m_lblloc = nullptr;
     QLabel *m_lblsellen = nullptr;
@@ -548,7 +497,51 @@ private:
     QPixmap _pixLock;
     QPixmap _pixCanOver, _pixCannotOver;
 
-    //================================
+    QTableViewExt *m_findresult = nullptr;
+    FindResultModel *_findResultModel = nullptr;
+    QTableViewExt *m_hash = nullptr;
+    CheckSumModel *_hashModel = nullptr;
+    QTableViewExt *m_bookMark = nullptr;
+    BookMarksModel *_bookMarkModel = nullptr;
+    QTableViewExt *m_metadata = nullptr;
+    MetaDataModel *_metadataModel = nullptr;
+
+    QTableViewExt *m_numshowtable = nullptr;
+    NumShowModel *_numsitem = nullptr;
+    QMenu *m_menuFind = nullptr;
+    ads::CDockWidget *m_find = nullptr;
+    ads::CDockWidget *m_hashtable = nullptr;
+
+    ScriptMachine::MessageType _lastOutputType =
+        ScriptMachine::MessageType::Unknown;
+    QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
+        m_findEncoding;
+
+    ScriptingDialog *m_scriptDialog = nullptr;
+    ScriptingConsole *m_scriptConsole = nullptr;
+    QPlainTextEdit *m_bgScriptOutput = nullptr;
+
+    ConsoleHighlighAnim *_hlAnim = nullptr;
+    Ribbon *m_ribbon = nullptr;
+    size_t m_newIndex = 1;
+    ads::CDockWidget *m_console = nullptr;
+
+    asIDBTreeView *_scriptObjView = nullptr;
+
+    QAction *m_aDelBookMark = nullptr;
+    QAction *m_aDelMetaData = nullptr;
+
+    qsizetype _decstrlim = 10;
+    QByteArray _defaultLayout;
+    QString m_lastusedpath;
+
+    SettingDialog *m_setdialog = nullptr;
+    SettingDialog *m_scriptsetdlg = nullptr;
+    RecentFileManager *m_recentmanager = nullptr;
+    QMenu *m_recentMenu = nullptr;
+
+    RibbonButtonGroup *m_pluginSettingsGroup = nullptr;
+    QList<QMenu *> _scriptContexts;
 
     // for plugin system use
     QHash<QString, RibbonTabContent *> m_ribbonMaps;
@@ -557,19 +550,14 @@ private:
         m_editorViewWidgets;
     QList<SettingPage *> m_settingPages;
 
+    // done in shownEvent
+    std::function<void()> _showEvents;
+
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr;
     ads::CDockAreaWidget *m_topViewArea = nullptr;
     ads::CDockAreaWidget *m_bottomViewArea = nullptr;
-
-    //================================
-
-    QString m_lastusedpath;
-    bool m_islittle = true;
-    bool m_unsignedHex = false;
-    ScriptMachine::MessageType _lastOutputType =
-        ScriptMachine::MessageType::Unknown;
 
     // EditorsCtl interface
 public:

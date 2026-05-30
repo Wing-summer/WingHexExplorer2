@@ -46,7 +46,10 @@ void InsertCommand::undo() {
     m_cursor->setPos(m_offset, m_nibbleindex);
 }
 void InsertCommand::redo() {
-    m_doc->_insert(m_offset, m_data);
+    if (!m_doc->_insert(m_offset, m_data)) {
+        setObsolete(true);
+        return;
+    }
     m_doc->insertBookMarkAdjust(m_offset, m_length);
     m_doc->metadata()->insertAdjust(m_offset, m_length);
     if (m_data.length() == 1 && m_nibbleindex) {

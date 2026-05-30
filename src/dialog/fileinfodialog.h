@@ -21,11 +21,24 @@
 #include "control/editorview.h"
 #include "framelessdialogbase.h"
 
+#include <QLabel>
+#include <QPushButton>
+#include <QTextBrowser>
+
 class FileInfoDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     FileInfoDialog(EditorView *editor, QWidget *parent = nullptr);
     virtual ~FileInfoDialog();
+
+private:
+    void reloadData();
+
+private:
+    EditorView *_editor;
+    QLabel *_lblicon;
+    QTextBrowser *_tb;
+    QPushButton *_clnbtn;
 };
 
 #endif // FILEINFODIALOG_H

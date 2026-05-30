@@ -27,7 +27,7 @@
 class BookMarkAddCommand : public BookMarkCommand {
 public:
     explicit BookMarkAddCommand(QHexDocument *doc, qsizetype pos,
-                                QString comment,
+                                const QString &comment,
                                 QUndoCommand *parent = nullptr);
 
     // QUndoCommand interface

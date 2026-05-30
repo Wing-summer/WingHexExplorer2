@@ -28,7 +28,7 @@
 class BookMarkCommand : public UndoCommandBase {
 public:
     explicit BookMarkCommand(const QString &text, QHexDocument *doc,
-                             qsizetype pos, QString comment,
+                             qsizetype pos, const QString &comment,
                              QUndoCommand *parent = nullptr);
 
 protected:

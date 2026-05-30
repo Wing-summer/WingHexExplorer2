@@ -24,9 +24,15 @@
 #include "settingmanager.h"
 #include "utilities.h"
 
-#define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"
-#define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"
-#define WARNLOG(msg) "<font color=\"gold\">" + msg + "</font>"
+#define INFOLOG(msg)                                                           \
+    (QStringLiteral("<font color=\"green\">") + msg.toHtmlEscaped() +          \
+     QStringLiteral("</font>"))
+#define ERRLOG(msg)                                                            \
+    (QStringLiteral("<font color=\"red\">") + msg.toHtmlEscaped() +            \
+     QStringLiteral("</font>"))
+#define WARNLOG(msg)                                                           \
+    (QStringLiteral("<font color=\"gold\">") + msg.toHtmlEscaped() +           \
+     QStringLiteral("</font>"))
 
 Logger::Logger(QObject *parent)
     : QObject(parent), _stream(new QTextStream(stdout)) {

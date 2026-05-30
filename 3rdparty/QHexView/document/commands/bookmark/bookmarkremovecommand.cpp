@@ -27,11 +27,15 @@ inline QString constructText(qsizetype offset) {
 }
 
 BookMarkRemoveCommand::BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
-                                             QString comment,
+                                             const QString &comment,
                                              QUndoCommand *parent)
     : BookMarkCommand(constructText(pos), doc, pos, comment, parent) {}
 
-void BookMarkRemoveCommand::redo() { m_doc->removeBookMark(m_pos); }
+void BookMarkRemoveCommand::redo() {
+    if (!m_doc->removeBookMark(m_pos)) {
+        setObsolete(true);
+    }
+}
 
 int BookMarkRemoveCommand::id() const { return UndoID_BookMarkRemove; }
 

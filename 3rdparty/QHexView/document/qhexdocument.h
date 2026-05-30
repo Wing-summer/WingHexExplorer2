@@ -101,7 +101,7 @@ public:
     qsizetype bookMarksCount() const;
     void applyBookMarks(const QMap<qsizetype, QString> &books);
     bool removeBookMark(qsizetype pos);
-    bool clearBookMark();
+    void clearBookMark();
 
     const QMap<qsizetype, QString> &bookMarks() const;
 

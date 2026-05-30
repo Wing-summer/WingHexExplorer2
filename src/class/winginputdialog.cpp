@@ -168,4 +168,43 @@ double WingInputDialog::getDouble(QWidget *parent, const QString &title,
     }
 }
 
+QString WingInputDialog::getText(QWidget *parent, const QString &title,
+                                 const QString &label, const QString &text,
+                                 int maxTextLength, bool *ok) {
+    auto dialog = new QInputDialog(parent);
+
+    dialog->setLabelText(label);
+    dialog->setTextValue(text);
+    dialog->setTextEchoMode(QLineEdit::Normal);
+    dialog->setInputMethodHints(Qt::ImhNone);
+    dialog->setWindowFlag(Qt::Widget);
+    if (maxTextLength < 0) {
+        maxTextLength = std::numeric_limits<int>::max();
+    }
+    QObject::connect(dialog, &QInputDialog::textValueChanged, dialog,
+                     [maxTextLength, dialog](const QString &value) {
+                         QSignalBlocker blocker(dialog);
+                         if (value.size() > maxTextLength) {
+                             dialog->setTextValue(value.sliced(maxTextLength));
+                         }
+                     });
+
+    FramelessDialogBase d(parent);
+    d.buildUpContent(dialog);
+    d.setWindowTitle(title);
+
+    QObject::connect(dialog, &QInputDialog::finished, &d,
+                     &FramelessDialogBase::done);
+
+    const int ret = d.exec();
+
+    if (ok)
+        *ok = !!ret;
+    if (ret) {
+        return dialog->textValue();
+    } else {
+        return QString();
+    }
+}
+
 WingInputDialog::WingInputDialog() {}

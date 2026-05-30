@@ -75,7 +75,9 @@ set_target_properties(
                CXX_STANDARD 17
                CXX_STANDARD_REQUIRED ON)
 
-target_compile_definitions(QHexView PUBLIC QHEXVIEW_FIND_LIMIT=1000)
+target_compile_definitions(
+    QHexView PUBLIC QHEXVIEW_FIND_LIMIT=1000 QHEXVIEW_BOOKMARK_LIMIT=100
+                    QHEXVIEW_METADATA_LIMIT=800 QHEXVIEW_COMMENT_LIMIT=100)
 
 target_link_libraries(
     QHexView PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui

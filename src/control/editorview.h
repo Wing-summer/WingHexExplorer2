@@ -257,6 +257,10 @@ public:
     QList<WingHex::WingEditorViewWidget *>
     editorViewWidgets(const QStringList &ids) const;
 
+    QStringList pluginDataNames() const;
+    void cleanUpPluginData();
+    bool needCleanUpPluginData();
+
 private:
     inline qsizetype findAvailCloneIndex();
 
@@ -580,6 +584,8 @@ signals:
     void sigOnHexWidth();
     void sigOnAddress();
 
+    void workspaceCorrupted();
+
 public:
     virtual void saveState(QXmlStreamWriter &Stream) const override;
 
@@ -591,8 +597,6 @@ private:
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
     EditorViewContext *_context = nullptr;
-    bool _hasRegistered = false;
-    quintptr _oldbase = 0;
 
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;
@@ -600,22 +604,25 @@ private:
     QMap<QString, WingEditorViewWidget *> m_others;
     QHash<WingEditorViewWidget *, QIcon> m_iconOrigin;
     QHash<QWidget *, QIcon> m_iconCaches;
+    QVector<EditorView *> m_cloneChildren;
+    QMap<QString, QByteArray> _pluginData;
+    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
+
+    bool _hasRegistered = false;
     bool m_isNewFile = true;
     bool m_checkSumInvalid = false;
+    bool m_cleanUpedPluginData = false;
 
-    QVector<EditorView *> m_cloneChildren;
     EditorView *m_cloneParent = nullptr;
 
     mutable QMutex m_findMutex;
     FindResultModel::FindData m_findData;
 
     CryptoAlgorithms _checkSumVisible;
-    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
     ScrollDataPoints _scrollPoints;
 
     DocumentType m_docType = DocumentType::InValid;
     QString m_workSpaceName;
-    QMap<QString, QByteArray> _pluginData;
 
     WingHex::WingIODevice *_dev = nullptr;
     QUrl m_fileName;

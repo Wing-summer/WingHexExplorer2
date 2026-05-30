@@ -27,7 +27,7 @@
 class BookMarkRemoveCommand : public BookMarkCommand {
 public:
     explicit BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
-                                   QString comment,
+                                   const QString &comment,
                                    QUndoCommand *parent = nullptr);
 
     // QUndoCommand interface

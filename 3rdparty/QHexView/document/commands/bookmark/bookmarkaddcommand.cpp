@@ -27,10 +27,19 @@ inline QString constructText(qsizetype offset) {
 }
 
 BookMarkAddCommand::BookMarkAddCommand(QHexDocument *doc, qsizetype pos,
-                                       QString comment, QUndoCommand *parent)
-    : BookMarkCommand(constructText(pos), doc, pos, comment, parent) {}
+                                       const QString &comment,
+                                       QUndoCommand *parent)
+    : BookMarkCommand(constructText(pos), doc, pos, comment, parent) {
+    if (m_doc->bookMarksCount() >= QHEXVIEW_BOOKMARK_LIMIT) {
+        setObsolete(true);
+    }
+}
 
-void BookMarkAddCommand::redo() { m_doc->addBookMark(m_pos, m_comment); }
+void BookMarkAddCommand::redo() {
+    if (!m_doc->addBookMark(m_pos, m_comment)) {
+        setObsolete(true);
+    }
+}
 
 int BookMarkAddCommand::id() const { return UndoID_BookMarkAdd; }
 

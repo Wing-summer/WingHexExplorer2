@@ -27,13 +27,17 @@ inline QString constructText(qsizetype offset) {
 }
 
 BookMarkReplaceCommand::BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos,
-                                               QString comment,
-                                               QString oldcomment,
+                                               const QString &comment,
+                                               const QString &oldcomment,
                                                QUndoCommand *parent)
     : BookMarkCommand(constructText(pos), doc, pos, comment, parent),
       m_oldcomment(oldcomment) {}
 
-void BookMarkReplaceCommand::redo() { m_doc->modBookMark(m_pos, m_comment); }
+void BookMarkReplaceCommand::redo() {
+    if (!m_doc->modBookMark(m_pos, m_comment)) {
+        setObsolete(true);
+    }
+}
 
 int BookMarkReplaceCommand::id() const { return UndoID_BookMarkReplace; }
 

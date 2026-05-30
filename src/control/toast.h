@@ -32,12 +32,10 @@ class Toast : public QDialog {
     Q_PROPERTY(QColor textcolor READ textColor WRITE setTextColor)
 
 public:
-    static int LENGTH_LONG;
-    static int LENGTH_SHORT;
     enum TOAST_POS { TOP, CENTER, BOTTOM };
 
     static void toast(QWidget *parent, const QPixmap &icon,
-                      const QString &strContent, int nToastInterval = 2000);
+                      const QString &strContent);
 
     virtual ~Toast();
 
@@ -69,7 +67,6 @@ public:
 
 private:
     QString m_strContent;
-    int m_nToastInterval;
     int m_nCurrentWindowOpacity;
     int m_nCurrentStayTime;
     int m_nStatus;
@@ -84,8 +81,7 @@ private:
     TOAST_POS m_pos = TOAST_POS::BOTTOM;
     bool _pauseTimer = false;
 
-    Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
-          QWidget *parent);
+    Toast(const QString &strContent, const QPixmap &icon, QWidget *parent);
 };
 
 #endif // TOAST_H

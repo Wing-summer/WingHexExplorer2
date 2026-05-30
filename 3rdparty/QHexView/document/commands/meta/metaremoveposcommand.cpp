@@ -37,7 +37,11 @@ MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
     }
 }
 
-void MetaRemovePosCommand::redo() { m_hexmeta->removeMetadata(m_pos); }
+void MetaRemovePosCommand::redo() {
+    if (!m_hexmeta->removeMetadata(m_pos)) {
+        setObsolete(true);
+    }
+}
 
 int MetaRemovePosCommand::id() const { return UndoID_MetaRemovePos; }
 

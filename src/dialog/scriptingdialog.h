@@ -308,18 +308,14 @@ private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
     QStatusBar *m_status = nullptr;
-
-    QByteArray _defaultLayout;
-    QByteArray _savedLayout;
-
-    ads::CDockWidget *m_outConsole = nullptr;
-    ads::CDockWidget *m_dbgVarView = nullptr;
-    ads::CDockWidget *m_dbgWatchView = nullptr;
-
     ScriptEditor *m_curEditor = nullptr;
     QList<QMetaObject::Connection> m_curConnections;
     WingSquiggleInfoModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
+
+    ads::CDockWidget *m_outConsole = nullptr;
+    ads::CDockWidget *m_dbgVarView = nullptr;
+    ads::CDockWidget *m_dbgWatchView = nullptr;
 
     QVector<QToolButton *> m_Tbtneditors;
 
@@ -347,6 +343,9 @@ private:
     ScriptEditor *_fakeEditor = nullptr;
 
     QLabel *_status = nullptr;
+
+    QByteArray _defaultLayout;
+    QByteArray _savedLayout;
 
     // EditorsCtl interface
 public:

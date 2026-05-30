@@ -44,12 +44,19 @@ inline QString constructText(const QHexMetadataItem &meta) {
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,
                                QUndoCommand *parent)
-    : MetaCommand(constructText(meta), hexmeta, meta, parent),
-      _brokenMetas(m_hexmeta->mayBrokenMetaData(meta.begin, meta.end)) {}
+    : MetaCommand(constructText(meta), hexmeta, meta, parent) {
+    if (hexmeta->size() >= QHEXVIEW_METADATA_LIMIT) {
+        setObsolete(true);
+    } else {
+        _brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
+    }
+}
 
 void MetaAddCommand::redo() {
-    m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,
-                        m_meta.background, m_meta.comment);
+    if (!m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,
+                             m_meta.background, m_meta.comment)) {
+        setObsolete(true);
+    }
 }
 
 int MetaAddCommand::id() const { return UndoID_MetaAdd; }
@@ -57,7 +64,12 @@ int MetaAddCommand::id() const { return UndoID_MetaAdd; }
 bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const MetaAddCommand *>(other);
     if (ucmd) {
-        return this->m_meta == ucmd->m_meta;
+        if (this->m_meta.isSameMeta(ucmd->m_meta)) {
+            if (this->m_meta.contains(ucmd->m_meta)) {
+                return true;
+            }
+        }
+        return false;
     }
     return false;
 }

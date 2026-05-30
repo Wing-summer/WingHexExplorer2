@@ -53,11 +53,14 @@ struct QHexMetadataItem final : QHexRegionObject<qsizetype, QHexMetadataItem> {
         this->end = end;
     }
 
+    inline bool isSameMeta(const QHexMetadataItem &item) const {
+        return foreground == item.foreground && background == item.background &&
+               comment == item.comment;
+    }
+
     // added by wingsummer
     inline bool operator==(const QHexMetadataItem &item) const {
-        return begin == item.begin && end == item.end &&
-               foreground == item.foreground && background == item.background &&
-               comment == item.comment;
+        return begin == item.begin && end == item.end && isSameMeta(item);
     }
 
     // QHexRegionObject interface
@@ -179,9 +182,9 @@ public:
     bool modifyMetadata(const QHexMetadataItem &newmeta,
                         const QHexMetadataItem &oldmeta);
     bool removeMetadata(const QHexMetadataItem &item);
-    void removeMetadata(qsizetype begin, qsizetype end);
+    bool removeMetadata(qsizetype begin, qsizetype end);
     bool removeLineMetadata(const QHexMetadataItem &item);
-    void removeMetadata(qsizetype offset);
+    bool removeMetadata(qsizetype offset);
 
     const QHexMetadataItem &at(qsizetype index) const;
     const QVector<QHexMetadataItem> &getAllMetadata() const;

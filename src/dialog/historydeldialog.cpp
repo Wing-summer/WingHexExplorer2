@@ -79,6 +79,7 @@ HistoryDelDialog::HistoryDelDialog(
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
+    _dialog->setWindowIcon(ICONRES(QStringLiteral("clearhis")));
     _dialog->setWindowTitle(this->windowTitle());
     _dialog->setMinimumSize(600, 400);
     Utilities::moveToCenter(_dialog);

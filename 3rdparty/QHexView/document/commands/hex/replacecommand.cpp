@@ -45,7 +45,10 @@ void ReplaceCommand::undo() {
 }
 
 void ReplaceCommand::redo() {
-    m_doc->_replace(m_offset, m_data);
+    if (!m_doc->_replace(m_offset, m_data)) {
+        setObsolete(true);
+        return;
+    }
     if (m_data.length() == 1 && m_nibbleindex) {
         m_cursor->setPos(m_offset, 0);
     } else {

@@ -30,23 +30,27 @@
 #include <QVector>
 
 struct WorkSpaceInfo {
-    qulonglong base = 0;
+    quint64 base = 0;
     QByteArray checkSum;
     QMap<QString, QByteArray> pluginData;
+};
+
+struct WorkSpaceData {
+    QUrl file;
+    QMap<qsizetype, QString> bookmarks;
+    QVector<QHexMetadataItem> metas;
+    WorkSpaceInfo infos;
+    bool corrupted = false;
 };
 
 class WorkSpaceManager {
 
 public:
     explicit WorkSpaceManager();
-    static bool saveWorkSpace(const QString &filename, const QUrl &file,
-                              const QMap<qsizetype, QString> &bookmarks,
-                              const QVector<QHexMetadataItem> &metas,
-                              const WorkSpaceInfo &infos);
-    static bool loadWorkSpace(const QString &filename, QUrl &file,
-                              QMap<qsizetype, QString> &bookmarks,
-                              QVector<QHexMetadataItem> &metas,
-                              WorkSpaceInfo &infos, QJsonDocument doc = {});
+    static bool saveWorkSpace(const QString &filename,
+                              const WorkSpaceData &data);
+    static bool loadWorkSpace(const QString &filename, WorkSpaceData &data,
+                              QJsonDocument doc = {});
 
     static QJsonDocument loadWorkSpace(const QString &filename);
     static QUrl loadWorkSpaceDocFile(const QString &filename,
@@ -54,6 +58,16 @@ public:
 
 private:
     QString static getColorString(const QColor &color);
+
+    static std::optional<quint64> readUInt64(const QJsonValue &value);
+    static std::optional<QColor> readColor(const QJsonValue &value);
+
+    static void readMetas(WorkSpaceData &data, const QJsonValue &values);
+    static void readBookmarks(WorkSpaceData &data, const QJsonValue &values);
+    static void loadPluginData(WorkSpaceData &data, const QJsonValue &values);
+
+    static QString packupMessage(const QUrl &file, const QJsonValue &values,
+                                 const QString &reason);
 };
 
 #endif // WORKSPACEMANAGER_H

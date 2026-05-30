@@ -111,7 +111,9 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
                 byteCount = chunk.absPos - pos;
 
             maxSize -= byteCount;
-            _ioDevice->seek(pos + ioDelta);
+            if (!_ioDevice->seek(pos + ioDelta)) {
+                return {};
+            }
             readBuffer = _ioDevice->read(byteCount);
             buffer += readBuffer;
             pos += readBuffer.size();
@@ -189,10 +191,16 @@ bool Chunks::insert(qint64 pos, const QByteArray &ba) {
 
     auto length = ba.length();
     qsizetype chunkIdx;
-    if (pos == _size)
+    if (pos == _size) {
         chunkIdx = getChunkIndex(pos - 1);
-    else
+    } else {
         chunkIdx = getChunkIndex(pos);
+    }
+
+    if (chunkIdx < 0) {
+        return false;
+    }
+
     qint64 posInBa = pos - _chunks[chunkIdx].absPos;
     _chunks[chunkIdx].data.insert(posInBa, ba);
     for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
@@ -206,6 +214,9 @@ bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
         return false;
 
     qsizetype chunkIdx = getChunkIndex(pos);
+    if (chunkIdx < 0) {
+        return false;
+    }
 
     auto &chunk = _chunks[chunkIdx];
     qint64 posInBa = pos - chunk.absPos;
@@ -232,6 +243,9 @@ bool Chunks::remove(qint64 pos, qint64 length) {
         return false;
 
     qsizetype chunkIdx = getChunkIndex(pos);
+    if (chunkIdx < 0) {
+        return false;
+    }
 
     auto &chunk = _chunks[chunkIdx];
     qint64 posInBa = pos - chunk.absPos;
@@ -297,7 +311,9 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
         Chunk newChunk;
         qint64 readAbsPos = absPos - ioDelta;
         qint64 readPos = (readAbsPos & READ_CHUNK_MASK);
-        _ioDevice->seek(readPos);
+        if (!_ioDevice->seek(readPos)) {
+            return -1;
+        }
         newChunk.data = _ioDevice->read(CHUNK_SIZE);
         newChunk.absPos = absPos - (readAbsPos - readPos);
         _chunks.insert(insertIdx, newChunk);

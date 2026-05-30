@@ -22,7 +22,7 @@
 #include "bookmarkcommand.h"
 
 BookMarkCommand::BookMarkCommand(const QString &text, QHexDocument *doc,
-                                 qsizetype pos, QString comment,
+                                 qsizetype pos, const QString &comment,
                                  QUndoCommand *parent)
-    : UndoCommandBase(text, parent), m_doc(doc), m_comment(comment),
-      m_pos(pos) {}
+    : UndoCommandBase(text, parent), m_doc(doc),
+      m_comment(comment.left(QHEXVIEW_COMMENT_LIMIT)), m_pos(pos) {}

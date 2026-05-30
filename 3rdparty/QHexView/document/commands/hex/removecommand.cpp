@@ -54,7 +54,10 @@ void RemoveCommand::undo() {
 
 void RemoveCommand::redo() {
     m_cursor->setPos(m_offset, m_nibbleindex);
-    m_doc->_remove(m_offset, m_length);
+    if (!m_doc->_remove(m_offset, m_length)) {
+        setObsolete(true);
+        return;
+    }
     _rmbms = m_doc->removeBookMarkAdjust(m_offset, m_length);
     _rmMetas = m_doc->metadata()->removeAdjust(m_offset, m_length);
 }

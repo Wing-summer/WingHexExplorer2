@@ -361,35 +361,26 @@ bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
 }
 
 bool QHexDocument::removeBookMark(qsizetype pos) {
-    if (m_keepsize) {
-        auto ret = _bookmarks.remove(pos) != 0;
-        if (ret) {
-            Q_EMIT bookMarkChanged();
-        }
-        return ret;
+    auto ret = _bookmarks.remove(pos) != 0;
+    if (ret) {
+        Q_EMIT bookMarkChanged();
     }
-    return false;
+    return ret;
 }
 
 bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
-    if (m_keepsize) {
-        if (_bookmarks.contains(pos)) {
-            _bookmarks[pos] = comment;
-            Q_EMIT bookMarkChanged();
-            return true;
-        }
-    }
-    return false;
-}
-
-bool QHexDocument::clearBookMark() {
-    if (m_keepsize) {
-        _bookmarks.clear();
-        Q_EMIT documentChanged();
+    if (_bookmarks.contains(pos)) {
+        _bookmarks[pos] = comment;
         Q_EMIT bookMarkChanged();
         return true;
     }
     return false;
+}
+
+void QHexDocument::clearBookMark() {
+    _bookmarks.clear();
+    Q_EMIT documentChanged();
+    Q_EMIT bookMarkChanged();
 }
 
 bool QHexDocument::existBookMark(qsizetype pos) {
@@ -399,6 +390,9 @@ bool QHexDocument::existBookMark(qsizetype pos) {
 qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
 
 void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
+    if (books.size() >= QHEXVIEW_BOOKMARK_LIMIT) {
+        return;
+    }
     _bookmarks = books;
     Q_EMIT documentChanged();
     Q_EMIT bookMarkChanged();
@@ -490,9 +484,11 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 }
 
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
-    m_buffer->insert(offset, data);
-    Q_EMIT documentChanged();
-    return true;
+    if (m_buffer->insert(offset, data)) {
+        Q_EMIT documentChanged();
+        return true;
+    }
+    return false;
 }
 
 bool QHexDocument::_replace(qsizetype offset, uchar b) {
@@ -500,15 +496,19 @@ bool QHexDocument::_replace(qsizetype offset, uchar b) {
 }
 
 bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
-    m_buffer->replace(offset, data);
-    Q_EMIT documentChanged();
-    return true;
+    if (m_buffer->replace(offset, data)) {
+        Q_EMIT documentChanged();
+        return true;
+    }
+    return false;
 }
 
 bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
-    m_buffer->remove(offset, len);
-    Q_EMIT documentChanged();
-    return true;
+    if (m_buffer->remove(offset, len)) {
+        Q_EMIT documentChanged();
+        return true;
+    }
+    return false;
 }
 
 bool QHexDocument::parsePattern(const QString &pattern,

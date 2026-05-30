@@ -180,25 +180,27 @@ bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
     return ret;
 }
 
-void QHexMetadata::removeMetadata(qsizetype begin, qsizetype end) {
+bool QHexMetadata::removeMetadata(qsizetype begin, qsizetype end) {
     const auto broken = mayBrokenMetaData(begin, end);
+    bool r = false;
     for (const auto &item : broken) {
-        removeMetadata(item);
+        r |= removeMetadata(item);
     }
+    return r;
 }
 
 bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
     for (auto &l : m_linemeta) {
         l.remove(item);
     }
-    m_linemeta.removeIf(
+    auto r = m_linemeta.removeIf(
         [](const QPair<qsizetype, QHash<QHexMetadataItem, QHexLineMetadata>>
                &item) { return item.second.isEmpty(); });
     Q_EMIT metadataChanged();
-    return true;
+    return r >= 0;
 }
 
-void QHexMetadata::removeMetadata(qsizetype offset) {
+bool QHexMetadata::removeMetadata(qsizetype offset) {
     auto rmfn = [offset, this](const QHexMetadataItem &item) {
         auto r = offset >= item.begin && offset <= item.end;
         if (r) {
@@ -209,8 +211,9 @@ void QHexMetadata::removeMetadata(qsizetype offset) {
         return r;
     };
 
-    m_metadata.removeIf(rmfn);
+    auto r = m_metadata.removeIf(rmfn);
     Q_EMIT metadataChanged();
+    return r >= 0;
 }
 
 const QHexMetadataItem &QHexMetadata::at(qsizetype index) const {
@@ -270,6 +273,9 @@ QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
 }
 
 void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
+    if (metas.size() >= QHEXVIEW_METADATA_LIMIT) {
+        return;
+    }
     for (const auto &meta : metas) {
         m_metadata.mergeAdd(meta);
     }

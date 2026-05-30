@@ -27,17 +27,16 @@
 #include <QTimerEvent>
 #include <QWindow>
 
-int Toast::LENGTH_LONG = 4000;
-int Toast::LENGTH_SHORT = 1500;
-static const int TIMER_INTERVAL = 50;
-static const int PADDING = 10;
+static constexpr auto LENGTH_LONG = 4000;
+static constexpr auto LENGTH_SHORT = 1500;
+static constexpr const int TIMER_INTERVAL = 50;
+static constexpr int PADDING = 10;
+static constexpr int TOAST_INTERVAL = 3000;
 
 static Toast *_toast = nullptr;
 
-Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
-             QWidget *parent)
-    : QDialog(parent), m_strContent(strContent),
-      m_nToastInterval(nToastInterval), m_nCurrentWindowOpacity(0),
+Toast::Toast(const QString &strContent, const QPixmap &icon, QWidget *parent)
+    : QDialog(parent), m_strContent(strContent), m_nCurrentWindowOpacity(0),
       m_nCurrentStayTime(0), m_nStatus(0), m_nFadeStep(0), m_icon(icon),
       _parent(parent) {
     Q_ASSERT(parent);
@@ -69,7 +68,7 @@ bool Toast::eventFilter(QObject *watched, QEvent *event) {
 }
 
 void Toast::toast(QWidget *parent, const QPixmap &icon,
-                  const QString &strContent, int nToastInterval) {
+                  const QString &strContent) {
     Q_ASSERT(parent);
 
     if (_toast) {
@@ -80,7 +79,7 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
     static QRegularExpression regex(QStringLiteral("\r\n|\n"));
     auto str = strContent;
     str.remove(regex);
-    _toast = new Toast(str, icon, nToastInterval, parent);
+    _toast = new Toast(str, icon, parent);
     parent->installEventFilter(_toast);
     qApp->installEventFilter(_toast);
     _toast->show();
@@ -209,7 +208,7 @@ void Toast::timerEvent(QTimerEvent *e) {
     }
 
     if (m_nStatus == 0x02) {
-        if (m_nCurrentStayTime < m_nToastInterval) {
+        if (m_nCurrentStayTime < TOAST_INTERVAL) {
             m_nCurrentStayTime += TIMER_INTERVAL;
             return;
         }

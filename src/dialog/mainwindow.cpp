@@ -355,14 +355,14 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                         _showEvents = [this]() {
                             Toast::toast(
                                 this, NAMEICONRES(QStringLiteral("angellsp")),
-                                tr("AngelLspInitFailed"), 3000);
+                                tr("AngelLspInitFailed"));
                         };
                     }
                 } else {
                     _showEvents = [this]() {
                         Toast::toast(this,
                                      NAMEICONRES(QStringLiteral("angellsp")),
-                                     tr("AngelLspInitFailed"), 3000);
+                                     tr("AngelLspInitFailed"));
                     };
                 }
                 m_scriptConsole->enableLSP();
@@ -1345,7 +1345,6 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
                             &MainWindow::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
-        m_driverStateWidgets << a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("export"), tr("Export"),
@@ -1703,7 +1702,6 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
         _scriptContexts =
             ScriptManager::buildUpScriptRunnerContext(pannel, this);
-        m_scriptDBGroup = pannel;
     }
 
     return tab;
@@ -2140,6 +2138,7 @@ void MainWindow::on_convpro() {
         if (reportErrFileError(ret, NAMEICONRES("convpro"),
                                tr("ConvWorkSpaceSuccess"),
                                tr("ConvWorkSpaceFailed"))) {
+            bindWorkSpaceEditorView(editor);
             // add to history
             addRecentFile(editor, workspace, true);
         }
@@ -2598,7 +2597,7 @@ void MainWindow::on_bookmark() {
         bool ok;
         auto comment =
             WingInputDialog::getText(this, tr("BookMark"), tr("InputComment"),
-                                     QLineEdit::Normal, QString(), &ok);
+                                     QString(), QHEXVIEW_COMMENT_LIMIT, &ok);
         if (ok) {
             doc->AddBookMark(pos, comment);
         }
@@ -3208,6 +3207,15 @@ bool MainWindow::newOpenFileSafeCheck() {
     return true;
 }
 
+void MainWindow::bindWorkSpaceEditorView(EditorView *editor) {
+    connect(editor, &EditorView::workspaceCorrupted, this, [this]() {
+        QTimer::singleShot(0, this, [this]() {
+            Toast::toast(this, NAMEICONRES("workspace"),
+                         tr("WorkspaceCorruptedSeeLog"));
+        });
+    });
+}
+
 void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
          p != m_editorViewWidgets.constKeyValueEnd(); p++) {
@@ -3742,6 +3750,9 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     auto filename = finfo.absoluteFilePath();
 
     auto ev = std::make_unique<EditorView>(this);
+    // we connect first
+    bindWorkSpaceEditorView(ev.get());
+
     auto res = ev->openWorkSpace(filename, wsDoc);
 
     bool failed = (res != ErrFile::Success && res != ErrFile::WorkSpaceUnSaved);

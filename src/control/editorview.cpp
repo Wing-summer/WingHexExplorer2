@@ -548,17 +548,14 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         return ErrFile::NotExist;
     }
 
-    QUrl file;
-    QMap<qsizetype, QString> bookmarks;
-    QVector<QHexMetadataItem> metas;
-    WorkSpaceInfo infos;
+    WorkSpaceData data;
 
-    if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas, infos,
-                                        doc)) {
+    if (WorkSpaceManager::loadWorkSpace(filename, data, doc)) {
         // it's a workspace project
         // we should check the type of "file"
-        ErrFile ret;
 
+        ErrFile ret;
+        auto file = data.file;
         if (file.isLocalFile()) {
             // regular file
             ret = openFile(file.toLocalFile(), false);
@@ -587,22 +584,21 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         // apply the content
         auto doc = m_hex->document();
 
-        doc->applyBookMarks(bookmarks);
-        doc->setBaseAddress(infos.base);
-        doc->metadata()->applyMetas(metas);
-        _pluginData = infos.pluginData;
+        doc->applyBookMarks(data.bookmarks);
+        doc->setBaseAddress(data.infos.base);
+        doc->metadata()->applyMetas(data.metas);
+        _pluginData = data.infos.pluginData;
         doc->setDocSaved();
 
         // checksum valid
         auto buffer = doc->buffer();
         auto nb = computeFileFingerprint(buffer->ioDevice());
-        if (infos.checkSum.isEmpty()) {
+        if (data.infos.checkSum.isEmpty()) {
             // we will automatic resave checksum to project file
-            infos.checkSum = nb;
-            WorkSpaceManager::saveWorkSpace(filename, file, bookmarks, metas,
-                                            infos);
+            data.infos.checkSum = nb;
+            WorkSpaceManager::saveWorkSpace(filename, data);
         } else {
-            if (nb != infos.checkSum) {
+            if (nb != data.infos.checkSum) {
                 ret = WingHex::WorkSpaceUnSaved;
                 m_checkSumInvalid = true;
                 updateDocSavedFlag(false);
@@ -613,6 +609,11 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         // It will be empty after openFile or openExtFile
         m_workSpaceName = finfo.absoluteFilePath();
         applyWorkSpaceStyle(this);
+
+        if (data.corrupted) {
+            Q_EMIT workspaceCorrupted();
+        }
+
         return ret;
     }
     return ErrFile::Error;
@@ -658,17 +659,20 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     }
 
     if (needSaveWS) {
+        WorkSpaceData data;
+        data.file = fileName.url();
+        data.bookmarks = doc->bookMarks();
+        data.metas = doc->metadata()->getAllMetadata();
+
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
         auto buffer = doc->buffer();
         infos.checkSum = computeFileFingerprint(buffer->ioDevice());
-
         savePluginData();
         infos.pluginData = _pluginData;
+        data.infos = infos;
 
-        auto b = WorkSpaceManager::saveWorkSpace(
-            workSpaceName, fileName.url(), doc->bookMarks(),
-            doc->metadata()->getAllMetadata(), infos);
+        auto b = WorkSpaceManager::saveWorkSpace(workSpaceName, data);
         if (!b) {
             return ErrFile::WorkSpaceUnSaved;
         }
@@ -982,17 +986,22 @@ void EditorView::setFileNameUrl(const QUrl &fileName) {
 }
 
 void EditorView::savePluginData() {
+    // only called in saving
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
         if (p->second->hasUnsavedState()) {
             auto data = p->second->saveState();
-            _pluginData.insert(p->first, data);
+            if (data.isEmpty()) {
+                _pluginData.remove(p->first);
+            } else {
+                _pluginData.insert(p->first, data);
+            }
         }
     }
 }
 
 bool EditorView::checkHasUnsavedState() const {
-    if (m_checkSumInvalid) {
+    if (m_checkSumInvalid || m_cleanUpedPluginData) {
         return true;
     }
     for (const auto &item : m_others) {
@@ -3067,6 +3076,35 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
         }
     }
     return ads::CDockWidget::eventFilter(watched, event);
+}
+
+QStringList EditorView::pluginDataNames() const { return _pluginData.keys(); }
+
+void EditorView::cleanUpPluginData() {
+    QMap<QString, QByteArray> pluginData;
+    for (auto p = m_others.keyBegin(); p != m_others.keyEnd(); ++p) {
+        auto n = *p;
+        auto d = _pluginData.value(n);
+        if (!d.isEmpty()) {
+            pluginData.insert(n, d);
+        }
+    }
+    _pluginData = pluginData;
+    m_cleanUpedPluginData = true;
+    updateDocSavedFlag(false);
+}
+
+bool EditorView::needCleanUpPluginData() {
+    if (!isWorkSpace()) {
+        return false;
+    }
+    for (auto p = _pluginData.keyBegin(); p != _pluginData.keyEnd(); ++p) {
+        auto r = m_others.contains(*p);
+        if (!r) {
+            return true;
+        }
+    }
+    return false;
 }
 
 const QList<EditorView *> &EditorView::instances() { return m_instances; }

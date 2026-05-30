@@ -467,7 +467,7 @@ void PluginSettingDialog::loadPluginInfo(
         if (!dependencies.isEmpty()) {
             ui->txtc->append(getWrappedText(tr("Dependencies") + sep));
             for (const auto &d : dependencies) {
-                auto dep = d.puid;
+                QString dep = QStringLiteral(" - ") + d.puid;
                 if (!d.version.isNull()) {
                     dep.append(':').append(d.version.toString());
                 }

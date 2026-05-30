@@ -74,7 +74,11 @@ MetaReplaceCommand::MetaReplaceCommand(QHexMetadata *hexmeta,
 
 void MetaReplaceCommand::undo() { m_hexmeta->modifyMetadata(m_old, m_meta); }
 
-void MetaReplaceCommand::redo() { m_hexmeta->modifyMetadata(m_meta, m_old); }
+void MetaReplaceCommand::redo() {
+    if (!m_hexmeta->modifyMetadata(m_meta, m_old)) {
+        setObsolete(true);
+    }
+}
 
 int MetaReplaceCommand::id() const { return UndoID_MetaReplace; }
 

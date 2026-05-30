@@ -44,7 +44,11 @@ MetaRemoveCommand::MetaRemoveCommand(QHexMetadata *hexmeta,
                                      QUndoCommand *parent)
     : MetaCommand(constructText(meta), hexmeta, meta, parent) {}
 
-void MetaRemoveCommand::redo() { m_hexmeta->removeMetadata(m_meta); }
+void MetaRemoveCommand::redo() {
+    if (!m_hexmeta->removeMetadata(m_meta)) {
+        setObsolete(true);
+    }
+}
 
 int MetaRemoveCommand::id() const { return UndoID_MetaRemove; }
 

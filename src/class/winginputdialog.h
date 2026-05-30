@@ -53,6 +53,10 @@ public:
                             double maxValue = 2147483647, int decimals = 1,
                             bool *ok = nullptr, double step = 1);
 
+    static QString getText(QWidget *parent, const QString &title,
+                           const QString &label, const QString &text,
+                           int maxTextLength, bool *ok);
+
 private:
     WingInputDialog();
 
