@@ -2581,6 +2581,12 @@ void MainWindow::on_bookmark() {
         return;
     }
     auto doc = hexeditor->document();
+    if (doc->bookMarksCount() >= QHEXVIEW_BOOKMARK_LIMIT) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("bookmark")),
+                     tr("TooManyBookMarks"));
+        return;
+    }
+
     auto pos = hexeditor->currentOffset();
 
     if (doc->existBookMark(pos)) {
@@ -2660,13 +2666,20 @@ void MainWindow::on_metadata() {
         return;
     }
     auto doc = hexeditor->document();
+    auto meta = doc->metadata();
+
+    if (meta->size() >= QHEXVIEW_METADATA_LIMIT) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+                     tr("TooManyMetaData"));
+        return;
+    }
+
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
         if (cur->hasSelection()) {
             if (m.exec()) {
                 auto total = cur->selectionCount();
-                auto meta = doc->metadata();
                 if (total == 1) {
                     auto begin = cur->selectionStart(0).offset();
                     auto end = cur->selectionEnd(0).offset();

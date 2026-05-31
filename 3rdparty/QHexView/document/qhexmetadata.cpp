@@ -273,7 +273,7 @@ QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
 }
 
 void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
-    if (metas.size() >= QHEXVIEW_METADATA_LIMIT) {
+    if (metas.size() > QHEXVIEW_METADATA_LIMIT) {
         return;
     }
     for (const auto &meta : metas) {

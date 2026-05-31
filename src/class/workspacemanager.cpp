@@ -42,7 +42,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename,
     if (file.isValid()) {
         data.file = file;
         auto jobj = doc.object();
-        auto values = jobj.value("base");
+        auto values = jobj.value(QLatin1String("base"));
         if (!values.isUndefined()) {
             auto base = readUInt64(values);
             if (base) {
@@ -54,7 +54,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename,
             }
         }
 
-        values = jobj.value("checksum");
+        values = jobj.value(QLatin1String("checksum"));
         if (!values.isUndefined()) {
             if (values.isString()) {
                 auto cs = values.toString();
@@ -66,13 +66,13 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename,
             }
         }
 
-        values = jobj.value("metas");
+        values = jobj.value(QLatin1String("metas"));
         readMetas(data, values);
 
-        values = jobj.value("bookmarks");
+        values = jobj.value(QLatin1String("bookmarks"));
         readBookmarks(data, values);
 
-        values = jobj.value("plugindata");
+        values = jobj.value(QLatin1String("plugindata"));
         loadPluginData(data, values);
 
         return true;
@@ -92,10 +92,11 @@ QJsonDocument WorkSpaceManager::loadWorkSpace(const QString &filename) {
         f.close();
         if (err.error == QJsonParseError::NoError) {
             auto jobj = doc.object();
-            auto t = jobj.value("type");
+            auto t = jobj.value(QLatin1String("type"));
             if (t.isString()) {
                 auto type = t.toString();
-                if (!QString::compare(type, "workspace", Qt::CaseInsensitive)) {
+                if (!QString::compare(type, QLatin1String("workspace"),
+                                      Qt::CaseInsensitive)) {
                     return doc;
                 }
             }
@@ -107,7 +108,7 @@ QJsonDocument WorkSpaceManager::loadWorkSpace(const QString &filename) {
 QUrl WorkSpaceManager::loadWorkSpaceDocFile(const QString &filename,
                                             const QJsonDocument &doc) {
     auto jobj = doc.object();
-    auto ff = jobj.value("file");
+    auto ff = jobj.value(QLatin1String("file"));
     QUrl file;
     if (ff.isString()) {
         auto fi = ff.toString();
@@ -196,7 +197,7 @@ void WorkSpaceManager::readMetas(WorkSpaceData &data,
 
             auto linem = item.toObject();
             QHexMetadataItem metaitem;
-            auto begin = readUInt64(linem.value("begin"));
+            auto begin = readUInt64(linem.value(QLatin1String("begin")));
             if (begin) {
                 auto v = begin.value();
                 if (v >= MAX_BYTES) {
@@ -215,7 +216,7 @@ void WorkSpaceManager::readMetas(WorkSpaceData &data,
                 continue;
             }
 
-            auto end = readUInt64(linem.value("end"));
+            auto end = readUInt64(linem.value(QLatin1String("end")));
             if (end) {
                 auto v = end.value();
                 if (v >= MAX_BYTES) {
@@ -242,7 +243,7 @@ void WorkSpaceManager::readMetas(WorkSpaceData &data,
                 continue;
             }
 
-            auto fg = readColor(linem.value("fgcolor"));
+            auto fg = readColor(linem.value(QLatin1String("fgcolor")));
             if (fg) {
                 metaitem.foreground = fg.value();
             } else {
@@ -253,7 +254,7 @@ void WorkSpaceManager::readMetas(WorkSpaceData &data,
                 continue;
             }
 
-            auto bg = readColor(linem.value("bgcolor"));
+            auto bg = readColor(linem.value(QLatin1String("bgcolor")));
             if (bg) {
                 metaitem.background = bg.value();
             } else {
@@ -264,7 +265,7 @@ void WorkSpaceManager::readMetas(WorkSpaceData &data,
                 continue;
             }
 
-            auto comment = linem.value("comment");
+            auto comment = linem.value(QLatin1String("comment"));
             if (!comment.isUndefined()) {
                 if (comment.isString()) {
                     auto cmt = comment.toString();
@@ -322,7 +323,7 @@ void WorkSpaceManager::readBookmarks(WorkSpaceData &data,
             }
 
             auto sitem = p->toObject();
-            auto pos = readUInt64(sitem.value("pos"));
+            auto pos = readUInt64(sitem.value(QLatin1String("pos")));
             if (!pos) {
                 data.corrupted = true;
                 Logger::warning(packupMessage(
@@ -340,7 +341,7 @@ void WorkSpaceManager::readBookmarks(WorkSpaceData &data,
                 continue;
             }
 
-            auto comment = sitem.value("comment");
+            auto comment = sitem.value(QLatin1String("comment"));
             if (!comment.isString()) {
                 data.corrupted = true;
                 Logger::warning(packupMessage(
@@ -379,13 +380,13 @@ void WorkSpaceManager::loadPluginData(WorkSpaceData &data,
             if (!item.isObject()) {
                 data.corrupted = true;
                 Logger::warning(
-                    packupMessage(data.file, values,
+                    packupMessage(data.file, item,
                                   QStringLiteral("Invalid plugindata object")));
                 continue;
             }
             auto sitem = item.toObject();
-            auto plgobj = sitem.value("key");
-            auto valueobj = sitem.value("value");
+            auto plgobj = sitem.value(QLatin1String("key"));
+            auto valueobj = sitem.value(QLatin1String("value"));
             if (plgobj.isString() && valueobj.isString()) {
                 auto plg = plgobj.toString();
                 auto value =
@@ -393,7 +394,7 @@ void WorkSpaceManager::loadPluginData(WorkSpaceData &data,
                 if (plg.isEmpty()) {
                     data.corrupted = true;
                     Logger::warning(packupMessage(
-                        data.file, values,
+                        data.file, item,
                         QStringLiteral("Invalid plugindata 'key' tag")));
                     continue;
                 }
@@ -401,7 +402,7 @@ void WorkSpaceManager::loadPluginData(WorkSpaceData &data,
             } else {
                 data.corrupted = true;
                 Logger::warning(
-                    packupMessage(data.file, values,
+                    packupMessage(data.file, item,
                                   QStringLiteral("Invalid plugindata object")));
                 continue;
             }
@@ -426,7 +427,7 @@ bool WorkSpaceManager::saveWorkSpace(const QString &filename,
     QFile f(filename);
     if (f.open(QFile::WriteOnly)) {
         QJsonObject jobj;
-        jobj.insert("type", "workspace");
+        jobj.insert(QLatin1String("type"), QLatin1String("workspace"));
 
         QString ff;
         auto file = data.file;
@@ -442,19 +443,23 @@ bool WorkSpaceManager::saveWorkSpace(const QString &filename,
             ff = file.url();
         }
 
-        jobj.insert("file", ff);
-        jobj.insert("base", QString(QStringLiteral("0x") +
-                                    QString::number(data.infos.base, 16)));
-        jobj.insert("checksum", QString::fromUtf8(data.infos.checkSum.toHex()));
+        jobj.insert(QLatin1String("file"), ff);
+        jobj.insert(QLatin1String("base"),
+                    QString(QStringLiteral("0x") +
+                            QString::number(data.infos.base, 16)));
+        jobj.insert(QLatin1String("checksum"),
+                    QString::fromUtf8(data.infos.checkSum.toHex()));
 
         QJsonArray metas;
         for (const auto &meta : data.metas) {
             QJsonObject obj;
-            obj.insert("begin", QString::number(meta.begin));
-            obj.insert("end", QString::number(meta.end));
-            obj.insert("comment", meta.comment);
-            obj.insert("fgcolor", getColorString(meta.foreground));
-            obj.insert("bgcolor", getColorString(meta.background));
+            obj.insert(QLatin1String("begin"), QString::number(meta.begin));
+            obj.insert(QLatin1String("end"), QString::number(meta.end));
+            obj.insert(QLatin1String("comment"), meta.comment);
+            obj.insert(QLatin1String("fgcolor"),
+                       getColorString(meta.foreground));
+            obj.insert(QLatin1String("bgcolor"),
+                       getColorString(meta.background));
             metas.append(obj);
         }
         jobj.insert("metas", metas);
@@ -463,24 +468,25 @@ bool WorkSpaceManager::saveWorkSpace(const QString &filename,
         const auto &bookmarklist = data.bookmarks;
         for (auto p = bookmarklist.cbegin(); p != bookmarklist.cend(); ++p) {
             QJsonObject i;
-            i.insert("pos", QString::number(p.key()));
-            i.insert("comment", p.value());
+            i.insert(QLatin1String("pos"), QString::number(p.key()));
+            i.insert(QLatin1String("comment"), p.value());
             bookmarks.append(i);
         }
 
-        jobj.insert("bookmarks", bookmarks);
+        jobj.insert(QLatin1String("bookmarks"), bookmarks);
 
         // plugin data
         QJsonArray plugindata;
         const auto &plgdata = data.infos.pluginData;
         for (auto p = plgdata.begin(); p != plgdata.end(); p++) {
             QJsonObject i;
-            i.insert("key", p.key());
-            i.insert("value", QString::fromLatin1(p.value().toBase64()));
+            i.insert(QLatin1String("key"), p.key());
+            i.insert(QLatin1String("value"),
+                     QString::fromLatin1(p.value().toBase64()));
             plugindata.append(i);
         }
 
-        jobj.insert("plugindata", plugindata);
+        jobj.insert(QLatin1String("plugindata"), plugindata);
 
         QJsonDocument jdoc(jobj);
         if (f.write(jdoc.toJson(QJsonDocument::JsonFormat::Indented)) >= 0) {
