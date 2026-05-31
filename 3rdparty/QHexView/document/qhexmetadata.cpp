@@ -197,7 +197,7 @@ bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
         [](const QPair<qsizetype, QHash<QHexMetadataItem, QHexLineMetadata>>
                &item) { return item.second.isEmpty(); });
     Q_EMIT metadataChanged();
-    return r >= 0;
+    return r > 0;
 }
 
 bool QHexMetadata::removeMetadata(qsizetype offset) {
@@ -213,7 +213,7 @@ bool QHexMetadata::removeMetadata(qsizetype offset) {
 
     auto r = m_metadata.removeIf(rmfn);
     Q_EMIT metadataChanged();
-    return r >= 0;
+    return r > 0;
 }
 
 const QHexMetadataItem &QHexMetadata::at(qsizetype index) const {

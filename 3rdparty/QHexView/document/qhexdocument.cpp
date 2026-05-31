@@ -390,7 +390,7 @@ bool QHexDocument::existBookMark(qsizetype pos) {
 qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
 
 void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
-    if (books.size() >= QHEXVIEW_BOOKMARK_LIMIT) {
+    if (books.size() > QHEXVIEW_BOOKMARK_LIMIT) {
         return;
     }
     _bookmarks = books;

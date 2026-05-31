@@ -443,7 +443,8 @@ bool WorkSpaceManager::saveWorkSpace(const QString &filename,
         }
 
         jobj.insert("file", ff);
-        jobj.insert("base", QString::number(data.infos.base, 16));
+        jobj.insert("base", QString(QStringLiteral("0x") +
+                                    QString::number(data.infos.base, 16)));
         jobj.insert("checksum", QString::fromUtf8(data.infos.checkSum.toHex()));
 
         QJsonArray metas;
