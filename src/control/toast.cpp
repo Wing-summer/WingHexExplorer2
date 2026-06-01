@@ -49,7 +49,7 @@ bool Toast::eventFilter(QObject *watched, QEvent *event) {
         if (type == QEvent::ApplicationDeactivate) {
             this->deleteLater();
         }
-    } else {
+    } else if (watched == parent()) {
         if (type == QEvent::Resize || type == QEvent::Move) {
             setToastPos(TOAST_POS::BOTTOM);
         } else if (type == QEvent::Hide || type == QEvent::HideToParent) {
