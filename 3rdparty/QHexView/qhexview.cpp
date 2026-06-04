@@ -20,7 +20,6 @@
 */
 
 #include "qhexview.h"
-#include "document/buffer/qmemorybuffer.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QFontDatabase>
@@ -245,8 +244,8 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
 }
 
 void QHexView::resetDocument() {
-    this->setDocument(QSharedPointer<QHexDocument>(
-        QHexDocument::fromInternalBuffer<QMemoryBuffer>(false)));
+    this->setDocument(
+        QSharedPointer<QHexDocument>(QHexDocument::fromInternalBuffer(false)));
 }
 
 bool QHexView::event(QEvent *e) {

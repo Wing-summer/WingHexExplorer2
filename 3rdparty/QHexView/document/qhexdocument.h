@@ -21,7 +21,7 @@
 #ifndef QHEXDOCUMENT_H
 #define QHEXDOCUMENT_H
 
-#include "buffer/qhexbuffer.h"
+#include "buffer/qfilebuffer.h"
 #include "qhexcursor.h"
 #include "qhexmetadata.h"
 #include "qhexundostack.h"
@@ -34,7 +34,7 @@ class QHexDocument : public QObject {
     Q_OBJECT
 
 private:
-    explicit QHexDocument(QHexBuffer *buffer);
+    explicit QHexDocument(QFileBuffer *buffer);
 
 public:
     virtual ~QHexDocument();
@@ -233,15 +233,12 @@ private:
     // modified by wingsummer
 
 public:
-    template <typename T>
     static QHexDocument *fromDevice(QIODevice *iodevice, bool readonly);
-    template <typename T>
     static QHexDocument *fromFile(const QString &filename, bool readonly);
-    template <typename T>
     static QHexDocument *fromInternalBuffer(bool readonly);
 
-    QHexBuffer *buffer() const;
-    void setBuffer(QHexBuffer *buffer);
+    QFileBuffer *buffer() const;
+    void setBuffer(QFileBuffer *buffer);
 
     QUndoStack *undoStack() const;
 
@@ -271,7 +268,7 @@ signals:
     void metaDataChanged();
 
 private:
-    QHexBuffer *m_buffer;
+    QFileBuffer *m_buffer;
     QHexMetadata *m_metadata;
 
     QHexUndoStack *m_undostack;
@@ -295,62 +292,6 @@ private:
 
     /*======================*/
 };
-
-/*====================================*/
-// modified by wingsummer
-
-template <typename T>
-QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
-    if (iodevice == nullptr) {
-        return nullptr;
-    }
-
-    if (!iodevice->open(readonly ? QIODevice::ReadOnly
-                                 : QIODevice::ReadWrite)) {
-        return nullptr;
-    }
-
-    iodevice->close();
-    QHexBuffer *hexbuffer = new T();
-    if (hexbuffer->open(iodevice, readonly)) {
-        return new QHexDocument(hexbuffer);
-    } else {
-        iodevice->close();
-        delete hexbuffer;
-    }
-
-    return nullptr;
-}
-
-template <typename T>
-QHexDocument *QHexDocument::fromFile(const QString &filename, bool readonly) {
-    if (!filename.isEmpty()) {
-        auto f = new QFile(filename);
-        QHexBuffer *hexbuffer = new T();
-        if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite)) {
-            f->close();
-            if (hexbuffer->open(f, readonly)) {
-                // modified by wingsummer
-                return new QHexDocument(hexbuffer);
-            }
-        } else {
-            delete hexbuffer;
-            delete f;
-        }
-    }
-    return nullptr;
-}
-
-template <typename T>
-QHexDocument *QHexDocument::fromInternalBuffer(bool readonly) {
-    QHexBuffer *hexbuffer = new T();
-    if (hexbuffer->open(readonly)) {
-        return new QHexDocument(hexbuffer);
-    } else {
-        delete hexbuffer;
-        return nullptr;
-    }
-}
 
 /*================================================*/
 

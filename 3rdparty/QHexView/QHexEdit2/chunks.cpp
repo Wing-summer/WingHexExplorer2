@@ -21,7 +21,8 @@
 #include <limits.h>
 
 #include <QBuffer>
-#include <QMutexLocker>
+#include <QReadLocker>
+#include <QWriteLocker>
 
 #define BUFFER_SIZE 0x10000
 #define CHUNK_SIZE 0x1000
@@ -31,24 +32,250 @@
 
 // ***************************************** Constructors and file settings
 
-Chunks::Chunks(QIODevice *ioDevice, QObject *parent) : QObject(parent) {
-    setIODevice(ioDevice);
+Chunks::Chunks(QIODevice *ioDevice) { setIODevice(ioDevice); }
+
+Chunks::~Chunks() {
+    if (_ioDevice) {
+        resetIODevice();
+    }
 }
 
 bool Chunks::setIODevice(QIODevice *ioDevice) {
     if (ioDevice == nullptr) {
         return false;
     }
-    QMutexLocker locker(&_mutex);
+    QWriteLocker locker(&_mutex);
     _ioDevice = ioDevice;
     _size = _ioDevice->size();
     _chunks.clear();
     return true;
 }
 
+void Chunks::resetIODevice() {
+    QWriteLocker locker(&_mutex);
+    _ioDevice = nullptr;
+    _size = 0;
+    _chunks.clear();
+}
+
 // ***************************************** Getting data out of Chunks
 
 QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
+    QReadLocker locker(&_mutex);
+    return __data(pos, maxSize);
+}
+
+bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
+    QWriteLocker locker(&_mutex);
+    if (count == -1) {
+        count = _size;
+    }
+    if (iODevice && iODevice->isOpen() && iODevice->isWritable()) {
+        for (qint64 idx = pos; idx < count; idx += BUFFER_SIZE) {
+            QByteArray ba = __data(idx, BUFFER_SIZE);
+            iODevice->write(ba);
+        }
+        return true;
+    }
+    return false;
+}
+
+// ***************************************** Search API
+
+qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
+    qint64 result = -1;
+    QByteArray buffer;
+    QReadLocker locker(&_mutex);
+    for (qint64 pos = from; (pos < _size) && (result < 0); pos += BUFFER_SIZE) {
+        buffer = __data(pos, BUFFER_SIZE + ba.size() - 1);
+        auto findPos = buffer.indexOf(ba);
+        if (findPos >= 0)
+            result = pos + findPos;
+    }
+    return result;
+}
+
+qint64 Chunks::lastIndexOf(const QByteArray &ba, qint64 from) const {
+    qint64 result = -1;
+    QByteArray buffer;
+    QReadLocker locker(&_mutex);
+    for (qint64 pos = from; (pos > 0) && (result < 0); pos -= BUFFER_SIZE) {
+        qint64 sPos = pos - BUFFER_SIZE - ba.size() + 1;
+        if (sPos < 0)
+            sPos = 0;
+        buffer = __data(sPos, pos - sPos);
+        auto findPos = buffer.lastIndexOf(ba);
+        if (findPos >= 0)
+            result = sPos + findPos;
+    }
+    return result;
+}
+
+// ***************************************** Char manipulations
+
+bool Chunks::insert(qint64 pos, char b) {
+    return insert(pos, QByteArray(1, b));
+}
+
+bool Chunks::overwrite(qint64 pos, char b) {
+    return overwrite(pos, QByteArray(1, b));
+}
+
+bool Chunks::removeAt(qint64 pos) { return remove(pos, 1); }
+
+bool Chunks::insert(qint64 pos, const QByteArray &ba) {
+    if ((pos < 0) || (pos > _size))
+        return false;
+
+    if (ba.isEmpty()) {
+        return true;
+    }
+
+    QWriteLocker locker(&_mutex);
+    auto length = ba.length();
+    qsizetype chunkIdx;
+    if (_size && pos == _size) {
+        chunkIdx = getChunkIndex(pos - 1);
+    } else {
+        chunkIdx = getChunkIndex(pos);
+    }
+
+    if (chunkIdx < 0) {
+        return false;
+    }
+
+    qint64 posInBa = pos - _chunks[chunkIdx].absPos;
+    _chunks[chunkIdx].data.insert(posInBa, ba);
+    for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+        _chunks[idx].absPos += length;
+    _size += length;
+    return true;
+}
+
+bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
+    QWriteLocker locker(&_mutex);
+    return __overwrite(pos, ba);
+}
+
+bool Chunks::remove(qint64 pos, qint64 length) {
+    QWriteLocker locker(&_mutex);
+    return __remove(pos, length);
+}
+
+// ***************************************** Utility functions
+
+char Chunks::at(qint64 pos) const { return data(pos, 1).at(0); }
+
+char Chunks::operator[](qint64 pos) const { return this->at(pos); }
+
+qint64 Chunks::size() const { return _size; }
+
+qsizetype Chunks::getChunkIndex(qint64 absPos) const {
+    // This routine checks, if there is already a copied chunk available. If os,
+    // it returns a reference to it. If there is no copied chunk available,
+    // original data will be copied into a new chunk.
+
+    qsizetype foundIdx = -1;
+    qsizetype insertIdx = 0;
+    qint64 ioDelta = 0;
+
+    for (qsizetype idx = 0; idx < _chunks.size(); idx++) {
+        Chunk chunk = _chunks[idx];
+        if ((absPos >= chunk.absPos) &&
+            (absPos < (chunk.absPos + chunk.data.size()))) {
+            foundIdx = idx;
+            break;
+        }
+        if (absPos < chunk.absPos) {
+            insertIdx = idx;
+            break;
+        }
+        ioDelta += chunk.data.size() - CHUNK_SIZE;
+        insertIdx = idx + 1;
+    }
+
+    if (foundIdx == -1 && _ioDevice) {
+        auto oldPos = _ioDevice->pos();
+        Chunk newChunk;
+        qint64 readAbsPos = absPos - ioDelta;
+        qint64 readPos = (readAbsPos & READ_CHUNK_MASK);
+        if (!_ioDevice->seek(readPos)) {
+            return -1;
+        }
+        newChunk.data = _ioDevice->read(CHUNK_SIZE);
+        newChunk.absPos = absPos - (readAbsPos - readPos);
+        _chunks.insert(insertIdx, newChunk);
+        foundIdx = insertIdx;
+        _ioDevice->seek(oldPos);
+    }
+    return foundIdx;
+}
+
+bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
+    if ((pos < 0) || (pos >= _size))
+        return false;
+
+    qsizetype chunkIdx = getChunkIndex(pos);
+    if (chunkIdx < 0) {
+        return false;
+    }
+
+    auto &chunk = _chunks[chunkIdx];
+    qint64 posInBa = pos - chunk.absPos;
+
+    auto length = ba.length();
+    auto clen = chunk.data.size();
+    auto dist = length + posInBa - clen;
+
+    if (dist <= 0) {
+        chunk.data.replace(posInBa, length, ba);
+    } else {
+        auto len = clen - posInBa;
+        chunk.data.replace(posInBa, len, ba.first(len));
+        if (!__overwrite(pos + clen, ba.right(dist))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Chunks::__remove(qint64 pos, qint64 length) {
+    if ((pos < 0) || (pos >= _size))
+        return false;
+
+    qsizetype chunkIdx = getChunkIndex(pos);
+    if (chunkIdx < 0) {
+        return false;
+    }
+
+    auto &chunk = _chunks[chunkIdx];
+    qint64 posInBa = pos - chunk.absPos;
+
+    auto clen = chunk.data.size();
+    auto dist = length + posInBa - clen;
+
+    if (dist <= 0) {
+        chunk.data.remove(posInBa, length);
+        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+            _chunks[idx].absPos += length;
+        _size -= length;
+    } else {
+        auto len = clen - posInBa;
+        chunk.data.remove(posInBa, len);
+        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+            _chunks[idx].absPos -= len;
+        _size -= len;
+
+        if (!__remove(pos + clen, dist)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
     qint64 ioDelta = 0;
     qsizetype chunkIdx = 0;
 
@@ -64,8 +291,7 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
     else if ((pos + maxSize) > _size)
         maxSize = _size - pos;
 
-    QMutexLocker locker(&_mutex);
-    if (!_ioDevice->isReadable()) {
+    if (!_ioDevice || !_ioDevice->isReadable()) {
         return {};
     }
 
@@ -121,206 +347,6 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
     }
     _ioDevice->seek(oldPos); // restore it
     return buffer;
-}
-
-bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
-    QMutexLocker locker(&_mutex);
-    if (count == -1) {
-        count = _size;
-    }
-    if (iODevice->isOpen() && iODevice->isWritable()) {
-        for (qint64 idx = pos; idx < count; idx += BUFFER_SIZE) {
-            QByteArray ba = data(idx, BUFFER_SIZE);
-            iODevice->write(ba);
-        }
-        return true;
-    }
-    return false;
-}
-
-// ***************************************** Search API
-
-qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
-    qint64 result = -1;
-    QByteArray buffer;
-
-    for (qint64 pos = from; (pos < _size) && (result < 0); pos += BUFFER_SIZE) {
-        buffer = data(pos, BUFFER_SIZE + ba.size() - 1);
-        auto findPos = buffer.indexOf(ba);
-        if (findPos >= 0)
-            result = pos + findPos;
-    }
-    return result;
-}
-
-qint64 Chunks::lastIndexOf(const QByteArray &ba, qint64 from) const {
-    qint64 result = -1;
-    QByteArray buffer;
-
-    for (qint64 pos = from; (pos > 0) && (result < 0); pos -= BUFFER_SIZE) {
-        qint64 sPos = pos - BUFFER_SIZE - ba.size() + 1;
-        if (sPos < 0)
-            sPos = 0;
-        buffer = data(sPos, pos - sPos);
-        auto findPos = buffer.lastIndexOf(ba);
-        if (findPos >= 0)
-            result = sPos + findPos;
-    }
-    return result;
-}
-
-// ***************************************** Char manipulations
-
-bool Chunks::insert(qint64 pos, char b) {
-    return insert(pos, QByteArray(1, b));
-}
-
-bool Chunks::overwrite(qint64 pos, char b) {
-    return overwrite(pos, QByteArray(1, b));
-}
-
-bool Chunks::removeAt(qint64 pos) { return remove(pos, 1); }
-
-bool Chunks::insert(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos > _size))
-        return false;
-
-    if (ba.isEmpty()) {
-        return true;
-    }
-
-    auto length = ba.length();
-    qsizetype chunkIdx;
-    if (pos == _size) {
-        chunkIdx = getChunkIndex(pos - 1);
-    } else {
-        chunkIdx = getChunkIndex(pos);
-    }
-
-    if (chunkIdx < 0) {
-        return false;
-    }
-
-    qint64 posInBa = pos - _chunks[chunkIdx].absPos;
-    _chunks[chunkIdx].data.insert(posInBa, ba);
-    for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
-        _chunks[idx].absPos += length;
-    _size += length;
-    return true;
-}
-
-bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos >= _size))
-        return false;
-
-    qsizetype chunkIdx = getChunkIndex(pos);
-    if (chunkIdx < 0) {
-        return false;
-    }
-
-    auto &chunk = _chunks[chunkIdx];
-    qint64 posInBa = pos - chunk.absPos;
-
-    auto length = ba.length();
-    auto clen = chunk.data.size();
-    auto dist = length + posInBa - clen;
-
-    if (dist <= 0) {
-        chunk.data.replace(posInBa, length, ba);
-    } else {
-        auto len = clen - posInBa;
-        chunk.data.replace(posInBa, len, ba.first(len));
-        if (!overwrite(pos + clen, ba.right(dist))) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool Chunks::remove(qint64 pos, qint64 length) {
-    if ((pos < 0) || (pos >= _size))
-        return false;
-
-    qsizetype chunkIdx = getChunkIndex(pos);
-    if (chunkIdx < 0) {
-        return false;
-    }
-
-    auto &chunk = _chunks[chunkIdx];
-    qint64 posInBa = pos - chunk.absPos;
-
-    auto clen = chunk.data.size();
-    auto dist = length + posInBa - clen;
-
-    if (dist <= 0) {
-        chunk.data.remove(posInBa, length);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
-            _chunks[idx].absPos += length;
-        _size -= length;
-    } else {
-        auto len = clen - posInBa;
-        chunk.data.remove(posInBa, len);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
-            _chunks[idx].absPos -= len;
-        _size -= len;
-
-        if (!remove(pos + clen, dist)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// ***************************************** Utility functions
-
-char Chunks::at(qint64 pos) const { return data(pos, 1).at(0); }
-
-char Chunks::operator[](qint64 pos) const { return this->at(pos); }
-
-qint64 Chunks::size() const { return _size; }
-
-qsizetype Chunks::getChunkIndex(qint64 absPos) const {
-    // This routine checks, if there is already a copied chunk available. If os,
-    // it returns a reference to it. If there is no copied chunk available,
-    // original data will be copied into a new chunk.
-
-    qsizetype foundIdx = -1;
-    qsizetype insertIdx = 0;
-    qint64 ioDelta = 0;
-
-    for (qsizetype idx = 0; idx < _chunks.size(); idx++) {
-        Chunk chunk = _chunks[idx];
-        if ((absPos >= chunk.absPos) &&
-            (absPos < (chunk.absPos + chunk.data.size()))) {
-            foundIdx = idx;
-            break;
-        }
-        if (absPos < chunk.absPos) {
-            insertIdx = idx;
-            break;
-        }
-        ioDelta += chunk.data.size() - CHUNK_SIZE;
-        insertIdx = idx + 1;
-    }
-
-    if (foundIdx == -1) {
-        auto oldPos = _ioDevice->pos();
-        QMutexLocker locker(&_mutex);
-        Chunk newChunk;
-        qint64 readAbsPos = absPos - ioDelta;
-        qint64 readPos = (readAbsPos & READ_CHUNK_MASK);
-        if (!_ioDevice->seek(readPos)) {
-            return -1;
-        }
-        newChunk.data = _ioDevice->read(CHUNK_SIZE);
-        newChunk.absPos = absPos - (readAbsPos - readPos);
-        _chunks.insert(insertIdx, newChunk);
-        foundIdx = insertIdx;
-        _ioDevice->seek(oldPos);
-    }
-    return foundIdx;
 }
 
 QIODevice *Chunks::ioDevice() const { return _ioDevice; }

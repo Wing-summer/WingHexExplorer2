@@ -600,11 +600,10 @@ qsizetype QHexDocument::findPreviousExt(qsizetype begin,
 /*======================*/
 
 // modified by wingsummer
-QHexDocument::QHexDocument(QHexBuffer *buffer)
-    : QObject(nullptr), m_baseaddress(0), m_readonly(false), m_keepsize(false),
+QHexDocument::QHexDocument(QFileBuffer *buffer)
+    : QObject(), m_baseaddress(0), m_readonly(false), m_keepsize(false),
       m_islocked(false) {
     Q_ASSERT(buffer);
-    buffer->setParent(this);
     m_buffer = buffer;
     m_areaindent = DEFAULT_AREA_IDENTATION;
     m_hexlinewidth = DEFAULT_HEX_LINE_LENGTH;
@@ -637,7 +636,10 @@ QHexDocument::QHexDocument(QHexBuffer *buffer)
     /*=======================*/
 }
 
-QHexDocument::~QHexDocument() { m_buffer->close(); }
+QHexDocument::~QHexDocument() {
+    m_buffer->close();
+    delete m_buffer;
+}
 
 bool QHexDocument::isEmpty() const { return m_buffer->isEmpty(); }
 
@@ -859,13 +861,63 @@ qsizetype QHexDocument::findPreviousExt(qsizetype begin,
     return findPreviousExt(begin, patterns);
 }
 
-QHexBuffer *QHexDocument::buffer() const { return m_buffer; }
+QFileBuffer *QHexDocument::buffer() const { return m_buffer; }
 
-void QHexDocument::setBuffer(QHexBuffer *buffer) {
+void QHexDocument::setBuffer(QFileBuffer *buffer) {
     if (buffer) {
-        m_buffer->deleteLater();
+        delete m_buffer;
         m_buffer = buffer;
     }
 }
 
 QUndoStack *QHexDocument::undoStack() const { return m_undostack; }
+
+QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
+    if (iodevice == nullptr) {
+        return nullptr;
+    }
+
+    if (!iodevice->open(readonly ? QIODevice::ReadOnly
+                                 : QIODevice::ReadWrite)) {
+        return nullptr;
+    }
+
+    iodevice->close();
+    auto hexbuffer = new QFileBuffer;
+    if (hexbuffer->open(iodevice, readonly)) {
+        return new QHexDocument(hexbuffer);
+    } else {
+        iodevice->close();
+        delete hexbuffer;
+    }
+
+    return nullptr;
+}
+
+QHexDocument *QHexDocument::fromFile(const QString &filename, bool readonly) {
+    if (!filename.isEmpty()) {
+        auto f = new QFile(filename);
+        auto hexbuffer = new QFileBuffer;
+        if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite)) {
+            f->close();
+            if (hexbuffer->open(f, readonly)) {
+                // modified by wingsummer
+                return new QHexDocument(hexbuffer);
+            }
+        } else {
+            delete hexbuffer;
+            delete f;
+        }
+    }
+    return nullptr;
+}
+
+QHexDocument *QHexDocument::fromInternalBuffer(bool readonly) {
+    auto hexbuffer = new QFileBuffer;
+    if (hexbuffer->open(readonly)) {
+        return new QHexDocument(hexbuffer);
+    } else {
+        delete hexbuffer;
+        return nullptr;
+    }
+}

@@ -17,27 +17,46 @@
 #include "qfilebuffer.h"
 #include "QHexEdit2/chunks.h"
 
+#include <QFile>
 #include <QSaveFile>
 
-QFileBuffer::QFileBuffer(QObject *parent) : QHexBuffer(parent) {}
+QFileBuffer::QFileBuffer() {}
 
 QFileBuffer::~QFileBuffer() {}
 
+bool QFileBuffer::open(bool readonly) {
+    if (_chunks) {
+        return false;
+    }
+    m_buffer = new QBuffer;
+    return open(m_buffer, readonly);
+}
+
 bool QFileBuffer::open(QIODevice *iodevice, bool readonly) {
-    if (QHexBuffer::open(iodevice, readonly)) {
-        _chunks = new Chunks(iodevice, this);
+    if (_chunks || !iodevice) {
+        return false;
+    }
+    if (iodevice->isOpen()) {
+        return false;
+    }
+    if (iodevice->open(readonly ? QIODevice::ReadOnly : QIODevice::ReadWrite)) {
+        _chunks = new Chunks(iodevice);
         return true;
     }
+
     return false;
 }
 
 bool QFileBuffer::close() {
-    if (QHexBuffer::close()) {
-        _chunks->deleteLater();
-        _chunks = nullptr;
-        return true;
+    // intenal buffer?
+    delete _chunks;
+    _chunks = nullptr;
+
+    if (m_buffer) {
+        delete m_buffer;
+        m_buffer = nullptr;
     }
-    return false;
+    return true;
 }
 
 bool QFileBuffer::save(QIODevice *iodevice) {
@@ -87,7 +106,7 @@ bool QFileBuffer::save(QIODevice *iodevice) {
             }
         }
     } else {
-        if (!internalBuffer()) {
+        if (!m_buffer) {
             auto iodevice = this->ioDevice();
             if (auto file = qobject_cast<QFile *>(iodevice)) {
                 QSaveFile sf(file->fileName());
@@ -136,6 +155,15 @@ uchar QFileBuffer::at(qsizetype idx) const {
         return uchar(data);
     }
     return 0;
+}
+
+uchar QFileBuffer::operator[](qsizetype pos) const { return at(pos); }
+
+QIODevice *QFileBuffer::ioDevice() const {
+    if (_chunks) {
+        return _chunks->ioDevice();
+    }
+    return nullptr;
 }
 
 qsizetype QFileBuffer::length() const {
@@ -188,4 +216,55 @@ qsizetype QFileBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) const {
     } else {
         return -1;
     }
+}
+
+bool QFileBuffer::isOpened() const {
+    auto d = ioDevice();
+    return d && d->isOpen();
+}
+
+QIODeviceBase::OpenMode QFileBuffer::openMode() const {
+    auto d = ioDevice();
+    if (d == nullptr) {
+        return QIODevice::NotOpen;
+    }
+    return d->openMode();
+}
+
+bool QFileBuffer::isReadable() const {
+    return openMode() & QIODevice::ReadOnly;
+}
+
+bool QFileBuffer::isWritable() const {
+    return openMode() & QIODevice::WriteOnly;
+}
+
+bool QFileBuffer::isEmpty() const { return length() == 0; }
+
+bool QFileBuffer::isReadyRead(qsizetype offset) const {
+    if (isReadable()) {
+        if (offset >= 0 && offset < this->length()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QFileBuffer::isReadyReplaceWrite(qsizetype offset,
+                                      qsizetype length) const {
+    if (isWritable()) {
+        if (offset >= 0 && offset + length <= this->length()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QFileBuffer::isReadyInsert(qsizetype offset) const {
+    if (isWritable()) {
+        if (offset >= 0 && offset <= this->length()) {
+            return true;
+        }
+    }
+    return false;
 }

@@ -387,7 +387,7 @@ ErrFile EditorView::newFile(size_t index) {
     m_isNewFile = true;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
-    auto p = QHexDocument::fromInternalBuffer<QFileBuffer>(false);
+    auto p = QHexDocument::fromInternalBuffer(false);
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
@@ -423,7 +423,7 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     QHexDocument *p;
     do {
         retry = false;
-        p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
+        p = QHexDocument::fromFile(filename, readonly);
         if (Q_UNLIKELY(p == nullptr)) {
             if (!readonly) {
                 // retry to open with readonly
@@ -496,7 +496,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
         }
     }
 
-    auto *p = QHexDocument::fromDevice<QFileBuffer>(d, readonly);
+    auto *p = QHexDocument::fromDevice(d, readonly);
 
     if (Q_UNLIKELY(p == nullptr)) {
         d->deleteLater();

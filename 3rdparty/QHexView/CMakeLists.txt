@@ -13,10 +13,6 @@ add_library(
     QHexView STATIC
     document/buffer/qfilebuffer.cpp
     document/buffer/qfilebuffer.h
-    document/buffer/qhexbuffer.cpp
-    document/buffer/qhexbuffer.h
-    document/buffer/qmemorybuffer.cpp
-    document/buffer/qmemorybuffer.h
     document/commands/hex/hexcommand.cpp
     document/commands/hex/hexcommand.h
     document/commands/hex/insertcommand.cpp

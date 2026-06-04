@@ -17,36 +17,62 @@
 #ifndef QFILEBUFFER_H
 #define QFILEBUFFER_H
 
-#include "qhexbuffer.h"
-#include <QFile>
+#include <QBuffer>
+#include <QIODevice>
 
 class Chunks;
 
-class QFileBuffer : public QHexBuffer {
-    Q_OBJECT
+class QFileBuffer {
+public:
+    explicit QFileBuffer();
+    virtual ~QFileBuffer();
 
 public:
-    explicit QFileBuffer(QObject *parent = nullptr);
-    ~QFileBuffer() override;
+    // note: QHexBuffer will take the ownership of iodevice
+    bool open(QIODevice *iodevice, bool readonly);
+    // use internal buffer as iodevice
+    bool open(bool readonly);
+
+    bool close();
+
+    // save inplace if iodevice == nullptr
+    // if iodevice != nullptr, you should keep iodevice un-opened
+    // or it will be closed
+    bool save(QIODevice *iodevice);
+
+public:
+    uchar at(qsizetype idx) const;
+    uchar operator[](qsizetype pos) const;
+
+public:
+    QIODevice *ioDevice() const;
+    bool isOpened() const;
+    bool isReadable() const;
+    bool isWritable() const;
+
+    QIODevice::OpenMode openMode() const;
+
+    bool isEmpty() const;
+
+public:
+    qsizetype length() const;
+    QByteArray read(qsizetype offset, qsizetype length) const;
+    bool insert(qsizetype offset, const QByteArray &data);
+    bool remove(qsizetype offset, qsizetype length);
+    bool replace(qsizetype offset, const QByteArray &data);
+
+public:
+    qsizetype indexOf(const QByteArray &ba, qsizetype from) const;
+    qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) const;
+
+protected:
+    bool isReadyRead(qsizetype offset) const;
+    bool isReadyReplaceWrite(qsizetype offset, qsizetype length) const;
+    bool isReadyInsert(qsizetype offset) const;
 
 private:
     Chunks *_chunks = nullptr;
-
-    // QHexBuffer interface
-public:
-    virtual bool open(QIODevice *iodevice, bool readonly) override;
-    virtual bool close() override;
-    virtual bool save(QIODevice *iodevice) override;
-    virtual uchar at(qsizetype idx) const override;
-    virtual qsizetype length() const override;
-    virtual QByteArray read(qsizetype offset, qsizetype length) const override;
-    virtual bool insert(qsizetype offset, const QByteArray &data) override;
-    virtual bool remove(qsizetype offset, qsizetype length) override;
-    virtual bool replace(qsizetype offset, const QByteArray &data) override;
-    virtual qsizetype indexOf(const QByteArray &ba,
-                              qsizetype from) const override;
-    virtual qsizetype lastIndexOf(const QByteArray &ba,
-                                  qsizetype from) const override;
+    QBuffer *m_buffer = nullptr;
 };
 
 #endif // QFILEBUFFER_H

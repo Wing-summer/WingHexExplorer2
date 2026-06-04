@@ -42,24 +42,23 @@
 
 #include <QByteArray>
 #include <QList>
-#include <QObject>
-#include <QRecursiveMutex>
+#include <QReadWriteLock>
 
 struct Chunk {
     QByteArray data;
     qint64 absPos;
 };
 
-class Chunks : public QObject {
-    Q_OBJECT
-
+class Chunks {
 public:
     // Constructors and file settings
-    explicit Chunks(QIODevice *ioDevice, QObject *parent);
+    explicit Chunks(QIODevice *ioDevice);
+    virtual ~Chunks();
 
 public:
     QIODevice *ioDevice() const;
     bool setIODevice(QIODevice *ioDevice);
+    void resetIODevice();
 
     // Getting data out of Chunks
     QByteArray data(qint64 pos = 0, qint64 count = -1) const;
@@ -87,9 +86,13 @@ public:
 private:
     qsizetype getChunkIndex(qint64 absPos) const;
 
+    bool __overwrite(qint64 pos, const QByteArray &ba);
+    bool __remove(qint64 pos, qint64 length);
+    QByteArray __data(qint64 pos = 0, qint64 count = -1) const;
+
 private:
     QIODevice *_ioDevice;
-    mutable QRecursiveMutex _mutex;
+    mutable QReadWriteLock _mutex;
     qint64 _size = 0;
     mutable QList<Chunk> _chunks;
 };

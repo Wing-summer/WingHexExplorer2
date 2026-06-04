@@ -2901,17 +2901,17 @@
 <context>
     <name>QHexView</name>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="275"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="274"/>
         <source>Foreground:</source>
         <translation>Foreground:</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="286"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="285"/>
         <source>Background:</source>
         <translation>Background:</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="293"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="292"/>
         <source>Comment:</source>
         <translation>Comment:</translation>
     </message>
