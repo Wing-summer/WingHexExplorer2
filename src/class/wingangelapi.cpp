@@ -1213,12 +1213,12 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 
         auto id = engine->GetTypeIdByDecl("char");
         if (id == typeID) {
-            return **getDereferencePointer<QChar *>(raw, isHandle);
+            return *getDereferencePointer<QChar>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("color");
         if (id == typeID) {
-            return **getDereferencePointer<QColor *>(raw, isHandle);
+            return *getDereferencePointer<QColor>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("string");
@@ -1228,7 +1228,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 
         id = engine->GetTypeIdByDecl("array<byte>");
         if (id == typeID) {
-            auto values = *getDereferencePointer<CScriptArray *>(raw, isHandle);
+            auto values = getDereferencePointer<CScriptArray>(raw, isHandle);
             auto len = values->GetSize();
             QByteArray arr;
             arr.resize(len);
@@ -1246,7 +1246,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
             auto tname = info->GetName();
             if (qstrcmp(tname, "array") == 0) {
                 auto values =
-                    *getDereferencePointer<CScriptArray *>(raw, isHandle);
+                    getDereferencePointer<CScriptArray>(raw, isHandle);
                 auto len = values->GetSize();
 
                 // QVector or QList ?
@@ -1274,7 +1274,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 
             if (qstrcmp(tname, "dictionary") == 0) {
                 auto values =
-                    *getDereferencePointer<CScriptDictionary *>(raw, isHandle);
+                    getDereferencePointer<CScriptDictionary>(raw, isHandle);
 
                 // QMap or QHash ?
                 if (flag) {
@@ -1516,7 +1516,7 @@ QString WingAngelAPI::type2AngelScriptString(uint type, bool isArg,
     }
 
     if (isArray || isList) {
-        retype.append(QStringLiteral("[]"));
+        retype.prepend(QStringLiteral("array<")).append('>');
     }
 
     if (isArg) {
@@ -1574,8 +1574,11 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     auto total = gen->GetArgCount();
     for (decltype(total) i = 0; i < total; ++i) {
         auto raw = gen->GetAddressOfArg(i);
-        auto id = gen->GetArgTypeId(i);
-
+        asDWORD flags;
+        auto id = gen->GetArgTypeId(i, &flags);
+        if (flags & ~asTM_CONST) {
+            id |= asTYPEID_OBJHANDLE;
+        }
         auto obj = qvariantGet(engine, raw, id, getQVariantGetFlag(fns, i));
         params.append(obj);
     }
@@ -1643,14 +1646,8 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         r = QStringLiteral("uint32");
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto type =
-        ret.isNull() ? QMetaType::Type::Void : QMetaType::Type(ret.userType());
-#else
     auto type =
         ret.isNull() ? QMetaType::Type::Void : QMetaType::Type(ret.typeId());
-#endif
-
     auto rr = qvariantCastASString(type);
 
     if (r != rr) {

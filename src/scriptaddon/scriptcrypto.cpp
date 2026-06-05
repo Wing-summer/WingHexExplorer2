@@ -38,8 +38,7 @@ void RegisterScriptCrypto(asIScriptEngine *engine) {
     registerAngelType<CryptographicHash::Algorithm>(engine, "algorithm");
 
     r = engine->RegisterGlobalFunction(
-        "array<byte>@ hash(const array<byte> &in data, "
-        "crypto::algorithm method)",
+        "array<byte>@ hash(const array<byte> &in data, algorithm method)",
         asFUNCTION(crypto_hash), asCALL_CDECL);
     ASSERT(r >= 0);
 

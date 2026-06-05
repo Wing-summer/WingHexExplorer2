@@ -293,6 +293,7 @@ format_element_with_spec(const void *elemPtr, int typeId,
 template <>
 struct formatter<CScriptArrayView> {
     bool no_brackets_ = false; // 'n' flag
+    bool char_fmt_ = false;
     enum RangeType {
         NONE = 0,
         AS_STRING = 1,
@@ -334,10 +335,16 @@ struct formatter<CScriptArrayView> {
             spec.erase(pos, 1);
         }
 
+        pos = spec.find('c');
+        if (pos != std::string::npos) {
+            char_fmt_ = true;
+        }
+
         // If there's a leading ':' leftover (some users might write ":x"),
         // strip it.
-        if (!spec.empty() && spec.front() == ':')
+        if (!spec.empty() && spec.front() == ':') {
             spec.erase(0, 1);
+        }
 
         // Remaining spec is the underlying_spec (may be empty)
         underlying_spec_ = spec;
@@ -358,20 +365,64 @@ struct formatter<CScriptArrayView> {
         // handle range_type as string if requested and element is char-like:
         if (range_type_ != NONE) {
             auto &m = ScriptMachine::instance();
-            if (m.isAngelChar(typeId)) {
-                QString data;
-                data.reserve(n);
+            QString data;
+            data.reserve(n);
 
+            switch (typeId) {
+            case asTYPEID_INT8:
                 for (asUINT i = 0; i < n; ++i) {
                     const void *elemPtr = arr->At(i);
-                    data.append(*static_cast<const QChar *>(elemPtr));
+                    data.append(
+                        QChar(char(*static_cast<const qint8 *>(elemPtr))));
                 }
-
-                if (range_type_ == AS_DEBUG_STRING) {
-                    return fmt::format_to(out, FMT_STRING("{:?}"), data);
+                break;
+            case asTYPEID_INT16:
+                for (asUINT i = 0; i < n; ++i) {
+                    const void *elemPtr = arr->At(i);
+                    data.append(QChar(*static_cast<const qint16 *>(elemPtr)));
                 }
-                return fmt::format_to(out, FMT_STRING("{}"), data);
+                break;
+            case asTYPEID_INT32:
+                for (asUINT i = 0; i < n; ++i) {
+                    const void *elemPtr = arr->At(i);
+                    data.append(QChar(*static_cast<const qint32 *>(elemPtr)));
+                }
+                break;
+            case asTYPEID_UINT8:
+                for (asUINT i = 0; i < n; ++i) {
+                    const void *elemPtr = arr->At(i);
+                    data.append(
+                        QChar(quint16(*static_cast<const quint8 *>(elemPtr))));
+                }
+                break;
+            case asTYPEID_UINT16:
+                for (asUINT i = 0; i < n; ++i) {
+                    const void *elemPtr = arr->At(i);
+                    data.append(QChar(*static_cast<const quint16 *>(elemPtr)));
+                }
+                break;
+            case asTYPEID_UINT32:
+                for (asUINT i = 0; i < n; ++i) {
+                    const void *elemPtr = arr->At(i);
+                    data.append(QChar(*static_cast<const quint32 *>(elemPtr)));
+                }
+                break;
+            default:
+                if (m.isAngelChar(typeId)) {
+                    for (asUINT i = 0; i < n; ++i) {
+                        const void *elemPtr = arr->At(i);
+                        data.append(*static_cast<const QChar *>(elemPtr));
+                    }
+                } else {
+                    FMT_THROW(format_error("invalid format"));
+                }
+                break;
             }
+
+            if (range_type_ == AS_DEBUG_STRING) {
+                return fmt::format_to(out, FMT_STRING("{:?}"), data);
+            }
+            return fmt::format_to(out, FMT_STRING("{}"), data);
         }
 
         if (!no_brackets_)
@@ -381,10 +432,16 @@ struct formatter<CScriptArrayView> {
             if (i) {
                 out = fmt::format_to(out, ", ");
             }
+            if (char_fmt_) {
+                out = fmt::format_to(out, "'");
+            }
             const void *elemPtr = arr->At(i);
             // pass through underlying_spec_ to element formatting
             out = format_element_with_spec(const_cast<void *>(elemPtr), typeId,
                                            underlying_spec_, ctx);
+            if (char_fmt_) {
+                out = fmt::format_to(out, "'");
+            }
         }
 
         if (!no_brackets_) {

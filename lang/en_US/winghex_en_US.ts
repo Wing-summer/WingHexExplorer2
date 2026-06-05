@@ -3969,13 +3969,13 @@
         <translation>Unsupported QT metadata types:</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1631"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1718"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1634"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1715"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>Get Exception While ScriptCall: (%1) %2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1657"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1654"/>
         <source>InvalidRetType: need </source>
         <translation>Invalid return value: Required </translation>
     </message>
@@ -4123,7 +4123,7 @@
 <context>
     <name>ads::CDockManager</name>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="528"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="533"/>
         <source>Show View</source>
         <translation>Show View</translation>
     </message>

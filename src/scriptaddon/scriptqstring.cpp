@@ -1133,14 +1133,14 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
-        "string number(float val, string::DoubleFmt "
-        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        "string number(float val, DoubleFmt "
+        "format=DoubleFmt::DFSignificantDigits, int precision=6)",
         asFUNCTION(Float2String), asCALL_CDECL);
     ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
-        "string number(double val, string::DoubleFmt "
-        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        "string number(double val, DoubleFmt "
+        "format=DoubleFmt::DFSignificantDigits, int precision=6)",
         asFUNCTION(Double2String), asCALL_CDECL);
     ASSERT(r >= 0);
 

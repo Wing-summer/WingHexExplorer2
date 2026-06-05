@@ -3969,13 +3969,13 @@
         <translation>不支持的 QT 数据元类型：</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1631"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1718"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1634"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1715"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>脚本调用发生异常：（%1）%2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1657"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1654"/>
         <source>InvalidRetType: need </source>
         <translation>无效返回值：需要 </translation>
     </message>
@@ -4123,7 +4123,7 @@
 <context>
     <name>ads::CDockManager</name>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="528"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="533"/>
         <source>Show View</source>
         <translation>显示视图</translation>
     </message>
