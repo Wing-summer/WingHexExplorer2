@@ -160,27 +160,32 @@ private:
     // modified by wingsummer
     enum Factor { String = 1, Hex = 4 };
 
+private:
+    void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
+    void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
+    void drawString(QPainter *painter, const QRect &linerect, qsizetype line);
+    void drawHeader(QPainter *painter);
+
+private:
     void applyDocumentStyles(QPainter *painter,
                              QTextDocument *textdocument) const;
-    void applyBasicStyle(QTextCursor &textcursor, const QByteArray &rawline,
-                         Factor factor) const;
-    void applyMetadata(QTextCursor &textcursor, qsizetype line,
-                       Factor factor) const;
+    void applyHexBasicStyle(QTextCursor &textcursor,
+                            const QByteArray &rawline) const;
+    void applyHexMetadata(QTextCursor &textcursor, qsizetype line) const;
 
-    void applySelection(QTextCursor &textcursor, qsizetype line,
-                        Factor factor) const;
-    void applySelection(const QHexSelection &selection, QTextCursor &textcursor,
-                        qsizetype line, Factor factor, bool strikeOut,
-                        bool hasSelection) const;
-    void applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
-                        QTextCursor &textcursor, qsizetype startLine,
-                        qsizetype lineStart, qsizetype lineEnd, Factor factor,
-                        bool strikeOut, bool hasSelection) const;
+    void applyHexSelection(QTextCursor &textcursor, qsizetype line) const;
+    void applyHexSelection(const QHexSelection &selection,
+                           QTextCursor &textcursor, qsizetype line,
+                           bool strikeOut, bool hasSelection) const;
+    void applyHexSelection(const QVector<QHexMetadata::MetaInfo> &metas,
+                           QTextCursor &textcursor, qsizetype startLine,
+                           qsizetype lineStart, qsizetype lineEnd,
+                           bool strikeOut, bool hasSelection) const;
+    void applyHexBookMark(QPainter *painter, QTextCursor &textcursor,
+                          qsizetype line);
+    void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
 
-    // added by wingsummer
-    void applyBookMark(QPainter *painter, QTextCursor &textcursor,
-                       qsizetype line, Factor factor);
-
+private:
     QVector<AsciiCell> buildAsciiCells(const QByteArray &rawline) const;
     QVector<AsciiCell> buildAsciiCellsLatin1(const QByteArray &rawline) const;
     QVector<AsciiCell> buildAsciiCellsUtf8(const QByteArray &rawline) const;
@@ -192,14 +197,18 @@ private:
                                             bool useBom) const;
     AsciiCellFormat asciiCellFormat(qsizetype line, int column,
                                     uchar value) const;
+
+private:
     bool selectionCoversByte(const QHexSelection &selection, qsizetype line,
                              int column) const;
     bool
     asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
                                const QVector<AsciiCellFormat> &formats) const;
-    bool isByteSelected(qsizetype line, int column, bool *strikeOut,
-                        bool *hasSelection) const;
+    bool isStrByteSelected(qsizetype line, int column, bool *strikeOut,
+                           bool *hasSelection) const;
     bool hasBookmark(qsizetype line, int column) const;
+
+private:
     static bool decodeUtf8At(const QByteArray &rawline, int index, int *length,
                              char32_t *codepoint);
     static bool decodeUtf16At(const QByteArray &rawline, int index,
@@ -212,15 +221,11 @@ private:
                               bool littleEndian);
     static quint32 readUInt32(const QByteArray &rawline, int index,
                               bool littleEndian);
-    void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
-    void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawString(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawHeader(QPainter *painter);
 
 private:
     QRect byteRectAt(qreal cellWidth, int height, int byteIndex) const;
-    void drawBookmarkRect(QPainter *painter, qreal cellWidth, int height,
+
+    void applyStrBookmark(QPainter *painter, qreal cellWidth, int height,
                           int byteIndex, const QColor &fallbackColor) const;
     void drawAsciiText(QPainter *painter, const QRect &rect,
                        const QString &text, const AsciiCellFormat &fmt) const;

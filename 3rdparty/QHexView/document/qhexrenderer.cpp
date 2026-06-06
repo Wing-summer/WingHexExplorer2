@@ -747,9 +747,8 @@ void QHexRenderer::applyDocumentStyles(QPainter *painter,
     textdocument->setDefaultTextOption(textopt);
 }
 
-void QHexRenderer::applyBasicStyle(QTextCursor &textcursor,
-                                   const QByteArray &rawline,
-                                   Factor factor) const {
+void QHexRenderer::applyHexBasicStyle(QTextCursor &textcursor,
+                                      const QByteArray &rawline) const {
     QColor color = m_bytesColor;
 
     if (color.lightness() < 50) {
@@ -769,15 +768,15 @@ void QHexRenderer::applyBasicStyle(QTextCursor &textcursor,
         if ((rawline[i] != 0x00) && (uchar(rawline[i]) != 0xFF))
             continue;
 
-        textcursor.setPosition(i * factor);
+        textcursor.setPosition(i * Hex);
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                factor);
+                                Hex);
         textcursor.mergeCharFormat(charformat);
     }
 }
 
-void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
-                                 Factor factor) const {
+void QHexRenderer::applyHexMetadata(QTextCursor &textcursor,
+                                    qsizetype line) const {
     QHexMetadata *metadata = m_document->metadata();
 
     if (!metadata->lineHasMetadata(line))
@@ -817,37 +816,36 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
                      CONTRASTING_COLOR_BORDER, Qt::SolidLine));
         }
 
-        textcursor.setPosition(int(mi.start * factor));
+        textcursor.setPosition(int(mi.start * Hex));
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                int((mi.length * factor)));
+                                int((mi.length * Hex)));
         textcursor.mergeCharFormat(charformat);
     }
 }
 
-void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
-                                  Factor factor) const {
+void QHexRenderer::applyHexSelection(QTextCursor &textcursor,
+                                     qsizetype line) const {
     if (!m_cursor->isLineSelected(line))
         return;
 
     auto total = m_cursor->selectionCount();
     for (int i = 0; i < total; ++i) {
-        applySelection(m_cursor->selection(i), textcursor, line, factor, false,
-                       false);
+        applyHexSelection(m_cursor->selection(i), textcursor, line, false,
+                          false);
     }
 
     if (m_cursor->hasPreviewSelection()) {
-        applySelection(
-            m_cursor->previewSelection(), textcursor, line, factor,
+        applyHexSelection(
+            m_cursor->previewSelection(), textcursor, line,
             m_cursor->previewSelectionMode() == QHexCursor::SelectionRemove,
             m_cursor->previewSelectionMode() == QHexCursor::SelectionNormal &&
                 m_cursor->hasInternalSelection());
     }
 }
 
-void QHexRenderer::applySelection(const QHexSelection &selection,
-                                  QTextCursor &textcursor, qsizetype line,
-                                  Factor factor, bool strikeOut,
-                                  bool hasSelection) const {
+void QHexRenderer::applyHexSelection(const QHexSelection &selection,
+                                     QTextCursor &textcursor, qsizetype line,
+                                     bool strikeOut, bool hasSelection) const {
     if (!selection.isLineSelected(line)) {
         return;
     }
@@ -902,16 +900,14 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
             end = startsel.lineWidth - 1;
     }
 
-    applySelection(metas, textcursor, line * startsel.lineWidth, begin, end,
-                   factor, strikeOut, hasSelection);
+    applyHexSelection(metas, textcursor, line * startsel.lineWidth, begin, end,
+                      strikeOut, hasSelection);
 }
 
-void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
-                                  QTextCursor &textcursor,
-                                  qsizetype startLineOffset,
-                                  qsizetype lineStart, qsizetype lineEnd,
-                                  Factor factor, bool strikeOut,
-                                  bool hasSelection) const {
+void QHexRenderer::applyHexSelection(
+    const QVector<QHexMetadata::MetaInfo> &metas, QTextCursor &textcursor,
+    qsizetype startLineOffset, qsizetype lineStart, qsizetype lineEnd,
+    bool strikeOut, bool hasSelection) const {
     auto totallen = lineEnd - lineStart + 1;
 
     QTextCharFormat charfmt;
@@ -936,16 +932,16 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
 
             auto blen = begin - fmtBegin;
 
-            textcursor.setPosition(fmtBegin * factor);
+            textcursor.setPosition(fmtBegin * Hex);
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    blen * factor);
+                                    blen * Hex);
 
             textcursor.mergeCharFormat(charfmt);
             textcursor.clearSelection();
             totallen -= blen;
 
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    mlen * factor);
+                                    mlen * Hex);
 
             if (!strikeOut) {
                 QColor fg, bg = charfmt.background().color();
@@ -981,20 +977,21 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
 
         if (totallen > 0) {
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    totallen * factor);
+                                    totallen * Hex);
             textcursor.mergeCharFormat(charfmt);
             textcursor.clearSelection();
         }
     } else {
-        textcursor.setPosition(lineStart * factor);
+        textcursor.setPosition(lineStart * Hex);
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                totallen * factor);
+                                totallen * Hex);
         textcursor.mergeCharFormat(charfmt);
     }
 }
 
-bool QHexRenderer::isByteSelected(qsizetype line, int column, bool *strikeOut,
-                                  bool *hasSelection) const {
+bool QHexRenderer::isStrByteSelected(qsizetype line, int column,
+                                     bool *strikeOut,
+                                     bool *hasSelection) const {
     if (strikeOut) {
         *strikeOut = false;
     }
@@ -1092,7 +1089,7 @@ QHexRenderer::asciiCellFormat(qsizetype line, int column, uchar value) const {
 
     bool strikeOut = false;
     bool hasSelection = false;
-    if (isByteSelected(line, column, &strikeOut, &hasSelection)) {
+    if (isStrByteSelected(line, column, &strikeOut, &hasSelection)) {
         fmt.background = (strikeOut || hasSelection)
                              ? m_selBackgroundColor.darker()
                              : m_selBackgroundColor;
@@ -1239,14 +1236,15 @@ void QHexRenderer::drawHex(QPainter *painter, const QRect &linerect,
     hexrect.setX(this->getHexColumnX() + this->borderSize());
 
     this->applyDocumentStyles(painter, &textdocument);
-    this->applyBasicStyle(textcursor, rawline, Hex);
+    this->applyHexBasicStyle(textcursor, rawline);
 
     auto dis = !m_document->metabgVisible() && !m_document->metafgVisible() &&
                !m_document->metaCommentVisible();
-    if (!dis)
-        this->applyMetadata(textcursor, line, Hex);
+    if (!dis) {
+        this->applyHexMetadata(textcursor, line);
+    }
 
-    this->applySelection(textcursor, line, Hex);
+    this->applyHexSelection(textcursor, line);
     this->applyCursorHex(textcursor, line);
 
     painter->save();
@@ -1256,12 +1254,12 @@ void QHexRenderer::drawHex(QPainter *painter, const QRect &linerect,
     ctx.palette.setColor(QPalette::Text, m_bytesColor);
     textdocument.documentLayout()->draw(painter, ctx);
 
-    this->applyBookMark(painter, textcursor, line, Hex);
+    this->applyHexBookMark(painter, textcursor, line);
     painter->restore();
 }
 
-void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
-                                 qsizetype line, Factor factor) {
+void QHexRenderer::applyHexBookMark(QPainter *painter, QTextCursor &textcursor,
+                                    qsizetype line) {
 
     if (!m_document->lineHasBookMark(line))
         return;
@@ -1275,18 +1273,11 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
         auto off = item % hexLineWidth();
 
         qreal begin, width;
-
         // add some paddings
-        if (factor == Hex) {
-            begin = getCellWidth() * off * 3 + 1;
-            begin += getCellWidth() / 2;
-            width = getCellWidth() * 2;
-            textcursor.setPosition(off * factor);
-        } else {
-            begin = getCellWidth() * off + 1;
-            width = getCellWidth();
-            textcursor.setPosition(m_cursor->currentColumn());
-        }
+        begin = getCellWidth() * off * 3 + 1;
+        begin += getCellWidth() / 2;
+        width = getCellWidth() * 2;
+        textcursor.setPosition(off * Hex);
 
         textcursor.movePosition(QTextCursor::NextCharacter);
         auto charformat = textcursor.charFormat();
@@ -1343,7 +1334,7 @@ QRect QHexRenderer::byteRectAt(qreal cellWidth, int height,
     return QRect(x, 0, w, height);
 }
 
-void QHexRenderer::drawBookmarkRect(QPainter *painter, qreal cellWidth,
+void QHexRenderer::applyStrBookmark(QPainter *painter, qreal cellWidth,
                                     int height, int byteIndex,
                                     const QColor &fallbackColor) const {
     QRect byteRect = byteRectAt(cellWidth, height, byteIndex);
@@ -1514,7 +1505,7 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
                 if (!hasBookmark(line, byteIndex)) {
                     continue;
                 }
-                drawBookmarkRect(painter, cellWidth, height, byteIndex,
+                applyStrBookmark(painter, cellWidth, height, byteIndex,
                                  prepared.formats.at(i).foreground);
             }
 
@@ -1531,7 +1522,7 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
             if (!hasBookmark(line, byteIndex)) {
                 continue;
             }
-            drawBookmarkRect(painter, cellWidth, height, byteIndex,
+            applyStrBookmark(painter, cellWidth, height, byteIndex,
                              prepared.formats.at(i).foreground);
         }
     }
