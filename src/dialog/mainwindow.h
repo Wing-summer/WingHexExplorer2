@@ -192,6 +192,9 @@ private slots:
     void on_metashowall();
     void on_metahideall();
 
+    void on_togglelocked();
+    void on_toggleover();
+
     void on_clearfindresult();
     void on_exportfindresult();
     void on_locChanged();

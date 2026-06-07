@@ -1560,32 +1560,12 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_iReadWrite->setStyleSheet(disableStyle);
         m_editStateWidgets << m_iReadWrite;
 
-        m_iLocked =
-            addPannelAction(pannel, _infoLock, tr("SetLocked"), [this]() {
-                auto hexeditor = currentHexView();
-                if (hexeditor == nullptr) {
-                    return;
-                }
-                if (!hexeditor->setLockedFile(!hexeditor->isLocked())) {
-                    Toast::toast(this, _pixLock, tr("ErrUnLock"));
-                }
-            });
+        m_iLocked = addPannelAction(pannel, _infoLock, tr("SetLocked"),
+                                    &MainWindow::on_togglelocked);
         m_editStateWidgets << m_iLocked;
 
-        m_iCanOver =
-            addPannelAction(pannel, _infoCanOver, tr("SetOver"), [this]() {
-                auto editor = currentEditor();
-                if (editor == nullptr) {
-                    return;
-                }
-                auto hexeditor = editor->hexEditor();
-                auto doc = hexeditor->document();
-
-                auto b = !hexeditor->isKeepSize();
-                if (!hexeditor->setKeepSize(b)) {
-                    Toast::toast(this, _pixCannotOver, tr("ErrUnOver"));
-                }
-            });
+        m_iCanOver = addPannelAction(pannel, _infoCanOver, tr("SetOver"),
+                                     &MainWindow::on_toggleover);
         m_editStateWidgets << m_iCanOver;
     }
 
@@ -2825,6 +2805,26 @@ void MainWindow::on_metahideall() {
     doc->setMetaCommentVisible(false);
 }
 
+void MainWindow::on_togglelocked() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+    if (!hexeditor->setLockedFile(!hexeditor->isLocked())) {
+        Toast::toast(this, _pixLock, tr("ErrUnLock"));
+    }
+}
+
+void MainWindow::on_toggleover() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+    if (!hexeditor->setKeepSize(!hexeditor->isKeepSize())) {
+        Toast::toast(this, _pixCannotOver, tr("ErrUnOver"));
+    }
+}
+
 void MainWindow::on_clearfindresult() {
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -3276,9 +3276,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         if (editor->hasCloneChildren()) {
             auto ret =
                 WingMessageBox::question(this, tr("Warn"), tr("HasClonedView"));
-            if (ret == QMessageBox::Yes) {
-                editor->closeAllClonedChildren();
-            } else {
+            if (ret == QMessageBox::No) {
                 return;
             }
         }
@@ -3839,9 +3837,6 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
                                 ? EditorView::SaveWorkSpaceAttr::ForceWorkSpace
                                 : EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     if (ret == ErrFile::Success) {
-        if (editor->isCloneFile()) {
-            editor = editor->cloneParent();
-        }
         PluginSystem::instance().dispatchFileSavedEvent(
             getEditorViewFileType(editor), QUrl::fromLocalFile(newName), url,
             isExport);
@@ -3853,20 +3848,10 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     if (editor == nullptr) {
         return ErrFile::Error;
     }
-    if (editor->isCloneFile()) {
-        editor->requestCloseDockWidget(); // must be success
-        return ErrFile::Success;
-    }
 
-    if (!force) {
-        if (!editor->isSaved()) {
-            return ErrFile::UnSaved;
-        }
-
-        auto cret = editor->closeFile();
-        if (cret != ErrFile::Success) {
-            return cret;
-        }
+    auto r = editor->closeFile(force);
+    if (!force && r != ErrFile::Success) {
+        return r;
     }
 
     if (currentEditor() == editor) {
@@ -3878,7 +3863,6 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     auto fileName = editor->fileNameUrl();
     auto &plgsys = PluginSystem::instance();
     plgsys.cleanUpEditorViewHandle(editor);
-
     editor->closeDockWidget();
 
     const auto &views = EditorView::instances();
@@ -4673,17 +4657,11 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
         } break;
         case QEvent::MouseButtonDblClick: {
             if (watched == m_sLocked) {
-                auto e = currentHexView();
-                if (e) {
-                    e->setLockedFile(!e->isLocked());
-                    return true;
-                }
+                on_togglelocked();
+                return true;
             } else if (watched == m_sCanOver) {
-                auto e = currentHexView();
-                if (e) {
-                    e->setKeepSize(!e->isKeepSize());
-                    return true;
-                }
+                on_toggleover();
+                return true;
             }
         } break;
         default:

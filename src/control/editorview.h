@@ -41,7 +41,7 @@ using CryptoAlgorithms =
     QVarLengthArray<bool, int(CryptographicHash::Algorithm::NumAlgorithms)>;
 
 // only plugin api can be declared with `private slot`
-class EditorView : public ads::CDockWidget, public EditorInfo {
+class EditorView final : public ads::CDockWidget, public EditorInfo {
     Q_OBJECT
     Q_PROPERTY(bool isWorkSpace READ isWorkSpace)
     Q_PROPERTY(bool isNewFile READ isNewFile)
@@ -240,7 +240,7 @@ public:
          bool isExport = false,
          SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace);
     ErrFile reload();
-    ErrFile closeFile();
+    ErrFile closeFile(bool force);
 
     void setCopyLimit(qsizetype sizeMB);
 
@@ -638,6 +638,10 @@ public:
     virtual QIcon editorIcon() const override;
     virtual QString infoFileName() const override;
     virtual QString infoTooltip() const override;
+
+    // QWidget interface
+protected:
+    virtual void focusInEvent(QFocusEvent *event) override;
 };
 
 #endif // EDITORVIEW_H

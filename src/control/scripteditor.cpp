@@ -446,3 +446,8 @@ QIcon ScriptEditor::editorIcon() const { return ICONRES("angellsp"); }
 QString ScriptEditor::infoFileName() const { return fileName(); }
 
 QString ScriptEditor::infoTooltip() const { return fileName(); }
+
+void ScriptEditor::focusInEvent(QFocusEvent *event) {
+    m_editor->setFocus(event->reason());
+    ads::CDockWidget::focusInEvent(event);
+}

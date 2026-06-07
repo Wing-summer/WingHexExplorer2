@@ -2645,6 +2645,10 @@ PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
             cret = PluginStatus::InvalidPlugin;
         }
 
+        if (fileinfo.isHidden()) {
+            cret = PluginStatus::InvalidPlugin;
+        }
+
         switch (cret) {
         case PluginStatus::Valid:
             // OK and success
@@ -3116,7 +3120,13 @@ void PluginSystem::loadExtPlugin() {
                    QStringLiteral("plugin"));
     plugindir.setNameFilters({"*.wingplg"});
 
-    const auto plgs = plugindir.entryInfoList();
+    const auto plgs =
+        plugindir.entryInfoList(QDir::Files | QDir::Readable | QDir::NoSymLinks
+#ifdef Q_OS_UNIX
+                                    | QDir::Executable
+#endif
+                                ,
+                                QDir::Name);
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 
     if (!plgs.isEmpty()) {
@@ -3177,7 +3187,13 @@ void PluginSystem::loadDevicePlugin() {
                 QStringLiteral("devdrv"));
     devdir.setNameFilters({"*.wingdrv"});
 
-    const auto plgs = devdir.entryInfoList();
+    const auto plgs =
+        devdir.entryInfoList(QDir::Files | QDir::Readable | QDir::NoSymLinks
+#ifdef Q_OS_UNIX
+                                 | QDir::Executable
+#endif
+                             ,
+                             QDir::Name);
     Logger::info(tr("FoundDrvPluginCount") + QString::number(plgs.count()));
     if (!plgs.isEmpty()) {
         Logger::newLine();

@@ -28,9 +28,9 @@
 
 class asIScriptEngine;
 
-class ScriptEditor : public ads::CDockWidget,
-                     public LspEditorInterace,
-                     public EditorInfo {
+class ScriptEditor final : public ads::CDockWidget,
+                           public LspEditorInterace,
+                           public EditorInfo {
     Q_OBJECT
 
 public:
@@ -118,6 +118,10 @@ public:
     virtual QString infoTooltip() const override;
     bool reloadLater() const;
     void setReloadLater(bool newReloadLater);
+
+    // QWidget interface
+protected:
+    virtual void focusInEvent(QFocusEvent *event) override;
 };
 
 #endif // SCRIPTEDITOR_H

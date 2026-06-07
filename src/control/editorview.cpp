@@ -809,7 +809,7 @@ ErrFile EditorView::reload() {
         return ErrFile::IsNewFile;
     }
 
-    auto cret = closeFile();
+    auto cret = closeFile(true);
     if (cret != ErrFile::Success) {
         return cret;
     }
@@ -831,16 +831,15 @@ ErrFile EditorView::reload() {
     return ErrFile::Error;
 }
 
-ErrFile EditorView::closeFile() {
+ErrFile EditorView::closeFile(bool force) {
     if (isCloneFile()) {
-        // it will be removed after destoried
+        m_hex->resetDocument();
         return ErrFile::Success;
     }
 
-    if (!m_workSpaceName.isEmpty()) {
-        // check whether having plugin metadata
-        if (checkHasUnsavedState()) {
-            return ErrFile::WorkSpaceUnSaved;
+    if (!force) {
+        if (!isSaved()) {
+            return ErrFile::UnSaved;
         }
     }
 
@@ -850,7 +849,9 @@ ErrFile EditorView::closeFile() {
             return ErrFile::Error;
         }
         if (!dev->onCloseFile(_dev)) {
-            return ErrFile::Permission;
+            if (!force) {
+                return ErrFile::Permission;
+            }
         }
     }
 
@@ -3158,3 +3159,15 @@ QString EditorView::infoFileName() const {
 }
 
 QString EditorView::infoTooltip() const { return this->tabWidget()->toolTip(); }
+
+void EditorView::focusInEvent(QFocusEvent *event) {
+    auto cur = m_stack->currentWidget();
+    if (cur) {
+        if (cur == m_hexContainer) {
+            m_hex->setFocus(event->reason());
+        } else {
+            cur->setFocus(event->reason());
+        }
+    }
+    ads::CDockWidget::focusInEvent(event);
+}
