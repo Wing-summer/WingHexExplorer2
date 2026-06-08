@@ -20,6 +20,7 @@
 #include <QColor>
 #include <QFontMetrics>
 #include <QGuiApplication>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
 #include <QRegularExpression>
@@ -62,6 +63,16 @@ bool Toast::eventFilter(QObject *watched, QEvent *event) {
                     this->deleteLater();
                 }
             }
+        }
+    } else {
+        if (type == QEvent::MouseButtonPress) {
+            auto e = static_cast<QMouseEvent *>(event);
+            auto p = e->globalPosition().toPoint();
+            if (!frameGeometry().contains(p)) {
+                this->deleteLater();
+            }
+        } else if (type == QEvent::KeyPress) {
+            this->deleteLater();
         }
     }
     return QDialog::eventFilter(watched, event);
