@@ -63,7 +63,6 @@ public:
 
     QList<RecentFileManager::RecentInfo> recentHexFiles() const;
     bool enablePlugin() const;
-    bool enableHexExt() const;
     bool editorShowHeader() const;
     bool editorCursorSync() const;
     QString appFontFamily() const;
@@ -136,7 +135,6 @@ public slots:
 
     void setEnabledExtPlugins(const QStringList &newEnabledPlugins);
     void setEnabledDevPlugins(const QStringList &newEnabledDevPlugins);
-    void setEnableHexExt(bool newEnableHexExt);
 
     void setSettingsLayout(const QByteArray &newSetLayout);
     void setSettingsScriptLayout(const QByteArray &newSetScriptLayout);
@@ -179,7 +177,6 @@ private:
     int m_editorfontSize = 18;
     bool m_enablePlugin = true;
     bool m_enablePlgInRoot = false;
-    bool m_enableHexExt = true;
 
     QString m_defaultLang;
     QByteArray m_dockLayout;

@@ -20,6 +20,10 @@
 #include "class/settingmanager.h"
 #include "class/wingmessagebox.h"
 
+#ifndef QT_DEBUG
+#include "class/fileaccesscheck.h"
+#endif
+
 #include "define.h"
 
 #include <QDebug>
@@ -27,6 +31,11 @@
 #include <QSettings>
 
 void loadEnvConfig(int argc, char *argv[]) {
+    // anti-env-inject
+    qputenv("WINGHEX_DISALLOW_ROOT_PLUGIN", QByteArrayLiteral("1"));
+    qputenv("WINGHEX_CERT_SKIP", QByteArrayLiteral("0"));
+    qputenv("WINGHEX_CERT_FORCE_ALL", QByteArrayLiteral("0"));
+
     QFileInfo info(QString::fromUtf8(argv[0]));
     QDir appDir(info.absoluteDir());
 
@@ -35,6 +44,13 @@ void loadEnvConfig(int argc, char *argv[]) {
     }
 
     auto path = appDir.absoluteFilePath(QStringLiteral("config.ini"));
+
+#ifndef QT_DEBUG
+    if (FileAccessCheck::canStandardUserWriteFile(path)) {
+        return;
+    }
+#endif
+
     QSettings set(path, QSettings::IniFormat);
 
     // General
@@ -142,6 +158,7 @@ int main(int argc, char *argv[]) {
     QApplication::setApplicationVersion(QStringLiteral(WINGHEX_VERSION));
 
 #ifdef QT_DEBUG
+    qputenv("WINGHEX_CERT_SKIP", "1");
     QStandardPaths::setTestModeEnabled(true);
 #endif
 

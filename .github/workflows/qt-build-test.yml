@@ -49,7 +49,7 @@ jobs:
           target: 'desktop'
           arch: ${{ matrix.arch }}
           modules: ${{ matrix.os == 'windows-latest' && 'qtactiveqt' || '' }}
-          tools: 'tools_ninja'
+          tools: ${{ matrix.os == 'windows-latest' && 'tools_ninja tools_opensslv3_x64' || 'tools_ninja' }}
           cache: true
 
       - name: Set up Node.js

@@ -31,6 +31,23 @@
 
 constexpr auto ICON_SIZE = 64;
 
+inline static QString processBytesCount(qint64 bytescount) {
+    static QStringList B{"B", "KB", "MB", "GB", "TB"};
+    auto av = bytescount;
+    auto r = av;
+
+    for (int i = 0; i < 5; i++) {
+        auto lld = lldiv(r, 1024);
+        r = lld.quot;
+        av = lld.rem;
+        if (r == 0) {
+            return QStringLiteral("%1 %2").arg(av).arg(B.at(i));
+        }
+    }
+
+    return QStringLiteral("%1 TB").arg(av);
+}
+
 FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     : FramelessDialogBase(parent), _editor(editor) {
     Q_ASSERT(editor);
@@ -118,8 +135,7 @@ void FileInfoDialog::reloadData() {
                 _tb->insertHtml(link.arg(Utilities::getUrlString(ws), ws, tt));
                 resetBrowserCursor(_tb);
             }
-            _tb->append(tr("FileSize") + sep +
-                        Utilities::processBytesCount(finfo.size()));
+            _tb->append(tr("FileSize") + sep + processBytesCount(finfo.size()));
             _tb->append(tr("Mime") + sep + t.name());
             _tb->append(
                 tr("FileBirthTime") + sep +
@@ -152,8 +168,7 @@ void FileInfoDialog::reloadData() {
 
         _tb->append(tr("FilePath") + sep + url.authority() + url.path());
         _tb->append(tr("FileSize") + sep +
-                    Utilities::processBytesCount(
-                        _editor->hexEditor()->documentBytes()));
+                    processBytesCount(_editor->hexEditor()->documentBytes()));
         if (_editor->isWorkSpace()) {
             auto ws = _editor->workSpaceName();
             QFileInfo winfo(ws);

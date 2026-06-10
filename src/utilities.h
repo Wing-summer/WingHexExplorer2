@@ -33,22 +33,18 @@
 #include <QScreen>
 #include <QStandardPaths>
 #include <QStorageInfo>
+#include <QStringDecoder>
 #include <QStyle>
 #include <QTableView>
 #include <QTreeView>
 #include <QWidget>
 #include <QtEndian>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QStringDecoder>
-#else
-#include <QTextCodec>
-#endif
-
 #ifdef Q_OS_WIN
 #include <qt_windows.h>
 #undef MessageBox // because of IWingPlugin
 #else
+#include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -68,6 +64,17 @@ Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {
         return icon;
     } else {
         return *picon;
+    }
+}
+
+Q_DECL_UNUSED static inline bool qEnvironmentVariableBool(const char *varName,
+                                                          bool defaultValue) {
+    bool ok;
+    auto value = qEnvironmentVariableIntValue(varName, &ok);
+    if (ok) {
+        return !!value;
+    } else {
+        return defaultValue;
     }
 }
 
@@ -93,23 +100,6 @@ public:
 #else
         return getuid() == 0;
 #endif
-    }
-
-    inline static QString processBytesCount(qint64 bytescount) {
-        static QStringList B{"B", "KB", "MB", "GB", "TB"};
-        auto av = bytescount;
-        auto r = av;
-
-        for (int i = 0; i < 5; i++) {
-            auto lld = lldiv(r, 1024);
-            r = lld.quot;
-            av = lld.rem;
-            if (r == 0) {
-                return QStringLiteral("%1 %2").arg(av).arg(B.at(i));
-            }
-        }
-
-        return QStringLiteral("%1 TB").arg(av);
     }
 
     inline static QStringConverter::Encoding

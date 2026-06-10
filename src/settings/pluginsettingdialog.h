@@ -39,6 +39,8 @@ public:
 private:
     Ui::PluginSettingDialog *ui;
 
+    QList<QList<int>> host;
+    QList<QList<int>> dep;
     ChangedStringList _devChanged;
     ChangedStringList _plgChanged;
 
@@ -68,7 +70,9 @@ private:
                         QTextBrowser *t);
 
 private:
-    QString getWrappedText(const QString &str);
+    QString getWrappedText(const QString &content);
+    void appendWrappedText(QTextBrowser *t, const QString &header,
+                           const QString &content);
 };
 
 #endif // PLUGINSETTINGDIALOG_H

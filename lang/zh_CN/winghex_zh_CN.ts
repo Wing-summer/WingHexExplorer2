@@ -318,52 +318,52 @@
 <context>
     <name>EditorSettingDialog</name>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="32"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="35"/>
         <source>Base</source>
         <translation>基础</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="56"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="62"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="73"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="79"/>
         <source>CopyLimit</source>
         <translation>拷贝字节限制</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="106"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="112"/>
         <source>DecStrLimit</source>
         <translation>解码字符数量限制</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="122"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="128"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="136"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="145"/>
         <source>HexWidth</source>
         <translation>十六进制行宽</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="150"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="159"/>
         <source>ShowAddr</source>
         <translation>显示/隐藏表头</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="170"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="179"/>
         <source>ShowCol</source>
         <translation>显示/隐藏地址栏</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="180"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="189"/>
         <source>CursorSync</source>
         <translation>同步光标</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="160"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="169"/>
         <source>ShowText</source>
         <translation>显示/隐藏解码文本</translation>
     </message>
@@ -472,121 +472,121 @@
 <context>
     <name>FileInfoDialog</name>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="95"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="112"/>
         <source>FileNew</source>
         <translation>新建文件，暂无信息！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="91"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="108"/>
         <source>ShowInShell</source>
         <translation>显示包含目录</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="108"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="125"/>
         <source>FileName</source>
         <translation>文件名</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="109"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="153"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="126"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="169"/>
         <source>FilePath</source>
         <translation>文件路径</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="116"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="160"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="133"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="175"/>
         <source>Workspace</source>
         <translation>工作区</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="117"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="161"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="134"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="176"/>
         <source>WorkspacePath</source>
         <translation>工作区路径</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="185"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="200"/>
         <source>WorkspacePluginData</source>
         <translation>工作区插件数据</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="121"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="154"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="138"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="170"/>
         <source>FileSize</source>
         <translation>文件大小</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="57"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="74"/>
         <source>CleanUpWSDataOK</source>
         <translation>清理工作区插件数据完成</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="123"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="139"/>
         <source>Mime</source>
         <translation>Mime 类型</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="125"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="141"/>
         <source>FileBirthTime</source>
         <translation>文件创建时间</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="128"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="144"/>
         <source>FileAccessTime</source>
         <translation>文件访问时间</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="130"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="146"/>
         <source>FileModificationTime</source>
         <translation>文件修改时间</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="133"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="149"/>
         <source>LastRead</source>
         <translation>最后读取时间</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="134"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="150"/>
         <source>LastMod</source>
         <translation>最后修改时间</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="168"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="183"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="169"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="184"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="170"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="185"/>
         <source>License</source>
         <translation>协议</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="171"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="186"/>
         <source>Author</source>
         <translation>作者</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="172"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="187"/>
         <source>Vendor</source>
         <translation>厂家</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="173"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="188"/>
         <source>Version</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="51"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="68"/>
         <source>CleanUpWSData</source>
         <translation>清理工作区插件数据</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="69"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="86"/>
         <source>FileInfo</source>
         <translation>文件信息</translation>
     </message>
@@ -665,68 +665,68 @@
 <context>
     <name>GeneralSettingDialog</name>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="38"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="41"/>
         <location filename="../../src/settings/generalsettingdialog.cpp" line="146"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="62"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="68"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="72"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="78"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="91"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="97"/>
         <source>Interface</source>
         <translation>界面</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="115"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="124"/>
         <source>Font</source>
         <translation>字体</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="125"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="134"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="142"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="151"/>
         <source>WinState</source>
         <translation>窗体状态</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="161"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="170"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="185"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="197"/>
         <source>Software Version</source>
         <translation>软件版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="205"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="217"/>
         <source>ScriptEngine Version</source>
         <translation>脚本引擎版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="225"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="237"/>
         <source>Qt Version</source>
         <translation>QT 版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="245"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="257"/>
         <source>OS</source>
         <translation>系统</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="265"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="277"/>
         <source>PluginSDK Version</source>
         <translation>插件 SDK 版本</translation>
     </message>
@@ -923,54 +923,54 @@
 <context>
     <name>LspSettingDialog</name>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="20"/>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="78"/>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="92"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="23"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="84"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="98"/>
         <source>Enable</source>
         <translation>启用</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="27"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="30"/>
         <source>Format</source>
         <translation>代码样式</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="51"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="57"/>
         <source>Indent</source>
         <translation>对齐</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="71"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="77"/>
         <source>UseTabStop</source>
         <translation>使用制表符</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="85"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="91"/>
         <source>AutoFormat</source>
         <translation>自动格式化</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="102"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="108"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="126"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="135"/>
         <source>Trace</source>
         <translation>跟踪</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="139"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="148"/>
         <source>Other</source>
         <translation>其他</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="160"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="172"/>
         <source>Export Predef File</source>
         <translation>导出预定义文件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="167"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="179"/>
         <source>Restart Angel-lsp</source>
         <translation>重启 Angel-lsp</translation>
     </message>
@@ -2447,57 +2447,57 @@
 <context>
     <name>OtherSettingsDialog</name>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="38"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="41"/>
         <source>System</source>
         <translation>系统</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="63"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="69"/>
         <source>UseNativeFileDialog</source>
         <translation>使用系统文件通用对话框</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="70"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="76"/>
         <source>UseNativeTitleBar</source>
         <translation>使用系统标题栏</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="77"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="83"/>
         <source>OpenAppData</source>
         <translation>打开配置文件夹</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="93"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="99"/>
         <source>Log</source>
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="120"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="129"/>
         <source>Level</source>
         <translation>级别</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="127"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="136"/>
         <source>Count</source>
         <translation>数量</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="153"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="162"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="174"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="186"/>
         <source>CheckWhenStartup</source>
         <translation>启动检查更新</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="56"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="62"/>
         <source>DontShowSplash</source>
         <translation>不显示启动窗体</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.cpp" line="126"/>
+        <location filename="../../src/settings/othersettingsdialog.cpp" line="124"/>
         <source>Others</source>
         <translation>杂项</translation>
     </message>
@@ -2505,125 +2505,141 @@
 <context>
     <name>PluginSettingDialog</name>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="32"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="35"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="53"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="59"/>
         <source>EnablePlugin</source>
         <translation>启用外部插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="60"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="66"/>
         <source>EnablePluginRoot</source>
         <translation>在管理员权限启动插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="81"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="300"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="87"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="380"/>
         <source>PluginInfo</source>
         <translation>插件信息</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="112"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="124"/>
         <source>Plugins:</source>
         <translation>插件：</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="125"/>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="187"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="137"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="202"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="146"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="308"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="158"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="388"/>
         <source>DevExtInfo</source>
         <translation>设备插件信息</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="174"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="189"/>
         <source>DevExt:</source>
         <translation>设备插件：</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="343"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="223"/>
+        <source>Cert</source>
+        <translation>证书</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="242"/>
+        <source>Cert:</source>
+        <translation>证书：</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="423"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="457"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="535"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="455"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="534"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="458"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="536"/>
         <source>License</source>
         <translation>协议</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="459"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="537"/>
         <source>Author</source>
         <translation>作者</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="460"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
         <source>Vendor</source>
         <translation>厂家</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="462"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
         <source>Version</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="393"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="473"/>
         <source>SelectAll</source>
         <translation>全选</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="372"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="452"/>
         <source>SelectEnable</source>
         <translation>启用选择</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="381"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="461"/>
         <source>SelectDisable</source>
         <translation>禁用选择</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="394"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="474"/>
         <source>SelectClear</source>
         <translation>删除所选</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="398"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="478"/>
         <source>DiscardChanges</source>
         <translation>丢弃修改</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="468"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="556"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="562"/>
+        <source>CertID</source>
+        <translation>证书 ID</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="568"/>
         <source>Dependencies</source>
         <translation>依赖</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="479"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="580"/>
         <source>Comment</source>
         <translation>说明</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="482"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="584"/>
         <source>NoPluginLoaded</source>
         <translation>无加载的插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="464"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="544"/>
         <source>URL</source>
         <translation>网址</translation>
     </message>
@@ -2631,143 +2647,104 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2693"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3266"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3355"/>
         <source>LoadingPlugin</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3041"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2964"/>
         <source>AppClosingCanceled:</source>
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3165"/>
-        <source>- PluginID:</source>
-        <translation>- 插件 ID：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3197"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3305"/>
         <source>FoundDrvPluginCount</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2667"/>
-        <source>ErrLoadPluginSDKVersion</source>
-        <translation>插件加载失败：非法插件 SDK 版本！</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3372"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3439"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3565"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3633"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3393"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3586"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2670"/>
-        <source>InvalidPlugin</source>
-        <translation>非法插件</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3402"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3595"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3403"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3596"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3404"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3597"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3442"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3636"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3443"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3637"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3460"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3654"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3483"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3677"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3519"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3714"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3529"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3724"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3537"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3732"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3652"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3847"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1402"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1404"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>监测到异常推入的撤销命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2660"/>
-        <source>InvalidPluginID</source>
-        <translation>加载插件失败：非法插件标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2663"/>
-        <source>InvalidDupPlugin</source>
-        <translation>加载插件失败：重复的插件标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3130"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3055"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3161"/>
-        <source>PluginLoadingFailedSummary</source>
-        <translation>有依赖插件加载失败总结</translation>
+        <location filename="../../src/class/pluginsystem.cpp" line="3945"/>
+        <source>SkipCertEnabledDangerContinue</source>
+        <translation>忽略证书验证存在严重风险，确认继续吗？</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3166"/>
-        <source>- Dependencies:</source>
-        <translation>- 依赖：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3168"/>
-        <source>PUID:</source>
-        <translation>插件唯一标志符：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3170"/>
-        <source>Version:</source>
-        <translation>版本：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3765"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3979"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -2775,7 +2752,7 @@
 <context>
     <name>QApplication</name>
     <message>
-        <location filename="../../src/utilities.h" line="274"/>
+        <location filename="../../src/utilities.h" line="264"/>
         <source>OptionNeedRestart</source>
         <translation>该设置需要程序重启后生效</translation>
     </message>
@@ -2798,72 +2775,72 @@
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="62"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="65"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="72"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="75"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="109"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="112"/>
         <source>Font</source>
         <translation>字体</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="157"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="160"/>
         <source>Indentation</source>
         <translation>缩进</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="179"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="182"/>
         <source>Options</source>
         <translation>选项</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="200"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="206"/>
         <source>LineNumber</source>
         <translation>行号</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="210"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="216"/>
         <source>WordWrap</source>
         <translation>换行</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="250"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="256"/>
         <source>AutoIden</source>
         <translation>自动缩进</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="240"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="246"/>
         <source>Whitespace</source>
         <translation>空格可见</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="230"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="236"/>
         <source>AutoCloseChar</source>
         <translation>匹配填充</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="270"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="276"/>
         <source>MatchBraces</source>
         <translation>高亮括号</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="220"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="226"/>
         <source>Folding</source>
         <translation>代码折叠</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="260"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="266"/>
         <source>IndentGuides</source>
         <translation>缩进线</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="122"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="125"/>
         <source>Tab width</source>
         <translation>制表符宽度</translation>
     </message>
@@ -3112,47 +3089,47 @@
         <translation>[空]</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="38"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="41"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="59"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="62"/>
         <source>Enable</source>
         <translation>启用</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="66"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="69"/>
         <source>AllowRunUsrSciptInRoot</source>
         <translation>允许在管理员权限下执行用户仓库脚本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="73"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="76"/>
         <source>ScriptFile overwritable</source>
         <translation>允许脚本覆写文件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="80"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="83"/>
         <source>ScriptFileSystem writable</source>
         <translation>允许脚本删除文件和文件夹</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="105"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="111"/>
         <source>Timeout</source>
         <translation>超时</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="131"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="137"/>
         <source>(0 : unlimited)</source>
         <translation>（0：无限制）</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="157"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="163"/>
         <source>DataBase</source>
         <translation>仓库</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="177"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="186"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
@@ -3912,7 +3889,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="453"/>
+        <location filename="../../src/class/settingmanager.cpp" line="440"/>
         <source>ConfigUnableSave</source>
         <translation>程序将无法保存配置，请检查配置文件权限。</translation>
     </message>

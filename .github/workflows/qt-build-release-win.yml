@@ -29,7 +29,7 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2022_64'
         modules: 'qtactiveqt'
-        tools: 'tools_ninja'
+        tools: 'tools_ninja tools_opensslv3_x64'
         cache: true
 
     - name: Set up Node.js

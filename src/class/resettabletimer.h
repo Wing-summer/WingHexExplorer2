@@ -25,6 +25,8 @@
 
 class ResettableTimer : public QObject {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(ResettableTimer)
+
 public:
     explicit ResettableTimer(QObject *parent = nullptr);
 

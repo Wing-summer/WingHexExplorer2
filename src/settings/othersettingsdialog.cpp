@@ -87,9 +87,7 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     ui->cbLogLevel->setCurrentIndex(Logger::Level::q4DEBUG);
     ui->cbLogLevel->setEnabled(false);
 #else
-    bool ok;
-    auto dbg = qEnvironmentVariableIntValue("WING_DEBUG", &ok);
-    if (dbg && ok) {
+    if (qEnvironmentVariableBool("WINGHEX_DEBUG", false)) {
         ui->cbLogLevel->setCurrentIndex(Logger::Level::q4DEBUG);
         ui->cbLogLevel->setEnabled(false);
     } else {

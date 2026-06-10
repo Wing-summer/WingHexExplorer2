@@ -44,9 +44,9 @@ struct WorkSpaceData {
 };
 
 class WorkSpaceManager {
+    Q_DISABLE_COPY_MOVE(WorkSpaceManager)
 
 public:
-    explicit WorkSpaceManager();
     static bool saveWorkSpace(const QString &filename,
                               const WorkSpaceData &data);
     static bool loadWorkSpace(const QString &filename, WorkSpaceData &data,
@@ -57,7 +57,7 @@ public:
                                      const QJsonDocument &doc);
 
 private:
-    QString static getColorString(const QColor &color);
+    static QString getColorString(const QColor &color);
 
     static std::optional<quint64> readUInt64(const QJsonValue &value);
     static std::optional<QColor> readColor(const QJsonValue &value);

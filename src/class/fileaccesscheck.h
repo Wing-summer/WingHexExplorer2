@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -15,34 +15,15 @@
 ** =============================================================================
 */
 
-#ifndef SHOWINSHELL_H
-#define SHOWINSHELL_H
+#ifndef FILEACCESSCHECK_H
+#define FILEACCESSCHECK_H
 
-#include <QString>
-#include <QWidget>
+#include <QFileInfo>
 
-struct HostOsInfo {
-#ifdef Q_OS_MAC
-    static constexpr bool isMacHost() { return true; }
-#else
-    static constexpr bool isMacHost() { return false; }
-#endif
-#ifdef Q_OS_WIN
-    static constexpr bool isWindowsHost() { return true; }
-#else
-    static constexpr bool isWindowsHost() { return false; }
-#endif
-};
-
-class ShowInShell {
+class FileAccessCheck {
 public:
-    static bool showInGraphicalShell(QWidget *parent, const QString &pathIn,
-                                     bool deselect);
-
-private:
-    static bool showInWindowsShell(const QString &filePath, bool deselect);
-
-    Q_DISABLE_COPY_MOVE(ShowInShell)
+    static bool canStandardUserWriteFile(const QFileInfo &file);
+    static bool canStandardUserWriteFile(const QString &filePath);
 };
 
-#endif // SHOWINSHELL_H
+#endif // FILEACCESSCHECK_H

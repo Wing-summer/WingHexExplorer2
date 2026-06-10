@@ -40,6 +40,7 @@ using namespace WingHex;
 
 class MainWindow;
 class asCScriptEngine;
+class QPluginLoader;
 
 // only plugin api can be declared with `public slot`
 
@@ -105,19 +106,28 @@ private:
         QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
 
 public:
-    enum class PluginStatus {
+    enum class PluginStatus : int {
         Valid,
         SDKVersion,
         InvalidPlugin,
         InvalidID,
         DupID,
-        LackDependencies
+        LackDependencies,
+        CertNotPassed,
+        Blocked,
+        InitFailed
     };
+    Q_ENUM(PluginStatus)
 
     struct DependencyMap {
         using Map = QList<QList<int>>;
         Map host; // all dependencies
         Map dep;  // all plugins depend on it
+    };
+
+    struct BlockInfo {
+        PluginStatus status;
+        PluginInfo info;
     };
 
 private:
@@ -216,12 +226,16 @@ public:
 
 private:
     void loadExtPlugin();
-
     void loadDevicePlugin();
 
-    template <typename T>
-    QPair<std::optional<PluginInfo>, bool> loadPlugin(const QFileInfo &filename,
-                                                      const QDir &setdir);
+    static QList<QFileInfo> findPlugins(const QString &dir,
+                                        const QString &filter);
+
+    static bool checkPluginCert(const QFileInfo &item,
+                                const QByteArray &certID);
+
+    std::optional<PluginInfo>
+    readPluginMetaHeader(const std::unique_ptr<QPluginLoader> &loader);
 
     static QString packLoadPlgMessage(const QString &header,
                                       const QString &content);
@@ -245,9 +259,11 @@ private:
 private:
     PluginInfo parsePluginMetadata(const QJsonObject &meta);
 
-    PluginStatus checkPluginMetadata(const PluginInfo &meta, bool isPlg);
+    PluginStatus checkPluginMetadata(const PluginInfo &meta);
 
     void retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta);
+
+    void printErrorSummary(const QList<BlockInfo> &info);
 
 private:
     void registerEvents(IWingPlugin *plg);
@@ -272,9 +288,9 @@ private:
     QUndoCommand *currentUndoCmd(EditorView *view);
 
 private:
-    void loadPlugin(IWingPlugin *p, PluginInfo &meta,
+    bool loadPlugin(IWingPlugin *p, PluginInfo &meta,
                     const std::optional<QDir> &setdir);
-    void loadPlugin(IWingDevice *p, PluginInfo &meta,
+    bool loadPlugin(IWingDevice *p, PluginInfo &meta,
                     const std::optional<QDir> &setdir);
 
 private:
@@ -289,8 +305,8 @@ public:
     // fpr crash checking
     QString currentLoadingPlugin() const;
 
-    const QList<PluginInfo> &blockedPlugins() const;
-    const QList<PluginInfo> &blockedDevPlugins() const;
+    const QList<BlockInfo> &blockedPlugins() const;
+    const QList<BlockInfo> &blockedDevPlugins() const;
 
     DependencyMap generatePluginsDepMap() const;
 
@@ -670,15 +686,14 @@ private:
     MainWindow *_win = nullptr;
     QHash<IWingPluginBase *, PluginInfo> _pinfos;
     QHash<QWidget *, ads::CDockWidget *> _raisedw;
-    QStringList _lazyplgs;
 
     QList<IWingPlugin *> _loadedplgs;
     QList<IWingDevice *> _loadeddevs;
 
     QStringList _enabledExtIDs;
     QStringList _enabledDevIDs;
-    QList<PluginInfo> _blkplgs;
-    QList<PluginInfo> _blkdevs;
+    QList<BlockInfo> _blkplgs;
+    QList<BlockInfo> _blkdevs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
@@ -692,6 +707,7 @@ private:
     QStringList _scriptMarcos;
     QList<IWingPlugin *> _pragmaedPlg;
 
+    QString preLoadedPlg;
     bool _handleDirty = false;
     bool _unloading = false;
     bool _switchingContext = false;

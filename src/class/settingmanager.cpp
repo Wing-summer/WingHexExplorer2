@@ -42,8 +42,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_METAHEADER_SHOW,
                           ("app.metaheader.visitems"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_HEXEXT,
-                          ("plugin.enablehexext"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
                           ("plugin.rootenableplugin"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_EXT, ("plugin.ext"))
@@ -143,7 +141,6 @@ void SettingManager::load() {
 
     READ_CONFIG_BOOL(m_enablePlugin, PLUGIN_ENABLE, true);
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
-    READ_CONFIG_BOOL(m_enableHexExt, PLUGIN_ENABLE_HEXEXT, true);
 
     {
         auto data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
@@ -377,16 +374,6 @@ void SettingManager::setSettingsLayout(const QByteArray &newSetLayout) {
         HANDLE_CONFIG;
         WRITE_CONFIG(OTHER_SET_LAYOUT, newSetLayout);
         m_setLayout = newSetLayout;
-    }
-}
-
-bool SettingManager::enableHexExt() const { return m_enableHexExt; }
-
-void SettingManager::setEnableHexExt(bool newEnableHexExt) {
-    if (m_enableHexExt != newEnableHexExt) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, newEnableHexExt);
-        m_enableHexExt = newEnableHexExt;
     }
 }
 
@@ -678,7 +665,6 @@ void SettingManager::__reset(SETTINGS cat) {
     if (cat.testFlag(SETTING::PLUGIN)) {
         WRITE_CONFIG(PLUGIN_ENABLE, true);
         WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
-        WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, true);
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
     }

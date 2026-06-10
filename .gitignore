@@ -75,6 +75,7 @@ CMakeLists.txt.user*
 # --------
 *.dll
 *.exe
+*.pem
 
 #VSCode
 .vscode/

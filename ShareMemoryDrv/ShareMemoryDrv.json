@@ -6,5 +6,6 @@
     "Author" : "wingsummer",
     "License" : "AGPL-3.0",
     "Description" : "An extension for opening sshared memory in WingHexExplorer2.",
-    "Url" : "https://github.com/Wing-summer/WingHexExplorer2"
+    "Url" : "https://github.com/Wing-summer/WingHexExplorer2",
+    "CertID": "74478CD3D6C5713B45DCCBFA39BB8CE352C6BB8A3F8CF6676C492B2D1481C3C3"
 }

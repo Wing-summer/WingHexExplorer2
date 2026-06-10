@@ -318,52 +318,52 @@
 <context>
     <name>EditorSettingDialog</name>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="32"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="35"/>
         <source>Base</source>
         <translation>Basic</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="56"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="62"/>
         <source>FontSize</source>
         <translation>Font Size</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="73"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="79"/>
         <source>CopyLimit</source>
         <translation>Copy Byte Limit</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="106"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="112"/>
         <source>DecStrLimit</source>
         <translation>Limit for Decoding</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="122"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="128"/>
         <source>Layout</source>
         <translation>Layout</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="136"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="145"/>
         <source>HexWidth</source>
         <translation>Hex width</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="150"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="159"/>
         <source>ShowAddr</source>
         <translation>Show/Hide Headers</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="170"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="179"/>
         <source>ShowCol</source>
         <translation>Show/Hide Address Bar</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="180"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="189"/>
         <source>CursorSync</source>
         <translation>Sync Cursor</translation>
     </message>
     <message>
-        <location filename="../../src/settings/editorsettingdialog.ui" line="160"/>
+        <location filename="../../src/settings/editorsettingdialog.ui" line="169"/>
         <source>ShowText</source>
         <translation>Show/Hide Decoded Text</translation>
     </message>
@@ -472,121 +472,121 @@
 <context>
     <name>FileInfoDialog</name>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="95"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="112"/>
         <source>FileNew</source>
         <translation>New file, no information available yet!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="91"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="108"/>
         <source>ShowInShell</source>
         <translation>Show contents</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="108"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="125"/>
         <source>FileName</source>
         <translation>File Name</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="109"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="153"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="126"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="169"/>
         <source>FilePath</source>
         <translation>File Path</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="116"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="160"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="133"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="175"/>
         <source>Workspace</source>
         <translation>WorkSpace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="117"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="161"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="134"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="176"/>
         <source>WorkspacePath</source>
         <translation>WorkSpace Path</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="185"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="200"/>
         <source>WorkspacePluginData</source>
         <translation>Workspace Plugin Data</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="121"/>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="154"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="138"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="170"/>
         <source>FileSize</source>
         <translation>File Size</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="57"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="74"/>
         <source>CleanUpWSDataOK</source>
         <translation>Workspace plugin data cleanup complete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="123"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="139"/>
         <source>Mime</source>
         <translation>Mime</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="125"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="141"/>
         <source>FileBirthTime</source>
         <translation>File Birth Time</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="128"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="144"/>
         <source>FileAccessTime</source>
         <translation>File Access Time</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="130"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="146"/>
         <source>FileModificationTime</source>
         <translation>File Modification Time</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="133"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="149"/>
         <source>LastRead</source>
         <translation>Last Read</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="134"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="150"/>
         <source>LastMod</source>
         <translation>Last Modification</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="168"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="183"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="169"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="184"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="170"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="185"/>
         <source>License</source>
         <translation>License</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="171"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="186"/>
         <source>Author</source>
         <translation>Author</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="172"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="187"/>
         <source>Vendor</source>
         <translation>Vendor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="173"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="188"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="51"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="68"/>
         <source>CleanUpWSData</source>
         <translation>Workspace plugin data cleanup</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/fileinfodialog.cpp" line="69"/>
+        <location filename="../../src/dialog/fileinfodialog.cpp" line="86"/>
         <source>FileInfo</source>
         <translation>File Information</translation>
     </message>
@@ -665,68 +665,68 @@
 <context>
     <name>GeneralSettingDialog</name>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="38"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="41"/>
         <location filename="../../src/settings/generalsettingdialog.cpp" line="146"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="62"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="68"/>
         <source>Language</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="72"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="78"/>
         <source>Theme</source>
         <translation>Theme</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="91"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="97"/>
         <source>Interface</source>
         <translation>Interface</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="115"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="124"/>
         <source>Font</source>
         <translation>Font</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="125"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="134"/>
         <source>FontSize</source>
         <translation>Font Size</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="142"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="151"/>
         <source>WinState</source>
         <translation>Window Status</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="161"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="170"/>
         <source>Info</source>
         <translation>Information</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="185"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="197"/>
         <source>Software Version</source>
         <translation>Software Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="205"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="217"/>
         <source>ScriptEngine Version</source>
         <translation>Script Engine Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="225"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="237"/>
         <source>Qt Version</source>
         <translation>Qt Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="245"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="257"/>
         <source>OS</source>
         <translation>OS</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.ui" line="265"/>
+        <location filename="../../src/settings/generalsettingdialog.ui" line="277"/>
         <source>PluginSDK Version</source>
         <translation>Plugin SDK Version</translation>
     </message>
@@ -923,54 +923,54 @@
 <context>
     <name>LspSettingDialog</name>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="20"/>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="78"/>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="92"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="23"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="84"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="98"/>
         <source>Enable</source>
         <translation>Enable</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="27"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="30"/>
         <source>Format</source>
         <translation>Format</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="51"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="57"/>
         <source>Indent</source>
         <translation>Indent</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="71"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="77"/>
         <source>UseTabStop</source>
         <translation>Use Tabs</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="85"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="91"/>
         <source>AutoFormat</source>
         <translation>Auto Format</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="102"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="108"/>
         <source>Debug</source>
         <translation>Debug</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="126"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="135"/>
         <source>Trace</source>
         <translation>Trace</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="139"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="148"/>
         <source>Other</source>
         <translation>Other</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="160"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="172"/>
         <source>Export Predef File</source>
         <translation>Export Predef File</translation>
     </message>
     <message>
-        <location filename="../../src/settings/lspsettingdialog.ui" line="167"/>
+        <location filename="../../src/settings/lspsettingdialog.ui" line="179"/>
         <source>Restart Angel-lsp</source>
         <translation>Restart Angel-lsp</translation>
     </message>
@@ -2447,57 +2447,57 @@
 <context>
     <name>OtherSettingsDialog</name>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="38"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="41"/>
         <source>System</source>
         <translation>System</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="56"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="62"/>
         <source>DontShowSplash</source>
         <translation>Hide splash window</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="63"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="69"/>
         <source>UseNativeFileDialog</source>
         <translation>Use native file dialog</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="70"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="76"/>
         <source>UseNativeTitleBar</source>
         <translation>Use native titlebar</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="77"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="83"/>
         <source>OpenAppData</source>
         <translation>Open AppData Folder</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="93"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="99"/>
         <source>Log</source>
         <translation>Log</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="120"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="129"/>
         <source>Level</source>
         <translation>Level</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="127"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="136"/>
         <source>Count</source>
         <translation>Count</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="153"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="162"/>
         <source>Update</source>
         <translation>Update</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.ui" line="174"/>
+        <location filename="../../src/settings/othersettingsdialog.ui" line="186"/>
         <source>CheckWhenStartup</source>
         <translation>Check for Updates</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.cpp" line="126"/>
+        <location filename="../../src/settings/othersettingsdialog.cpp" line="124"/>
         <source>Others</source>
         <translation>Others</translation>
     </message>
@@ -2505,125 +2505,141 @@
 <context>
     <name>PluginSettingDialog</name>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="32"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="35"/>
         <source>Control</source>
         <translation>Control</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="53"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="59"/>
         <source>EnablePlugin</source>
         <translation>Enable Plugins</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="60"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="66"/>
         <source>EnablePluginRoot</source>
         <translation>Enable Plugins in Root</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="81"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="300"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="87"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="380"/>
         <source>PluginInfo</source>
         <translation>Plugin Information</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="112"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="124"/>
         <source>Plugins:</source>
         <translation>Plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="125"/>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="187"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="137"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="202"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="146"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="308"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="158"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="388"/>
         <source>DevExtInfo</source>
         <translation>Device Extension Information</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="174"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="189"/>
         <source>DevExt:</source>
         <translation>Device Extension:</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="343"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="223"/>
+        <source>Cert</source>
+        <translation>Certificate</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="242"/>
+        <source>Cert:</source>
+        <translation>Cert:</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="423"/>
         <source>Plugin</source>
         <translation>Plugin</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="372"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="452"/>
         <source>SelectEnable</source>
         <translation>Enable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="381"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="461"/>
         <source>SelectDisable</source>
         <translation>Disable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="393"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="473"/>
         <source>SelectAll</source>
         <translation>Select all</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="394"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="474"/>
         <source>SelectClear</source>
         <translation>Clear Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="398"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="478"/>
         <source>DiscardChanges</source>
         <translation>Discard the changes</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="455"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="534"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="457"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="535"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="458"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="536"/>
         <source>License</source>
         <translation>License</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="459"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="537"/>
         <source>Author</source>
         <translation>Author</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="460"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
         <source>Vendor</source>
         <translation>Vendor</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="462"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="464"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="544"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="468"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="556"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="562"/>
+        <source>CertID</source>
+        <translation>Cert ID</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="568"/>
         <source>Dependencies</source>
         <translation>Dependencies</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="479"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="580"/>
         <source>Comment</source>
         <translation>Comment</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="482"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="584"/>
         <source>NoPluginLoaded</source>
         <translation>No plugins are currently loaded.</translation>
     </message>
@@ -2631,143 +2647,104 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1402"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1404"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2693"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3266"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3355"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2660"/>
-        <source>InvalidPluginID</source>
-        <translation>Failed to load plugin: Invalid plugin identifier</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2670"/>
-        <source>InvalidPlugin</source>
-        <translation>Invalid plugin</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2663"/>
-        <source>InvalidDupPlugin</source>
-        <translation>Failed to load plugin: Duplicate plugin identifier</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2667"/>
-        <source>ErrLoadPluginSDKVersion</source>
-        <translation>Plugin loading failed: Invalid plugin SDK version!</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3041"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2964"/>
         <source>AppClosingCanceled:</source>
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3130"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3055"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3161"/>
-        <source>PluginLoadingFailedSummary</source>
-        <translation>Summary of Dependency Plugin Loading Failures</translation>
+        <location filename="../../src/class/pluginsystem.cpp" line="3945"/>
+        <source>SkipCertEnabledDangerContinue</source>
+        <translation>Skipping certificate verification is dangerous. Are you sure you want to continue?</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3165"/>
-        <source>- PluginID:</source>
-        <translation>- Plugin ID:</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3166"/>
-        <source>- Dependencies:</source>
-        <translation>- Dependencies:</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3168"/>
-        <source>PUID:</source>
-        <translation>PUID:</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3170"/>
-        <source>Version:</source>
-        <translation>Version:</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3765"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3979"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3197"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3305"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3393"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3586"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3372"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3439"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3565"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3633"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3402"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3595"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3403"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3596"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3404"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3597"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3442"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3636"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3443"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3637"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3460"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3654"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3483"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3677"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3519"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3714"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3529"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3724"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3537"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3732"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3652"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3847"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
@@ -2785,7 +2762,7 @@
         <translation>WingCloudStudio</translation>
     </message>
     <message>
-        <location filename="../../src/utilities.h" line="274"/>
+        <location filename="../../src/utilities.h" line="264"/>
         <source>OptionNeedRestart</source>
         <translation>Restart to take effect</translation>
     </message>
@@ -2798,72 +2775,72 @@
         <translation>Preference</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="62"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="65"/>
         <source>Theme</source>
         <translation>Theme</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="72"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="75"/>
         <source>FontSize</source>
         <translation>Font Size</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="109"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="112"/>
         <source>Font</source>
         <translation>Font</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="122"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="125"/>
         <source>Tab width</source>
         <translation>Tab width</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="157"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="160"/>
         <source>Indentation</source>
         <translation>Indentation</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="179"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="182"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="270"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="276"/>
         <source>MatchBraces</source>
         <translation>Match Braces</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="230"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="236"/>
         <source>AutoCloseChar</source>
         <translation>Auto Close Char</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="220"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="226"/>
         <source>Folding</source>
         <translation>Folding</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="240"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="246"/>
         <source>Whitespace</source>
         <translation>Whitespace</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="200"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="206"/>
         <source>LineNumber</source>
         <translation>Line Number</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="210"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="216"/>
         <source>WordWrap</source>
         <translation>Word Wrap</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="260"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="266"/>
         <source>IndentGuides</source>
         <translation>Indent Guides</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="250"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="256"/>
         <source>AutoIden</source>
         <translation>Auto Indent</translation>
     </message>
@@ -3077,47 +3054,47 @@
 <context>
     <name>ScriptSettingDialog</name>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="38"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="41"/>
         <source>Control</source>
         <translation>Control</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="59"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="62"/>
         <source>Enable</source>
         <translation>Enable</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="66"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="69"/>
         <source>AllowRunUsrSciptInRoot</source>
         <translation>Allow execution of user repository scripts with admin</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="73"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="76"/>
         <source>ScriptFile overwritable</source>
         <translation>Allow file to be overwritten with scripting</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="80"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="83"/>
         <source>ScriptFileSystem writable</source>
         <translation>Allow files or directories to be removed with scripting</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="105"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="111"/>
         <source>Timeout</source>
         <translation>Timeout</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="131"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="137"/>
         <source>(0 : unlimited)</source>
         <translation>(0 : unlimited)</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="157"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="163"/>
         <source>DataBase</source>
         <translation>Database</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="177"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="186"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
@@ -3912,7 +3889,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="453"/>
+        <location filename="../../src/class/settingmanager.cpp" line="440"/>
         <source>ConfigUnableSave</source>
         <translation>The program will be unable to save the configuration. Please check the permissions for the configuration file.</translation>
     </message>

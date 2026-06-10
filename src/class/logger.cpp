@@ -63,7 +63,7 @@ Logger::Logger(QObject *parent)
         _stream->setDevice(_file.get());
     }
 
-    if (qEnvironmentVariableIntValue("WING_DEBUG")) {
+    if (qEnvironmentVariableBool("WINGHEX_DEBUG", false)) {
         setLogLevel(Level::q4DEBUG);
     } else {
 #ifdef QT_DEBUG

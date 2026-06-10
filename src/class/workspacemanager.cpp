@@ -26,8 +26,6 @@
 
 constexpr qsizetype MAX_BYTES = std::numeric_limits<qsizetype>::max();
 
-WorkSpaceManager::WorkSpaceManager() {}
-
 bool WorkSpaceManager::loadWorkSpace(const QString &filename,
                                      WorkSpaceData &data, QJsonDocument doc) {
     if (doc.isEmpty()) {

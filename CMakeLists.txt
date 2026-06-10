@@ -17,7 +17,7 @@ else()
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.7")
+set(PROJECT_VERSION "2.3.8")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
@@ -28,6 +28,8 @@ if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
     set(QT_NO_PRIVATE_MODULE_WARNING ON)
     find_package(Qt6 REQUIRED GuiPrivate CorePrivate WidgetsPrivate)
 endif()
+
+find_package(OpenSSL REQUIRED)
 
 message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 
@@ -130,44 +132,44 @@ set(NUMCAL_GRAMMAR
     src/grammar/NumCal/NumCalVisitor.h)
 
 set(CSTRUCT_GRAMMAR
-    src/grammar/c/CStructVisitor.h
     src/grammar/c/CStructBaseVisitor.cpp
-    src/grammar/c/CStructLexer.cpp
-    src/grammar/c/CStructParser.cpp
-    src/grammar/c/CStructVisitor.cpp
     src/grammar/c/CStructBaseVisitor.h
+    src/grammar/c/CStructLexer.cpp
     src/grammar/c/CStructLexer.h
-    src/grammar/c/CStructParser.h)
+    src/grammar/c/CStructParser.cpp
+    src/grammar/c/CStructParser.h
+    src/grammar/c/CStructVisitor.cpp
+    src/grammar/c/CStructVisitor.h)
 
 set(ASCONSOLE_GRAMMAR
     src/grammar/ASConsole/AngelscriptConsoleLexer.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParser.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.cpp
     src/grammar/ASConsole/AngelscriptConsoleLexer.h
+    src/grammar/ASConsole/AngelscriptConsoleParser.cpp
     src/grammar/ASConsole/AngelscriptConsoleParser.h
+    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.cpp
     src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h
+    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.cpp
     src/grammar/ASConsole/AngelscriptConsoleParserVisitor.h)
 
 set(SNIPPET_GRAMMAR
-    src/grammar/Snippet/SnippetVisitor.h
-    src/grammar/Snippet/SnippetVisitor.cpp
-    src/grammar/Snippet/SnippetParser.h
-    src/grammar/Snippet/SnippetParser.cpp
-    src/grammar/Snippet/SnippetLexer.h
-    src/grammar/Snippet/SnippetLexer.cpp
+    src/grammar/Snippet/SnippetBaseVisitor.cpp
     src/grammar/Snippet/SnippetBaseVisitor.h
-    src/grammar/Snippet/SnippetBaseVisitor.cpp)
+    src/grammar/Snippet/SnippetLexer.cpp
+    src/grammar/Snippet/SnippetLexer.h
+    src/grammar/Snippet/SnippetParser.cpp
+    src/grammar/Snippet/SnippetParser.h
+    src/grammar/Snippet/SnippetVisitor.cpp
+    src/grammar/Snippet/SnippetVisitor.h)
 
 set(ANGELSCRIPTEXP_SRC
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.h
     src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.h
     src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.h
     src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.cpp
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.cpp)
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.h
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.cpp
+    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.h)
 
 set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR}
                    ${SNIPPET_GRAMMAR} ${ANGELSCRIPTEXP_SRC})
@@ -209,58 +211,58 @@ set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbontabcontent.ui)
 
 set(QCONSOLEWIDGET_SRC
+    3rdparty/QConsoleWidget/commandhistorymanager.cpp
+    3rdparty/QConsoleWidget/commandhistorymanager.h
     3rdparty/QConsoleWidget/QConsoleIODevice.cpp
     3rdparty/QConsoleWidget/QConsoleIODevice.h
     3rdparty/QConsoleWidget/QConsoleWidget.cpp
-    3rdparty/QConsoleWidget/QConsoleWidget.h
-    3rdparty/QConsoleWidget/commandhistorymanager.h
-    3rdparty/QConsoleWidget/commandhistorymanager.cpp)
+    3rdparty/QConsoleWidget/QConsoleWidget.h)
 
 set(DIALOG_SRC
-    src/dialog/framelessmainwindow.h
+    src/dialog/aboutsoftwaredialog.cpp
+    src/dialog/aboutsoftwaredialog.h
+    src/dialog/aboutsoftwaredialog.ui
+    src/dialog/checksumdialog.cpp
+    src/dialog/checksumdialog.h
+    src/dialog/colorpickerdialog.cpp
+    src/dialog/colorpickerdialog.h
+    src/dialog/colorpickerdialog.ui
+    src/dialog/crashreport.cpp
+    src/dialog/crashreport.h
+    src/dialog/crashreport.ui
+    src/dialog/encodingdialog.cpp
+    src/dialog/encodingdialog.h
+    src/dialog/fileinfodialog.cpp
+    src/dialog/fileinfodialog.h
+    src/dialog/finddialog.cpp
+    src/dialog/finddialog.h
+    src/dialog/framelessdialogbase.cpp
+    src/dialog/framelessdialogbase.h
     src/dialog/framelessmainwindow.cpp
+    src/dialog/framelessmainwindow.h
+    src/dialog/historydeldialog.cpp
+    src/dialog/historydeldialog.h
+    src/dialog/historydeldialog.ui
+    src/dialog/layoutdeldialog.cpp
+    src/dialog/layoutdeldialog.h
+    src/dialog/layoutdeldialog.ui
     src/dialog/mainwindow.cpp
     src/dialog/mainwindow.h
+    src/dialog/metadialog.cpp
+    src/dialog/metadialog.h
+    src/dialog/metaheaderdialog.cpp
+    src/dialog/metaheaderdialog.h
+    src/dialog/mutisavedialog.cpp
+    src/dialog/mutisavedialog.h
+    src/dialog/mutisavedialog.ui
+    src/dialog/scriptingdialog.cpp
+    src/dialog/scriptingdialog.h
     src/dialog/settingdialog.cpp
     src/dialog/settingdialog.h
     src/dialog/settingdialog.ui
-    src/dialog/framelessdialogbase.h
-    src/dialog/framelessdialogbase.cpp
-    src/dialog/aboutsoftwaredialog.ui
-    src/dialog/aboutsoftwaredialog.cpp
-    src/dialog/aboutsoftwaredialog.h
-    src/dialog/fileinfodialog.cpp
-    src/dialog/fileinfodialog.h
-    src/dialog/encodingdialog.cpp
-    src/dialog/encodingdialog.h
-    src/dialog/metaheaderdialog.h
-    src/dialog/metaheaderdialog.cpp
-    src/dialog/metadialog.cpp
-    src/dialog/metadialog.h
-    src/dialog/scriptingdialog.h
-    src/dialog/scriptingdialog.cpp
-    src/dialog/finddialog.cpp
-    src/dialog/finddialog.h
-    src/dialog/checksumdialog.h
-    src/dialog/checksumdialog.cpp
-    src/dialog/colorpickerdialog.h
-    src/dialog/colorpickerdialog.cpp
-    src/dialog/colorpickerdialog.ui
-    src/dialog/splashdialog.ui
     src/dialog/splashdialog.cpp
     src/dialog/splashdialog.h
-    src/dialog/historydeldialog.h
-    src/dialog/historydeldialog.cpp
-    src/dialog/historydeldialog.ui
-    src/dialog/layoutdeldialog.h
-    src/dialog/layoutdeldialog.cpp
-    src/dialog/layoutdeldialog.ui
-    src/dialog/crashreport.h
-    src/dialog/crashreport.cpp
-    src/dialog/crashreport.ui
-    src/dialog/mutisavedialog.h
-    src/dialog/mutisavedialog.cpp
-    src/dialog/mutisavedialog.ui)
+    src/dialog/splashdialog.ui)
 
 set(STRUCT_LIB_SRC
     src/structlib/cstructerrorlistener.cpp
@@ -274,152 +276,156 @@ set(STRUCT_LIB_SRC
     src/structlib/structdefine.h)
 
 set(CONTROL_SRC
-    src/control/codeedit.h
+    src/control/asidbtreeview.cpp
+    src/control/asidbtreeview.h
+    src/control/asobjtreewidget.cpp
+    src/control/asobjtreewidget.h
     src/control/codeedit.cpp
-    src/control/editorview.h
+    src/control/codeedit.h
+    src/control/codeeditcontrolwidget.cpp
+    src/control/codeeditcontrolwidget.h
+    src/control/consolecodeedit.cpp
+    src/control/consolecodeedit.h
+    src/control/dockwidgettab.cpp
+    src/control/dockwidgettab.h
     src/control/editorview.cpp
-    src/control/toast.h
-    src/control/toast.cpp
+    src/control/editorview.h
+    src/control/gotolinewidget.cpp
+    src/control/gotolinewidget.h
+    src/control/gotowidget.cpp
+    src/control/gotowidget.h
+    src/control/gotowidget.ui
+    src/control/hexlineedit.cpp
+    src/control/hexlineedit.h
+    src/control/huecolorpickerslider.cpp
+    src/control/huecolorpickerslider.h
+    src/control/qcolorpicker_slider.cpp
+    src/control/qcolorpicker_slider.hpp
+    src/control/qtableviewext.cpp
+    src/control/qtableviewext.h
+    src/control/scripteditor.cpp
+    src/control/scripteditor.h
+    src/control/scriptinfobroswer.cpp
+    src/control/scriptinfobroswer.h
     src/control/scriptingconsole.cpp
     src/control/scriptingconsole.h
-    src/control/scriptingconsolebase.h
     src/control/scriptingconsolebase.cpp
-    src/control/gotowidget.h
-    src/control/gotowidget.cpp
-    src/control/gotowidget.ui
-    src/control/scripteditor.h
-    src/control/scripteditor.cpp
-    src/control/qcolorpicker_slider.hpp
-    src/control/qcolorpicker_slider.cpp
-    src/control/huecolorpickerslider.h
-    src/control/huecolorpickerslider.cpp
-    src/control/qtableviewext.h
-    src/control/qtableviewext.cpp
-    src/control/asobjtreewidget.h
-    src/control/asobjtreewidget.cpp
-    src/control/dockwidgettab.h
-    src/control/dockwidgettab.cpp
-    src/control/hexlineedit.h
-    src/control/hexlineedit.cpp
-    src/control/settingspopup.cpp
-    src/control/settingspopup.h
+    src/control/scriptingconsolebase.h
     src/control/searchreplacewidget.cpp
     src/control/searchreplacewidget.h
-    src/control/gotolinewidget.h
-    src/control/gotolinewidget.cpp
-    src/control/codeeditcontrolwidget.h
-    src/control/codeeditcontrolwidget.cpp
-    src/control/scriptinfobroswer.h
-    src/control/scriptinfobroswer.cpp
-    src/control/consolecodeedit.h
-    src/control/consolecodeedit.cpp
-    src/control/asidbtreeview.h
-    src/control/asidbtreeview.cpp)
+    src/control/settingspopup.cpp
+    src/control/settingspopup.h
+    src/control/toast.cpp
+    src/control/toast.h)
 
 set(CLASS_SRC
-    src/class/logger.cpp
-    src/class/logger.h
-    src/class/skinmanager.cpp
-    src/class/skinmanager.h
-    src/class/workspacemanager.cpp
-    src/class/workspacemanager.h
-    src/class/eventfilter.h
-    src/class/qkeysequences.h
-    src/class/qkeysequences.cpp
-    src/class/wingmessagebox.h
-    src/class/wingmessagebox.cpp
-    src/class/recentfilemanager.cpp
-    src/class/recentfilemanager.h
-    src/class/winginputdialog.h
-    src/class/winginputdialog.cpp
-    src/class/wingfiledialog.h
-    src/class/wingfiledialog.cpp
-    src/class/scriptmachine.h
-    src/class/scriptmachine.cpp
-    src/class/scriptmanager.h
-    src/class/scriptmanager.cpp
-    src/class/languagemanager.h
-    src/class/languagemanager.cpp
-    src/class/settingmanager.h
-    src/class/settingmanager.cpp
-    src/class/asdebugger.h
-    src/class/asdebugger.cpp
-    src/class/appmanager.h
-    src/class/appmanager.cpp
+    src/class/angellsp.cpp
+    src/class/angellsp.h
+    src/class/angelscriptconsolevisitor.cpp
+    src/class/angelscriptconsolevisitor.h
     src/class/angelscripthelper.h
+    src/class/appmanager.cpp
+    src/class/appmanager.h
+    src/class/asbuilder.cpp
+    src/class/asbuilder.h
     src/class/ascompletion.cpp
     src/class/ascompletion.h
-    src/class/asbuilder.h
-    src/class/asbuilder.cpp
-    src/class/aspreprocesser.h
-    src/class/aspreprocesser.cpp
-    src/class/asexprevaluator.h
-    src/class/asexprevaluator.cpp
-    src/class/layoutmanager.h
-    src/class/layoutmanager.cpp
-    src/class/cryptographichash.h
-    src/class/cryptographichash.cpp
-    src/class/wingupdater.h
-    src/class/wingupdater.cpp
-    src/class/richtextitemdelegate.h
-    src/class/richtextitemdelegate.cpp
-    src/class/showinshell.h
-    src/class/showinshell.cpp
-    src/class/dockcomponentsfactory.h
-    src/class/dockcomponentsfactory.cpp
-    src/class/crashhandler.h
-    src/class/crashhandler.cpp
-    src/class/pluginsystem.h
-    src/class/pluginsystem.cpp
-    src/class/inspectqtloghelper.h
-    src/class/inspectqtloghelper.cpp
-    src/class/codeinfotip.h
-    src/class/codeinfotip.cpp
-    src/class/wingconsolehighligher.h
-    src/class/wingconsolehighligher.cpp
-    src/class/asconsolecompletion.h
     src/class/asconsolecompletion.cpp
-    src/class/scriptsettings.h
-    src/class/scriptsettings.cpp
-    src/class/wingangel.h
-    src/class/wingangel.cpp
-    src/class/winggeneric.h
-    src/class/winggeneric.cpp
-    src/class/changedstringlist.h
-    src/class/changedstringlist.cpp
-    src/class/editorviewcontext.h
-    src/class/editorviewcontext.cpp
-    src/class/compositeiconengine.h
-    src/class/compositeiconengine.cpp
-    src/class/consolehighlighanim.h
-    src/class/consolehighlighanim.cpp
-    src/class/angellsp.h
-    src/class/angellsp.cpp
-    src/class/lsp.h
-    src/class/editorlspevent.h
-    src/class/editorlspevent.cpp
-    src/class/resettabletimer.h
-    src/class/resettabletimer.cpp
-    src/class/astype_evaluator.h
-    src/class/angelscriptconsolevisitor.h
-    src/class/angelscriptconsolevisitor.cpp
-    src/class/aswingcache.h
-    src/class/aswingcache.cpp
-    src/class/lspeditorinterface.h
-    src/class/lspeditorinterface.cpp
-    src/class/editorinfo.h
-    src/class/fmtlibext.h
-    src/class/mutisavebuttondelegate.h
-    src/class/mutisavebuttondelegate.cpp
-    src/class/asscriptobjects.h
+    src/class/asconsolecompletion.h
+    src/class/asdebugger.cpp
+    src/class/asdebugger.h
+    src/class/asexprevaluator.cpp
+    src/class/asexprevaluator.h
+    src/class/aspreprocesser.cpp
+    src/class/aspreprocesser.h
     src/class/asscriptobjects.cpp
+    src/class/asscriptobjects.h
+    src/class/astype_evaluator.h
+    src/class/aswingcache.cpp
+    src/class/aswingcache.h
+    src/class/changedstringlist.cpp
+    src/class/changedstringlist.h
+    src/class/codeinfotip.cpp
+    src/class/codeinfotip.h
+    src/class/compositeiconengine.cpp
+    src/class/compositeiconengine.h
+    src/class/consolehighlighanim.cpp
+    src/class/consolehighlighanim.h
+    src/class/crashhandler.cpp
+    src/class/crashhandler.h
+    src/class/cryptographichash.cpp
+    src/class/cryptographichash.h
+    src/class/dockcomponentsfactory.cpp
+    src/class/dockcomponentsfactory.h
+    src/class/editorinfo.h
+    src/class/editorlspevent.cpp
+    src/class/editorlspevent.h
+    src/class/editorviewcontext.cpp
+    src/class/editorviewcontext.h
+    src/class/eventfilter.h
+    src/class/fileaccesscheck.cpp
+    src/class/fileaccesscheck.h
+    src/class/fmtlibext.h
+    src/class/inspectqtloghelper.cpp
+    src/class/inspectqtloghelper.h
+    src/class/languagemanager.cpp
+    src/class/languagemanager.h
+    src/class/layoutmanager.cpp
+    src/class/layoutmanager.h
+    src/class/logger.cpp
+    src/class/logger.h
+    src/class/lsp.h
+    src/class/lspeditorinterface.cpp
+    src/class/lspeditorinterface.h
+    src/class/mutisavebuttondelegate.cpp
+    src/class/mutisavebuttondelegate.h
+    src/class/pluginsystem.cpp
+    src/class/pluginsystem.h
+    src/class/qkeysequences.cpp
+    src/class/qkeysequences.h
+    src/class/recentfilemanager.cpp
+    src/class/recentfilemanager.h
+    src/class/resettabletimer.cpp
+    src/class/resettabletimer.h
+    src/class/richtextitemdelegate.cpp
+    src/class/richtextitemdelegate.h
+    src/class/scriptmachine.cpp
+    src/class/scriptmachine.h
+    src/class/scriptmanager.cpp
+    src/class/scriptmanager.h
+    src/class/scriptsettings.cpp
+    src/class/scriptsettings.h
+    src/class/settingmanager.cpp
+    src/class/settingmanager.h
+    src/class/showinshell.cpp
+    src/class/showinshell.h
+    src/class/skinmanager.cpp
+    src/class/skinmanager.h
+    src/class/snippetprocessor.cpp
     src/class/snippetprocessor.h
-    src/class/snippetprocessor.cpp)
+    src/class/wingangel.cpp
+    src/class/wingangel.h
+    src/class/wingconsolehighligher.cpp
+    src/class/wingconsolehighligher.h
+    src/class/wingfiledialog.cpp
+    src/class/wingfiledialog.h
+    src/class/winggeneric.cpp
+    src/class/winggeneric.h
+    src/class/winginputdialog.cpp
+    src/class/winginputdialog.h
+    src/class/wingmessagebox.cpp
+    src/class/wingmessagebox.h
+    src/class/wingplugincert.cpp
+    src/class/wingplugincert.h
+    src/class/wingupdater.cpp
+    src/class/wingupdater.h
+    src/class/workspacemanager.cpp
+    src/class/workspacemanager.h)
 
 set(INTERNAL_PLG_SRC
-    src/class/wingangelapi.h src/class/wingangelapi.cpp src/class/wingcstruct.h
-    src/class/wingcstruct.cpp src/class/structparser.h
-    src/class/structparser.cpp)
+    src/class/structparser.cpp src/class/structparser.h
+    src/class/wingangelapi.cpp src/class/wingangelapi.h
+    src/class/wingcstruct.cpp src/class/wingcstruct.h)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -433,82 +439,82 @@ else()
 endif()
 
 set(MODEL_SRC
-    src/model/findresultmodel.h
-    src/model/findresultmodel.cpp
-    src/model/numshowmodel.h
-    src/model/numshowmodel.cpp
-    src/model/bookmarksmodel.h
-    src/model/bookmarksmodel.cpp
-    src/model/metadatamodel.h
-    src/model/metadatamodel.cpp
-    src/model/checksummodel.h
-    src/model/checksummodel.cpp
-    src/model/dbgcallstackmodel.h
-    src/model/dbgcallstackmodel.cpp
-    src/model/codecompletionmodel.h
-    src/model/codecompletionmodel.cpp
-    src/model/asidbtreemodel.h
     src/model/asidbtreemodel.cpp
+    src/model/asidbtreemodel.h
+    src/model/asidbwatchmodel.cpp
     src/model/asidbwatchmodel.h
-    src/model/asidbwatchmodel.cpp)
+    src/model/bookmarksmodel.cpp
+    src/model/bookmarksmodel.h
+    src/model/checksummodel.cpp
+    src/model/checksummodel.h
+    src/model/codecompletionmodel.cpp
+    src/model/codecompletionmodel.h
+    src/model/dbgcallstackmodel.cpp
+    src/model/dbgcallstackmodel.h
+    src/model/findresultmodel.cpp
+    src/model/findresultmodel.h
+    src/model/metadatamodel.cpp
+    src/model/metadatamodel.h
+    src/model/numshowmodel.cpp
+    src/model/numshowmodel.h)
 
 set(SETTING_SRC
-    src/settings/settings.h
-    src/settings/generalsettingdialog.h
-    src/settings/generalsettingdialog.cpp
-    src/settings/generalsettingdialog.ui
-    src/settings/pluginsettingdialog.h
-    src/settings/pluginsettingdialog.cpp
-    src/settings/pluginsettingdialog.ui
-    src/settings/editorsettingdialog.h
     src/settings/editorsettingdialog.cpp
+    src/settings/editorsettingdialog.h
     src/settings/editorsettingdialog.ui
-    src/settings/scriptsettingdialog.h
-    src/settings/scriptsettingdialog.cpp
-    src/settings/scriptsettingdialog.ui
-    src/settings/othersettingsdialog.h
-    src/settings/othersettingsdialog.cpp
-    src/settings/othersettingsdialog.ui
-    src/settings/lspsettingdialog.h
+    src/settings/generalsettingdialog.cpp
+    src/settings/generalsettingdialog.h
+    src/settings/generalsettingdialog.ui
     src/settings/lspsettingdialog.cpp
+    src/settings/lspsettingdialog.h
     src/settings/lspsettingdialog.ui
-    src/settings/qeditconfig.h
+    src/settings/othersettingsdialog.cpp
+    src/settings/othersettingsdialog.h
+    src/settings/othersettingsdialog.ui
+    src/settings/pluginsettingdialog.cpp
+    src/settings/pluginsettingdialog.h
+    src/settings/pluginsettingdialog.ui
     src/settings/qeditconfig.cpp
-    src/settings/qeditconfig.ui)
+    src/settings/qeditconfig.h
+    src/settings/qeditconfig.ui
+    src/settings/scriptsettingdialog.cpp
+    src/settings/scriptsettingdialog.h
+    src/settings/scriptsettingdialog.ui
+    src/settings/settings.h)
 
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/contextmgr.cpp
     src/scriptaddon/contextmgr.h
-    src/scriptaddon/scriptrunable.h
-    src/scriptaddon/scriptrunable.cpp
-    src/scriptaddon/scriptdatetime.h
-    src/scriptaddon/scriptdatetime.cpp
-    src/scriptaddon/scriptcrypto.h
-    src/scriptaddon/scriptcrypto.cpp
-    src/scriptaddon/scriptqstring.h
-    src/scriptaddon/scriptqstring.cpp
-    src/scriptaddon/scriptqdictionary.h
-    src/scriptaddon/scriptqdictionary.cpp
-    src/scriptaddon/scripturl.h
-    src/scriptaddon/scripturl.cpp
-    src/scriptaddon/scriptregex.h
-    src/scriptaddon/scriptregex.cpp
-    src/scriptaddon/scriptcolor.h
+    src/scriptaddon/scriptany.cpp
+    src/scriptaddon/scriptany.h
     src/scriptaddon/scriptcolor.cpp
-    src/scriptaddon/scriptjson.h
-    src/scriptaddon/scriptjson.cpp
+    src/scriptaddon/scriptcolor.h
+    src/scriptaddon/scriptcrypto.cpp
+    src/scriptaddon/scriptcrypto.h
+    src/scriptaddon/scriptdatetime.cpp
+    src/scriptaddon/scriptdatetime.h
+    src/scriptaddon/scriptenv.cpp
+    src/scriptaddon/scriptenv.h
+    src/scriptaddon/scriptfile.cpp
     src/scriptaddon/scriptfile.h
     src/scriptaddon/scriptfilesystem.cpp
     src/scriptaddon/scriptfilesystem.h
-    src/scriptaddon/scriptfile.cpp
-    src/scriptaddon/scriptenv.h
-    src/scriptaddon/scriptreflection.h
-    src/scriptaddon/scriptreflection.cpp
-    src/scriptaddon/scriptoptbox.h
+    src/scriptaddon/scriptjson.cpp
+    src/scriptaddon/scriptjson.h
     src/scriptaddon/scriptoptbox.cpp
-    src/scriptaddon/scriptenv.cpp
-    src/scriptaddon/scriptany.cpp
-    src/scriptaddon/scriptany.h)
+    src/scriptaddon/scriptoptbox.h
+    src/scriptaddon/scriptqdictionary.cpp
+    src/scriptaddon/scriptqdictionary.h
+    src/scriptaddon/scriptqstring.cpp
+    src/scriptaddon/scriptqstring.h
+    src/scriptaddon/scriptreflection.cpp
+    src/scriptaddon/scriptreflection.h
+    src/scriptaddon/scriptregex.cpp
+    src/scriptaddon/scriptregex.h
+    src/scriptaddon/scriptrunable.cpp
+    src/scriptaddon/scriptrunable.h
+    src/scriptaddon/scripturl.cpp
+    src/scriptaddon/scripturl.h)
 
 # localization support
 file(
@@ -558,7 +564,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
 
     set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
-    set(LANG_COMPRESS_CONTENT "winghex_${LANG_NAME}.qm" "about.md" "devs.md")
+    set(LANG_COMPRESS_CONTENT "about.md" "devs.md" "winghex_${LANG_NAME}.qm")
 
     add_custom_target(
         pak_lang_files_${LANG_NAME}
@@ -582,28 +588,28 @@ endforeach()
 add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
 
 set(PROJECT_SOURCES
+    ${ANGEL_SCRIPT_ADDON}
+    ${ANTLR4_GRAMMAR}
+    ${AS_DEBUGGER_SRC}
+    ${CLASS_SRC}
+    ${CONTROL_SRC}
+    ${DIALOG_SRC}
+    ${INTERNAL_PLG_SRC}
+    ${MODEL_SRC}
+    ${QCONSOLEWIDGET_SRC}
+    ${QM_FILES}
+    ${RIBBON_SRC}
+    ${SCRIPT_ADDON_SRC}
+    ${SETTING_SRC}
+    ${STRUCT_LIB_SRC}
+    ${WIDGET_FRAME_SRC}
     main.cpp
-    src/utilities.h
+    resources.qrc
     src/dbghelper.h
     src/define.h
     src/predefgen.h
-    ${QCONSOLEWIDGET_SRC}
-    ${WIDGET_FRAME_SRC}
-    ${RIBBON_SRC}
-    ${STRUCT_LIB_SRC}
-    ${CLASS_SRC}
-    ${AS_DEBUGGER_SRC}
-    ${INTERNAL_PLG_SRC}
-    ${MODEL_SRC}
-    ${DIALOG_SRC}
-    ${CONTROL_SRC}
-    ${SETTING_SRC}
-    ${SCRIPT_ADDON_SRC}
-    ${ANGEL_SCRIPT_ADDON}
-    ${QM_FILES}
-    ${ANTLR4_GRAMMAR}
-    theme/breeze.qrc
-    resources.qrc)
+    src/utilities.h
+    theme/breeze.qrc)
 
 add_custom_target(
     build-time-make-directory ALL
@@ -638,18 +644,20 @@ target_link_libraries(
             Qt6::Network
             Qt6::Concurrent
             Qt6::PrintSupport
+            Qt6::Xml
             Qt6::GuiPrivate
             Qt6::CorePrivate
-            Qt6::Xml
-            cpptrace::cpptrace
+            OpenSSL::SSL
+            OpenSSL::Crypto
             QtSingleApplication::QtSingleApplication
-            WingPlugin
-            QHexView
-            WingCodeEdit
-            angelscript
+            cpptrace::cpptrace
             fmt::fmt
             antlr4_static
-            qtadvanceddocking-qt6)
+            angelscript
+            qtadvanceddocking-qt6
+            QHexView
+            WingCodeEdit
+            WingPlugin)
 
 if(WINGHEX_USE_FRAMELESS)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QWKCore QWKWidgets)

@@ -11,6 +11,8 @@ public:
 
 private:
     static bool versionCompare(const QString &remote, const QString &local);
+
+    Q_DISABLE_COPY_MOVE(WingUpdater)
 };
 
 #endif // WINGUPDATER_H

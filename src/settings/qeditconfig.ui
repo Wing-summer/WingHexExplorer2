@@ -12,7 +12,7 @@
   </property>
   <layout class="QVBoxLayout" name="layoutEdit">
    <property name="sizeConstraint">
-    <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
+    <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -38,6 +38,9 @@
       <string>Preference</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+      </property>
       <property name="horizontalSpacing">
        <number>8</number>
       </property>
@@ -179,6 +182,9 @@
       <string>Options</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+      </property>
       <property name="leftMargin">
        <number>10</number>
       </property>

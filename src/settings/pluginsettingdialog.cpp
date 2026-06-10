@@ -16,19 +16,25 @@
 */
 
 #include "pluginsettingdialog.h"
+#include "ui_pluginsettingdialog.h"
+
 #include "class/eventfilter.h"
 #include "class/pluginsystem.h"
 #include "class/settingmanager.h"
-#include "ui_pluginsettingdialog.h"
+#include "class/showinshell.h"
+#include "class/wingplugincert.h"
 #include "utilities.h"
 
-enum PLUGIN_INFO {
+#include <QDesktopServices>
+
+enum {
     PLUIGN_META = Qt::UserRole,
     PLUIGN_NAME,
     PLUIGN_COMMENT,
-    PLUGIN_DEPENDENCY_DEP,
-    PLUGIN_DEPENDENCY_HOST,
+    PLUGIN_DEPENDENCY_IDX,
 };
+
+enum { CERT_CERT = Qt::UserRole };
 
 PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::PluginSettingDialog) {
@@ -39,16 +45,15 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     reload();
 
-    bool ok = false;
-    auto dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
-    if (dis && ok) {
+    auto dis = qEnvironmentVariableBool("WINGHEX_DISABLE_PLUGIN_SYSTEM", false);
+    if (dis) {
         ui->groupBox->setEnabled(false);
         ui->tabPluginInfo->setEnabled(false);
         ui->tabDevInfo->setEnabled(false);
         return;
     } else {
-        dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
-        if (dis && ok) {
+        dis = qEnvironmentVariableBool("WINGHEX_DISABLE_PLUGIN", false);
+        if (dis) {
             ui->cbEnablePlugin->setEnabled(false);
         } else {
             connect(ui->cbEnablePlugin,
@@ -60,19 +65,24 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     this, &PluginSettingDialog::optionNeedRestartChanged);
         }
 
-        dis = qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
-        if (dis && ok) {
+        dis = qEnvironmentVariableBool("WINGHEX_DISABLE_EXTDRV", false);
+        if (dis) {
             ui->tabDevInfo->setEnabled(false);
         }
     }
 
-    connect(ui->cbEnablePluginRoot,
+    dis = qEnvironmentVariableBool("WINGHEX_DISALLOW_ROOT_PLUGIN", true);
+    if (dis) {
+        ui->cbEnablePluginRoot->setEnabled(false);
+    } else {
+        connect(ui->cbEnablePluginRoot,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            &QCheckBox::checkStateChanged,
+                &QCheckBox::checkStateChanged,
 #else
-            &QCheckBox::stateChanged,
+                &QCheckBox::stateChanged,
 #endif
-            this, &PluginSettingDialog::optionNeedRestartChanged);
+                this, &PluginSettingDialog::optionNeedRestartChanged);
+    }
 
     auto &plgsys = PluginSystem::instance();
     auto pico = ICONRES("plugin");
@@ -80,7 +90,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     const auto &plugins = plgsys.plugins();
     auto total = plugins.size();
+
     const auto deps = plgsys.generatePluginsDepMap();
+    host = deps.host;
+    dep = deps.dep;
+
     for (qsizetype i = 0; i < total; ++i) {
         auto p = plugins.at(i);
         auto pco = p->pluginIcon();
@@ -100,10 +114,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         lwi->setData(PLUIGN_META, QVariant::fromValue(info));
         lwi->setData(PLUIGN_NAME, p->pluginName());
         lwi->setData(PLUIGN_COMMENT, p->pluginComment());
-        lwi->setData(PLUGIN_DEPENDENCY_HOST,
-                     QVariant::fromValue(deps.host.at(i)));
-        lwi->setData(PLUGIN_DEPENDENCY_DEP,
-                     QVariant::fromValue(deps.dep.at(i)));
+        lwi->setData(PLUGIN_DEPENDENCY_IDX, i);
         ui->plglist->addItem(lwi);
     }
 
@@ -112,18 +123,21 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     const auto istart = total;
     total = blkplgs.size();
     for (int i = 0; i < total; ++i) {
-        auto meta = blkplgs.at(i);
-        auto lwi = new QListWidgetItem(pico, meta.id);
-        auto flags = lwi->flags();
-        flags.setFlag(Qt::ItemIsUserCheckable);
-        lwi->setFlags(flags);
-        lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
-        lwi->setCheckState(Qt::Unchecked);
+        auto [status, m] = blkplgs.at(i);
+        auto lwi = new QListWidgetItem(pico, m.id);
+        lwi->setData(PLUIGN_META, QVariant::fromValue(m));
+        if (status == PluginSystem::PluginStatus::Blocked) {
+            auto flags = lwi->flags();
+            flags.setFlag(Qt::ItemIsUserCheckable);
+            lwi->setFlags(flags);
+            lwi->setCheckState(Qt::Unchecked);
+        } else if (status == PluginSystem::PluginStatus::InvalidPlugin) {
+            auto font = lwi->font();
+            font.setStrikeOut(true);
+            lwi->setFont(font);
+        }
         auto ridx = istart + i;
-        lwi->setData(PLUGIN_DEPENDENCY_HOST,
-                     QVariant::fromValue(deps.host.at(ridx)));
-        lwi->setData(PLUGIN_DEPENDENCY_DEP,
-                     QVariant::fromValue(deps.dep.at(ridx)));
+        lwi->setData(PLUGIN_DEPENDENCY_IDX, ridx);
         ui->plglist->addItem(lwi);
     }
 
@@ -146,13 +160,19 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     pico = ICONRES("devextdis");
     const auto blkdevs = plgsys.blockedDevPlugins();
-    for (const auto &meta : blkdevs) {
-        auto lwi = new QListWidgetItem(pico, meta.id);
+    for (const auto &[status, m] : blkdevs) {
+        auto lwi = new QListWidgetItem(pico, m.id);
         auto flags = lwi->flags();
-        flags.setFlag(Qt::ItemIsUserCheckable);
         lwi->setFlags(flags);
-        lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
-        lwi->setCheckState(Qt::Unchecked);
+        lwi->setData(PLUIGN_META, QVariant::fromValue(m));
+        if (status == PluginSystem::PluginStatus::Blocked) {
+            flags.setFlag(Qt::ItemIsUserCheckable);
+            lwi->setCheckState(Qt::Unchecked);
+        } else if (status == PluginSystem::PluginStatus::InvalidPlugin) {
+            auto font = lwi->font();
+            font.setStrikeOut(true);
+            lwi->setFont(font);
+        }
         ui->devlist->addItem(lwi);
     }
 
@@ -172,8 +192,8 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
                 switch (item->checkState()) {
                 case Qt::Unchecked: {
-                    const auto deps =
-                        item->data(PLUGIN_DEPENDENCY_DEP).value<QList<int>>();
+                    const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
+                    const auto deps = this->dep.at(idx);
                     for (const auto &idx : deps) {
                         // exclude WingAngelAPI
                         if (idx || !PluginSystem::instance().angelApi()) {
@@ -185,8 +205,8 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     _plgChanged.pushRemoveItem(id);
                 } break;
                 case Qt::Checked: {
-                    const auto deps =
-                        item->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
+                    const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
+                    const auto deps = this->host.at(idx);
                     for (const auto &idx : deps) {
                         if (idx || !PluginSystem::instance().angelApi()) {
                             auto item = ui->plglist->item(idx);
@@ -202,47 +222,69 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
                 ui->btnplgSave->setEnabled(_plgChanged.containChanges());
             });
-    connect(
-        ui->plglist, &QListWidget::currentItemChanged, this,
-        [this](QListWidgetItem *current, QListWidgetItem *previous) {
-            ui->plglist->blockSignals(true);
-            if (previous) {
-                const auto deps =
-                    previous->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
-                for (const auto &idx : deps) {
-                    auto d = ui->plglist->item(idx);
-                    if (d) {
-                        auto font = d->font();
-                        font.setUnderline(false);
-                        font.setBold(false);
-                        d->setFont(font);
+    connect(ui->plglist, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *previous) {
+                ui->plglist->blockSignals(true);
+                if (previous) {
+                    const auto idx =
+                        previous->data(PLUGIN_DEPENDENCY_IDX).toInt();
+                    auto deps = this->host.at(idx);
+                    for (const auto &idx : std::as_const(deps)) {
+                        auto d = ui->plglist->item(idx);
+                        if (d) {
+                            auto font = d->font();
+                            font.setUnderline(false);
+                            font.setBold(false);
+                            d->setFont(font);
+                        }
+                    }
+
+                    deps = this->dep.at(idx);
+                    for (const auto &idx : std::as_const(deps)) {
+                        auto d = ui->plglist->item(idx);
+                        if (d) {
+                            auto font = d->font();
+                            font.setItalic(false);
+                            font.setBold(false);
+                            d->setFont(font);
+                        }
                     }
                 }
-            }
 
-            if (current == nullptr) {
-                return;
-            }
+                if (current == nullptr) {
+                    ui->txtc->clear();
+                    return;
+                }
 
-            auto info = current->data(PLUIGN_META).value<PluginInfo>();
-            auto plgName = current->data(PLUIGN_NAME).toString();
-            auto plgComment = current->data(PLUIGN_COMMENT).toString();
+                auto info = current->data(PLUIGN_META).value<PluginInfo>();
+                auto plgName = current->data(PLUIGN_NAME).toString();
+                auto plgComment = current->data(PLUIGN_COMMENT).toString();
 
-            loadPluginInfo(info, plgName, plgComment, info.dependencies,
-                           ui->txtc);
+                loadPluginInfo(info, plgName, plgComment, info.dependencies,
+                               ui->txtc);
 
-            // highlight deps
-            const auto deps =
-                current->data(PLUGIN_DEPENDENCY_HOST).value<QList<int>>();
-            for (const auto &idx : deps) {
-                auto d = ui->plglist->item(idx);
-                auto font = d->font();
-                font.setUnderline(true);
-                font.setBold(true);
-                d->setFont(font);
-            }
-            ui->plglist->blockSignals(false);
-        });
+                // highlight deps
+                const auto idx = current->data(PLUGIN_DEPENDENCY_IDX).toInt();
+                auto deps = this->host.at(idx);
+                for (const auto &idx : std::as_const(deps)) {
+                    auto d = ui->plglist->item(idx);
+                    auto font = d->font();
+                    font.setUnderline(true);
+                    font.setBold(true);
+                    d->setFont(font);
+                }
+
+                deps = this->dep.at(idx);
+                for (const auto &idx : std::as_const(deps)) {
+                    auto d = ui->plglist->item(idx);
+                    auto font = d->font();
+                    font.setItalic(true);
+                    font.setBold(true);
+                    d->setFont(font);
+                }
+
+                ui->plglist->blockSignals(false);
+            });
 
     connect(ui->devlist, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -267,6 +309,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     connect(ui->devlist, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem *current, QListWidgetItem *) {
                 if (current == nullptr) {
+                    ui->txtd->clear();
                     return;
                 }
 
@@ -292,6 +335,43 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->btndevSave->setEnabled(false);
         Q_EMIT optionNeedRestartChanged();
     });
+
+    connect(ui->txtc, &QTextBrowser::anchorClicked, this,
+            [this](const QUrl &url) {
+                if (url.isLocalFile()) {
+                    ShowInShell::showInGraphicalShell(this, url.toLocalFile(),
+                                                      false);
+                } else {
+                    QDesktopServices::openUrl(url);
+                }
+            });
+
+    auto cicon = ICONRES(QStringLiteral("cert"));
+    auto &ct = WingPluginCert::instance();
+    for (auto &&[c, loc] : ct.certificates().asKeyValueRange()) {
+        auto lwi = new QListWidgetItem(cicon, c.subjectDisplayName() +
+                                                  QStringLiteral(" (") +
+                                                  loc.fileName() + ')');
+        lwi->setData(CERT_CERT, QVariant::fromValue(c));
+        if (!ct.isValidFingerPrint(c)) {
+            auto font = lwi->font();
+            font.setItalic(true);
+            font.setBold(true);
+            font.setStrikeOut(true);
+            lwi->setFont(font);
+        }
+        ui->certlist->addItem(lwi);
+    }
+
+    connect(ui->certlist, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *) {
+                if (current == nullptr) {
+                    ui->txtcert->clear();
+                    return;
+                }
+                auto c = current->data(CERT_CERT).value<QSslCertificate>();
+                ui->txtcert->setText(c.toText());
+            });
 
     auto ev = new EventFilter(QEvent::EnabledChange, this);
     connect(ev, &EventFilter::eventTriggered, this,
@@ -451,18 +531,38 @@ void PluginSettingDialog::loadPluginInfo(
     if (info) {
         t->clear();
         static auto sep = QStringLiteral(" : ");
-        if (!name.isEmpty()) {
-            t->append(getWrappedText(tr("Name") + sep + name));
+        appendWrappedText(t, tr("Name"), name);
+        appendWrappedText(t, tr("ID"), info->id);
+        appendWrappedText(t, tr("License"), info->license);
+        appendWrappedText(t, tr("Author"), info->author);
+        appendWrappedText(t, tr("Vendor"), info->vendor);
+        appendWrappedText(t, tr("Version"), info->version.toString());
+
+        auto url = info->url;
+        if (!url.isEmpty()) {
+            t->append(getWrappedText(
+                tr("URL") + sep + QStringLiteral("<a href=\"") + url +
+                QStringLiteral("\">") + url + QStringLiteral("</a>")));
         }
-        t->append(getWrappedText(tr("ID") + sep + info->id));
-        t->append(getWrappedText(tr("License") + sep + info->license));
-        t->append(getWrappedText(tr("Author") + sep + info->author));
-        t->append(getWrappedText(tr("Vendor") + sep + info->vendor));
-        t->append(
-            getWrappedText(tr("Version") + sep + info->version.toString()));
-        t->append(getWrappedText(
-            tr("URL") + sep + QStringLiteral("<a href=\"") + info->url +
-            QStringLiteral("\">") + info->url + QStringLiteral("</a>")));
+
+        auto certID = info->certID;
+        if (!certID.isEmpty()) {
+            auto &ct = WingPluginCert::instance();
+            auto c = ct.cert(certID);
+            auto finfo = ct.certLocation(c);
+            if (finfo.exists()) {
+                auto p = finfo.absoluteFilePath();
+                t->append(getWrappedText(
+                    tr("CertID") + sep + QStringLiteral("<a href=\"") +
+                    Utilities::getUrlString(p) + QStringLiteral("\" title=\"") +
+                    c.subjectDisplayName() + QStringLiteral("\">") +
+                    finfo.fileName() + QStringLiteral("</a>")));
+            } else {
+                appendWrappedText(
+                    t, tr("CertID"),
+                    QString::fromLatin1(certID.toHex().toUpper()));
+            }
+        }
 
         if (!dependencies.isEmpty()) {
             ui->txtc->append(getWrappedText(tr("Dependencies") + sep));
@@ -476,13 +576,25 @@ void PluginSettingDialog::loadPluginInfo(
         }
 
         t->append(getWrappedText({}));
-        t->append(getWrappedText(tr("Comment") + sep));
-        t->append(getWrappedText(comment));
+        if (!comment.isEmpty()) {
+            t->append(getWrappedText(tr("Comment") + sep));
+            t->append(getWrappedText(comment));
+        }
     } else {
         t->setText(tr("NoPluginLoaded"));
     }
 }
 
-QString PluginSettingDialog::getWrappedText(const QString &str) {
-    return QStringLiteral("<a>") + str + QStringLiteral("</a>");
+QString PluginSettingDialog::getWrappedText(const QString &content) {
+    return QStringLiteral("<a>") + content + QStringLiteral("</a>");
+}
+
+void PluginSettingDialog::appendWrappedText(QTextBrowser *t,
+                                            const QString &header,
+                                            const QString &content) {
+    if (content.isEmpty()) {
+        return;
+    }
+    t->append(QStringLiteral("<a>") + header + QStringLiteral(" : ") + content +
+              QStringLiteral("</a>"));
 }
