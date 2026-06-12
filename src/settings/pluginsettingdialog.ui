@@ -244,7 +244,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="certlist"/>
+            <widget class="QListWidget" name="certlist">
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

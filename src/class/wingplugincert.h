@@ -32,17 +32,28 @@ public:
     bool isValidFingerPrint(const QSslCertificate &cert) const;
 
     bool verify(const QFileInfo &plg, const QString &sigFileName,
-                const QByteArray &fprint);
+                const QByteArray &fprint) const;
 
     QFileInfo certLocation(const QByteArray &fprint);
     QFileInfo certLocation(const QSslCertificate &cert);
     QSslCertificate cert(const QByteArray &fprint);
+
+    bool isSysCert(const QSslCertificate &cert) const;
+
     static QByteArray fingerPrint(const QSslCertificate &cert);
+
+private:
+    static bool isValidCert(const QSslCertificate &cert);
+
+private:
+    bool verify(const QString &fileName, const QByteArray &sig,
+                const QSslCertificate &cert) const;
 
 private:
     WingPluginCert();
     Q_DISABLE_COPY_MOVE(WingPluginCert)
 
+    QSslCertificate _sysCert;
     QHash<QSslCertificate, QFileInfo> _certs;
     QHash<QByteArray, QSslCertificate> _cs;
 };

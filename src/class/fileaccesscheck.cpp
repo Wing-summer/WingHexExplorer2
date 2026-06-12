@@ -44,24 +44,6 @@ bool FileAccessCheck::canStandardUserWriteFile(const QFileInfo &file) {
 
 #ifdef Q_OS_LINUX
 
-#define Q_DECLARE_AND_REGISTER_METATYPE(TYPE)                                  \
-    Q_DECLARE_METATYPE(TYPE)                                                   \
-    struct TYPE##_metatype_registrar {                                         \
-        class inner {                                                          \
-            inner() { qRegisterMetaType<TYPE>(); }                             \
-            inner(const inner &) = delete;                                     \
-            void operator=(const inner &) = delete;                            \
-                                                                               \
-        public:                                                                \
-            static inner &once() {                                             \
-                static inner instance;                                         \
-                return instance;                                               \
-            }                                                                  \
-        };                                                                     \
-        TYPE##_metatype_registrar() { inner::once(); }                         \
-    };                                                                         \
-    Q_GLOBAL_STATIC(TYPE##_metatype_registrar, _##TYPE##_metatype_registrar);
-
 struct Login1SessionRef {
     QString id;
     QDBusObjectPath path;
@@ -72,8 +54,8 @@ struct Login1UserRef {
     QDBusObjectPath path;
 };
 
-Q_DECLARE_AND_REGISTER_METATYPE(Login1SessionRef)
-Q_DECLARE_AND_REGISTER_METATYPE(Login1UserRef)
+Q_DECLARE_METATYPE(Login1SessionRef)
+Q_DECLARE_METATYPE(Login1UserRef)
 
 static QDBusArgument &operator<<(QDBusArgument &arg,
                                  const Login1SessionRef &v) {

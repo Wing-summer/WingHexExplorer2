@@ -187,6 +187,7 @@ Homepage: https://www.cnblogs.com/wingsummer/
     os.makedirs(exeBasePath)
     os.mkdir(os.path.join(exeBasePath, "plugin"))
     os.mkdir(os.path.join(exeBasePath, "scripts"))
+    os.mkdir(os.path.join(exeBasePath, "certs"))
 
     shutil.copy2(exemain_src, os.path.join(exeBasePath, package_name))
     shutil.copy2(os.path.join(projectdeb, "WingPlugin", "libWingPlugin.so"),
@@ -196,9 +197,6 @@ Homepage: https://www.cnblogs.com/wingsummer/
     os.makedirs(desktopPath)
     shutil.copyfile(os.path.join(buildinstaller, "com.wingsummer.winghexexplorer2.desktop"),
                     os.path.join(desktopPath, "com.wingsummer.winghexexplorer2.desktop"))
-
-    shutil.copyfile(os.path.join(mkinstaller, "config.ini"),
-                    os.path.join(exeBasePath, "config.ini"))
 
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeBasePath, "share"))

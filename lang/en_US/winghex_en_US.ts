@@ -23,7 +23,7 @@
     <name>AboutSoftwareDialog</name>
     <message>
         <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="14"/>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="116"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="101"/>
         <source>About</source>
         <translation>About</translation>
     </message>
@@ -33,32 +33,27 @@
         <translation>WingHexExplorer</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="68"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="71"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="92"/>
-        <source>BuildDate</source>
-        <translation>Build Date</translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="130"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="115"/>
         <source>Components</source>
         <translation>Components</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="144"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="129"/>
         <source>License</source>
         <translation>License</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="164"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="149"/>
         <source>Developer</source>
         <translation>Developer</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="178"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="163"/>
         <source>Translator</source>
         <translation>Translator</translation>
     </message>
@@ -2521,7 +2516,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="87"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="380"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="384"/>
         <source>PluginInfo</source>
         <translation>Plugin Information</translation>
     </message>
@@ -2538,7 +2533,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="158"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="388"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="392"/>
         <source>DevExtInfo</source>
         <translation>Device Extension Information</translation>
     </message>
@@ -2558,88 +2553,89 @@
         <translation>Cert:</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="423"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="427"/>
         <source>Plugin</source>
         <translation>Plugin</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="452"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="456"/>
         <source>SelectEnable</source>
         <translation>Enable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="461"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="465"/>
         <source>SelectDisable</source>
         <translation>Disable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="473"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="477"/>
         <source>SelectAll</source>
         <translation>Select all</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="474"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="478"/>
         <source>SelectClear</source>
         <translation>Clear Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="478"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="482"/>
         <source>DiscardChanges</source>
         <translation>Discard the changes</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="534"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="535"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="536"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="540"/>
         <source>License</source>
         <translation>License</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="537"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="541"/>
         <source>Author</source>
         <translation>Author</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="542"/>
         <source>Vendor</source>
         <translation>Vendor</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="543"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="544"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="548"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="556"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="562"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="558"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="567"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="575"/>
         <source>CertID</source>
         <translation>Cert ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="568"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="582"/>
         <source>Dependencies</source>
         <translation>Dependencies</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="580"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="594"/>
         <source>Comment</source>
         <translation>Comment</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="584"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="598"/>
         <source>NoPluginLoaded</source>
         <translation>No plugins are currently loaded.</translation>
     </message>
@@ -2652,8 +2648,8 @@
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3266"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3355"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3270"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3363"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
@@ -2663,88 +2659,88 @@
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3055"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3057"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3945"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3955"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>Skipping certificate verification is dangerous. Are you sure you want to continue?</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3979"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3989"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3305"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3311"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3586"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3594"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3565"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3633"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3573"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3641"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3595"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3603"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3596"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3604"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3597"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3605"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3636"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3644"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3637"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3645"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3654"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3662"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3677"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3685"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3714"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3722"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3724"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3732"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3732"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3740"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3847"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3855"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>

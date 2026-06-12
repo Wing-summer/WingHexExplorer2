@@ -106,15 +106,13 @@ def update(build_path):
     shutil.copy2(os.path.join(build_path, "WingPlugin", "libWingPlugin.so"),
                  os.path.join(INSTALL_PATH, "libWingPlugin.so"))
 
-    for sub in ("plugin", "scripts"):
+    for sub in ("plugin", "scripts", "certs"):
         create_dir(os.path.join(INSTALL_PATH, sub))
 
     shutil.copytree(os.path.join(installer_path, "share"),
                     os.path.join(INSTALL_PATH, "share"), dirs_exist_ok=True)
     shutil.copytree(os.path.join(build_path, "lang"),
                     os.path.join(INSTALL_PATH, "lang"), dirs_exist_ok=True)
-    shutil.copyfile(os.path.join(mkinstaller_path, "config.ini"),
-                    os.path.join(INSTALL_PATH, "config.ini"))
     shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
         INSTALL_PATH, "lsp"), dirs_exist_ok=True)
 

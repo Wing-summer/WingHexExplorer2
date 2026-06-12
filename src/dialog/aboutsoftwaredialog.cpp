@@ -32,7 +32,6 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
         QStringLiteral(":/com.wingsummer.winghex/src/translist.md")));
     ui->tbDev->setMarkdown(data.dev);
     ui->lblVersion->setText(qApp->applicationVersion());
-    ui->lblBuildDate->setText(QStringLiteral(__DATE__));
 
     ui->tbLicense->setMarkdown(
         readContent(QStringLiteral(":/com.wingsummer.winghex/src/LICENSE.md")));

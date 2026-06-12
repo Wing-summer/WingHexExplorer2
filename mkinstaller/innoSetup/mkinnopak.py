@@ -162,15 +162,13 @@ def main():
     print(Fore.GREEN + ">> Constructing packages..." + Style.RESET_ALL)
     os.mkdir(os.path.join(exeDebPath, "plugin"))
     os.mkdir(os.path.join(exeDebPath, "scripts"))
+    os.mkdir(os.path.join(exeDebPath, "certs"))
 
     shutil.copy2(exemain_src, os.path.join(exeDebPath, exe_name))
     shutil.copy2(exesym_src, os.path.join(exeDebPath, sym_name))
     shutil.copy2(exeplg_src,
                  os.path.join(exeDebPath, "WingPlugin.dll"))
     shutil.copyfile(exeplg_pdb, os.path.join(exeDebPath, "WingPlugin.pdb"))
-
-    shutil.copyfile(os.path.join(mkinstaller, "config.ini"),
-                    os.path.join(exeDebPath, "config.ini"))
 
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeDebPath, "share"))

@@ -122,6 +122,7 @@
         <file>images/writable.png</file>
         <file>src/LICENSE.md</file>
         <file>src/TESTCODE.as</file>
+        <file>src/WingCloudStudio.crt</file>
         <file>src/class/WingAngelAPI.json</file>
         <file>src/class/WingCStruct.json</file>
         <file>src/components.md</file>

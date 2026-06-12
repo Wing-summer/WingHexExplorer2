@@ -145,6 +145,7 @@ def main():
 
     create_dir(os.path.join(installer_path_exec, "plugin"))
     create_dir(os.path.join(installer_path_exec, "scripts"))
+    create_dir(os.path.join(installer_path_exec, "certs"))
 
     shutil.copyfile(version_file_src, os.path.join(
         installer_path_exec, "VERSION"))
@@ -157,9 +158,6 @@ def main():
 
     shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
         installer_path_exec, "lsp"), dirs_exist_ok=True)
-
-    shutil.copyfile(os.path.join(mkinstaller_path, "config.ini"),
-                    os.path.join(installer_path_exec, "config.ini"))
 
     # copying deployment files
     deploy_files = ["qt.conf", "uninstall.sh",

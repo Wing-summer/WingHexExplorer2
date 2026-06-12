@@ -339,8 +339,10 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     connect(ui->txtc, &QTextBrowser::anchorClicked, this,
             [this](const QUrl &url) {
                 if (url.isLocalFile()) {
-                    ShowInShell::showInGraphicalShell(this, url.toLocalFile(),
-                                                      false);
+                    auto f = url.toLocalFile();
+                    if (!f.isEmpty()) {
+                        ShowInShell::showInGraphicalShell(this, f, false);
+                    }
                 } else {
                     QDesktopServices::openUrl(url);
                 }
@@ -349,9 +351,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto cicon = ICONRES(QStringLiteral("cert"));
     auto &ct = WingPluginCert::instance();
     for (auto &&[c, loc] : ct.certificates().asKeyValueRange()) {
-        auto lwi = new QListWidgetItem(cicon, c.subjectDisplayName() +
-                                                  QStringLiteral(" (") +
-                                                  loc.fileName() + ')');
+        auto name = c.subjectDisplayName();
+        if (!ct.isSysCert(c)) {
+            name += QStringLiteral(" (") + loc.fileName() + ')';
+        }
+        auto lwi = new QListWidgetItem(cicon, name);
         lwi->setData(CERT_CERT, QVariant::fromValue(c));
         if (!ct.isValidFingerPrint(c)) {
             auto font = lwi->font();
@@ -549,18 +553,28 @@ void PluginSettingDialog::loadPluginInfo(
         if (!certID.isEmpty()) {
             auto &ct = WingPluginCert::instance();
             auto c = ct.cert(certID);
-            auto finfo = ct.certLocation(c);
-            if (finfo.exists()) {
-                auto p = finfo.absoluteFilePath();
+            if (ct.isSysCert(c)) {
                 t->append(getWrappedText(
-                    tr("CertID") + sep + QStringLiteral("<a href=\"") +
-                    Utilities::getUrlString(p) + QStringLiteral("\" title=\"") +
+                    tr("CertID") + sep +
+                    QStringLiteral("<a href=\"file://\" title=\"") +
                     c.subjectDisplayName() + QStringLiteral("\">") +
-                    finfo.fileName() + QStringLiteral("</a>")));
+                    c.subjectDisplayName() + QStringLiteral("</a>")));
             } else {
-                appendWrappedText(
-                    t, tr("CertID"),
-                    QString::fromLatin1(certID.toHex().toUpper()));
+                auto finfo = ct.certLocation(c);
+                if (finfo.exists()) {
+                    auto p = finfo.absoluteFilePath();
+                    t->append(getWrappedText(
+                        tr("CertID") + sep + QStringLiteral("<a href=\"") +
+                        Utilities::getUrlString(p) +
+                        QStringLiteral("\" title=\"") + c.subjectDisplayName() +
+                        QStringLiteral("\">") + finfo.fileName() +
+                        QStringLiteral("</a>")));
+                } else {
+
+                    appendWrappedText(
+                        t, tr("CertID"),
+                        QString::fromLatin1(certID.toHex().toUpper()));
+                }
             }
         }
 

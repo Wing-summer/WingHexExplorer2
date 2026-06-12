@@ -42,11 +42,10 @@ WingPluginCert &WingPluginCert::instance() {
 }
 
 bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
-                            const QByteArray &fprint) {
+                            const QByteArray &fprint) const {
     if (!_cs.contains(fprint)) {
         return false;
     }
-
     QFileInfo sigInfo(sigFileName);
     if (!sigInfo.exists() || !sigInfo.isFile() || !sigInfo.isReadable()) {
         return false;
@@ -54,8 +53,72 @@ bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
     if (sigInfo.size() <= 0 || sigInfo.size() > MaxSigSize) {
         return false;
     }
+
+    QFile fsig(sigFileName);
+    if (!fsig.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    auto sig = fsig.readAll();
     auto c = _cs.value(fprint);
-    auto key = c.publicKey();
+    return verify(plg.absoluteFilePath(), sig, c);
+}
+
+QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
+    auto c = cert(fprint);
+    if (c.isNull()) {
+        return {};
+    }
+    return certLocation(c);
+}
+
+QFileInfo WingPluginCert::certLocation(const QSslCertificate &cert) {
+    return _certs.value(cert);
+}
+
+QSslCertificate WingPluginCert::cert(const QByteArray &fprint) {
+    return _cs.value(fprint);
+}
+
+bool WingPluginCert::isSysCert(const QSslCertificate &cert) const {
+    if (_sysCert.isNull()) {
+        return false;
+    }
+    return _sysCert == cert;
+}
+
+QHash<QSslCertificate, QFileInfo> WingPluginCert::certificates() const {
+    return _certs;
+}
+
+bool WingPluginCert::isValidFingerPrint(const QSslCertificate &cert) const {
+    return _cs.contains(fingerPrint(cert));
+}
+
+QByteArray WingPluginCert::fingerPrint(const QSslCertificate &cert) {
+    return cert.digest(QCryptographicHash::Sha256);
+}
+
+bool WingPluginCert::isValidCert(const QSslCertificate &cert) {
+    // valid crt file but it's invalid
+    if (cert.isNull() || cert.isBlacklisted()) {
+        return false;
+    }
+
+    auto date = QDateTime::currentDateTime();
+    if (date < cert.effectiveDate() || date > cert.expiryDate()) {
+        return false;
+    }
+    return true;
+}
+
+bool WingPluginCert::verify(const QString &fileName, const QByteArray &sig,
+                            const QSslCertificate &cert) const {
+    if (!isValidCert(cert)) {
+        return false;
+    }
+
+    auto key = cert.publicKey();
     const auto pem = key.toPem();
     if (pem.isEmpty()) {
         return false;
@@ -68,22 +131,13 @@ bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
     if (!pkey) {
         return false;
     }
-    QFile fsig(sigFileName);
-    if (!fsig.open(QIODevice::ReadOnly)) {
+
+    if (sig.isEmpty()) {
         EVP_PKEY_free(pkey);
         return false;
     }
-    const auto signature = fsig.readAll();
-    if (signature.isEmpty()) {
-        EVP_PKEY_free(pkey);
-        return false;
-    }
-    if (signature.isEmpty()) {
-        EVP_PKEY_free(pkey);
-        return false;
-    }
-    QFile fplg(plg.absoluteFilePath());
-    if (!fplg.open(QIODevice::ReadOnly)) {
+    QFile f(fileName);
+    if (!f.open(QIODevice::ReadOnly)) {
         EVP_PKEY_free(pkey);
         return false;
     }
@@ -122,7 +176,7 @@ bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
         }
 
         while (true) {
-            const qint64 len = fplg.read(buffer, ChunkSize);
+            const qint64 len = f.read(buffer, ChunkSize);
             if (len < 0) {
                 ok = false;
                 goto done_verify;
@@ -135,11 +189,9 @@ bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
                 goto done_verify;
             }
         }
-        ok =
-            (EVP_DigestVerifyFinal(
-                 ctx,
-                 reinterpret_cast<const unsigned char *>(signature.constData()),
-                 static_cast<size_t>(signature.size())) == 1);
+        ok = (EVP_DigestVerifyFinal(
+                  ctx, reinterpret_cast<const unsigned char *>(sig.constData()),
+                  static_cast<size_t>(sig.size())) == 1);
     done_verify:;
     } while (false);
     EVP_MD_CTX_free(ctx);
@@ -147,35 +199,21 @@ bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
     return ok;
 }
 
-QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
-    auto c = cert(fprint);
-    if (c.isNull()) {
-        return {};
-    }
-    return certLocation(c);
-}
-
-QFileInfo WingPluginCert::certLocation(const QSslCertificate &cert) {
-    return _certs.value(cert);
-}
-
-QSslCertificate WingPluginCert::cert(const QByteArray &fprint) {
-    return _cs.value(fprint);
-}
-
-QHash<QSslCertificate, QFileInfo> WingPluginCert::certificates() const {
-    return _certs;
-}
-
-bool WingPluginCert::isValidFingerPrint(const QSslCertificate &cert) const {
-    return _cs.contains(fingerPrint(cert));
-}
-
-QByteArray WingPluginCert::fingerPrint(const QSslCertificate &cert) {
-    return cert.digest(QCryptographicHash::Sha256);
-}
-
 WingPluginCert::WingPluginCert() {
+    // load internal cert
+    QFile f(QStringLiteral(":/com.wingsummer.winghex/src/WingCloudStudio.crt"));
+    if (f.open(QFile::ReadOnly)) {
+        QSslCertificate cert(&f, QSsl::Pem);
+        if (!cert.isNull()) {
+            if (isValidCert(cert)) {
+                _certs.insert(cert, {});
+                _sysCert = cert;
+                _cs.insert(fingerPrint(cert), cert);
+            }
+        }
+    }
+
+    // load user cert
     QDir data(QCoreApplication::applicationDirPath());
     auto certdir = QStringLiteral("certs");
     if (!data.exists(certdir)) {
@@ -201,7 +239,7 @@ WingPluginCert::WingPluginCert() {
             continue;
         }
         QSslCertificate cert(&f, QSsl::Pem);
-        if (cert.isNull()) {
+        if (cert.isNull() || _certs.contains(cert)) {
             continue;
         }
 
@@ -211,17 +249,11 @@ WingPluginCert::WingPluginCert() {
             continue;
         }
 
-        // valid crt file but it's invalid
-        if (cert.isBlacklisted()) {
+        if (!isValidCert(cert)) {
             _certs.insert(cert, c);
             continue;
         }
 
-        auto date = QDateTime::currentDateTime();
-        if (date < cert.effectiveDate() || date > cert.expiryDate()) {
-            _certs.insert(cert, c);
-            continue;
-        }
         _certs.insert(cert, c);
         _cs.insert(fingerPrint(cert), cert);
     }

@@ -3041,7 +3041,9 @@ QString PluginSystem::getPluginID(IWingPluginBase *plg) const {
 void PluginSystem::loadExtPlugin() {
     const auto folder = QStringLiteral("plugin");
     QDir udir(Utilities::getAppDataPath());
-    udir.mkdir(folder);
+    if (!udir.exists(folder)) {
+        udir.mkdir(folder);
+    }
 
     const auto filter = QStringLiteral("*.wingplg");
     auto plgs =
@@ -3055,7 +3057,9 @@ void PluginSystem::loadExtPlugin() {
     Logger::info(tr("FoundPluginCount") + QString::number(totalFound));
 
     const auto plgset = QStringLiteral("plgset");
-    udir.mkdir(plgset);
+    if (!udir.exists(plgset)) {
+        udir.mkdir(plgset);
+    }
     bool udir_ok = udir.cd(plgset);
 
     QHash<QString, QVersionNumber> loadedVersions;
@@ -3291,7 +3295,9 @@ void PluginSystem::loadExtPlugin() {
 void PluginSystem::loadDevicePlugin() {
     const auto folder = QStringLiteral("devdrv");
     QDir udir(Utilities::getAppDataPath());
-    udir.mkdir(folder);
+    if (!udir.exists(folder)) {
+        udir.mkdir(folder);
+    }
 
     const auto filter = QStringLiteral("*.wingdrv");
     const auto plgs =
@@ -3305,7 +3311,9 @@ void PluginSystem::loadDevicePlugin() {
     Logger::info(tr("FoundDrvPluginCount") + QString::number(total));
 
     auto plgset = QStringLiteral("drvset");
-    udir.mkdir(plgset);
+    if (!udir.exists(plgset)) {
+        udir.mkdir(plgset);
+    }
     bool udir_ok = udir.cd(plgset);
 
     QStringList loaded;
@@ -3916,7 +3924,9 @@ void PluginSystem::loadAllPlugins() {
             auto cstructplg = new WingCStruct;
             QDir setd(Utilities::getAppDataPath());
             auto plgset = QStringLiteral("plgset");
-            setd.mkdir(plgset);
+            if (!setd.exists(plgset)) {
+                setd.mkdir(plgset);
+            }
             retranslateMetadata(cstructplg, meta);
             auto r = loadPlugin(cstructplg, meta, setd);
             ASSERT(r);
@@ -3986,7 +3996,9 @@ void PluginSystem::loadAllPlugins() {
 void PluginSystem::destory() {
     QDir udir(Utilities::getAppDataPath());
     auto plgset = QStringLiteral("plgset");
-    udir.mkdir(plgset);
+    if (!udir.exists(plgset)) {
+        udir.mkdir(plgset);
+    }
     _unloading = true; // marked as unloading and disable cache
 
     bool ok = udir.cd(plgset);

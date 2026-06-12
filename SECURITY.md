@@ -12,6 +12,21 @@ if any version of Qt is deprecated, this version will not be supported, and
 the related code will be removed. If you require support, please contact me
 for paid technical support.
 
+## 正版验证
+
+该仓库传统意义上没有官方正版的说法。而且由于发行版是通过 CI 方式构建自行生成的，
+而且不同 Linux 发行版的差异也会造成一些麻烦，这需要自行编译才能基本解决。并且，
+就算这些问题都能够解决，签名需要私钥，由于个人开发，没有多余的人力财力维护这一套设施，
+使用者是无法通过直接手段判断是否二进制产物来源于仓库拥有者。
+
+Traditionally, there is no official, genuine version of this repository.
+Furthermore, since the distributions are generated automatically via CI,
+and differences between different Linux distributions can cause problems,
+requiring manual compilation to resolve. Even if these issues are resolved,
+signing requires a private key, and due to the individual development,
+there isn't sufficient manpower or financial resources to maintain this system.
+Users cannot directly determine whether the binary output originates from the repository owner.
+
 ## 报告漏洞 (Reporting a Vulnerability)
 
 以下情况将不视为该软件的漏洞：
