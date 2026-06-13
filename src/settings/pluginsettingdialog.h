@@ -38,6 +38,7 @@ public:
 
 private:
     Ui::PluginSettingDialog *ui;
+    QListWidgetItem *_sysCertItem = nullptr;
 
     QList<QList<int>> host;
     QList<QList<int>> dep;
@@ -73,6 +74,9 @@ private:
     QString getWrappedText(const QString &content);
     void appendWrappedText(QTextBrowser *t, const QString &header,
                            const QString &content);
+
+private slots:
+    void onAnchorClicked(const QUrl &url);
 };
 
 #endif // PLUGINSETTINGDIALOG_H

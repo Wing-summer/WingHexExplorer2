@@ -3398,9 +3398,7 @@ bool PluginSystem::checkPluginCert(const QFileInfo &item,
         }
         if (ck) {
             auto &ct = WingPluginCert::instance();
-            const auto sigFile = item.absoluteDir().absoluteFilePath(
-                item.baseName() + QStringLiteral(".sig"));
-            return ct.verify(item, sigFile, certID);
+            return ct.verify(item, certID);
         }
     }
     return true;

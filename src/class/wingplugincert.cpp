@@ -31,9 +31,42 @@
 #include <openssl/x509.h>
 
 namespace {
-constexpr qint64 MaxCertSize = 64 * 1024; // 64 KB
-constexpr qint64 MaxSigSize = 16 * 1024;  // 16 KB (Base64 text)
-constexpr qint64 ChunkSize = 64 * 1024;   // 64 KB
+constexpr qint64 MaxPluginSize = 500LL * 1024 * 1024; // 500 MB
+constexpr qint64 MaxCertSize = 64 * 1024;             // 64 KB
+constexpr qint64 ExpectedSigSize = 64;                // Ed25519 fixed size
+constexpr char Magic[8]{'W', 'I', 'N', 'G', 'S', 'I', 'G', '1'};
+constexpr qint64 MagicSize = sizeof(Magic);
+constexpr qint64 InternalSigSize = MagicSize + ExpectedSigSize;
+
+EVP_PKEY *loadPkeyFromCertificate(const QSslCertificate &cert) {
+    const QByteArray pem = cert.toPem();
+    if (pem.isEmpty())
+        return nullptr;
+
+    BIO *bio = BIO_new_mem_buf(pem.constData(), static_cast<int>(pem.size()));
+    if (!bio)
+        return nullptr;
+
+    X509 *x509 = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    BIO_free(bio);
+
+    if (!x509)
+        return nullptr;
+
+    EVP_PKEY *pkey = X509_get_pubkey(x509);
+    X509_free(x509);
+
+    if (!pkey)
+        return nullptr;
+
+    if (EVP_PKEY_id(pkey) != EVP_PKEY_ED25519) {
+        EVP_PKEY_free(pkey);
+        return nullptr;
+    }
+
+    return pkey;
+}
+
 } // namespace
 
 WingPluginCert &WingPluginCert::instance() {
@@ -41,27 +74,50 @@ WingPluginCert &WingPluginCert::instance() {
     return ins;
 }
 
-bool WingPluginCert::verify(const QFileInfo &plg, const QString &sigFileName,
+bool WingPluginCert::verify(const QFileInfo &plg,
                             const QByteArray &fprint) const {
     if (!_cs.contains(fprint)) {
         return false;
     }
-    QFileInfo sigInfo(sigFileName);
-    if (!sigInfo.exists() || !sigInfo.isFile() || !sigInfo.isReadable()) {
-        return false;
-    }
-    if (sigInfo.size() <= 0 || sigInfo.size() > MaxSigSize) {
+    if (plg.size() <= 0 || plg.size() > MaxPluginSize) {
         return false;
     }
 
-    QFile fsig(sigFileName);
-    if (!fsig.open(QIODevice::ReadOnly)) {
+    QFile fplg(plg.absoluteFilePath());
+    if (!fplg.open(QIODevice::ReadOnly)) {
         return false;
     }
+    auto data = fplg.readAll();
 
-    auto sig = fsig.readAll();
+    QByteArray sig;
+    if (data.size() > InternalSigSize) {
+        auto maySig = data.last(InternalSigSize);
+        if (QByteArrayView(maySig).first(MagicSize) ==
+            QByteArrayView::fromArray(Magic)) {
+            data.chop(InternalSigSize);
+            sig = maySig.sliced(MagicSize);
+        }
+    }
+
+    if (sig.isEmpty()) {
+        const auto sigFileName = plg.absoluteDir().absoluteFilePath(
+            plg.baseName() + QStringLiteral(".sig"));
+        QFileInfo sigInfo(sigFileName);
+        if (!sigInfo.exists() || !sigInfo.isFile() || !sigInfo.isReadable()) {
+            return false;
+        }
+        if (sigInfo.size() != ExpectedSigSize) {
+            return false;
+        }
+        QFile fsig(sigFileName);
+        if (fsig.open(QIODevice::ReadOnly)) {
+            sig = fsig.readAll();
+            fsig.close();
+        }
+    }
+
     auto c = _cs.value(fprint);
-    return verify(plg.absoluteFilePath(), sig, c);
+    return verify(data, sig, c);
 }
 
 QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
@@ -112,88 +168,35 @@ bool WingPluginCert::isValidCert(const QSslCertificate &cert) {
     return true;
 }
 
-bool WingPluginCert::verify(const QString &fileName, const QByteArray &sig,
+bool WingPluginCert::verify(const QByteArray &file, const QByteArray &sig,
                             const QSslCertificate &cert) const {
     if (!isValidCert(cert)) {
         return false;
     }
 
-    auto key = cert.publicKey();
-    const auto pem = key.toPem();
-    if (pem.isEmpty()) {
-        return false;
-    }
-    BIO *bio = BIO_new_mem_buf(pem.constData(), pem.size());
-    if (!bio) {
-        return false;
-    }
-    EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bio, nullptr, nullptr, nullptr);
+    EVP_PKEY *pkey = loadPkeyFromCertificate(cert);
     if (!pkey) {
         return false;
     }
 
-    if (sig.isEmpty()) {
-        EVP_PKEY_free(pkey);
-        return false;
-    }
-    QFile f(fileName);
-    if (!f.open(QIODevice::ReadOnly)) {
-        EVP_PKEY_free(pkey);
-        return false;
-    }
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     if (!ctx) {
         EVP_PKEY_free(pkey);
         return false;
     }
+
     bool ok = false;
-    char buffer[ChunkSize];
     do {
-        if (EVP_DigestVerifyInit(ctx, nullptr, EVP_sha256(), nullptr, pkey) !=
-            1) {
-            EVP_MD_CTX_free(ctx);
-            EVP_PKEY_free(pkey);
-            return false;
-        }
+        if (EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) != 1)
+            break;
 
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
-        if (!pctx) {
-            EVP_MD_CTX_free(ctx);
-            EVP_PKEY_free(pkey);
-            return false;
-        }
-
-        if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) != 1) {
-            EVP_MD_CTX_free(ctx);
-            EVP_PKEY_free(pkey);
-            return false;
-        }
-
-        if (EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_AUTO) != 1) {
-            EVP_MD_CTX_free(ctx);
-            EVP_PKEY_free(pkey);
-            return false;
-        }
-
-        while (true) {
-            const qint64 len = f.read(buffer, ChunkSize);
-            if (len < 0) {
-                ok = false;
-                goto done_verify;
-            }
-            if (len == 0)
-                break;
-            if (EVP_DigestVerifyUpdate(ctx, buffer, static_cast<size_t>(len)) !=
-                1) {
-                ok = false;
-                goto done_verify;
-            }
-        }
-        ok = (EVP_DigestVerifyFinal(
+        ok = (EVP_DigestVerify(
                   ctx, reinterpret_cast<const unsigned char *>(sig.constData()),
-                  static_cast<size_t>(sig.size())) == 1);
-    done_verify:;
+                  static_cast<size_t>(sig.size()),
+                  reinterpret_cast<const unsigned char *>(file.constData()),
+                  static_cast<size_t>(file.size())) == 1);
     } while (false);
+
     EVP_MD_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     return ok;

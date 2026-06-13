@@ -206,15 +206,15 @@
           </layout>
          </widget>
          <widget class="QTextBrowser" name="txtd">
-          <property name="openExternalLinks">
-           <bool>true</bool>
+          <property name="openLinks">
+           <bool>false</bool>
           </property>
          </widget>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="tabCert">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
         <normaloff>:/com.wingsummer.winghex/images/certfile.png</normaloff>:/com.wingsummer.winghex/images/certfile.png</iconset>

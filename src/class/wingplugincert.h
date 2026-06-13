@@ -31,8 +31,7 @@ public:
 
     bool isValidFingerPrint(const QSslCertificate &cert) const;
 
-    bool verify(const QFileInfo &plg, const QString &sigFileName,
-                const QByteArray &fprint) const;
+    bool verify(const QFileInfo &plg, const QByteArray &fprint) const;
 
     QFileInfo certLocation(const QByteArray &fprint);
     QFileInfo certLocation(const QSslCertificate &cert);
@@ -46,7 +45,7 @@ private:
     static bool isValidCert(const QSslCertificate &cert);
 
 private:
-    bool verify(const QString &fileName, const QByteArray &sig,
+    bool verify(const QByteArray &file, const QByteArray &sig,
                 const QSslCertificate &cert) const;
 
 private:

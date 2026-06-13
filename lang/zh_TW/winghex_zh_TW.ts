@@ -2516,7 +2516,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="87"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="384"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="381"/>
         <source>PluginInfo</source>
         <translation>插件資訊</translation>
     </message>
@@ -2533,7 +2533,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="158"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="392"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="389"/>
         <source>DevExtInfo</source>
         <translation>設備插件資訊</translation>
     </message>
@@ -2553,89 +2553,89 @@
         <translation>證書：</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="427"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="424"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="536"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="535"/>
         <source>Name</source>
         <translation>名稱</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="540"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="537"/>
         <source>License</source>
         <translation>協議</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="541"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="538"/>
         <source>Author</source>
         <translation>作者</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="542"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="539"/>
         <source>Vendor</source>
         <translation>廠家</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="543"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="540"/>
         <source>Version</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="477"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="474"/>
         <source>SelectAll</source>
         <translation>全選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="456"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="453"/>
         <source>SelectEnable</source>
         <translation>啟用所選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="465"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="462"/>
         <source>SelectDisable</source>
         <translation>禁用所選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="478"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="475"/>
         <source>SelectClear</source>
         <translation>刪除所選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="482"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="479"/>
         <source>DiscardChanges</source>
         <translation>丟棄修改</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="558"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="567"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="575"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="555"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="564"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="571"/>
         <source>CertID</source>
         <translation>證書 ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="582"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="578"/>
         <source>Dependencies</source>
         <translation>依賴</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="594"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="590"/>
         <source>Comment</source>
         <translation>說明</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="598"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="594"/>
         <source>NoPluginLoaded</source>
         <translation>無加載的插件</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="548"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="545"/>
         <source>URL</source>
         <translation>網址</translation>
     </message>
@@ -2659,68 +2659,68 @@
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3573"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3641"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3571"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3639"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3594"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3592"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3603"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3601"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3604"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3602"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3605"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3603"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3644"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3642"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3645"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3643"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3662"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3660"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3685"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3683"/>
         <source>ChooseFile</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3722"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3720"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3732"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3730"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3740"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3738"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3855"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3853"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2735,12 +2735,12 @@
         <translation>總計發現插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3955"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3953"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>忽略證書驗證存在嚴重風險，確認繼續嗎？</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3989"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3987"/>
         <source>PluginLoadingFinished</source>
         <translation>加載插件完畢！</translation>
     </message>

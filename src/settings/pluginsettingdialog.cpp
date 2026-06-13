@@ -337,26 +337,23 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     });
 
     connect(ui->txtc, &QTextBrowser::anchorClicked, this,
-            [this](const QUrl &url) {
-                if (url.isLocalFile()) {
-                    auto f = url.toLocalFile();
-                    if (!f.isEmpty()) {
-                        ShowInShell::showInGraphicalShell(this, f, false);
-                    }
-                } else {
-                    QDesktopServices::openUrl(url);
-                }
-            });
+            &PluginSettingDialog::onAnchorClicked);
+    connect(ui->txtd, &QTextBrowser::anchorClicked, this,
+            &PluginSettingDialog::onAnchorClicked);
 
     auto cicon = ICONRES(QStringLiteral("cert"));
     auto &ct = WingPluginCert::instance();
     for (auto &&[c, loc] : ct.certificates().asKeyValueRange()) {
         auto name = c.subjectDisplayName();
-        if (!ct.isSysCert(c)) {
+        bool s = ct.isSysCert(c);
+        if (!s) {
             name += QStringLiteral(" (") + loc.fileName() + ')';
         }
         auto lwi = new QListWidgetItem(cicon, name);
         lwi->setData(CERT_CERT, QVariant::fromValue(c));
+        if (s) {
+            _sysCertItem = lwi;
+        }
         if (!ct.isValidFingerPrint(c)) {
             auto font = lwi->font();
             font.setItalic(true);
@@ -556,7 +553,7 @@ void PluginSettingDialog::loadPluginInfo(
             if (ct.isSysCert(c)) {
                 t->append(getWrappedText(
                     tr("CertID") + sep +
-                    QStringLiteral("<a href=\"file://\" title=\"") +
+                    QStringLiteral("<a href=\"cert://\" title=\"") +
                     c.subjectDisplayName() + QStringLiteral("\">") +
                     c.subjectDisplayName() + QStringLiteral("</a>")));
             } else {
@@ -570,7 +567,6 @@ void PluginSettingDialog::loadPluginInfo(
                         QStringLiteral("\">") + finfo.fileName() +
                         QStringLiteral("</a>")));
                 } else {
-
                     appendWrappedText(
                         t, tr("CertID"),
                         QString::fromLatin1(certID.toHex().toUpper()));
@@ -611,4 +607,22 @@ void PluginSettingDialog::appendWrappedText(QTextBrowser *t,
     }
     t->append(QStringLiteral("<a>") + header + QStringLiteral(" : ") + content +
               QStringLiteral("</a>"));
+}
+
+void PluginSettingDialog::onAnchorClicked(const QUrl &url) {
+    if (url.isLocalFile()) {
+        auto f = url.toLocalFile();
+        if (!f.isEmpty()) {
+            ShowInShell::showInGraphicalShell(this, f, false);
+        }
+    } else {
+        if (url.scheme() == QLatin1String("cert")) {
+            ui->tabWidget->setCurrentWidget(ui->tabCert);
+            if (_sysCertItem) {
+                ui->certlist->setCurrentItem(_sysCertItem);
+            }
+        } else {
+            QDesktopServices::openUrl(url);
+        }
+    }
 }
