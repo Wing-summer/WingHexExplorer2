@@ -71,6 +71,7 @@ Thanks to the sponsorship of the following people, I will try my best to continu
 | Sponsor |       Comment        |
 | :-----: | :------------------: |
 |   *欢   | a fellow from Deepin |
+|   *森   |                      |
 
 ## Contributing
 
