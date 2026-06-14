@@ -18,3 +18,11 @@ with section("format"):
   # If a statement is wrapped to more than one line, than dangle the closing
   # parenthesis on its own line.
   dangle_parens = False
+
+  max_blank_lines = 1
+
+# ------------------------------------------------
+# Options affecting comment reflow and formatting.
+# ------------------------------------------------
+with section("markup"):
+    enable_markup = False
