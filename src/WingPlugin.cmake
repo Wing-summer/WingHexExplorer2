@@ -1,3 +1,21 @@
+# ==============================================================================
+# Copyright (C) 2026-2029 WingSummer
+#
+# You can redistribute this file and/or modify it under the terms of the BSD
+# 3-Clause.
+#
+# THIS FILE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# =============================================================================
+
 # Function: add_wing_plugin
 # Parameters:
 #> NAME <string> - Plugin name (required)
@@ -12,18 +30,30 @@
 #  ${CMAKE_BINARY_DIR}
 #> LINK_LIBRARIES <list> - Additional libraries to link (optional, defaults to
 #  Qt::Widgets and WingPlugin)
-#> TRANSLATION_UTILS_ALREADY_INCLUDED <bool> - Whether TranslationUtils.cmake has
-#  already been included, default OFF
-#> TRANSLATION_UTILS_PATH <path> - Path to TranslationUtils.cmake, default
-#  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/TranslationUtils.cmake
-#> DEP_SUBDIR <string> - Subdirectory for dependency libraries (relative to
-#  plugin location), default ${NAME}Dep. E.g., if plugin name is Foo,
-#  subdirectory is FooDep
 #> SET_RPATH <bool> - Whether to set RPATH for relative dependency lookup,
 #  default ON (effective only on Linux/Unix)
 #> KEEP_DEBUG_SYMBOLS <bool> - Keep debug symbols in Release builds, default ON
-#  TRANSLATION_OPTIONS <list> - Options passed to lrelease (e.g., -no-obsolete,
+#> TRANSLATION_OPTIONS <list> - Options passed to lrelease (e.g., -no-obsolete,
 #  -compress), default empty
+
+function(ADD_PLUGIN_TRANSLATIONS_RESOURCE res_file target)
+    set(_qm_files ${ARGN})
+    set(_res_file ${CMAKE_CURRENT_BINARY_DIR}/app_translations.qrc)
+
+    file(
+        WRITE ${_res_file}
+        "<!DOCTYPE RCC><RCC version=\"1.0\">\n <qresource prefix=\"/PLGLANG/${target}\">\n"
+    )
+    foreach(_lang ${_qm_files})
+        get_filename_component(_filename ${_lang} NAME)
+        file(APPEND ${_res_file} "  <file>${_filename}</file>\n")
+    endforeach()
+    file(APPEND ${_res_file} " </qresource>\n</RCC>\n")
+
+    set(${res_file}
+        ${_res_file}
+        PARENT_SCOPE)
+endfunction()
 
 function(_winghex_to_bool input_var default_value output_var)
     if(DEFINED ${input_var})
@@ -73,7 +103,7 @@ function(add_wing_plugin)
     cmake_parse_arguments(
         ARG
         ""
-        "NAME;TYPE;CXX_STANDARD;WINGHEX_PATH;TEST_MODE;TRANSLATION_UTILS_ALREADY_INCLUDED;TRANSLATION_UTILS_PATH;DEP_SUBDIR;SET_RPATH;KEEP_DEBUG_SYMBOLS"
+        "NAME;TYPE;CXX_STANDARD;WINGHEX_PATH;TEST_MODE;SET_RPATH;KEEP_DEBUG_SYMBOLS"
         "SOURCES;RESOURCES;TS_FILES;LINK_LIBRARIES;TRANSLATION_OPTIONS"
         ${ARGN})
 
@@ -103,8 +133,6 @@ function(add_wing_plugin)
     endif()
 
     _winghex_to_bool(ARG_TEST_MODE OFF ARG_TEST_MODE)
-    _winghex_to_bool(ARG_TRANSLATION_UTILS_ALREADY_INCLUDED OFF
-                     ARG_TRANSLATION_UTILS_ALREADY_INCLUDED)
     _winghex_to_bool(ARG_SET_RPATH ON ARG_SET_RPATH)
     _winghex_to_bool(ARG_KEEP_DEBUG_SYMBOLS ON ARG_KEEP_DEBUG_SYMBOLS)
 
@@ -112,14 +140,7 @@ function(add_wing_plugin)
         set(ARG_CXX_STANDARD 17)
     endif()
 
-    if(NOT ARG_TRANSLATION_UTILS_PATH)
-        set(ARG_TRANSLATION_UTILS_PATH
-            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/TranslationUtils.cmake")
-    endif()
-
-    if(NOT ARG_DEP_SUBDIR)
-        set(ARG_DEP_SUBDIR "${ARG_NAME}Dep")
-    endif()
+    set(ARG_DEP_SUBDIR "${ARG_NAME}Dep")
 
     # --- Qt6 ---
     set(QT_COMPONENTS Widgets)
@@ -152,32 +173,6 @@ function(add_wing_plugin)
 
         if(NOT _filtered_ts_files)
             message(FATAL_ERROR "add_wing_plugin: No valid .ts files provided.")
-        endif()
-
-        # Load TranslationUtils only when needed
-        if(NOT COMMAND add_plugin_translations_resource)
-            if(ARG_TRANSLATION_UTILS_ALREADY_INCLUDED)
-                message(
-                    FATAL_ERROR
-                        "add_wing_plugin: TRANSLATION_UTILS_ALREADY_INCLUDED=ON, but command 'add_plugin_translations_resource' is still not available."
-                )
-            endif()
-
-            if(EXISTS "${ARG_TRANSLATION_UTILS_PATH}")
-                include("${ARG_TRANSLATION_UTILS_PATH}")
-            else()
-                message(
-                    FATAL_ERROR
-                        "add_wing_plugin: TranslationUtils.cmake not found at '${ARG_TRANSLATION_UTILS_PATH}'."
-                )
-            endif()
-        endif()
-
-        if(NOT COMMAND add_plugin_translations_resource)
-            message(
-                FATAL_ERROR
-                    "add_wing_plugin: command 'add_plugin_translations_resource' is not defined after including TranslationUtils.cmake."
-            )
         endif()
 
         # Build source list for lupdate
@@ -224,10 +219,10 @@ function(add_wing_plugin)
     # --- Library ---
     add_library(${ARG_NAME} SHARED ${ARG_SOURCES} ${ARG_RESOURCES} ${QM_FILES}
                                    ${QM_RES})
-
     set_target_properties(
         ${ARG_NAME}
-        PROPERTIES SUFFIX "${_wing_plugin_suffix}"
+        PROPERTIES PREFIX ""
+                   SUFFIX "${_wing_plugin_suffix}"
                    CXX_STANDARD ${ARG_CXX_STANDARD}
                    CXX_STANDARD_REQUIRED ON
                    CXX_EXTENSIONS OFF

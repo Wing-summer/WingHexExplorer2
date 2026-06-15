@@ -42,6 +42,34 @@ class MainWindow;
 class asCScriptEngine;
 class QPluginLoader;
 
+class PluginLoadGuard {
+public:
+    PluginLoadGuard(const QFileInfo &path) {
+#ifdef Q_OS_WIN
+        QDir pluginDir(path.absoluteFilePath());
+        QFileInfo dir(
+            pluginDir.absoluteFilePath(path.baseName() + QLatin1String("Dep")));
+        if (dir.isDir() && dir.exists()) {
+            auto path = dir.absoluteFilePath();
+            _cookie = AddDllDirectory((PCWSTR)path.utf16());
+        }
+#endif
+    }
+
+    ~PluginLoadGuard() {
+#ifdef Q_OS_WIN
+        if (_cookie) {
+            RemoveDllDirectory(_cookie);
+        }
+#endif
+    }
+
+private:
+#ifdef Q_OS_WIN
+    DLL_DIRECTORY_COOKIE _cookie{};
+#endif
+};
+
 // only plugin api can be declared with `public slot`
 
 class PluginSystem : public QObject {
@@ -316,7 +344,7 @@ signals:
     void pluginLoading(const QString &plgName);
 
 private:
-    PluginSystem(QObject *parent = nullptr);
+    PluginSystem();
     ~PluginSystem();
 
     // IWingPluginBase API

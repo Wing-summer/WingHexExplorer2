@@ -19,8 +19,6 @@ with section("format"):
   # parenthesis on its own line.
   dangle_parens = False
 
-  max_blank_lines = 1
-
 # ------------------------------------------------
 # Options affecting comment reflow and formatting.
 # ------------------------------------------------

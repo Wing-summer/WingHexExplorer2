@@ -52,7 +52,7 @@
 
 #include <private/qmetaobject_p.h>
 
-PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
+PluginSystem::PluginSystem() : QObject() {
     auto mobj = PluginSystem::metaObject();
     auto total = mobj->methodCount();
 
@@ -118,6 +118,11 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
     };
 
     _api._fnCaller = this;
+
+#ifdef Q_OS_WIN
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS |
+                             LOAD_LIBRARY_SEARCH_USER_DIRS);
+#endif
 }
 
 PluginSystem::~PluginSystem() {}
@@ -3266,6 +3271,7 @@ void PluginSystem::loadExtPlugin() {
             continue;
         }
 
+        PluginLoadGuard guard(candidate.file);
         auto fName = candidate.file.fileName();
         Logger::info(tr("LoadingPlugin") + fName);
         auto &loader = candidate.loader;
@@ -3335,6 +3341,7 @@ void PluginSystem::loadDevicePlugin() {
         auto fName = item.fileName();
         _curLoadingPlg = fName;
 
+        PluginLoadGuard guard(item);
         auto loader = std::make_unique<QPluginLoader>(fileName);
         auto meta = readPluginMetaHeader(loader);
         if (!meta) {

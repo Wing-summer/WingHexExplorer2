@@ -9,15 +9,11 @@ project(TestPlugin)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 option(WINGHEX_TEST_MODE TRUE)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/TranslationUtils.cmake)
-
 add_wing_plugin(
     NAME
     TestPlugin
-
     TYPE
     PLUGIN
-
     SOURCES
     testplugin.h
     testplugin.cpp
@@ -37,19 +33,13 @@ add_wing_plugin(
     testsettingpage.cpp
     testwingeditorviewwidget.h
     testwingeditorviewwidget.cpp
-
     RESOURCES
     resources.qrc
-
     TS_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/lang/TestPlugin_zh_CN.ts"
-
     TEST_MODE
     ${WINGHEX_TEST_MODE}
-
     TRANSLATION_UTILS_ALREADY_INCLUDED
     TRUE
-
     TRANSLATION_OPTIONS
-    -no-obsolete
-)
+    -no-obsolete)
