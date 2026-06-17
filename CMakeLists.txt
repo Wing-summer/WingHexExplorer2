@@ -18,10 +18,12 @@ endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_VERSION "2.3.8")
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
-    Xml LinguistTools)
+                                     Xml LinguistTools)
 
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
     set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
@@ -41,7 +43,7 @@ option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
 option(WINGHEX_ANGEL_LSP "Build LS for AngelScript" ON)
 option(WINGHEX_BUILD_TEST "Build test data generator for WingCStruct" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
-    "Build with native optimization(less portable)" OFF)
+       "Build with native optimization(less portable)" OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
@@ -75,7 +77,7 @@ if(WINGHEX_OPTIMIZE_FOR_NATIVE)
 endif()
 
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
-    -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
+                -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" "6")
 
@@ -174,7 +176,7 @@ set(ANGELSCRIPTEXP_SRC
     src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.h)
 
 set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR}
-    ${SNIPPET_GRAMMAR} ${ANGELSCRIPTEXP_SRC})
+                   ${SNIPPET_GRAMMAR} ${ANGELSCRIPTEXP_SRC})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -435,7 +437,7 @@ if(WINGHEX_USE_FRAMELESS)
         src/widgetframe/windowbar_p.h src/widgetframe/windowbutton.cpp
         src/widgetframe/windowbutton.h src/widgetframe/windowbutton_p.h)
     list(APPEND CLASS_SRC src/class/framelesshelper.h
-        src/class/framelesshelper.cpp)
+         src/class/framelesshelper.cpp)
 else()
     set(WIDGET_FRAME_SRC)
 endif()
@@ -541,7 +543,7 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 qt_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-    -no-obsolete)
+                      -no-obsolete)
 
 set(LANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lang")
 set(LANG_DEST "${CMAKE_CURRENT_BINARY_DIR}/.tmp/lang")
@@ -557,7 +559,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
     set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
     set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
     set(LANG_NEED_COPY "${LANG_NEED_COPY_PREFIX}/about.md"
-        "${LANG_NEED_COPY_PREFIX}/devs.md")
+                       "${LANG_NEED_COPY_PREFIX}/devs.md")
 
     add_custom_target(
         copy_lang_files_${LANG_NAME}
@@ -571,7 +573,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
     add_custom_target(
         pak_lang_files_${LANG_NAME}
         COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
-        ${LANG_COMPRESS_CONTENT}
+                ${LANG_COMPRESS_CONTENT}
         WORKING_DIRECTORY "${QM_DIR}"
         COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
         DEPENDS ${QM_FILES} copy_lang_files_${LANG_NAME})
@@ -616,16 +618,16 @@ set(PROJECT_SOURCES
 add_custom_target(
     build-time-make-directory ALL
     COMMAND
-    ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/lang"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts"
-    "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
+        ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/lang"
+        "${CMAKE_CURRENT_BINARY_DIR}/scripts"
+        "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
 
 if(WIN32)
     set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
     find_package(Qt6 REQUIRED COMPONENTS Core)
 
     qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES}
-        ${app_icon_resource_windows})
+                      ${app_icon_resource_windows})
 
     target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Core)
 else()
@@ -636,30 +638,30 @@ if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
     target_compile_definitions(
         WingHexExplorer2
         PRIVATE QT_NO_CONTEXTLESS_CONNECT
-        QT_NO_NARROWING_CONVERSIONS_IN_CONNECT
-        QT_RESTRICTED_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII)
+                QT_NO_NARROWING_CONVERSIONS_IN_CONNECT
+                QT_RESTRICTED_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII)
 endif()
 
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
     PRIVATE Qt6::Widgets
-    Qt6::Network
-    Qt6::Concurrent
-    Qt6::PrintSupport
-    Qt6::Xml
-    Qt6::GuiPrivate
-    Qt6::CorePrivate
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    QtSingleApplication::QtSingleApplication
-    cpptrace::cpptrace
-    fmt::fmt
-    antlr4_static
-    angelscript
-    qtadvanceddocking-qt6
-    QHexView
-    WingCodeEdit
-    WingPlugin)
+            Qt6::Network
+            Qt6::Concurrent
+            Qt6::PrintSupport
+            Qt6::Xml
+            Qt6::GuiPrivate
+            Qt6::CorePrivate
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            QtSingleApplication::QtSingleApplication
+            cpptrace::cpptrace
+            fmt::fmt
+            antlr4_static
+            angelscript
+            qtadvanceddocking-qt6
+            QHexView
+            WingCodeEdit
+            WingPlugin)
 
 if(WINGHEX_USE_FRAMELESS)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QWKCore QWKWidgets)
@@ -673,7 +675,7 @@ if(LINUX)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::DBus)
     set_target_properties(
         ${CMAKE_PROJECT_NAME} PROPERTIES BUILD_RPATH "\$ORIGIN" INSTALL_RPATH
-        "\$ORIGIN")
+                                                                "\$ORIGIN")
 endif()
 
 # emit marco in Qt conflicts with antlr4-cpp
@@ -683,15 +685,15 @@ target_compile_definitions(WingHexExplorer2 PRIVATE QT_USE_QSTRINGBUILDER)
 
 target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src")
+                                  "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set_target_properties(
     WingHexExplorer2
     PROPERTIES ${BUNDLE_ID_OPTION} MACOSX_BUNDLE_BUNDLE_VERSION
-    ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING
-    ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} MACOSX_BUNDLE
-    TRUE WIN32_EXECUTABLE
-    TRUE)
+               ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING
+               ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} MACOSX_BUNDLE
+               TRUE WIN32_EXECUTABLE
+               TRUE)
 
 qt_finalize_executable(WingHexExplorer2)
 
@@ -704,7 +706,7 @@ install(
 
 # Generate the deployment script.
 qt6_generate_deploy_app_script(TARGET WingHexExplorer2 OUTPUT_SCRIPT
-    deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
+                               deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 
 # Call the deployment script on "cmake --install".
 install(SCRIPT ${deploy_script})
@@ -714,23 +716,23 @@ add_subdirectory(WingPlugin)
 target_compile_options(
     WingHexExplorer2
     PRIVATE
-    $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>>:-g1>
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/Z7>
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:
-    -ffunction-sections
-    -fdata-sections
-    -fvisibility=hidden
-    -fvisibility-inlines-hidden
-    -fno-var-tracking
-    -fno-var-tracking-assignments
-    >
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:
-    -ffunction-sections
-    -fdata-sections
-    -fvisibility=hidden
-    -fvisibility-inlines-hidden
-    -fno-var-tracking
-    >)
+        $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>>:-g1>
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/Z7>
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:
+        -ffunction-sections
+        -fdata-sections
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+        -fno-var-tracking
+        -fno-var-tracking-assignments
+        >
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:
+        -ffunction-sections
+        -fdata-sections
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+        -fno-var-tracking
+        >)
 
 target_link_options(
     WingHexExplorer2
@@ -740,6 +742,8 @@ target_link_options(
     /OPT:ICF>
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Wl,--gc-sections>
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
+
+enable_reproducible_paths(WingHexExplorer2)
 
 if(WINGHEX_ANGEL_LSP)
     set(NODE_ROOT_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp")
@@ -814,7 +818,7 @@ if(WINGHEX_ANGEL_LSP)
         COMMAND ${NPX_EXE} tsc
         COMMAND ${ESBUILD_CMD}
         COMMAND ${CMAKE_COMMAND} -E echo
-        "Building JS bundle with esbuild -> ${DIST_JS}"
+                "Building JS bundle with esbuild -> ${DIST_JS}"
         VERBATIM)
 
     if(WIN32)
@@ -823,11 +827,11 @@ if(WINGHEX_ANGEL_LSP)
             DEPENDS ${DIST_JS}
             WORKING_DIRECTORY ${NODE_SUBDIR}
             COMMAND ${CMAKE_COMMAND} -E echo
-            "[3] packaging with pkg/npm exec/npx"
+                    "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
             COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
             COMMAND ${NODE_EXE} "${NODE_SUBDIR}/modIcon_win.js"
-            "--basedir=${BUILD_BIN_DIR}"
+                    "--basedir=${BUILD_BIN_DIR}"
             COMMAND ${CMAKE_COMMAND} -E echo "[5] Modifying exe icon"
             VERBATIM)
     else()
@@ -836,7 +840,7 @@ if(WINGHEX_ANGEL_LSP)
             DEPENDS ${DIST_JS}
             WORKING_DIRECTORY ${NODE_SUBDIR}
             COMMAND ${CMAKE_COMMAND} -E echo
-            "[3] packaging with pkg/npm exec/npx"
+                    "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
             COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
             VERBATIM)

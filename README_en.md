@@ -30,11 +30,6 @@
 <a href="https://deepwiki.com/Wing-summer/WingHexExplorer2"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-<p align="center">
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
-</p>
-
 - Not easy to open source, please Star or [Donate](#donate)
 
 ## Contributors
@@ -107,7 +102,7 @@ This software complies with the `AGPL-3.0` agreement. Please do not use it for p
 
 If you want to use the code of this software for closed-source commercial code and want to lift the restriction of the `GPL` series that it must be open source, please consult me ​​in person to discuss commercial licensing matters.
 
-For plugin development, the corresponding open source agreements are different. Only the code of  `WingPlugin` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source commercial development. The code of `TestPlugin`/`TestHexExt` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
+For plugin development, the corresponding open source agreements are different. Only the code of  `WingPlugin` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source commercial development. The code of `TestPlugin`/`TestHexExt` in this repository complies with the `MIT` agreement.
 
 ### Usage Statement
 

@@ -55,6 +55,28 @@ function(ADD_PLUGIN_TRANSLATIONS_RESOURCE res_file target)
         PARENT_SCOPE)
 endfunction()
 
+function(enable_reproducible_paths target)
+    set(_non_debug $<NOT:$<CONFIG:Debug>>)
+
+    if(MSVC)
+        target_compile_options(
+            ${target} PRIVATE $<${_non_debug}: /pathmap:${CMAKE_SOURCE_DIR}=.
+                              /pathmap:${CMAKE_BINARY_DIR}=. >)
+
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+        target_compile_options(
+            ${target}
+            PRIVATE $<${_non_debug}:
+                    -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.
+                    -fmacro-prefix-map=${CMAKE_SOURCE_DIR}=.
+                    -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.
+                    -ffile-prefix-map=${CMAKE_BINARY_DIR}=.
+                    -fmacro-prefix-map=${CMAKE_BINARY_DIR}=.
+                    -fdebug-prefix-map=${CMAKE_BINARY_DIR}=.
+                    >)
+    endif()
+endfunction()
+
 function(_winghex_to_bool input_var default_value output_var)
     if(DEFINED ${input_var})
         set(_value "${${input_var}}")
@@ -262,6 +284,8 @@ function(add_wing_plugin)
             "$<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Wl,--gc-sections>"
             "$<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>"
         )
+
+        enable_reproducible_paths(${ARG_NAME})
     endif()
 
     # --- Link libraries ---
