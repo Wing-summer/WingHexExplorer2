@@ -43,7 +43,7 @@ const QHexPosition &QHexCursor::selectionEnd(qsizetype index) const {
     return m_sels.at(index).end;
 }
 
-const QHexPosition &QHexCursor::position() const { return m_position; }
+const QHexPosition &QHexCursor::position() const { return m_selection; }
 
 qsizetype QHexCursor::selectionCount() const { return m_sels.size(); }
 
@@ -139,7 +139,7 @@ void QHexCursor::moveTo(const QHexPosition &pos, bool clearSelection) {
 }
 void QHexCursor::select(const QHexPosition &pos,
                         QHexCursor::SelectionModes mode) {
-    this->select(pos.line, pos.column, mode);
+    this->select(pos.line, pos.column, pos.nibbleindex, mode);
 }
 
 void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
@@ -158,22 +158,22 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
     Q_EMIT positionChanged();
 }
 
-void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
+void QHexCursor::select(qsizetype line, int column, int nibbleindex,
+                        SelectionModes modes) {
     if (modes.testFlag(SelectionPreview)) {
         m_selection.line = line;
         m_selection.column = qMax(0, column); // fix the bug by wingsummer
         m_selection.lineWidth = m_position.lineWidth;
-        m_selection.nibbleindex = 0;
+        m_selection.nibbleindex = nibbleindex;
         modes.setFlag(SelectionPreview, false);
     } else {
         QHexSelection sel;
         sel.begin = m_position;
-        sel.begin.nibbleindex = 1;
 
         sel.end.line = line;
         sel.end.column = column;
         sel.end.lineWidth = m_position.lineWidth;
-        sel.end.nibbleindex = 0;
+        sel.end.nibbleindex = nibbleindex;
 
         sel.normalize();
 
@@ -210,7 +210,7 @@ void QHexCursor::setPos(qsizetype offset, int nibbleindex,
 void QHexCursor::select(qsizetype length, QHexCursor::SelectionModes mode) {
     auto div = std::div(qsizetype(m_position.column + length - 1),
                         qsizetype(m_lineWidth));
-    this->select(m_position.line + div.quot, div.rem, mode);
+    this->select(m_position.line + div.quot, div.rem, 1, mode);
 }
 
 void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {

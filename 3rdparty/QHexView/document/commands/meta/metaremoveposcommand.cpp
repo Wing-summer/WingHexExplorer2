@@ -31,9 +31,11 @@ inline QString constructText(qsizetype pos) {
 MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
     : MetaCommand(constructText(pos), hexmeta, {}, parent), m_pos(pos) {
-    auto po = m_hexmeta->get(pos);
-    if (po.has_value()) {
-        m_meta = po.value();
+    auto idx = m_hexmeta->getIndex(pos);
+    if (idx >= 0) {
+        m_meta = m_hexmeta->at(idx);
+    } else {
+        setObsolete(true);
     }
 }
 

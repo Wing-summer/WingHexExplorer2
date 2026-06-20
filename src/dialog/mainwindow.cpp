@@ -117,8 +117,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto font = _editArea->font();
         auto fm = QFontMetrics(font);
         _editArea->setAlignment(Qt::AlignCenter);
-        // ASCII or HEX or NONE
-        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 5);
+        // STR or HEX
+        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 4);
         m_status->addWidget(_editArea);
 
         auto separator = new QFrame(m_status);
@@ -258,6 +258,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 }
                 if (reportErrFileError(ret, {}, {}, {})) {
                     if (ret != ErrFile::AlreadyOpened) {
+                        Q_ASSERT(editor);
                         editor->setTabToolTip(
                             RecentFileManager::getDisplayTooltip(rinfo, false));
                     }
@@ -2695,10 +2696,11 @@ void MainWindow::on_metadataedit() {
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
-        auto mc = doc->metadata()->get(cur->position().offset());
+        auto mt = doc->metadata();
+        auto idx = mt->getIndex(cur->position().offset());
 
-        if (mc.has_value()) {
-            auto meta = mc.value();
+        if (idx >= 0) {
+            auto meta = mt->at(idx);
             auto begin = meta.begin;
             auto end = meta.end;
             m.setForeGroundColor(meta.foreground);
@@ -2905,17 +2907,13 @@ void MainWindow::on_locChanged() {
     m_lblsellen->setText(QStringLiteral("%1 - 0x%2")
                              .arg(sellen)
                              .arg(QString::number(sellen, 16).toUpper()));
-
     updateNumberTable(false);
-
     auto cursor = hexeditor->cursor();
-
     PluginSystem::instance().dispatchCursorPositionChangedEvent(
         cursor->position());
 }
 
 void MainWindow::on_selectionChanged() {
-    on_locChanged();
     auto pair = updateStringDec();
     PluginSystem::instance().dispatchSelectionChangedEvent(pair.first,
                                                            pair.second);
@@ -2923,7 +2921,7 @@ void MainWindow::on_selectionChanged() {
 
 void MainWindow::on_editableAreaClicked(QHexRenderer::Areas area) {
     if (area == QHexRenderer::Areas::AsciiArea) {
-        _editArea->setText(QStringLiteral("ASCII"));
+        _editArea->setText(QStringLiteral("STR"));
     } else {
         _editArea->setText(QStringLiteral("HEX"));
     }
@@ -3440,9 +3438,10 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                     cur->clearSelection();
                 }
             } else {
-                auto md = doc->metadata()->get(cur->position().offset());
-                if (md.has_value()) {
-                    auto meta = md.value();
+                auto mt = doc->metadata();
+                auto idx = mt->getIndex(cur->position().offset());
+                if (idx >= 0) {
+                    auto meta = mt->at(idx);
                     auto begin = meta.begin;
                     auto end = meta.end;
                     m.setForeGroundColor(meta.foreground);

@@ -2600,13 +2600,14 @@ MetadataInfo EditorView::metadataInfo(const QObject *caller, qsizetype offset) {
 
     auto doc = m_hex->document();
     auto meta = doc->metadata();
-    auto r = meta->get(offset);
-    if (r) {
-        info.begin = r->begin;
-        info.end = r->end;
-        info.foreground = r->foreground;
-        info.background = r->background;
-        info.comment = r->comment;
+    auto r = meta->getIndex(offset);
+    if (r >= 0) {
+        auto m = meta->at(r);
+        info.begin = m.begin;
+        info.end = m.end;
+        info.foreground = m.foreground;
+        info.background = m.background;
+        info.comment = m.comment;
     }
     return info;
 }

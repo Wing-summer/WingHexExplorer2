@@ -189,7 +189,7 @@ public:
     const QHexMetadataItem &at(qsizetype index) const;
     const QVector<QHexMetadataItem> &getAllMetadata() const;
 
-    std::optional<QHexMetadataItem> get(qsizetype offset);
+    qsizetype getIndex(qsizetype offset);
     QHexLineMetadata gets(qsizetype line);
     QVector<MetaInfo> getRealMetaRange(qsizetype begin, qsizetype end);
 

@@ -108,6 +108,7 @@ public:
     bool cursorSync() const;
 
 public slots:
+    // modified by wingsummer
     void setDocument(const QSharedPointer<QHexDocument> &document,
                      QHexCursor *cursor = nullptr);
     void resetDocument();
@@ -149,8 +150,12 @@ public slots:
     void setCopyLimit(qsizetype newCopylimit);
     void setCursorSync(bool newCursorSync);
 
+    void ensureCurrentLineVisible();
+
 private:
     void establishSignal(QHexDocument *doc);
+
+    void adjustLineVisible(qsizetype line);
 
 signals:
     void cursorLocationChanged();
@@ -189,6 +194,7 @@ signals:
 protected:
     virtual bool event(QEvent *e) override;
     virtual void keyPressEvent(QKeyEvent *e) override;
+    virtual void keyReleaseEvent(QKeyEvent *e) override;
     virtual void mousePressEvent(QMouseEvent *e) override;
     virtual void mouseMoveEvent(QMouseEvent *e) override;
     virtual void mouseReleaseEvent(QMouseEvent *e) override;
@@ -201,14 +207,18 @@ protected:
 
 private slots:
     void renderCurrentLine();
-    void moveToSelection();
+    void processPosChanged();
     void blinkCursor();
 
 private:
-    void moveNext(bool select = false);
-    void movePrevious(bool select = false);
+    void moveNext(QHexCursor::SelectionModes modes);
+    void movePrevious(QHexCursor::SelectionModes modes);
 
-    QHexCursor::SelectionMode getSelectionMode() const;
+    QHexCursor::SelectionModes getSelectionMode() const;
+    static QHexCursor::SelectionModes
+    getSelectionMode(Qt::KeyboardModifiers mods);
+
+    static bool isInSelection(QHexCursor::SelectionModes modes);
 
 private:
     bool processMove(QHexCursor *cur, QKeyEvent *e);

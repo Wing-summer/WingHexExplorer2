@@ -132,10 +132,7 @@ QUndoCommand *QHexMetadata::MakeRemoveMetadata(QUndoCommand *parent,
 
 QUndoCommand *QHexMetadata::MakeRemoveMetadata(QUndoCommand *parent,
                                                qsizetype offset) {
-    if (get(offset)) {
-        return new MetaRemovePosCommand(this, offset, parent);
-    }
-    return nullptr;
+    return new MetaRemovePosCommand(this, offset, parent);
 }
 
 QUndoCommand *QHexMetadata::MakeMetadata(QUndoCommand *parent, qsizetype begin,
@@ -224,15 +221,22 @@ const QVector<QHexMetadataItem> &QHexMetadata::getAllMetadata() const {
     return m_metadata;
 }
 
-std::optional<QHexMetadataItem> QHexMetadata::get(qsizetype offset) {
-    auto r = std::find_if(m_metadata.begin(), m_metadata.end(),
-                          [offset](const QHexMetadataItem &item) {
-                              return offset >= item.begin && offset <= item.end;
-                          });
-    if (r == m_metadata.end()) {
-        return {};
+qsizetype QHexMetadata::getIndex(qsizetype offset) {
+    auto it =
+        std::lower_bound(m_metadata.begin(), m_metadata.end(), offset,
+                         [](const QHexMetadataItem &item, qsizetype value) {
+                             return item.begin < value;
+                         });
+    if (it != m_metadata.end() && it->begin == offset && offset <= it->end) {
+        return std::distance(m_metadata.begin(), it);
     }
-    return *r;
+    if (it != m_metadata.begin()) {
+        --it;
+        if (offset <= it->end) {
+            return std::distance(m_metadata.begin(), it);
+        }
+    }
+    return -1;
 }
 
 QHexLineMetadata QHexMetadata::gets(qsizetype line) {

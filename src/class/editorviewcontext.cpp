@@ -83,17 +83,17 @@ qsizetype EditorViewContext::documentLines() const {
     return render->documentLines();
 }
 
-int EditorViewContext::documentWidth() const {
+qreal EditorViewContext::documentWidth() const {
     auto render = _hex->renderer();
     return render->documentWidth();
 }
 
-int EditorViewContext::lineHeight() const {
+qreal EditorViewContext::lineHeight() const {
     auto render = _hex->renderer();
     return render->lineHeight();
 }
 
-int EditorViewContext::borderSize() const {
+qreal EditorViewContext::borderSize() const {
     auto render = _hex->renderer();
     return render->borderSize();
 }
@@ -113,22 +113,22 @@ int EditorViewContext::addressWidth() const {
     return render->getAddressWidth();
 }
 
-int EditorViewContext::headerHeight() const {
+qreal EditorViewContext::headerHeight() const {
     auto render = _hex->renderer();
     return render->headerLineCount() * render->lineHeight();
 }
 
-int EditorViewContext::hexColumnX() const {
+qreal EditorViewContext::hexColumnX() const {
     auto render = _hex->renderer();
     return render->getHexColumnX();
 }
 
-int EditorViewContext::stringColumnX() const {
+qreal EditorViewContext::stringColumnX() const {
     auto render = _hex->renderer();
     return render->getAsciiColumnX();
 }
 
-int EditorViewContext::endColumnX() const {
+qreal EditorViewContext::endColumnX() const {
     auto render = _hex->renderer();
     return render->getEndColumnX();
 }
@@ -138,12 +138,12 @@ qreal EditorViewContext::cellWidth() const {
     return render->getCellWidth();
 }
 
-int EditorViewContext::nCellsWidth(int n) const {
+qreal EditorViewContext::nCellsWidth(int n) const {
     auto render = _hex->renderer();
     return render->getNCellsWidth(n);
 }
 
-QRect EditorViewContext::lineRect(qsizetype line, qsizetype firstline) const {
+QRectF EditorViewContext::lineRect(qsizetype line, qsizetype firstline) const {
     auto render = _hex->renderer();
     return render->getLineRect(line, firstline);
 }

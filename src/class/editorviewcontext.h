@@ -47,21 +47,21 @@ public:
     virtual qsizetype documentLastLine() const override;
     virtual qsizetype documentLastColumn() const override;
     virtual qsizetype documentLines() const override;
-    virtual int documentWidth() const override;
-    virtual int lineHeight() const override;
-    virtual int borderSize() const override;
+    virtual qreal documentWidth() const override;
+    virtual qreal lineHeight() const override;
+    virtual qreal borderSize() const override;
     virtual int hexLineWidth() const override;
     virtual int areaIndent() const override;
     virtual int addressWidth() const override;
 
 public:
-    virtual int headerHeight() const override;
-    virtual int hexColumnX() const override;
-    virtual int stringColumnX() const override;
-    virtual int endColumnX() const override;
+    virtual qreal headerHeight() const override;
+    virtual qreal hexColumnX() const override;
+    virtual qreal stringColumnX() const override;
+    virtual qreal endColumnX() const override;
     virtual qreal cellWidth() const override;
-    virtual int nCellsWidth(int n) const override;
-    virtual QRect lineRect(qsizetype line, qsizetype firstline) const override;
+    virtual qreal nCellsWidth(int n) const override;
+    virtual QRectF lineRect(qsizetype line, qsizetype firstline) const override;
 
 public:
     virtual WingHex::HexPosition position() const override;

@@ -152,7 +152,7 @@ public:
 
     void select(const QHexPosition &pos,
                 QHexCursor::SelectionModes mode = SelectionNormal);
-    void select(qsizetype line, int column,
+    void select(qsizetype line, int column, int nibbleindex = 1,
                 QHexCursor::SelectionModes mode = SelectionNormal);
     void select(qsizetype length,
                 QHexCursor::SelectionModes mode = SelectionNormal);

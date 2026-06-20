@@ -28,10 +28,9 @@
  */
 
 #include "qhexdocument.h"
+#include <QCache>
 #include <QPainter>
-#include <QPalette>
 #include <QStringConverter>
-#include <QTextDocument>
 #include <QVector>
 
 class QHexRenderer : public QObject {
@@ -73,8 +72,8 @@ public:
 
 public:
     void blinkCursor();
-    bool hitTest(const QPoint &pt, QHexPosition *position,
-                 qsizetype firstline) const;
+    bool hitTest(const QPoint &pt, QHexPosition *position, qsizetype firstline,
+                 qsizetype lastline) const;
     Areas hitTestArea(const QPoint &pt) const;
     Areas hitTestColArea(const QPoint &pt) const;
     Areas selectedArea() const;
@@ -82,11 +81,11 @@ public:
     qsizetype documentLastLine() const;
     qsizetype documentLastColumn() const;
     qsizetype documentLines() const;
-    int documentWidth() const;
-    int lineHeight() const;
-    QRect getLineRect(qsizetype line, qsizetype firstline) const;
+    qreal documentWidth() const;
+    qreal lineHeight() const;
+    QRectF getLineRect(qsizetype line, qsizetype firstline) const;
     int headerLineCount() const;
-    int borderSize() const;
+    qreal borderSize() const;
     int hexLineWidth() const;
 
     QColor headerColor() const;
@@ -118,34 +117,34 @@ public:
 
     QHexCursor *cursor() const;
     void setCursor(QHexCursor *newCursor);
-    bool asciiCellAt(qsizetype line, int column, int *start, int *length) const;
+
+    int normalizeAsciiColumn(qsizetype line, int column) const;
+
+    void setCacheLineCount(qsizetype count);
 
 private:
-    QString hexString(qsizetype line, QByteArray *rawline = nullptr) const;
-
     QByteArray getLine(qsizetype line) const;
     qsizetype rendererLength() const;
 
 public:
     int getAddressWidth() const;
-    int getHexColumnX() const;
-    int getAsciiColumnX() const;
-    int getEndColumnX() const;
+    qreal getHexColumnX() const;
+    qreal getAsciiColumnX() const;
+    qreal getEndColumnX() const;
     qreal getCellWidth() const;
-    int getNCellsWidth(int n) const;
+    qreal getNCellsWidth(int n) const;
     void unprintableChars(QByteArray &ascii) const;
 
 private:
-    static QByteArray toHexSequence(const QByteArray &arr);
-    static char toHexUpper(uint value) noexcept;
+    static QChar toHexUpper(uint value) noexcept;
 
     struct AsciiCell {
-        int start = 0;
-        int length = 1;
+        qsizetype start = 0;
+        qsizetype length = 1;
         QString text;
     };
 
-    struct AsciiCellFormat {
+    struct CellFormat {
         QColor foreground;
         QColor background;
         QColor outline;
@@ -157,36 +156,37 @@ private:
     };
 
 private:
-    // modified by wingsummer
-    enum Factor { String = 1, Hex = 4 };
-
-private:
-    void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawString(QPainter *painter, const QRect &linerect, qsizetype line);
+    void drawAddress(QPainter *painter, const QRectF &linerect, qsizetype line);
+    void drawHex(QPainter *painter, const QRectF &linerect,
+                 const QVector<CellFormat> &lineFormats, qsizetype line);
+    void drawString(QPainter *painter, const QRectF &linerect,
+                    const QVector<CellFormat> &lineFormats, qsizetype line);
     void drawHeader(QPainter *painter);
 
-private:
-    void applyDocumentStyles(QPainter *painter,
-                             QTextDocument *textdocument) const;
-    void applyHexBasicStyle(QTextCursor &textcursor,
-                            const QByteArray &rawline) const;
-    void applyHexMetadata(QTextCursor &textcursor, qsizetype line) const;
-
-    void applyHexSelection(QTextCursor &textcursor, qsizetype line) const;
-    void applyHexSelection(const QHexSelection &selection,
-                           QTextCursor &textcursor, qsizetype line,
-                           bool strikeOut, bool hasSelection) const;
-    void applyHexSelection(const QVector<QHexMetadata::MetaInfo> &metas,
-                           QTextCursor &textcursor, qsizetype startLine,
-                           qsizetype lineStart, qsizetype lineEnd,
-                           bool strikeOut, bool hasSelection) const;
-    void applyHexBookMark(QPainter *painter, QTextCursor &textcursor,
-                          qsizetype line);
-    void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
+    void drawCursorBlock(QPainter *painter, const QRectF &cursorRect,
+                         const AsciiCell &cell, qsizetype line, int col,
+                         const CellFormat &fmt) const;
+    void drawCursorStrBlock(QPainter *painter, const QRectF &cursorRect,
+                            const QString &cursorText, qsizetype line, int col,
+                            const CellFormat &fmt) const;
 
 private:
-    QVector<AsciiCell> buildAsciiCells(const QByteArray &rawline) const;
+    bool drawCursor(QPainter *painter, const QRectF &cursorRect,
+                    const QString &cursorText, qsizetype line, int col,
+                    Areas area) const;
+    bool drawCursor(QPainter *painter, const QRectF &cursorRect,
+                    const AsciiCell &cell, qsizetype line, int col) const;
+    void drawCursor(QPainter *painter, const QRectF &cursorRect,
+                    const QString &cursorText) const;
+
+private:
+    QRectF hexVisualRect(qreal cellWidth, qreal height, int byteIndex) const;
+    QRectF hexCoreRect(qreal cellWidth, qreal height, int byteIndex) const;
+    QRectF hexNibbleRect(qreal cellWidth, qreal height, int byteIndex,
+                         int nibble) const;
+
+private:
+    QVector<AsciiCell> buildAsciiCells(qsizetype line) const;
     QVector<AsciiCell> buildAsciiCellsLatin1(const QByteArray &rawline) const;
     QVector<AsciiCell> buildAsciiCellsUtf8(const QByteArray &rawline) const;
     QVector<AsciiCell> buildAsciiCellsUtf16(const QByteArray &rawline,
@@ -195,15 +195,15 @@ private:
     QVector<AsciiCell> buildAsciiCellsUtf32(const QByteArray &rawline,
                                             bool littleEndian,
                                             bool useBom) const;
-    AsciiCellFormat asciiCellFormat(qsizetype line, int column,
-                                    uchar value) const;
+    CellFormat cellFormat(qsizetype line, int column) const;
+
+    QVector<CellFormat> buildUpLineFormats(qsizetype line) const;
 
 private:
     bool selectionCoversByte(const QHexSelection &selection, qsizetype line,
                              int column) const;
-    bool
-    asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
-                               const QVector<AsciiCellFormat> &formats) const;
+    bool asciiCellNeedsByteFallback(qsizetype line, const AsciiCell &cell,
+                                    const QVector<CellFormat> &formats) const;
     bool isStrByteSelected(qsizetype line, int column, bool *strikeOut,
                            bool *hasSelection) const;
     bool hasBookmark(qsizetype line, int column) const;
@@ -223,20 +223,25 @@ private:
                               bool littleEndian);
 
 private:
-    QRect byteRectAt(qreal cellWidth, int height, int byteIndex) const;
+    QRectF byteRectAt(qreal cellWidth, qreal height, int byteIndex) const;
 
-    void applyStrBookmark(QPainter *painter, qreal cellWidth, int height,
-                          int byteIndex, const QColor &fallbackColor) const;
-    void drawAsciiText(QPainter *painter, const QRect &rect,
-                       const QString &text, const AsciiCellFormat &fmt) const;
-    AsciiCellFormat
-    mergeCellFormat(const QVector<AsciiCellFormat> &formats) const;
+    void applyBookmark(QPainter *painter, const QRectF &rect,
+                       const QColor &fallbackColor) const;
+    void drawText(QPainter *painter, const QRectF &rect, const QString &text,
+                  const CellFormat &fmt) const;
+    void drawUnderLine(
+        QPainter *painter, const QVector<CellFormat> &lineFormats,
+        const std::function<QPair<qreal, qreal>(qreal start, qreal end)> &fn);
+    CellFormat mergeCellFormat(const QVector<CellFormat> &formats) const;
 
 private:
     QHexDocument *m_document;
     QHexCursor *m_cursor;
     QFontMetricsF m_fontmetrics;
 
+    mutable QCache<qsizetype,
+                   QPair<QByteArray, QVector<QHexRenderer::AsciiCell>>>
+        m_lineCaches{30};
     QHexRenderer::Areas m_selectedarea;
     bool m_cursorenabled;
 
