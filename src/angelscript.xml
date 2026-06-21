@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language>
 <language name="AngelScript" section="Sources" version="19" kateversion="5.79" extensions="*.as;*.angelscript" indenter="cstyle" style="C++"
-          author="wingsummer" license="GPL" priority="99" >
+          author="wingsummer" license="GPL" priority="99">
     <highlighting>
         <list name="keywords">
             <item>abstract</item>
@@ -56,6 +56,7 @@
             <item>while</item>
             <item>xor</item>
         </list>
+
         <list name="types">
             <item>void</item>
             <item>bool</item>
@@ -72,6 +73,7 @@
             <item>int64</item>
             <item>auto</item>
         </list>
+
         <contexts>
             <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
                 <!-- scientific / exponent floats (support e/E + optional sign) -->
@@ -79,24 +81,29 @@
                 <RegExpr attribute="Float" context="Float Suffixes" String="\b\d+([eE][+-]?\d+)\b"/>
 
                 <keyword attribute="Keyword" context="#stay" String="keywords"/>
-                <keyword attribute="Data Type" context="#stay" String="types" />
+                <keyword attribute="Data Type" context="#stay" String="types"/>
                 <Float attribute="Float" context="Float Suffixes"/>
                 <HlCOct attribute="Octal" context="#stay"/>
                 <HlCHex attribute="Hex" context="#stay"/>
                 <Int attribute="Decimal" context="Int Suffixes"/>
 
                 <StringDetect attribute="Text Block" context="TextBlock" String="&quot;&quot;&quot;"/>
-                <!-- use numeric character ref for backslash to avoid XML quoting issues -->
                 <DetectChar attribute="String" context="StringDouble" char="&quot;"/>
                 <DetectChar attribute="String" context="StringSingle" char="&apos;"/>
 
-                <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="/" lookAhead="true"/>
-                <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="*" lookAhead="true" />
+                <!-- documentation comments first -->
+                <RegExpr attribute="Comment" context="DocLineComment" String="///+"/>
+                <RegExpr attribute="Comment" context="DocBlockComment" String="/\*\*"/>
+
+                <!-- normal comments -->
+                <Detect2Chars attribute="Comment" context="LineComment" char="/" char1="/"/>
+                <Detect2Chars attribute="Comment" context="BlockComment" char="/" char1="*" beginRegion="BlockComment"/>
+
                 <DetectChar attribute="Symbol" context="#stay" char="{" beginRegion="block1"/>
                 <DetectChar attribute="Symbol" context="#stay" char="}" endRegion="block1"/>
                 <RegExpr attribute="Data Type" context="#stay" String="\bauto(?=\s+\w+|\s*@|@)"/>
                 <RegExpr attribute="Keyword" context="#stay" String="\b(?=\s+(?:class|interface|void)|(?=\s+(?:return|break))|(?:set|get)(?=\s*[;{])|(?=\s*::\s*\w+))"/>
-                <RegExpr attribute="Function" context="#stay" String="\b[_\w][_\w\d]*(?=[\s]*[(])" />
+                <RegExpr attribute="Function" context="#stay" String="\b[_\w][_\w\d]*(?=[\s]*[(])"/>
                 <DetectChar attribute="Symbol" context="Member" char="."/>
                 <AnyChar attribute="Symbol" context="#stay" String="@:!%&amp;()+,-/*&lt;=&gt;?[]|~^&#59;"/>
                 <DetectChar attribute="Macro" context="Macro" char="#"/>
@@ -105,6 +112,7 @@
             <context name="Float Suffixes" attribute="Float" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
                 <AnyChar String="dDfFmM" attribute="Float" context="#pop"/>
             </context>
+
             <context name="Int Suffixes" attribute="Decimal" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
                 <StringDetect attribute="Decimal" context="#pop" String="UL" insensitive="true"/>
                 <StringDetect attribute="Decimal" context="#pop" String="LU" insensitive="true"/>
@@ -112,7 +120,6 @@
             </context>
 
             <context attribute="String" lineEndContext="#pop" name="StringDouble">
-                <!-- detect escaped character (use numeric backslash char reference in XML) -->
                 <DetectChar context="StringEscapedChar" char="&#92;" lookAhead="true"/>
                 <DetectChar attribute="String" context="#pop" char="&quot;"/>
             </context>
@@ -124,7 +131,6 @@
 
             <context attribute="String" lineEndContext="#pop" name="StringEscapedChar">
                 <HlCStringChar attribute="String Char" context="#pop"/>
-                <!-- unicode escape sequence: match \uFFFF (4 hex digits) -->
                 <RegExpr attribute="String Char" context="#pop" String="\\u[0-9a-fA-F]{4}"/>
             </context>
 
@@ -134,27 +140,63 @@
             </context>
 
             <context attribute="Normal Text" lineEndContext="#pop" name="Member" fallthrough="true" fallthroughContext="#pop">
-                <RegExpr attribute="Function" context="#pop" String="\b[_\w][_\w\d]*(?=[\s]*)" />
+                <RegExpr attribute="Function" context="#pop" String="\b[_\w][_\w\d]*(?=[\s]*)"/>
             </context>
 
-            <context attribute="Comment" lineEndContext="#pop" name="Commentar 1">
-                <IncludeRules context="##Comments"/>
-            </context>
-            <context attribute="Comment" lineEndContext="#stay" name="Commentar 2">
+            <!-- plain comments -->
+            <context attribute="Comment" lineEndContext="#pop" name="LineComment"/>
+            <context attribute="Comment" lineEndContext="#stay" name="BlockComment">
                 <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="BlockComment"/>
-                <IncludeRules context="##Comments"/>
             </context>
-            <context name="MatchComment" attribute="Normal Text" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
-                <IncludeRules context="##Doxygen" />
-                <Detect2Chars attribute="Comment" context="#pop!Commentar 1" char="/" char1="/" />
-                <Detect2Chars attribute="Comment" context="#pop!Commentar 2" char="/" char1="*" beginRegion="BlockComment" />
+
+            <!-- Doxygen-style single-line comments -->
+            <context attribute="Comment" lineEndContext="#pop" name="DocLineComment">
+                <IncludeRules context="DocCommentRules"/>
             </context>
+
+            <!-- Doxygen-style block comments -->
+            <context attribute="Comment" lineEndContext="#stay" name="DocBlockComment">
+                <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="DocBlockComment"/>
+                <IncludeRules context="DocCommentRules"/>
+            </context>
+
+            <!-- shared comment rules for doc comments -->
+            <context attribute="Comment" lineEndContext="#stay" name="DocCommentRules">
+                <!-- Doxygen commands -->
+                <RegExpr attribute="Doxygen" context="#stay"
+                         String="[@\\](brief|return|retval|throws|throw|exception|see|note|warning|deprecated|since|author|version|todo|bug|sa|code|endcode|details|invariant|pre|post|par|c)\b"/>
+
+                <!-- @param / @tparam with parameter name -->
+                <RegExpr attribute="Annotation" context="#stay"
+                         String="[@\\](param|tparam)\s+[A-Za-z_][A-Za-z0-9_]*"/>
+
+                <!-- HTML / XML tags -->
+                <RegExpr attribute="Annotation" context="#stay"
+                         String="&lt;/?[A-Za-z][^&gt;]*&gt;"/>
+
+                <!-- common review markers -->
+                <WordDetect attribute="Alert" context="#stay" String="TODO"/>
+                <WordDetect attribute="Alert" context="#stay" String="FIXME"/>
+                <WordDetect attribute="Alert" context="#stay" String="BUG"/>
+                <WordDetect attribute="Alert" context="#stay" String="HACK"/>
+                <WordDetect attribute="Alert" context="#stay" String="XXX"/>
+
+                <!-- markdown-style code fence -->
+                <StringDetect attribute="String" context="DocCommentCodeBlock" String="```"/>
+            </context>
+
+            <context attribute="Comment" lineEndContext="#stay" name="DocCommentCodeBlock">
+                <StringDetect attribute="String" context="#pop" String="```"/>
+            </context>
+
             <context attribute="Decimal" lineEndContext="#pop" name="Decimal"/>
+
             <context attribute="Macro" lineEndContext="#pop" name="Macro">
                 <Detect2Chars attribute="Comment" context="#pop" char="/" char1="/"/>
                 <Detect2Chars attribute="Comment" context="#pop" char="/" char1="*" beginRegion="Comment"/>
             </context>
         </contexts>
+
         <itemDatas>
             <itemData name="Normal Text"  defStyleNum="dsNormal"/>
             <itemData name="Keyword"      defStyleNum="dsKeyword"/>
@@ -169,15 +211,19 @@
             <itemData name="Text Block"   defStyleNum="dsString"/>
             <itemData name="String Char"  defStyleNum="dsSpecialChar"/>
             <itemData name="Comment"      defStyleNum="dsComment"/>
+            <itemData name="Doxygen"      defStyleNum="dsDocumentation"/>
+            <itemData name="Annotation"   defStyleNum="dsAnnotation"/>
+            <itemData name="Alert"        defStyleNum="dsAlert"/>
             <itemData name="Symbol"       defStyleNum="dsOperator"/>
             <itemData name="Macro"        defStyleNum="dsPreprocessor"/>
         </itemDatas>
     </highlighting>
+
     <general>
         <comments>
             <comment name="singleLine" start="//" position="afterwhitespace"/>
-            <comment name="multiLine" start="/*" end="*/" region="BlockComment" />
+            <comment name="multiLine" start="/*" end="*/" region="BlockComment"/>
         </comments>
-        <keywords casesensitive="1" />
+        <keywords casesensitive="1"/>
     </general>
 </language>
