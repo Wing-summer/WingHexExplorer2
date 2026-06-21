@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(WingHexExplorer2 LANGUAGES CXX)
 
+set(CMAKE_INSTALL_RPATH "$ORIGIN")
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
