@@ -26,6 +26,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPixmap>
+#include <QScrollBar>
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
@@ -439,6 +440,39 @@ bool ScriptEditor::isAllClosed() {
            std::all_of(
                m_instances.begin(), m_instances.end(),
                [](ScriptEditor *editor) -> bool { return editor->isClosed(); });
+}
+
+void ScriptEditor::scrollView(const QPoint &p) {
+    m_editor->horizontalScrollBar()->setValue(p.x());
+    m_editor->verticalScrollBar()->setValue(p.y());
+}
+
+QPoint ScriptEditor::scrollViewValue() const {
+    return {m_editor->horizontalScrollBar()->value(),
+            m_editor->verticalScrollBar()->value()};
+}
+
+void ScriptEditor::setCursorPos(const QPair<qsizetype, qsizetype> &p) {
+    auto [line, col] = p;
+    if (line < 0 || line >= m_editor->blockCount()) {
+        return;
+    }
+
+    auto doc = m_editor->document();
+    auto block = doc->findBlockByLineNumber(line);
+    if (col < 0 || col >= block.length() - 1) {
+        return;
+    }
+
+    QTextCursor cursor(block);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor,
+                        col);
+    m_editor->setTextCursor(cursor);
+}
+
+QPair<qsizetype, qsizetype> ScriptEditor::cursorPosValue() const {
+    auto pos = currentPosition();
+    return {pos.blockNumber, pos.positionInBlock};
 }
 
 QIcon ScriptEditor::editorIcon() const { return ICONRES("angellsp"); }

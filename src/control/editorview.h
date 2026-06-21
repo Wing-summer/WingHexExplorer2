@@ -206,6 +206,12 @@ public:
 
     ScrollDataPoints &scrollPoints();
 
+    QStringConverter::Encoding stringEncoding() const;
+    void setStringEncoding(QStringConverter::Encoding enc);
+
+    int hexLineWidth() const;
+    void setHexLineWidth(int v);
+
 public slots:
     void raiseAndSwitchView(const QString &id);
 
@@ -216,9 +222,16 @@ public:
 public:
     EditorView *clone();
 
+    void scrollHexView(const QPoint &p);
+    QPoint scrollHexViewValue() const;
+
+    void setCursorPos(const QPair<qsizetype, qsizetype> &p);
+    QPair<qsizetype, qsizetype> cursorPosValue() const;
+
     void registerView(const QString &id, WingHex::WingEditorViewWidget *view,
                       const QIcon &viewIcon);
 
+    QString currentView() const;
     void switchView(const QString &id);
     void registerQMenu(QMenu *menu);
 

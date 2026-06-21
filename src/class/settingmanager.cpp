@@ -261,9 +261,14 @@ QList<RecentFileManager::RecentInfo>
 SettingManager::getDataFromVarList(const QVariantList &varlist) const {
     QList<RecentFileManager::RecentInfo> infos;
     for (const auto &var : varlist) {
-        if (var.canConvert<RecentFileManager::RecentInfo>()) {
-            infos.append(var.value<RecentFileManager::RecentInfo>());
+        RecentFileManager::RecentInfo info;
+        QByteArray data = var.toByteArray();
+        QDataStream ss(&data, QIODevice::ReadOnly);
+        ss >> info;
+        if (info.url.isEmpty()) {
+            continue;
         }
+        infos.append(info);
     }
     return infos;
 }
@@ -272,7 +277,10 @@ QVariantList SettingManager::getVarList(
     const QList<RecentFileManager::RecentInfo> &infos) const {
     QVariantList varlist;
     for (const auto &info : infos) {
-        varlist.append(QVariant::fromValue(info));
+        QByteArray data;
+        QDataStream ss(&data, QIODevice::WriteOnly);
+        ss << info;
+        varlist.append(data);
     }
     return varlist;
 }
@@ -577,11 +585,9 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentScriptFiles() const {
 
 void SettingManager::setRecentScriptFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles) {
-    if (m_recentScriptFiles != newRecentScriptFiles) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(SCRIPT_RECENTFILES, getVarList(newRecentScriptFiles));
-        m_recentScriptFiles = newRecentScriptFiles;
-    }
+    HANDLE_CONFIG;
+    WRITE_CONFIG(SCRIPT_RECENTFILES, getVarList(newRecentScriptFiles));
+    m_recentScriptFiles = newRecentScriptFiles;
 }
 
 QString SettingManager::appFontFamily() const { return m_appFontFamily; }
@@ -620,11 +626,9 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentHexFiles() const {
 
 void SettingManager::setRecentFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentFiles) {
-    if (m_recentHexFiles != newRecentFiles) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(EDITOR_RECENTFILES, getVarList(newRecentFiles));
-        m_recentHexFiles = newRecentFiles;
-    }
+    HANDLE_CONFIG;
+    WRITE_CONFIG(EDITOR_RECENTFILES, getVarList(newRecentFiles));
+    m_recentHexFiles = newRecentFiles;
 }
 
 Qt::WindowState SettingManager::defaultWinState() const {

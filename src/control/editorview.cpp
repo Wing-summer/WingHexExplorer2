@@ -32,6 +32,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QVBoxLayout>
 
 constexpr auto CLONE_LIMIT = 3;
@@ -228,6 +229,16 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
                         QIcon(new CompositeIconEngine(
                             viewIcon, m_iconCaches.value(m_hexContainer))));
     view->onWorkSpaceNotify(isWorkSpace());
+}
+
+QString EditorView::currentView() const {
+    auto curWidget = m_stack->currentWidget();
+    if (curWidget == m_hexContainer) {
+        return {};
+    } else {
+        auto o = qobject_cast<WingEditorViewWidget *>(curWidget);
+        return o->creator()->id();
+    }
 }
 
 void EditorView::switchView(const QString &id) {
@@ -2991,6 +3002,39 @@ EditorView *EditorView::clone() {
     return ev;
 }
 
+void EditorView::scrollHexView(const QPoint &p) {
+    m_hex->horizontalScrollBar()->setValue(p.x());
+    m_hex->verticalScrollBar()->setValue(p.y());
+}
+
+QPoint EditorView::scrollHexViewValue() const {
+    return {m_hex->horizontalScrollBar()->value(),
+            m_hex->verticalScrollBar()->value()};
+}
+
+void EditorView::setCursorPos(const QPair<qsizetype, qsizetype> &p) {
+    auto [line, col] = p;
+    auto render = m_hex->renderer();
+    if (line < 0 || col < 0 || line > render->documentLastLine()) {
+        return;
+    }
+    if (line == render->documentLastLine()) {
+        if (col > render->documentLastColumn()) {
+            return;
+        }
+    } else {
+        if (col >= render->hexLineWidth()) {
+            return;
+        }
+    }
+    m_hex->cursor()->moveTo(line, col, 1, true);
+}
+
+QPair<qsizetype, qsizetype> EditorView::cursorPosValue() const {
+    auto pos = m_hex->cursor()->position();
+    return {pos.line, pos.column};
+}
+
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     if (isCloneFile()) {
@@ -3058,6 +3102,26 @@ QUrl EditorView::fileNameUrl() const {
         return this->cloneParent()->fileNameUrl();
     }
     return m_fileName;
+}
+
+QStringConverter::Encoding EditorView::stringEncoding() const {
+    return m_hex->renderer()->stringEncoding();
+}
+
+void EditorView::setStringEncoding(QStringConverter::Encoding enc) {
+    m_hex->renderer()->setStringEncoding(enc);
+}
+
+int EditorView::hexLineWidth() const {
+    return m_hex->document()->hexLineWidth();
+}
+
+void EditorView::setHexLineWidth(int v) {
+    const auto &hexline = Utilities::hexLineValues();
+    if (std::find(hexline.begin(), hexline.end(), v) == hexline.end()) {
+        v = 16;
+    }
+    m_hex->document()->setHexLineWidth(v);
 }
 
 bool EditorView::eventFilter(QObject *watched, QEvent *event) {

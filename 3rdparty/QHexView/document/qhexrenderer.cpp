@@ -196,6 +196,14 @@ void QHexRenderer::selectArea(const QPoint &pt) {
     m_selectedarea = area;
 }
 
+void QHexRenderer::toggleArea() {
+    if (m_selectedarea == Areas::AsciiArea) {
+        m_selectedarea = Areas::HexArea;
+    } else if (m_selectedarea == Areas::HexArea) {
+        m_selectedarea = Areas::AsciiArea;
+    }
+}
+
 bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
                            qsizetype firstline, qsizetype lastline) const {
     auto area = this->hitTestArea(pt);
@@ -1249,7 +1257,8 @@ void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,
     // when the cursor sits on the virtual "next byte" slot, the loop above
     // has nothing to draw. This keeps the caret visible on the trailing blank
     // slot and on the extra wrap line.
-    if (m_cursor->currentColumn() >= documentLastColumn()) {
+    if (line >= documentLastLine() &&
+        m_cursor->currentColumn() >= documentLastColumn()) {
         const auto cursorColumn = m_cursor->currentColumn();
         const auto placeholderRect =
             byteRectAt(cellWidth, height, cursorColumn);

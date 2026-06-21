@@ -50,6 +50,7 @@ public:
     void updateMetrics(const QFontMetricsF &fm);
     void enableCursor(bool b = true);
     void selectArea(const QPoint &pt);
+    void toggleArea();
 
     /*==============================*/
     // added by wingsummer

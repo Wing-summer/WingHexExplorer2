@@ -29,6 +29,12 @@ class RecentFileManager : public QObject {
 public:
     struct RecentInfo {
         QUrl url;
+        qsizetype cursorRow = -1;
+        qsizetype cursorCol = -1;
+        QPoint scroll;
+        QString view;
+        uint lineWidth = 0;
+        uint lastUseEncoding = QStringConverter::Encoding::Latin1;
         bool isWorkSpace = false;
 
         bool operator==(const RecentInfo &info) const {
@@ -42,14 +48,30 @@ public:
 
         friend QDataStream &operator<<(QDataStream &arch,
                                        const RecentInfo &object) {
-            arch << object.url;
-            arch << object.isWorkSpace;
+            QVariantHash data;
+            data["url"] = object.url;
+            data["ws"] = object.isWorkSpace;
+            data["enc"] = object.lastUseEncoding;
+            data["sbar"] = object.scroll;
+            data["curR"] = object.cursorRow;
+            data["curC"] = object.cursorCol;
+            data["view"] = object.view;
+            data["lwidth"] = object.lineWidth;
+            arch << data;
             return arch;
         }
 
         friend QDataStream &operator>>(QDataStream &arch, RecentInfo &object) {
-            arch >> object.url;
-            arch >> object.isWorkSpace;
+            QVariantHash data;
+            arch >> data;
+            object.url = data["url"].toUrl();
+            object.isWorkSpace = data["ws"].toBool();
+            object.lastUseEncoding = data["enc"].toUInt();
+            object.scroll = data["sbar"].toPoint();
+            object.cursorRow = data["curR"].toLongLong();
+            object.cursorCol = data["curC"].toLongLong();
+            object.view = data["view"].toString();
+            object.lineWidth = data["lwidth"].toUInt();
             return arch;
         }
     };
@@ -58,6 +80,7 @@ public:
     explicit RecentFileManager(QMenu *menu, bool isScriptFile);
     ~RecentFileManager();
     void addRecentFile(const RecentInfo &info);
+    void updateRecentFile(const RecentInfo &info);
     void clearFile();
     void apply(QWidget *parent, const QList<RecentInfo> &files);
 
@@ -81,7 +104,5 @@ private:
 
     bool _isScriptFile;
 };
-
-Q_DECLARE_METATYPE(RecentFileManager::RecentInfo)
 
 #endif // RECENTFILEMANAGER_H

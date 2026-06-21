@@ -119,6 +119,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         _editArea->setAlignment(Qt::AlignCenter);
         // STR or HEX
         _editArea->setFixedWidth(fm.horizontalAdvance('A') * 4);
+        _editArea->installEventFilter(this);
         m_status->addWidget(_editArea);
 
         auto separator = new QFrame(m_status);
@@ -130,6 +131,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto l = new QLabel(tr("loc"), this);
         m_status->addWidget(l);
         m_status->addWidget(m_lblloc);
+        m_lblloc->installEventFilter(this);
 
         separator = new QFrame(m_status);
         separator->setFrameShape(QFrame::VLine);
@@ -153,6 +155,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             QStringLiteral("border:none;background:transparent;");
 
         m_sSaved = new QToolButton(this);
+        m_sSaved->setFocusPolicy(Qt::NoFocus);
         m_sSaved->setStyleSheet(disableStyle);
         m_sSaved->setToolTip(tr("InfoSave"));
         m_sSaved->setIcon(_infoSaved);
@@ -161,6 +164,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_editStateWidgets << m_sSaved;
 
         m_sReadWrite = new QToolButton(this);
+        m_sReadWrite->setFocusPolicy(Qt::NoFocus);
         m_sReadWrite->setStyleSheet(disableStyle);
         m_sReadWrite->setToolTip(tr("ReadOnly"));
         m_sReadWrite->setIcon(_infoWriteable);
@@ -169,6 +173,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_editStateWidgets << m_sReadWrite;
 
         m_sLocked = new QToolButton(this);
+        m_sLocked->setCursor(Qt::PointingHandCursor);
+        m_sLocked->setFocusPolicy(Qt::NoFocus);
         m_sLocked->setStyleSheet(disableStyle);
         m_sLocked->setToolTip(tr("SetLocked"));
         m_sLocked->setIcon(_infoUnLock);
@@ -178,6 +184,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_editStateWidgets << m_sLocked;
 
         m_sCanOver = new QToolButton(this);
+        m_sCanOver->setCursor(Qt::PointingHandCursor);
+        m_sCanOver->setFocusPolicy(Qt::NoFocus);
         m_sCanOver->setStyleSheet(disableStyle);
         m_sCanOver->setToolTip(tr("SetOver"));
         m_sCanOver->setIcon(_infoCannotOver);
@@ -261,6 +269,14 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                         Q_ASSERT(editor);
                         editor->setTabToolTip(
                             RecentFileManager::getDisplayTooltip(rinfo, false));
+                        editor->setStringEncoding(QStringConverter::Encoding(
+                            qBound(0u, rinfo.lastUseEncoding,
+                                   uint(QStringConverter::LastEncoding) - 1)));
+                        editor->scrollHexView(rinfo.scroll);
+                        editor->switchView(rinfo.view);
+                        editor->setCursorPos(
+                            {rinfo.cursorRow, rinfo.cursorCol});
+                        editor->setHexLineWidth(rinfo.lineWidth);
                     }
                 }
             });
@@ -3260,7 +3276,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     auto &set = SettingManager::instance();
     editor->setCopyLimit(set.copylimit());
     editor->setFontSize(set.editorfontSize());
-    editor->hexEditor()->document()->setHexLineWidth(set.editorHexLineWidth());
+    editor->setHexLineWidth(set.editorHexLineWidth());
 
     connect(editor, &EditorView::closeRequested, this, [this] {
         auto editor = qobject_cast<EditorView *>(sender());
@@ -3528,6 +3544,31 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
                          QString::number(hexeditor->scaleRate() * 100) +
                              QStringLiteral("%"));
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::inputTextHitLimit, this, [this]() {
+            auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
+            constexpr auto COUNT = 3;
+            constexpr auto INTERVAL = 200;
+            QPixmap icon;
+
+            if (hexeditor->isLocked()) {
+                blinkWidget(m_iLocked, COUNT, INTERVAL);
+                blinkWidget(m_sLocked, COUNT, INTERVAL);
+                icon = _pixLock;
+            } else if (hexeditor->isKeepSize()) {
+                blinkWidget(m_iCanOver, COUNT, INTERVAL);
+                blinkWidget(m_sCanOver, COUNT, INTERVAL);
+                icon = _pixCannotOver;
+            } else {
+                blinkWidget(m_iReadWrite, COUNT, INTERVAL);
+                blinkWidget(m_sReadWrite, COUNT, INTERVAL);
+                icon = _pixReadonly;
+            }
+
+            QTimer::singleShot(0, this, [icon, this]() {
+                Toast::toast(this, icon, tr("EditLimitHit"));
+            });
         });
 
     auto menu = m_toolBtneditors[EDITOR_WINS]->menu();
@@ -3848,6 +3889,7 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         return ErrFile::Error;
     }
 
+    updateRecentFile(editor);
     auto r = editor->closeFile(force);
     if (!force && r != ErrFile::Success) {
         return r;
@@ -3915,6 +3957,8 @@ void MainWindow::updateEditModeEnabled() {
             doc->canRedo());
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
             doc->canUndo());
+        _editArea->setCursor(Qt::PointingHandCursor);
+        m_lblloc->setCursor(Qt::PointingHandCursor);
         updateWindowTitle(editor);
     } else {
         auto &plgsys = PluginSystem::instance();
@@ -3937,6 +3981,8 @@ void MainWindow::updateEditModeEnabled() {
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
         on_editableAreaClicked(QHexRenderer::Areas::ExtraArea);
+        _editArea->unsetCursor();
+        m_lblloc->unsetCursor();
         updateWindowTitle(nullptr);
     }
 }
@@ -4317,6 +4363,7 @@ void MainWindow::loadCacheIcon() {
     _infoCannotOver = ICONRES(QStringLiteral("unover"));
 
     _pixLock = QPixmap(NAMEICONRES("lock"));
+    _pixReadonly = QPixmap(NAMEICONRES("readonly"));
     _pixCanOver = QPixmap(NAMEICONRES("canover"));
     _pixCannotOver = QPixmap(NAMEICONRES("unover"));
 }
@@ -4393,10 +4440,37 @@ void MainWindow::addRecentFile(EditorView *editor, const QString &fileName,
     info.url = QUrl::fromLocalFile(fileName);
     info.isWorkSpace = isWorkspace;
     if (editor) {
+        info.lastUseEncoding = editor->stringEncoding();
         editor->setTabToolTip(
             RecentFileManager::getDisplayTooltip(info, false));
     }
     m_recentmanager->addRecentFile(info);
+}
+
+void MainWindow::updateRecentFile(EditorView *editor) {
+    Q_ASSERT(editor);
+    if (editor->isCloneFile()) {
+        return;
+    }
+    RecentFileManager::RecentInfo info;
+
+    if (editor->isWorkSpace()) {
+        info.url = QUrl::fromLocalFile(editor->workSpaceName());
+        info.isWorkSpace = true;
+    } else {
+        info.url = editor->fileNameUrl();
+        info.isWorkSpace = false;
+    }
+
+    auto sv = editor->scrollHexViewValue();
+    info.scroll = sv;
+    auto cp = editor->cursorPosValue();
+    info.cursorRow = cp.first;
+    info.cursorCol = cp.second;
+    info.view = editor->currentView();
+    info.lastUseEncoding = editor->stringEncoding();
+    info.lineWidth = editor->hexLineWidth();
+    m_recentmanager->updateRecentFile(info);
 }
 
 ads::CDockAreaWidget *MainWindow::editorViewArea() const {
@@ -4660,6 +4734,27 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
                 return true;
             } else if (watched == m_sCanOver) {
                 on_toggleover();
+                return true;
+            } else if (watched == _editArea) {
+                auto hex = currentHexView();
+                if (hex) {
+                    hex->cursor()->switchInsertionMode();
+                }
+                return true;
+            } else if (watched == m_lblloc) {
+                auto hex = currentHexView();
+                if (hex) {
+                    hex->ensureCurrentLineVisible();
+                }
+                return true;
+            }
+        } break;
+        case QEvent::Wheel: {
+            if (watched == _editArea) {
+                auto hex = currentHexView();
+                if (hex) {
+                    hex->toggleArea();
+                }
                 return true;
             }
         } break;

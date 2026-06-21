@@ -144,13 +144,13 @@ void QHexCursor::select(const QHexPosition &pos,
 
 void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
                         bool clearSelection) {
-    m_position.line = line;
+    m_position.line = qMax(0, line);
     m_position.column = qMax(0, column); // fix the bug by wingsummer
     m_position.nibbleindex = nibbleindex;
 
     m_selection = m_position;
 
-    if (clearSelection) {
+    if (clearSelection && !m_sels.isEmpty()) {
         m_sels.clear();
         Q_EMIT selectionChanged();
     }
@@ -161,7 +161,7 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
 void QHexCursor::select(qsizetype line, int column, int nibbleindex,
                         SelectionModes modes) {
     if (modes.testFlag(SelectionPreview)) {
-        m_selection.line = line;
+        m_selection.line = qMax(0, line);
         m_selection.column = qMax(0, column); // fix the bug by wingsummer
         m_selection.lineWidth = m_position.lineWidth;
         m_selection.nibbleindex = nibbleindex;
@@ -214,11 +214,10 @@ void QHexCursor::select(qsizetype length, QHexCursor::SelectionModes mode) {
 }
 
 void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {
-    bool differentmode = (m_insertionmode != mode);
-    m_insertionmode = mode;
-
-    if (differentmode)
+    if (m_insertionmode != mode) {
+        m_insertionmode = mode;
         Q_EMIT insertionModeChanged();
+    }
 }
 
 void QHexCursor::setLineWidth(quint8 width) {

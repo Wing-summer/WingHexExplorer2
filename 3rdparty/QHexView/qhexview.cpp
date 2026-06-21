@@ -43,22 +43,10 @@
 bool QHexView::isReadOnly() { return m_document->isReadOnly(); }
 bool QHexView::isKeepSize() { return m_document->isKeepSize(); }
 bool QHexView::isLocked() { return m_document->isLocked(); }
-bool QHexView::setLockedFile(bool b) {
-    auto ret = m_document->setLockedFile(b);
-    return ret;
-}
-bool QHexView::setKeepSize(bool b) {
-    auto ret = m_document->setKeepSize(b);
-    if (b) {
-        m_cursor->setInsertionMode(QHexCursor::OverwriteMode);
-    }
-    return ret;
-}
-
+bool QHexView::setLockedFile(bool b) { return m_document->setLockedFile(b); }
+bool QHexView::setKeepSize(bool b) { return m_document->setKeepSize(b); }
 void QHexView::setLockKeepSize(bool b) { m_document->setLockKeepSize(b); }
-
 bool QHexView::lockKeepSize() const { return m_document->lockKeepSize(); }
-
 qsizetype QHexView::documentLines() { return m_renderer->documentLines(); }
 qsizetype QHexView::documentBytes() { return m_document->length(); }
 qsizetype QHexView::currentRow() { return m_cursor->currentLine(); }
@@ -408,12 +396,12 @@ qsizetype QHexView::findPrevious(qsizetype begin, const QByteArray &ba) {
 }
 
 bool QHexView::RemoveSelection(int nibbleindex) {
-    if (isReadOnly() || isKeepSize()) {
-        return false;
-    }
-
     if (!m_cursor->hasSelection()) {
         return true;
+    }
+
+    if (isReadOnly() || isKeepSize()) {
+        return false;
     }
 
     auto total = m_cursor->selectionCount();
@@ -760,10 +748,15 @@ void QHexView::mouseMoveEvent(QMouseEvent *e) {
 
     auto hittest = m_renderer->hitTestArea(abspos);
 
-    if (m_renderer->editableArea(hittest))
+    if (m_renderer->editableArea(hittest)) {
         this->setCursor(Qt::IBeamCursor);
-    else
-        this->setCursor(Qt::ArrowCursor);
+    } else {
+        if (hittest == QHexRenderer::Areas::HeaderArea) {
+            this->setCursor(Qt::PointingHandCursor);
+        } else {
+            this->setCursor(Qt::ArrowCursor);
+        }
+    }
 }
 
 void QHexView::mouseReleaseEvent(QMouseEvent *e) {
@@ -875,6 +868,13 @@ void QHexView::paintEvent(QPaintEvent *e) {
 
 void QHexView::ensureCurrentLineVisible() {
     adjustLineVisible(m_cursor->currentLine());
+}
+
+void QHexView::toggleArea() {
+    if (!m_renderer)
+        return;
+    m_renderer->toggleArea();
+    emit editableAreaClicked(m_renderer->selectedArea());
 }
 
 void QHexView::blinkCursor() {
@@ -1190,28 +1190,40 @@ bool QHexView::processMove(QHexCursor *cur, QKeyEvent *e) {
 }
 
 bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
-    if (isReadOnly() || isLocked() || (e->modifiers() & Qt::ControlModifier))
+    if (e->modifiers() & Qt::ControlModifier) {
         return false;
+    }
+    if (isReadOnly() || isLocked()) {
+        emit inputTextHitLimit();
+        return false;
+    }
 
     auto text = e->text();
     if (text.isEmpty()) {
         return false;
     }
 
-    uchar key = static_cast<uchar>(text[0].toLatin1());
-
+    QChar key = text.front();
     if ((m_renderer->selectedArea() == QHexRenderer::Areas::HexArea)) {
-        if (!((key >= '0' && key <= '9') ||
-              (key >= 'a' && key <= 'f'))) // Check if is a Hex Char
+        uchar val = hexChar2Value(key);
+        if (val == 0xFF) {
             return false;
+        }
 
-        uchar val = uchar(QString(char(key)).toUInt(nullptr, 16));
-        this->RemoveSelection();
-
-        if (this->atEnd() || (cur->currentNibble() && !isKeepSize() &&
-                              cur->insertionMode() == QHexCursor::InsertMode)) {
-            m_document->Insert(cur, cur->position().offset(), uchar(val << 4),
-                               1); // X0 byte
+        auto r = this->RemoveSelection();
+        if (!r) {
+            emit inputTextHitLimit();
+            return false;
+        }
+        if (cur->currentNibble() &&
+            cur->insertionMode() == QHexCursor::InsertMode) {
+            r = m_document->Insert(cur, cur->position().offset(),
+                                   uchar(val << 4),
+                                   1); // X0 byte
+            if (!r) {
+                emit inputTextHitLimit();
+                return false;
+            }
             return true;
         }
 
@@ -1222,23 +1234,35 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
         else // 0X
             val = (ch & 0xF0) | val;
 
-        m_document->Replace(cur, cur->position().offset(), val,
-                            cur->currentNibble());
+        r = m_document->Replace(cur, cur->position().offset(), val,
+                                cur->currentNibble());
+        if (!r) {
+            emit inputTextHitLimit();
+            return false;
+        }
         return true;
     }
 
     if ((m_renderer->selectedArea() == QHexRenderer::Areas::AsciiArea)) {
-        if (!(key >= 0x20 && key <= 0x7E)) // Check if is a Printable Char
+        if (!key.isPrint()) // Check if is a Printable Char
             return false;
 
-        this->RemoveSelection();
-
-        if (!this->atEnd() &&
-            (cur->insertionMode() == QHexCursor::OverwriteMode))
-            m_document->Replace(cur, cur->position().offset(), key, 1);
-        else
-            m_document->Insert(cur, cur->position().offset(), key, 1);
-
+        auto r = this->RemoveSelection();
+        if (!r) {
+            emit inputTextHitLimit();
+            return false;
+        }
+        if (cur->insertionMode() == QHexCursor::OverwriteMode) {
+            r = m_document->Replace(cur, cur->position().offset(),
+                                    key.toLatin1(), 1);
+        } else {
+            r = m_document->Insert(cur, cur->position().offset(),
+                                   key.toLatin1(), 1);
+        }
+        if (!r) {
+            emit inputTextHitLimit();
+            return false;
+        }
         QKeyEvent keyevent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
         qApp->sendEvent(this, &keyevent);
         return true;
@@ -1317,6 +1341,19 @@ bool QHexView::isLineVisible(qsizetype line) const {
     if (line > this->lastVisibleLine())
         return false;
     return true;
+}
+
+uchar QHexView::hexChar2Value(const QChar &ch) {
+    auto c = ch.toLatin1();
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    } else {
+        return 0xFF;
+    }
 }
 
 int QHexView::documentSizeFactor() const {

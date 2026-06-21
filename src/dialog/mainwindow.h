@@ -246,6 +246,7 @@ public:
 
     void addRecentFile(EditorView *editor, const QString &fileName,
                        bool isWorkspace = false);
+    void updateRecentFile(EditorView *editor);
 
 private:
     void updateNumberTable(bool force);
@@ -453,6 +454,22 @@ private:
         watcher->setFuture(fu);
     }
 
+    static void blinkWidget(QWidget *widget, int timesLeft, int interval) {
+        Q_ASSERT(widget);
+        if (timesLeft <= 0) {
+            widget->setEnabled(true);
+            return;
+        }
+
+        widget->setEnabled(false);
+        QTimer::singleShot(interval, widget, [=]() {
+            widget->setEnabled(true);
+            QTimer::singleShot(interval, widget, [=]() {
+                blinkWidget(widget, timesLeft - 1, interval);
+            });
+        });
+    }
+
 signals:
     void closed();
 
@@ -498,6 +515,7 @@ private:
     QIcon _infoCanOver, _infoCannotOver;
 
     QPixmap _pixLock;
+    QPixmap _pixReadonly;
     QPixmap _pixCanOver, _pixCannotOver;
 
     QTableViewExt *m_findresult = nullptr;

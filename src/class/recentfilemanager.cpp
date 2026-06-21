@@ -164,7 +164,6 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             delete a;
         }
         auto a = new QAction(m_menu);
-        a->setData(QVariant::fromValue(info));
 
         const auto &url = info.url;
         a->setToolTip(getDisplayTooltip(info, _isScriptFile));
@@ -205,7 +204,11 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         connect(a, &QAction::triggered, this, [this, a] {
             auto send = qobject_cast<QAction *>(sender());
             if (send) {
-                auto f = send->data().value<RecentInfo>();
+                auto idx = hitems.indexOf(send);
+                if (idx < 0) {
+                    return;
+                }
+                auto f = m_recents.at(idx);
                 if (existsPath(f)) {
                     auto idx = hitems.indexOf(a);
                     if (idx > 0) {
@@ -244,8 +247,17 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             m_menu->insertAction(hitems.first(), a);
             hitems.move(o, 0);
             m_recents.move(o, 0);
+            m_recents.first() = info;
         }
     }
+}
+
+void RecentFileManager::updateRecentFile(const RecentInfo &info) {
+    int o = m_recents.indexOf(info);
+    if (o < 0) {
+        return;
+    }
+    m_recents[o] = info;
 }
 
 void RecentFileManager::clearFile() {

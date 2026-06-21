@@ -60,8 +60,10 @@ function(enable_reproducible_paths target)
 
     if(MSVC)
         target_compile_options(
-            ${target} PRIVATE $<${_non_debug}: /pathmap:${CMAKE_SOURCE_DIR}=.
-                              /pathmap:${CMAKE_BINARY_DIR}=. >)
+            ${target}
+            PRIVATE $<${_non_debug}:/experimental:deterministic
+                    /pathmap:${CMAKE_SOURCE_DIR}=.
+                    /pathmap:${CMAKE_BINARY_DIR}=. >)
 
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         target_compile_options(

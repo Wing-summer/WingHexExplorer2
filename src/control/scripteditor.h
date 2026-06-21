@@ -50,6 +50,12 @@ public:
     static const QList<ScriptEditor *> &instances();
     static bool isAllClosed();
 
+    void scrollView(const QPoint &p);
+    QPoint scrollViewValue() const;
+
+    void setCursorPos(const QPair<qsizetype, qsizetype> &p);
+    QPair<qsizetype, qsizetype> cursorPosValue() const;
+
 public:
     virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;

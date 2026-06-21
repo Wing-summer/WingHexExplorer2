@@ -237,9 +237,10 @@ private:
     void editorGotoPos(ScriptEditor *editor, int line, int col);
 
 public:
-    ScriptEditor *openFile(const QString &filename);
+    ScriptEditor *openFile(const QString &filename, bool *opened = nullptr);
 
     void addRecentFile(ScriptEditor *editor, const QString &fileName);
+    void updateRecentFile(ScriptEditor *editor);
 
     bool try2CloseScriptViews(const QList<ScriptEditor *> views);
 

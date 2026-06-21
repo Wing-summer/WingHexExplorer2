@@ -59,10 +59,15 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     m_recentmanager = new RecentFileManager(m_recentMenu, true);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [this](const RecentFileManager::RecentInfo &rinfo) {
-                auto e = openFile(rinfo.url.toLocalFile());
+                bool o;
+                auto e = openFile(rinfo.url.toLocalFile(), &o);
                 if (e) {
                     e->setTabToolTip(
                         RecentFileManager::getDisplayTooltip(rinfo, true));
+                    if (!o) {
+                        e->scrollView(rinfo.scroll);
+                        e->setCursorPos({rinfo.cursorRow, rinfo.cursorCol});
+                    }
                 }
             });
     m_recentmanager->apply(this,
@@ -1136,6 +1141,19 @@ void ScriptingDialog::addRecentFile(ScriptEditor *editor,
     m_recentmanager->addRecentFile(info);
 }
 
+void ScriptingDialog::updateRecentFile(ScriptEditor *editor) {
+    Q_ASSERT(editor);
+    RecentFileManager::RecentInfo info;
+    info.url = editor->lspFileNameURL();
+    info.isWorkSpace = false;
+    auto sv = editor->scrollViewValue();
+    info.scroll = sv;
+    auto cv = editor->cursorPosValue();
+    info.cursorRow = cv.first;
+    info.cursorCol = cv.second;
+    m_recentmanager->updateRecentFile(info);
+}
+
 void ScriptingDialog::updateRunDebugMode(bool disable) {
     auto &runner = ScriptMachine::instance();
     auto enable = !disable;
@@ -1194,13 +1212,20 @@ bool ScriptingDialog::isCurrentDebugging() const {
     return m.isDebugMode();
 }
 
-ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
+ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
     auto e = findEditorView(filename);
     if (e) {
+        if (opened) {
+            *opened = true;
+        }
         e->raise();
         Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
                      tr("AlreadyOpened"));
         return e;
+    } else {
+        if (opened) {
+            *opened = false;
+        }
     }
 
     auto editor = std::make_unique<ScriptEditor>(this);
@@ -2054,6 +2079,9 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
         }
     }
 
+    if (editor != _fakeEditor) {
+        updateRecentFile(editor);
+    }
     editor->deleteDockWidget();
     updateEditModeEnabled();
 }

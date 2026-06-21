@@ -151,6 +151,7 @@ public slots:
     void setCursorSync(bool newCursorSync);
 
     void ensureCurrentLineVisible();
+    void toggleArea();
 
 private:
     void establishSignal(QHexDocument *doc);
@@ -186,6 +187,7 @@ signals:
     void selectionColorChanged();
     void selBackgroundColorChanged();
     void borderColorChanged();
+    void inputTextHitLimit();
 
     void headerAreaClicked(QHexRenderer::Areas area);
     void onPaintCustomEvent(int XOffset, qsizetype firstVisible,
@@ -231,8 +233,8 @@ private:
     qsizetype visibleLines() const;
     bool isLineVisible(qsizetype line) const;
 
+    uchar hexChar2Value(const QChar &ch);
     int documentSizeFactor() const;
-
     QPoint absolutePosition(const QPoint &pos) const;
 
 private:
