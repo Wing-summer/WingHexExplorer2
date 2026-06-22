@@ -29,13 +29,13 @@ class RecentFileManager : public QObject {
 public:
     struct RecentInfo {
         QUrl url;
+        bool isWorkSpace = false;
         qsizetype cursorRow = -1;
         qsizetype cursorCol = -1;
         QPoint scroll;
         QString view;
         uint lineWidth = 0;
         uint lastUseEncoding = QStringConverter::Encoding::Latin1;
-        bool isWorkSpace = false;
 
         bool operator==(const RecentInfo &info) const {
             return this->url == info.url &&
@@ -90,11 +90,14 @@ public:
                                       bool isScriptFile);
     static QString getDisplayTooltip(const RecentInfo &info, bool isScriptFile);
 
+    bool isDirty() const;
+
 signals:
     void triggered(const RecentFileManager::RecentInfo &rinfo);
 
 private:
     bool existsPath(const RecentInfo &info);
+    static bool isDirtyInfo(const RecentInfo &old, const RecentInfo &info);
 
 private:
     QMenu *m_menu;
@@ -103,6 +106,7 @@ private:
     QList<QAction *> hitems;
 
     bool _isScriptFile;
+    bool _dirty = false;
 };
 
 #endif // RECENTFILEMANAGER_H

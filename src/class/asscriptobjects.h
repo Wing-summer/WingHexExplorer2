@@ -19,7 +19,7 @@
 #define ASSCRIPTOBJECTS_H
 
 #include "WingPlugin/scriptobjects.h"
-#include "WingPlugin/wingcore.h"
+#include "utilities.h"
 
 class ScriptDictionary : public WingHex::ASScriptDictionary {
 public:
@@ -45,7 +45,7 @@ public:
     virtual void clear() override;
 
 private:
-    inline static WingHex::Cache<std::string_view, int> typeIDCache{10};
+    inline static Cache<std::string_view, int> typeIDCache{10};
 };
 
 class ScriptArray : public WingHex::ASScriptArray {
@@ -112,7 +112,7 @@ public:
     virtual bool retrieve(double &value) const override;
 
 private:
-    inline static WingHex::Cache<std::string_view, int> typeIDCache{10};
+    inline static Cache<std::string_view, int> typeIDCache{10};
 };
 
 #endif // ASSCRIPTOBJECTS_H

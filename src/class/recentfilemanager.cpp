@@ -113,6 +113,16 @@ bool RecentFileManager::existsPath(const RecentInfo &info) {
     return false;
 }
 
+bool RecentFileManager::isDirtyInfo(const RecentInfo &old,
+                                    const RecentInfo &info) {
+    return old.cursorRow != info.cursorRow || old.cursorCol != info.cursorCol ||
+           old.scroll != info.scroll || old.view != info.view ||
+           old.lineWidth != info.lineWidth ||
+           old.lastUseEncoding != info.lastUseEncoding;
+}
+
+bool RecentFileManager::isDirty() const { return _dirty; }
+
 QString RecentFileManager::getDisplayFileName(const RecentInfo &info,
                                               bool isScriptFile) {
     auto url = info.url;
@@ -247,7 +257,6 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             m_menu->insertAction(hitems.first(), a);
             hitems.move(o, 0);
             m_recents.move(o, 0);
-            m_recents.first() = info;
         }
     }
 }
@@ -257,7 +266,11 @@ void RecentFileManager::updateRecentFile(const RecentInfo &info) {
     if (o < 0) {
         return;
     }
-    m_recents[o] = info;
+    auto &ninfo = m_recents[o];
+    if (isDirtyInfo(ninfo, info)) {
+        ninfo = info;
+        _dirty = true;
+    }
 }
 
 void RecentFileManager::clearFile() {

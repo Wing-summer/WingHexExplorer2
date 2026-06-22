@@ -883,11 +883,8 @@ bool ScriptMachine::executeScript(
 
     mod->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(umode),
-                     AsUserDataType::UserData_ContextMode);
     ctx->SetUserData(reinterpret_cast<void *>(
                          AppManager::instance()->currentMSecsSinceEpoch()),
                      AsUserDataType::UserData_Timer);
@@ -975,7 +972,6 @@ bool ScriptMachine::executeScript(
             // discarding the module and doing a full garbage collection so that
             // this can also be debugged if desired
             mod->Discard();
-
             onFinished(true);
         });
     runner->start();
@@ -1139,6 +1135,8 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
         ctx = p->_ctxPool.dequeue();
     }
 
+    auto mode = engine->GetUserData(AsUserDataType::UserData_ContextMode);
+    ctx->SetUserData(mode, AsUserDataType::UserData_ContextMode);
     // Attach the debugger
     p->checkDebugger(ctx);
 
@@ -1614,6 +1612,9 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         isDecl = false;
     }
 
+    asPWORD umode = asPWORD(mode);
+    _engine->SetUserData(reinterpret_cast<void *>(umode),
+                         AsUserDataType::UserData_ContextMode);
     if (isDecl) {
         auto decls = visitor.declCode();
         if (!decls.isEmpty()) {
@@ -1634,6 +1635,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                 _cachedGlobalStrs.clear();
             }
         }
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         onFinished(true);
         return;
     }
@@ -1642,16 +1644,13 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
 
     ccode = code.toUtf8();
     if (ccode.isEmpty()) {
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         onFinished(true);
         return;
     }
 
     // ok, wrap the codes
     ccode.prepend("void f(){\n").append("\n}");
-
-    asPWORD umode = asPWORD(mode);
-    _engine->SetUserData(reinterpret_cast<void *>(umode),
-                         AsUserDataType::UserData_ContextMode);
 
     // start to compile
     auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
@@ -1682,11 +1681,8 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
     asPWORD isDbg = 0;
     mod->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(umode),
-                     AsUserDataType::UserData_ContextMode);
     ctx->SetUserData(reinterpret_cast<void *>(
                          AppManager::instance()->currentMSecsSinceEpoch()),
                      AsUserDataType::UserData_Timer);
@@ -1744,7 +1740,6 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                 func->Release();
                 _engine->GarbageCollect();
             }
-
             onFinished(true);
         });
 

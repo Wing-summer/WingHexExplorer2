@@ -78,6 +78,171 @@ Q_DECL_UNUSED static inline bool qEnvironmentVariableBool(const char *varName,
     }
 }
 
+template <class Key, class T>
+class Cache {
+    struct Chain {
+        Chain() noexcept : prev(this), next(this) {}
+        Chain *prev;
+        Chain *next;
+    };
+
+    struct Node : public Chain {
+        using KeyType = Key;
+        using ValueType = T;
+
+        Key key;
+        T value;
+
+        inline Node(Key k, T v) noexcept : Chain(), key(k), value(v) {}
+
+        inline static void createInPlace(Node *n, Key k, T v) {
+            new (n) Node(k, v);
+        }
+
+        inline void emplace(T v) { value = v; }
+
+        inline Node(Node &&other)
+            : Chain(other), key(std::move(other.key)),
+              value(std::move(other.value)) {
+            Q_ASSERT(this->prev);
+            Q_ASSERT(this->next);
+            this->prev->next = this;
+            this->next->prev = this;
+        }
+
+    private:
+        Q_DISABLE_COPY(Node)
+    };
+
+    using Data = QHashPrivate::Data<Node>;
+
+    mutable Chain chain;
+    Data d;
+    qsizetype mx = 0;
+    qsizetype total = 0;
+
+    inline static void unlinkChain(Node *n) noexcept {
+        n->prev->next = n->next;
+        n->next->prev = n->prev;
+    }
+
+    inline void linkFront(Node *n) noexcept {
+        n->prev = &chain;
+        n->next = chain.next;
+        chain.next->prev = n;
+        chain.next = n;
+    }
+
+    inline void moveToFront(Node *n) const noexcept {
+        if (chain.next == n)
+            return;
+        unlinkChain(n);
+        n->prev = const_cast<Chain *>(&chain);
+        n->next = chain.next;
+        chain.next->prev = n;
+        chain.next = n;
+    }
+
+    inline void unlink(Node *n) {
+        unlinkChain(n);
+        --total;
+        auto it = d.findBucket(n->key);
+        d.erase(it);
+    }
+
+    inline void trim(qsizetype m) {
+        while (chain.prev != &chain && total > m) {
+            Node *n = static_cast<Node *>(chain.prev);
+            unlink(n);
+        }
+    }
+
+    Q_DISABLE_COPY(Cache)
+
+public:
+    inline explicit Cache(qsizetype maxCost) noexcept : mx(maxCost) {}
+
+    inline ~Cache() {
+        static_assert(std::is_nothrow_destructible_v<Key>,
+                      "Types with throwing destructors are not supported in Qt "
+                      "containers.");
+        static_assert(std::is_nothrow_destructible_v<T>,
+                      "Types with throwing destructors are not supported in Qt "
+                      "containers.");
+        clear();
+    }
+
+    inline qsizetype maxCost() const noexcept { return mx; }
+
+    inline void setMaxCost(qsizetype m) {
+        mx = m;
+        trim(mx);
+    }
+
+    inline qsizetype totalCost() const noexcept { return total; }
+
+    inline qsizetype size() const noexcept { return qsizetype(d.size); }
+    inline qsizetype count() const noexcept { return qsizetype(d.size); }
+    inline bool isEmpty() const noexcept { return !d.size; }
+
+    inline void clear() {
+        d.clear();
+        total = 0;
+        chain.next = &chain;
+        chain.prev = &chain;
+    }
+
+    inline bool insert(const Key &key, T object) {
+        if (mx < 1) {
+            remove(key);
+            return false;
+        }
+
+        if (Node *existing = d.findNode(key)) {
+            existing->emplace(object);
+            moveToFront(existing);
+            return true;
+        }
+
+        trim(mx - 1);
+
+        auto result = d.findOrInsert(key);
+        Node *n = result.it.node();
+        Node::createInPlace(n, key, object);
+        linkFront(n);
+        ++total;
+        return true;
+    }
+
+    inline T object(const Key &key) const {
+        if (isEmpty())
+            return T{};
+
+        Node *n = d.findNode(key);
+        if (!n)
+            return T{};
+
+        moveToFront(n);
+        return n->value;
+    }
+
+    inline bool contains(const Key &key) const {
+        return !isEmpty() && d.findNode(key) != nullptr;
+    }
+
+    inline bool remove(const Key &key) {
+        if (isEmpty())
+            return false;
+
+        Node *n = d.findNode(key);
+        if (!n)
+            return false;
+
+        unlink(n);
+        return true;
+    }
+};
+
 class Utilities {
 public:
     static inline bool isRoot() {

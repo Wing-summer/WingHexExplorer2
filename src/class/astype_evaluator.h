@@ -25,6 +25,7 @@
 #include "define.h"
 #include "fmtlibext.h"
 #include "src/scriptaddon/scriptqdictionary.h"
+#include "utilities.h"
 
 #include <QChar>
 #include <QColor>
@@ -592,7 +593,7 @@ public:
 
 private:
     QHash<std::string_view, WingHex::IWingAngel::Evaluator> evals;
-    mutable WingHex::Cache<QString, int> typeIDCache;
+    mutable Cache<QString, int> typeIDCache;
 };
 
 #endif // ASTYPE_EVALUATOR_H

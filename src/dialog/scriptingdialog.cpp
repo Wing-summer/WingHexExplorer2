@@ -1973,7 +1973,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
 
     _savedLayout = m_dock->saveState();
     auto &set = SettingManager::instance();
-    set.setRecentScriptFiles(m_recentmanager->saveRecent());
+    if (m_recentmanager->isDirty())
+        set.setRecentScriptFiles(m_recentmanager->saveRecent());
     set.setLastUsedScriptPath(m_lastusedpath);
     saveDockLayout();
     FramelessMainWindow::closeEvent(event);

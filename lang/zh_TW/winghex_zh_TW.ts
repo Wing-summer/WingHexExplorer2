@@ -1845,7 +1845,7 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="2210"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2874"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4035"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4796"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4797"/>
         <source>ChooseSaveFile</source>
         <translation>請選擇保存檔路徑：</translation>
     </message>
@@ -1984,8 +1984,8 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="4108"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4778"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4806"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4779"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4807"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
@@ -2047,8 +2047,8 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="3177"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4778"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4806"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4779"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4807"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失敗！</translation>
     </message>
@@ -2753,7 +2753,7 @@
 <context>
     <name>QApplication</name>
     <message>
-        <location filename="../../src/utilities.h" line="264"/>
+        <location filename="../../src/utilities.h" line="429"/>
         <source>OptionNeedRestart</source>
         <translation>該設置需要程式重啟後生效</translation>
     </message>
@@ -2951,7 +2951,7 @@
     <message>
         <location filename="../../src/class/recentfilemanager.cpp" line="52"/>
         <location filename="../../src/class/recentfilemanager.cpp" line="62"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="266"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="279"/>
         <source>NoHistoryDel</source>
         <translation>無打開歷史專案可刪除！</translation>
     </message>
@@ -2961,32 +2961,32 @@
         <translation>刪除歷史專案成功</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="142"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="152"/>
         <source>[file]</source>
         <translation>【檔】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="145"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="155"/>
         <source>[isWorkSpace]</source>
         <translation>【是否工作區】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="146"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
         <source>True</source>
         <translation>是</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="146"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
         <source>False</source>
         <translation>否</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="230"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="240"/>
         <source>FileNotExistClean</source>
         <translation>檔不存在，該選項已被清除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="276"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="289"/>
         <source>HistoryClearFinished</source>
         <translation>打開歷史記錄完成！</translation>
     </message>
@@ -3529,7 +3529,7 @@
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1632"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1661"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1687"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2112"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2113"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
@@ -3560,7 +3560,7 @@
         <translation>目的檔案被修改，是否重新載入？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2112"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2113"/>
         <source>BusyRunScript</source>
         <translation>腳本運行繁忙</translation>
     </message>
