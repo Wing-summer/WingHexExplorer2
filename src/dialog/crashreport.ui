@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>CrashReport</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../resources.qrc">
+    <normaloff>:/com.wingsummer.winghex/images/crashicon.png</normaloff>:/com.wingsummer.winghex/images/crashicon.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>8</number>
@@ -77,7 +81,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok|QDialogButtonBox::Save</set>
+      <set>QDialogButtonBox::StandardButton::Ok|QDialogButtonBox::StandardButton::Save</set>
      </property>
     </widget>
    </item>

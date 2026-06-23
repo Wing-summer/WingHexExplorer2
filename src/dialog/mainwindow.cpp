@@ -277,6 +277,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                         editor->setCursorPos(
                             {rinfo.cursorRow, rinfo.cursorCol});
                         editor->setHexLineWidth(rinfo.lineWidth);
+                        editor->hexEditor()->ensureCurrentLineVisible();
                     }
                 }
             });

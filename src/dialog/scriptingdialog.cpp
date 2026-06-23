@@ -67,6 +67,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                     if (!o) {
                         e->scrollView(rinfo.scroll);
                         e->setCursorPos({rinfo.cursorRow, rinfo.cursorCol});
+                        e->editor()->ensureCursorVisible();
                     }
                 }
             });

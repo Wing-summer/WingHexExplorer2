@@ -1308,7 +1308,7 @@ void QHexView::adjustScrollBars() {
                                margins.right());
     }
 
-    m_renderer->setCacheLineCount(qMin(visLines + 16, 40));
+    m_renderer->setCacheLineCount(visLines + 8);
 }
 
 void QHexView::renderLine(qsizetype line) {
