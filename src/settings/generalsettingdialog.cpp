@@ -34,6 +34,11 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     ui->setupUi(this);
 
     ui->cbLanguage->addItem(tr("SystemDefault"));
+    auto &lang = LanguageManager::instance();
+    const auto langs = lang.langs();
+    for (const auto &l : langs) {
+        ui->cbLanguage->addItem(lang.langDisplay(l), l);
+    }
 
     auto e = QMetaEnum::fromType<SkinManager::Theme>();
     for (int i = 0; i < e.keyCount(); ++i) {
@@ -106,10 +111,6 @@ void GeneralSettingDialog::reload() {
 
     auto &lang = LanguageManager::instance();
     const auto langs = lang.langs();
-    for (const auto &l : langs) {
-        ui->cbLanguage->addItem(lang.langDisplay(l), l);
-    }
-
     auto deflang = set.defaultLang();
     if (deflang.isEmpty()) {
         ui->cbLanguage->setCurrentIndex(0);

@@ -52,7 +52,7 @@ LanguageManager::LanguageManager() {
     QDir langDir(langPath);
     Q_ASSERT(langDir.exists());
 
-    QHash<QString, QLocale> localeMap;
+    QMap<QString, QLocale> localeMap;
     const auto langFiles =
         langDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const auto &langinfo : langFiles) {

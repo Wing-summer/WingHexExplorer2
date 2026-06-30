@@ -661,7 +661,7 @@
     <name>GeneralSettingDialog</name>
     <message>
         <location filename="../../src/settings/generalsettingdialog.ui" line="41"/>
-        <location filename="../../src/settings/generalsettingdialog.cpp" line="146"/>
+        <location filename="../../src/settings/generalsettingdialog.cpp" line="147"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
@@ -731,17 +731,17 @@
         <translation>系統默認</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.cpp" line="43"/>
+        <location filename="../../src/settings/generalsettingdialog.cpp" line="48"/>
         <source>Normal</source>
         <translation>正常</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.cpp" line="43"/>
+        <location filename="../../src/settings/generalsettingdialog.cpp" line="48"/>
         <source>Maximized</source>
         <translation>最大化</translation>
     </message>
     <message>
-        <location filename="../../src/settings/generalsettingdialog.cpp" line="43"/>
+        <location filename="../../src/settings/generalsettingdialog.cpp" line="48"/>
         <source>FullScreen</source>
         <translation>全屏</translation>
     </message>
