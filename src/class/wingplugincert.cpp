@@ -246,7 +246,8 @@ WingPluginCert::WingPluginCert() {
             continue;
         }
 
-        if (FileAccessCheck::canStandardUserWriteFile(c)) {
+        if (FileAccessCheck::canStandardUserWriteFile(c) !=
+            FileAccessCheck::Status::Deny) {
             // untrusted cert, maybe modified
             _certs.insert(cert, c);
             continue;

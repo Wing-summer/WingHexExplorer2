@@ -2669,12 +2669,12 @@
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3960"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3961"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>Skipping certificate verification is dangerous. Are you sure you want to continue?</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3994"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3995"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
@@ -2684,68 +2684,68 @@
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3599"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3600"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3578"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3646"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3579"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3647"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3608"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3609"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3609"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3610"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3610"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3611"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3649"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3650"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3650"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3651"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3667"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3668"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3690"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3691"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3727"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3728"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3737"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3738"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3745"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3746"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3860"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3861"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
@@ -2951,42 +2951,42 @@
     <message>
         <location filename="../../src/class/recentfilemanager.cpp" line="52"/>
         <location filename="../../src/class/recentfilemanager.cpp" line="62"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="279"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="284"/>
         <source>NoHistoryDel</source>
         <translation>No history items to delete!</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="73"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="74"/>
         <source>HistoryDelSuccess</source>
         <translation>Deleting historical items successfully</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="152"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="153"/>
         <source>[file]</source>
         <translation>[File]</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="155"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
         <source>[isWorkSpace]</source>
         <translation>[WorkSpace]</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
         <source>True</source>
         <translation>True</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
         <source>False</source>
         <translation>False</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="240"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="244"/>
         <source>FileNotExistClean</source>
         <translation>The file does not exist; this entry has been removed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="289"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="295"/>
         <source>HistoryClearFinished</source>
         <translation>History opened!</translation>
     </message>

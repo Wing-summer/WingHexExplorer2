@@ -46,7 +46,8 @@ void loadEnvConfig(int argc, char *argv[]) {
     auto path = appDir.absoluteFilePath(QStringLiteral("config.ini"));
 
 #ifndef QT_DEBUG
-    if (FileAccessCheck::canStandardUserWriteFile(path)) {
+    if (FileAccessCheck::canStandardUserWriteFile(path) !=
+        FileAccessCheck::Status::Deny) {
         return;
     }
 #endif

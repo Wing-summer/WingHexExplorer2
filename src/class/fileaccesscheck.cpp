@@ -23,159 +23,49 @@
 #endif
 
 #ifdef Q_OS_LINUX
-#include <QDBusArgument>
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
-#include <QDBusVariant>
-
 #include <grp.h>
 #include <pwd.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
 
-bool FileAccessCheck::canStandardUserWriteFile(const QFileInfo &file) {
+FileAccessCheck::Status
+FileAccessCheck::canStandardUserWriteFile(const QFileInfo &file) {
     if (!file.isFile()) {
-        return false;
+        return Status::Unknown;
     }
     return canStandardUserWriteFile(file.absoluteFilePath());
 }
 
 #ifdef Q_OS_LINUX
 
-struct Login1SessionRef {
-    QString id;
-    QDBusObjectPath path;
-};
-
-struct Login1UserRef {
-    uint uid = 0;
-    QDBusObjectPath path;
-};
-
-Q_DECLARE_METATYPE(Login1SessionRef)
-Q_DECLARE_METATYPE(Login1UserRef)
-
-static QDBusArgument &operator<<(QDBusArgument &arg,
-                                 const Login1SessionRef &v) {
-    arg.beginStructure();
-    arg << v.id << v.path;
-    arg.endStructure();
-    return arg;
-}
-static const QDBusArgument &operator>>(const QDBusArgument &arg,
-                                       Login1SessionRef &v) {
-    arg.beginStructure();
-    arg >> v.id >> v.path;
-    arg.endStructure();
-    return arg;
-}
-static QDBusArgument &operator<<(QDBusArgument &arg, const Login1UserRef &v) {
-    arg.beginStructure();
-    arg << v.uid << v.path;
-    arg.endStructure();
-    return arg;
-}
-static const QDBusArgument &operator>>(const QDBusArgument &arg,
-                                       Login1UserRef &v) {
-    arg.beginStructure();
-    arg >> v.uid >> v.path;
-    arg.endStructure();
-    return arg;
-}
-
-template <typename T>
-static bool variantToDbusStruct(const QVariant &value, T &out) {
-    if (!value.canConvert<QDBusArgument>()) {
-        return false;
-    }
-    const QDBusArgument arg = qvariant_cast<QDBusArgument>(value);
-    arg >> out;
-    return true;
-}
-
-static bool readProperty(const QString &service, const QString &path,
-                         const QString &interface, const QString &property,
-                         QVariant &value) {
-    QDBusInterface props(service, path,
-                         QStringLiteral("org.freedesktop.DBus.Properties"),
-                         QDBusConnection::systemBus());
-    if (!props.isValid()) {
-        return false;
-    }
-    QDBusMessage reply = props.call(QStringLiteral("Get"), interface, property);
-    if (reply.type() == QDBusMessage::ErrorMessage ||
-        reply.arguments().isEmpty()) {
-        return false;
-    }
-    auto args = reply.arguments();
-    if (args.isEmpty()) {
-        return false;
-    }
-    const QDBusVariant dbusVariant = qvariant_cast<QDBusVariant>(args.first());
-    value = dbusVariant.variant();
-    return true;
-}
-
 static bool getActiveDesktopUid(uid_t &uid) {
-    QDBusConnection bus = QDBusConnection::systemBus();
-    if (!bus.isConnected()) {
+    auto runtime = getenv("XDG_RUNTIME_DIR");
+
+    if (!runtime) {
         return false;
     }
-    QDBusInterface manager(QStringLiteral("org.freedesktop.login1"),
-                           QStringLiteral("/org/freedesktop/login1"),
-                           QStringLiteral("org.freedesktop.login1.Manager"),
-                           bus);
-    if (!manager.isValid()) {
+
+    const QLatin1String path(runtime);
+    const auto st = QLatin1String("/run/user/");
+    if (!path.startsWith(st)) {
         return false;
     }
-    QDBusReply<QDBusObjectPath> seatReply =
-        manager.call(QStringLiteral("GetSeat"), QStringLiteral("seat0"));
-    if (!seatReply.isValid()) {
-        return false;
-    }
-    QString seatPath = seatReply.value().path();
-    if (seatPath.isEmpty() || seatPath == QLatin1String("/")) {
-        return false;
-    }
-    QVariant activeSessionVar;
-    if (!readProperty(QLatin1String("org.freedesktop.login1"), seatPath,
-                      QLatin1String("org.freedesktop.login1.Seat"),
-                      QLatin1String("ActiveSession"), activeSessionVar)) {
-        return false;
-    }
-    Login1SessionRef activeSession;
-    if (!variantToDbusStruct(activeSessionVar, activeSession)) {
-        return false;
-    }
-    if (activeSession.path.path().isEmpty() ||
-        activeSession.path.path() == QLatin1String("/")) {
-        return false;
-    }
-    QVariant userVar;
-    if (!readProperty(QLatin1String("org.freedesktop.login1"),
-                      activeSession.path.path(),
-                      QLatin1String("org.freedesktop.login1.Session"),
-                      QLatin1String("User"), userVar)) {
-        return false;
-    }
-    Login1UserRef user;
-    if (!variantToDbusStruct(userVar, user)) {
-        return false;
-    }
-    uid = uid_t(user.uid);
-    return true;
+
+    bool ok = false;
+    uid = path.sliced(st.size()).toUInt(&ok);
+    return ok;
 }
 
 #endif
 
-bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
+FileAccessCheck::Status
+FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
 #ifdef Q_OS_WIN
     HANDLE hToken = nullptr;
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE,
                           &hToken)) {
-        return false;
+        return Status::Unknown;
     }
 
     HANDLE hAccessToken = nullptr;
@@ -187,7 +77,7 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
                                   DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
                                   &pAdminSid)) {
         CloseHandle(hToken);
-        return false;
+        return Status::Unknown;
     }
 
     CheckTokenMembership(nullptr, pAdminSid, &isAdmin);
@@ -200,7 +90,7 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
 
             FreeSid(pAdminSid);
             CloseHandle(hToken);
-            return false;
+            return Status::Unknown;
         }
         if (!DuplicateToken(hRestrictedToken, SecurityImpersonation,
                             &hAccessToken)) {
@@ -208,14 +98,14 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
             CloseHandle(hRestrictedToken);
             FreeSid(pAdminSid);
             CloseHandle(hToken);
-            return false;
+            return Status::Unknown;
         }
         CloseHandle(hRestrictedToken);
     } else {
         if (!DuplicateToken(hToken, SecurityImpersonation, &hAccessToken)) {
             FreeSid(pAdminSid);
             CloseHandle(hToken);
-            return false;
+            return Status::Unknown;
         }
     }
 
@@ -231,7 +121,7 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
 
     if (err != ERROR_SUCCESS) {
         CloseHandle(hAccessToken);
-        return false;
+        return Status::Unknown;
     }
 
     DWORD desiredAccess = FILE_GENERIC_WRITE;
@@ -249,27 +139,27 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
 
     LocalFree(pSD);
     CloseHandle(hAccessToken);
-    return accessCheckResult && accessStatus;
+    return (accessCheckResult && accessStatus) ? Status::OK : Status::Deny;
 #else
     auto path = filePath.toUtf8();
     if (geteuid() != 0) {
-        return access(path, W_OK) == 0;
+        return access(path, W_OK) == 0 ? Status::OK : Status::Deny;
     }
 
     uid_t targetUid;
     if (!getActiveDesktopUid(targetUid)) {
-        return false;
+        return Status::Unknown;
     }
 
     struct passwd *pw = getpwuid(targetUid);
     if (!pw) {
-        return false;
+        return Status::Unknown;
     }
     gid_t targetGid = pw->pw_gid;
 
     pid_t pid = fork();
     if (pid == -1) {
-        return false;
+        return Status::Unknown;
     }
 
     if (pid == 0) {
@@ -286,7 +176,8 @@ bool FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
     } else {
         int status;
         waitpid(pid, &status, 0);
-        return (WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? Status::OK
+                                                               : Status::Deny;
     }
 #endif
 }

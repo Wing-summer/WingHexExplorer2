@@ -68,6 +68,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                     auto action = hitems.takeAt(ind);
                     m_menu->removeAction(action);
                     action->deleteLater();
+                    _dirty = true;
                 }
                 Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
                              tr("HistoryDelSuccess"));
@@ -172,6 +173,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             auto a = hitems.takeLast();
             m_menu->removeAction(a);
             delete a;
+            _dirty = true;
         }
         auto a = new QAction(m_menu);
 
@@ -226,6 +228,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                         m_menu->insertAction(hitems.first(), a);
                         hitems.move(idx, 0);
                         m_recents.move(idx, 0);
+                        _dirty = true;
                     }
                     Q_EMIT triggered(f);
                 } else {
@@ -235,6 +238,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                         hitems.removeAt(index);
                         send->deleteLater();
                         m_recents.removeAt(index);
+                        _dirty = true;
                         Toast::toast(m_parent,
                                      NAMEICONRES(QStringLiteral("clearhis")),
                                      tr("FileNotExistClean"));
@@ -257,6 +261,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             m_menu->insertAction(hitems.first(), a);
             hitems.move(o, 0);
             m_recents.move(o, 0);
+            _dirty = true;
         }
     }
 }
@@ -285,6 +290,7 @@ void RecentFileManager::clearFile() {
     }
     m_recents.clear();
     hitems.clear();
+    _dirty = true;
     Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
                  tr("HistoryClearFinished"));
 }

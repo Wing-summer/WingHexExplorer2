@@ -3401,7 +3401,8 @@ bool PluginSystem::checkPluginCert(const QFileInfo &item,
     if (!qEnvironmentVariableBool("WINGHEX_CERT_SKIP", false)) {
         bool ck = qEnvironmentVariableBool("WINGHEX_CERT_FORCE_ALL", false);
         if (!ck) {
-            ck = FileAccessCheck::canStandardUserWriteFile(item);
+            ck = FileAccessCheck::canStandardUserWriteFile(item) !=
+                 FileAccessCheck::Status::Deny;
         }
         if (ck) {
             auto &ct = WingPluginCert::instance();

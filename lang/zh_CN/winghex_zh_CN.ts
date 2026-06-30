@@ -2664,68 +2664,68 @@
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3578"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3646"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3579"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3647"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3599"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3600"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3608"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3609"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3609"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3610"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3610"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3611"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3649"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3650"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3650"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3651"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3667"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3668"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3690"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3691"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3727"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3728"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3737"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3738"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3745"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3746"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3860"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3861"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
@@ -2740,12 +2740,12 @@
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3960"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3961"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>忽略证书验证存在严重风险，确认继续吗？</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3994"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3995"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -2951,42 +2951,42 @@
     <message>
         <location filename="../../src/class/recentfilemanager.cpp" line="52"/>
         <location filename="../../src/class/recentfilemanager.cpp" line="62"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="279"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="284"/>
         <source>NoHistoryDel</source>
         <translation>无打开历史项目可删除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="73"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="74"/>
         <source>HistoryDelSuccess</source>
         <translation>删除历史项目成功</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="152"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="153"/>
         <source>[file]</source>
         <translation>【文件】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="155"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
         <source>[isWorkSpace]</source>
         <translation>【是否工作区】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
         <source>True</source>
         <translation>是</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
         <source>False</source>
         <translation>否</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="240"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="244"/>
         <source>FileNotExistClean</source>
         <translation>文件不存在，该选项已被清除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="289"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="295"/>
         <source>HistoryClearFinished</source>
         <translation>打开历史记录完成！</translation>
     </message>

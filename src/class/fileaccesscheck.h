@@ -22,8 +22,11 @@
 
 class FileAccessCheck {
 public:
-    static bool canStandardUserWriteFile(const QFileInfo &file);
-    static bool canStandardUserWriteFile(const QString &filePath);
+    enum class Status { OK, Deny, Unknown };
+
+public:
+    static Status canStandardUserWriteFile(const QFileInfo &file);
+    static Status canStandardUserWriteFile(const QString &filePath);
 };
 
 #endif // FILEACCESSCHECK_H
