@@ -176,9 +176,6 @@ def main():
     shutil.copytree(os.path.join(projectdeb, "lang"),
                     os.path.join(exeDebPath, "lang"))
 
-    shutil.copytree(os.path.join(projectdeb, "lsp"),
-                    os.path.join(exeDebPath, "lsp"))
-
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 
     material_files = ["LICENSE", "authorband.svg",

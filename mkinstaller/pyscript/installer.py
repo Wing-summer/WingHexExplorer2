@@ -113,8 +113,6 @@ def update(build_path):
                     os.path.join(INSTALL_PATH, "share"), dirs_exist_ok=True)
     shutil.copytree(os.path.join(build_path, "lang"),
                     os.path.join(INSTALL_PATH, "lang"), dirs_exist_ok=True)
-    shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
-        INSTALL_PATH, "lsp"), dirs_exist_ok=True)
 
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
     material_files = ["LICENSE", "authorband.svg",

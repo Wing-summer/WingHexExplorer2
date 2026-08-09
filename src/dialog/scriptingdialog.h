@@ -219,7 +219,7 @@ private:
 
     bool isCurrentDebugging() const;
 
-    void runDbgCommand(asIDBAction action);
+    // void runDbgCommand(asIDBAction action);
 
     void startDebugScript(const QString &fileName);
 
@@ -331,7 +331,6 @@ private:
 
     QString m_lastusedpath;
 
-    QHash<QString, AsPreprocesser::Result> _curDbgData;
     QVector<ScriptEditor *> _reditors;
 
     // widgets for debugging

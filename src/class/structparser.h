@@ -18,7 +18,6 @@
 #ifndef STRUCTPARSER_H
 #define STRUCTPARSER_H
 
-#include "scriptaddon/scriptqdictionary.h"
 #include "structlib/ctypeparser.h"
 #include "utilities.h"
 
@@ -221,9 +220,9 @@ private:
 
 protected:
     bool isValidCStructMetaType(QMetaType::Type type);
-    CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);
-    CScriptArray *convert2AsArray(const QVariantList &array,
-                                  QMetaType::Type type, int id);
+    // CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);
+    // CScriptArray *convert2AsArray(const QVariantList &array,
+    //                               QMetaType::Type type, int id);
 
 private:
     WingCStruct *_api = nullptr;

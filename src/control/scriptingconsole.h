@@ -18,8 +18,9 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
-#include "class/asconsolecompletion.h"
+// #include "class/asconsolecompletion.h"
 #include "class/lspeditorinterface.h"
+#include "class/resettabletimer.h"
 #include "class/scriptmachine.h"
 #include "scriptingconsolebase.h"
 

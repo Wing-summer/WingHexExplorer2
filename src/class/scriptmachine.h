@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -18,14 +18,9 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "AngelScript/sdk/angelscript/include/angelscript.h"
-
 #include "WingPlugin/iwingangel.h"
-#include "as-debugger/as_debugger.h"
-#include "class/aspreprocesser.h"
 
-#include "asdebugger.h"
-#include "scriptaddon/contextmgr.h"
+#include "class/luauscheduler.h"
 
 #include <QObject>
 #include <QQueue>
@@ -36,12 +31,15 @@ class ScriptMachine {
     Q_GADGET
 public:
     // we have three console modes
-    enum ConsoleMode {
-        Interactive = 1, // in a shell
-        Scripting,       // in scripting dialog
-        Background,      // run codes from other way
-        Console_MaxCount
+    enum ConsoleMode : int {
+        Console_Begin = 0,
+        Interactive, // in a shell
+        Scripting,   // in scripting dialog
+        Background,  // run codes from other way
+        Console_End
     };
+
+    static constexpr auto ConsoleModeCount = Console_End - Console_Begin - 1;
 
 public:
     enum class MessageType { Unknown, Info, Warn, Error, Print, ExecInfo };
@@ -56,23 +54,6 @@ public:
     };
 
 public:
-    // only for refection
-    enum class asEContextState {
-        asEXECUTION_FINISHED = ::asEContextState::asEXECUTION_FINISHED,
-        asEXECUTION_SUSPENDED = ::asEContextState::asEXECUTION_SUSPENDED,
-        asEXECUTION_ABORTED = ::asEContextState::asEXECUTION_ABORTED,
-        asEXECUTION_EXCEPTION = ::asEContextState::asEXECUTION_EXCEPTION,
-        asEXECUTION_PREPARED = ::asEContextState::asEXECUTION_PREPARED,
-        asEXECUTION_UNINITIALIZED =
-            ::asEContextState::asEXECUTION_UNINITIALIZED,
-        asEXECUTION_ACTIVE = ::asEContextState::asEXECUTION_ACTIVE,
-        asEXECUTION_ERROR = ::asEContextState::asEXECUTION_ERROR,
-        asEXECUTION_DESERIALIZATION =
-            ::asEContextState::asEXECUTION_DESERIALIZATION
-    };
-    Q_ENUM(asEContextState)
-
-public:
     struct RegCallBacks {
         std::function<QString()> getInputFn;
         std::function<void()> clearFn;
@@ -80,17 +61,20 @@ public:
     };
 
 private:
+private:
     explicit ScriptMachine();
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
-private:
-    asIScriptModule *createModule(ConsoleMode mode);
-    asIScriptModule *createModuleIfNotExist(ConsoleMode mode);
-    bool isModuleExists(ConsoleMode mode);
+    LuauThread *context(ConsoleMode mode) const;
+    lua_State *contextState(ConsoleMode mode) const;
+    LuauThreadData *contextData(ConsoleMode mode) const;
+
+    static bool configureEngine(lua_State *l);
+
+    static LuauThreadData *contextData(lua_State *l);
+    static int consoleModeIdx(ConsoleMode mode);
 
 public:
-    asIScriptModule *module(ConsoleMode mode) const;
-
     static ScriptMachine &instance();
     void destoryMachine();
 
@@ -103,21 +87,12 @@ public:
     bool isRunning(ConsoleMode mode) const;
     bool checkEngineConfigError() const;
 
-    static void registerEngineAddon(asIScriptEngine *engine);
-    static void registerEngineAssert(asIScriptEngine *engine);
-    static void registerEngineClipboard(asIScriptEngine *engine);
-    static void registerEngineDebug(asIScriptEngine *engine);
+    // static void registerEngineAddon(asIScriptEngine *engine);
+    // static void registerEngineClipboard(asIScriptEngine *engine);
 
     void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
 
 public:
-    bool isAngelChar(int typeID) const;
-    bool isAngelString(int typeID) const;
-    bool isAngelArray(int typeID) const;
-    bool isAngelDictionary(int typeID) const;
-    bool isAngelDicValue(int typeID) const;
-    bool isAngelAny(int typeID) const;
-
     void setFileEnableOverwrite(bool b);
     void setFileSystemWrite(bool b);
 
@@ -125,139 +100,71 @@ public:
     bool fileSystemWrite() const;
 
 public:
-    asDebugger *debugger() const;
-
-    asIScriptEngine *engine() const;
+    // asDebugger *debugger() const;
 
     void outputMessage(const MessageInfo &info);
 
     QString getGlobalDecls() const;
 
 public:
-    static void scriptAssert(bool b);
-    static void scriptAssert_X(bool b, const QString &msg);
-
     static void clip_setText(const QString &text);
     static void clip_setBinary(const CScriptArray &array);
     static QString clip_getText();
     static CScriptArray *clip_getBinary();
-
-    static void scriptThrow(const QString &msg);
-
-    static QString scriptGetExceptionInfo();
-
-    static void registerExceptionRoutines(asIScriptEngine *engine);
 
 public:
     // debug or release?
     bool isDebugMode(ConsoleMode mode = Scripting);
 
 public:
+    // @return true if execution finished, else need more codes input
     void executeCode(ScriptMachine::ConsoleMode mode, const QString &code,
                      const std::function<void(bool)> &onFinished);
 
     // only scripting mode can be debugged
-    bool executeScript(
-        ScriptMachine::ConsoleMode mode, const QString &script, bool isInDebug,
-        std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
-            sections,
-        const std::function<void(bool)> &onFinished);
+    void executeScript(ScriptMachine::ConsoleMode mode, const QString &fileName,
+                       bool isInDebug,
+                       const std::function<void(bool)> &onFinished);
 
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
 
     std::string getAsTypeName(int typeId);
 
-protected:
-    bool configureEngine();
-
-    QString getCallStack(asIScriptContext *context);
-
 private:
-    static void __output(MessageType type, asIScriptGeneric *args);
-    static void __outputln(MessageType type, asIScriptGeneric *args);
-    static void __outputfmt(MessageType type, asIScriptGeneric *args);
+    static int __output(MessageType type, lua_State *L);
+    static int __outputln(MessageType type, lua_State *L);
 
-    static void print(asIScriptGeneric *args);
-    static void printf(asIScriptGeneric *args);
-    static void println(asIScriptGeneric *args);
+    static int print(lua_State *L);
+    static int println(lua_State *L);
 
-    static void warnprint(asIScriptGeneric *args);
-    static void warnprintf(asIScriptGeneric *args);
-    static void warnprintln(asIScriptGeneric *args);
+    static int warnprint(lua_State *L);
+    static int warnprintln(lua_State *L);
 
-    static void errprint(asIScriptGeneric *args);
-    static void errprintf(asIScriptGeneric *args);
-    static void errprintln(asIScriptGeneric *args);
+    static int errprint(lua_State *L);
+    static int errprintln(lua_State *L);
 
-    static void infoprint(asIScriptGeneric *args);
-    static void infoprintf(asIScriptGeneric *args);
-    static void infoprintln(asIScriptGeneric *args);
+    static int infoprint(lua_State *L);
+    static int infoprintln(lua_State *L);
 
     QString input();
 
-    static int execSystemCmd(QString &out, const QString &exe,
-                             const QString &params, int timeout);
-
-    QString stringify(void *ref, int typeId);
-
-    template <typename T>
-    static inline const T *resolveObjAs(const void *address, int typeId) {
-        if (!address)
-            return nullptr;
-        else if (typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE)) {
-            return *reinterpret_cast<const T *const *>(address);
-        }
-        return reinterpret_cast<const T *>(address);
-    }
-
-public:
-    std::string stringify_helper(const void *ref, int typeId);
-
-    void exceptionCallback(asIScriptContext *context);
+private:
+    static void onLuauInterrupt(lua_State *L, int gc);
+    static void onLuauThreadCreated(lua_State *LP, lua_State *L);
 
 private:
-    static void messageCallback(const asSMessageInfo *msg, void *param);
-
-    static void translateAppException(asIScriptContext *ctx, void *userParam);
-
-    static void cleanUpPluginSysIDFunction(asIScriptFunction *fn);
-
-    static asIScriptContext *requestContextCallback(asIScriptEngine *engine,
-                                                    void *param);
-    static void lineCallback(asIScriptContext *ctx, void *param);
-    static void returnContextCallback(asIScriptEngine *engine,
-                                      asIScriptContext *ctx, void *param);
-
-    static WingHex::PragmaResult pragmaCallback(const QString &pragmaText,
-                                                AsPreprocesser *builder,
-                                                const QString &sectionname);
-
-    static void debug_break();
-    static quint64 debug_elapsedTime();
-    static QString debug_backtrace();
+    // void attachDebugBreak(asIScriptContext *ctx);
 
 private:
-    void attachDebugBreak(asIScriptContext *ctx);
-
-private:
-    asIScriptEngine *_engine = nullptr;
-    asIScriptModule *_eMod = nullptr;
-
-    QQueue<asIScriptContext *> _ctxPool;
-
     QVector<RegCallBacks> _regcalls;
-    QVector<asIScriptContext *> _ctx;
-    QVector<CContextMgr *> _ctxMgr;
-
     mutable QString _cachedGlobalStrs;
 
 private:
-    void checkDebugger(asIScriptContext *ctx);
-
-private:
-    asDebugger *_debugger = nullptr;
-    asIDBWorkspace *_workspace = nullptr;
+    bool _inited = false;
+    lua_State *_main = nullptr;
+    mutable LuauThread _ctx[ConsoleModeCount]{};
+    mutable LuauThreadData _tdata[ConsoleModeCount]{};
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

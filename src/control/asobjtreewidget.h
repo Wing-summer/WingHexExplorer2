@@ -18,19 +18,21 @@
 #ifndef ASOBJTREEWIDGET_H
 #define ASOBJTREEWIDGET_H
 
-#include "angelscript.h"
 #include "class/codeinfotip.h"
 
 #include <QHash>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
+// TODO
+class asIScriptEngine;
+
 class ASObjTreeWidget : public QTreeWidget {
     Q_OBJECT
 public:
     explicit ASObjTreeWidget(QWidget *parent = nullptr);
 
-    void setEngine(asIScriptEngine *engine);
+    // void setEngine(asIScriptEngine *engine);
 
 private:
     QTreeWidgetItem *createObjNode(const CodeInfoTip &node,

@@ -63,7 +63,7 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
         return {};
     }
     QStringList ret;
-    const auto files = dir.entryInfoList({"*.as"}, QDir::Files);
+    const auto files = dir.entryInfoList({"*.lua", "*.luau"}, QDir::Files);
     for (const auto &info : files) {
         ret << info.absoluteFilePath();
     }
@@ -143,9 +143,12 @@ bool ScriptManager::isScriptFile(const QString &file) {
     QFileInfo info(file);
     auto suffix = info.suffix();
     return info.exists() && Utilities::isTextFile(info) &&
-           (suffix.compare(QStringLiteral("as"), Qt::CaseInsensitive) == 0 ||
-            suffix.compare(QStringLiteral("anglescript"),
-                           Qt::CaseInsensitive) == 0);
+           isScriptFileSuffix(suffix);
+}
+
+bool ScriptManager::isScriptFileSuffix(const QString &suffix) {
+    return suffix.compare(QStringLiteral("luau"), Qt::CaseInsensitive) == 0 ||
+           suffix.compare(QStringLiteral("lua"), Qt::CaseInsensitive) == 0;
 }
 
 QStringList ScriptManager::sysScriptsDbCats() const {
@@ -181,7 +184,7 @@ void ScriptManager::refreshUsrScriptsDbCats() {
             scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
-            auto files = dir.entryList({"*.as"}, QDir::Files);
+            auto files = dir.entryList({"*.lua", "*.luau"}, QDir::Files);
             m_usrScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = false;
@@ -200,7 +203,7 @@ void ScriptManager::refreshSysScriptsDbCats() {
             sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
-            auto files = dir.entryList({"*.as"}, QDir::Files);
+            auto files = dir.entryList({"*.lua", "*.luau"}, QDir::Files);
             m_sysScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = true;
@@ -394,7 +397,7 @@ void ScriptManager::runScript(const QString &filename) {
 
     Q_ASSERT(m_indicator);
     setIndicatorBusy(true);
-    ins.executeScript(ScriptMachine::Background, filename, false, {},
+    ins.executeScript(ScriptMachine::Background, filename, false,
                       [this](bool isNotBusy) {
                           if (isNotBusy) {
                               setIndicatorBusy(false);

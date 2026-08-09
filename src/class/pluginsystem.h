@@ -32,8 +32,8 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
+#include "WingPlugin/iwingplugin.h"
 #include "WingPlugin/wingplugincalls_p.h"
-#include "class/wingangelapi.h"
 #include "control/editorview.h"
 
 using namespace WingHex;
@@ -201,8 +201,6 @@ public:
     const QList<IWingDevice *> &devices() const;
     IWingDevice *device(qsizetype index) const;
 
-    WingAngelAPI *angelApi() const;
-
     void cleanUpEditorViewHandle(EditorView *view);
 
     WingHex::PragmaResult processPragma(const QString &section,
@@ -217,21 +215,21 @@ public:
     void dispatchSelectionChangedEvent(const QByteArrayList &selections,
                                        bool isPreview);
     void dispatchCursorPositionChangedEvent(const QHexPosition &pos);
-    void dispatchFileOpenedEvent(WingAngelAPI::FileType type,
+    void dispatchFileOpenedEvent(IWingPlugin::FileType type,
                                  const QUrl &newfileName);
-    void dispatchFileClosedEvent(WingAngelAPI::FileType type,
+    void dispatchFileClosedEvent(IWingPlugin::FileType type,
                                  const QUrl &fileName);
-    void dispatchFileSavedEvent(WingAngelAPI::FileType type,
+    void dispatchFileSavedEvent(IWingPlugin::FileType type,
                                 const QUrl &newfileName,
                                 const QUrl &oldfileName, bool isExported);
     void dispatchFileSwitchedEvent(const QUrl &newfileName,
                                    const QUrl &oldfileName);
     void dispatchAppReadyEvent();
     void dispatchPluginFileOpenedEvent(IWingPlugin *plg,
-                                       WingAngelAPI::FileType type,
+                                       IWingPlugin::FileType type,
                                        const QUrl &fileName, int id);
     void dispatchPluginFileClosedEvent(IWingPlugin *plg,
-                                       WingAngelAPI::FileType type,
+                                       IWingPlugin::FileType type,
                                        const QUrl &fileName, int id);
     bool dispatchAppClosingEvent();
 
@@ -688,21 +686,6 @@ public slots:
 
     bool clearBookMark(const QObject *sender);
 
-    // generic call support
-    WingHex::IWingGeneric *__createParamContext(const QObject *sender,
-                                                void *ctx);
-
-    void __raiseContextException(const QObject *sender,
-                                 const QString &exception, bool allowCatch);
-
-    WingHex::ASScriptArray *__createScriptArray(const QObject *sender,
-                                                const QString &type);
-    WingHex::ASScriptDictionary *
-    __createScriptDictionary(const QObject *sender);
-    WingHex::ASScriptAny *__createScriptAny(const QObject *sender);
-    WingHex::ASScript2DArray *__createScript2DArray(const QObject *sender,
-                                                    const QString &type);
-
 private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
@@ -729,8 +712,6 @@ private:
     QHash<EditorView *, ViewBind> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
-
-    WingAngelAPI *_angelplg = nullptr;
 
     QStringList _scriptMarcos;
     QList<IWingPlugin *> _pragmaedPlg;

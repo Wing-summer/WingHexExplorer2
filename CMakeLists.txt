@@ -40,7 +40,6 @@ install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 option(WINGHEX_USE_FRAMELESS "Enable custom titlebar support" ON)
 option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
 option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
-option(WINGHEX_ANGEL_LSP "Build LS for AngelScript" ON)
 option(WINGHEX_BUILD_TEST "Build test data generator for WingCStruct" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
        "Build with native optimization(less portable)" OFF)
@@ -114,8 +113,16 @@ option(BUILD_STATIC "Build the static library" TRUE)
 add_subdirectory(3rdparty/cpptrace)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/WingCodeEdit)
+
+set(LUABRIDGE_TESTING OFF)
+set(LUABRIDGE_COVERAGE OFF)
+set(LUABRIDGE_BENCHMARKS OFF)
+add_subdirectory(3rdparty/LuaBridge3)
+target_compile_definitions(
+    LuaBridge INTERFACE LUABRIDGE_STRICT_STACK_CONVERSIONS=1
+                        LUABRIDGE_RAISE_UNREGISTERED_CLASS_USAGE=1)
+
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
-add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 
 set(DISABLE_WARNINGS ON)
 set(ANTLR4_INSTALL OFF)
@@ -145,16 +152,6 @@ set(CSTRUCT_GRAMMAR
     src/grammar/c/CStructVisitor.cpp
     src/grammar/c/CStructVisitor.h)
 
-set(ASCONSOLE_GRAMMAR
-    src/grammar/ASConsole/AngelscriptConsoleLexer.cpp
-    src/grammar/ASConsole/AngelscriptConsoleLexer.h
-    src/grammar/ASConsole/AngelscriptConsoleParser.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParser.h
-    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h
-    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.cpp
-    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.h)
-
 set(SNIPPET_GRAMMAR
     src/grammar/Snippet/SnippetBaseVisitor.cpp
     src/grammar/Snippet/SnippetBaseVisitor.h
@@ -165,44 +162,17 @@ set(SNIPPET_GRAMMAR
     src/grammar/Snippet/SnippetVisitor.cpp
     src/grammar/Snippet/SnippetVisitor.h)
 
-set(ANGELSCRIPTEXP_SRC
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.cpp
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserBaseVisitor.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.cpp
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserLexer.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.cpp
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserParser.h
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.cpp
-    src/grammar/AngelscriptExprParser/AngelscriptExprParserVisitor.h)
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${SNIPPET_GRAMMAR})
 
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR}
-                   ${SNIPPET_GRAMMAR} ${ANGELSCRIPTEXP_SRC})
-
-set(ANGEL_SCRIPT_ADDON_ROOT
-    "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
-set(ANGEL_SCRIPT_ADDON
-    ${ANGEL_SCRIPT_ADDON_ROOT}/autowrapper/aswrappedcall.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scripthandle/scripthandle.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scripthandle/scripthandle.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scripthelper/scripthelper.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scripthelper/scripthelper.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmath.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmath.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmathcomplex.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmathcomplex.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h)
-
+set(LUAU_BUILD_CLI OFF)
+set(LUAU_BUILD_TESTS OFF)
+set(LUAU_BUILD_WEB OFF)
+set(LUAU_WERROR OFF)
+set(LUAU_STATIC_CRT OFF)
+set(LUAU_EXTERN_C OFF)
+set(LUAU_BUILD_SHARED OFF)
+add_subdirectory(3rdparty/luau)
 add_subdirectory(3rdparty/qtsingleapplication)
-add_subdirectory(3rdparty/fmt)
-
-set(AS_DEBUGGER_SRC
-    3rdparty/as-debugger/as_debugger.cpp 3rdparty/as-debugger/as_debugger.h
-    3rdparty/as-debugger/as_helpers.cpp 3rdparty/as-debugger/as_helpers.h)
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -288,8 +258,6 @@ set(CONTROL_SRC
     src/control/codeedit.h
     src/control/codeeditcontrolwidget.cpp
     src/control/codeeditcontrolwidget.h
-    src/control/consolecodeedit.cpp
-    src/control/consolecodeedit.h
     src/control/dockwidgettab.cpp
     src/control/dockwidgettab.h
     src/control/editorview.cpp
@@ -323,30 +291,12 @@ set(CONTROL_SRC
     src/control/toast.h)
 
 set(CLASS_SRC
-    src/class/angellsp.cpp
-    src/class/angellsp.h
-    src/class/angelscriptconsolevisitor.cpp
-    src/class/angelscriptconsolevisitor.h
-    src/class/angelscripthelper.h
     src/class/appmanager.cpp
     src/class/appmanager.h
-    src/class/asbuilder.cpp
-    src/class/asbuilder.h
     src/class/ascompletion.cpp
     src/class/ascompletion.h
     src/class/asconsolecompletion.cpp
     src/class/asconsolecompletion.h
-    src/class/asdebugger.cpp
-    src/class/asdebugger.h
-    src/class/asexprevaluator.cpp
-    src/class/asexprevaluator.h
-    src/class/aspreprocesser.cpp
-    src/class/aspreprocesser.h
-    src/class/asscriptobjects.cpp
-    src/class/asscriptobjects.h
-    src/class/astype_evaluator.h
-    src/class/aswingcache.cpp
-    src/class/aswingcache.h
     src/class/changedstringlist.cpp
     src/class/changedstringlist.h
     src/class/codeinfotip.cpp
@@ -369,9 +319,10 @@ set(CLASS_SRC
     src/class/eventfilter.h
     src/class/fileaccesscheck.cpp
     src/class/fileaccesscheck.h
-    src/class/fmtlibext.h
     src/class/inspectqtloghelper.cpp
     src/class/inspectqtloghelper.h
+    src/class/luauscheduler.h
+    src/class/luauscheduler.cpp
     src/class/languagemanager.cpp
     src/class/languagemanager.h
     src/class/layoutmanager.cpp
@@ -413,8 +364,6 @@ set(CLASS_SRC
     src/class/wingconsolehighligher.h
     src/class/wingfiledialog.cpp
     src/class/wingfiledialog.h
-    src/class/winggeneric.cpp
-    src/class/winggeneric.h
     src/class/winginputdialog.cpp
     src/class/winginputdialog.h
     src/class/wingmessagebox.cpp
@@ -426,10 +375,8 @@ set(CLASS_SRC
     src/class/workspacemanager.cpp
     src/class/workspacemanager.h)
 
-set(INTERNAL_PLG_SRC
-    src/class/structparser.cpp src/class/structparser.h
-    src/class/wingangelapi.cpp src/class/wingangelapi.h
-    src/class/wingcstruct.cpp src/class/wingcstruct.h)
+set(INTERNAL_PLG_SRC src/class/structparser.cpp src/class/structparser.h
+                     src/class/wingcstruct.cpp src/class/wingcstruct.h)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -487,38 +434,15 @@ set(SETTING_SRC
     src/settings/settings.h)
 
 set(SCRIPT_ADDON_SRC
-    src/scriptaddon/contextmgr.cpp
-    src/scriptaddon/contextmgr.h
-    src/scriptaddon/scriptany.cpp
-    src/scriptaddon/scriptany.h
-    src/scriptaddon/scriptcolor.cpp
-    src/scriptaddon/scriptcolor.h
-    src/scriptaddon/scriptcrypto.cpp
-    src/scriptaddon/scriptcrypto.h
-    src/scriptaddon/scriptdatetime.cpp
-    src/scriptaddon/scriptdatetime.h
-    src/scriptaddon/scriptenv.cpp
-    src/scriptaddon/scriptenv.h
-    src/scriptaddon/scriptfile.cpp
-    src/scriptaddon/scriptfile.h
-    src/scriptaddon/scriptfilesystem.cpp
-    src/scriptaddon/scriptfilesystem.h
-    src/scriptaddon/scriptjson.cpp
-    src/scriptaddon/scriptjson.h
-    src/scriptaddon/scriptoptbox.cpp
-    src/scriptaddon/scriptoptbox.h
-    src/scriptaddon/scriptqdictionary.cpp
-    src/scriptaddon/scriptqdictionary.h
-    src/scriptaddon/scriptqstring.cpp
-    src/scriptaddon/scriptqstring.h
-    src/scriptaddon/scriptreflection.cpp
-    src/scriptaddon/scriptreflection.h
-    src/scriptaddon/scriptregex.cpp
-    src/scriptaddon/scriptregex.h
-    src/scriptaddon/scriptrunable.cpp
-    src/scriptaddon/scriptrunable.h
-    src/scriptaddon/scripturl.cpp
-    src/scriptaddon/scripturl.h)
+    # src/scriptaddon/scriptenv.cpp
+    # src/scriptaddon/scriptenv.h
+    # src/scriptaddon/scriptjson.cpp
+    # src/scriptaddon/scriptjson.h
+    # src/scriptaddon/scriptregex.cpp
+    # src/scriptaddon/scriptregex.h
+    # src/scriptaddon/scripturl.cpp
+    # src/scriptaddon/scripturl.h
+)
 
 # localization support
 file(
@@ -592,9 +516,7 @@ endforeach()
 add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
 
 set(PROJECT_SOURCES
-    ${ANGEL_SCRIPT_ADDON}
     ${ANTLR4_GRAMMAR}
-    ${AS_DEBUGGER_SRC}
     ${CLASS_SRC}
     ${CONTROL_SRC}
     ${DIALOG_SRC}
@@ -655,9 +577,13 @@ target_link_libraries(
             OpenSSL::Crypto
             QtSingleApplication::QtSingleApplication
             cpptrace::cpptrace
-            fmt::fmt
+            Luau.Compiler
+            Luau.VM
+            Luau.Ast
+            Luau.Analysis
+            Luau.CodeGen
+            LuaBridge
             antlr4_static
-            angelscript
             qtadvanceddocking-qt6
             QHexView
             WingCodeEdit
@@ -744,108 +670,3 @@ target_link_options(
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
 
 enable_reproducible_paths(WingHexExplorer2)
-
-if(WINGHEX_ANGEL_LSP)
-    set(NODE_ROOT_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp")
-    set(NODE_SUBDIR "${NODE_ROOT_SUBDIR}/server")
-    set(BUILD_BIN_DIR "${CMAKE_BINARY_DIR}/lsp")
-    set(BUILD_BIN_BUILD_DIR "${CMAKE_BINARY_DIR}/lsp-build")
-    if(WIN32)
-        set(OUT_NAME "angelscript-ls.exe")
-    else()
-        set(OUT_NAME "angelscript-ls")
-    endif()
-
-    set(SRC_JS "${NODE_SUBDIR}/src/server.ts")
-    set(DIST_DIR "${BUILD_BIN_BUILD_DIR}/dist")
-    set(DIST_JS "${DIST_DIR}/angelscript-language-server.js")
-    set(OUT_BIN "${BUILD_BIN_DIR}/${OUT_NAME}")
-
-    find_program(NODE_EXE NAMES node)
-    find_program(NPM_EXE NAMES npm)
-    find_program(NPX_EXE NAMES npx)
-
-    if(NOT NODE_EXE)
-        message(FATAL_ERROR "Node.js not found. Install Node >= 18.")
-    endif()
-    if(NOT NPM_EXE)
-        message(FATAL_ERROR "npm not found. Install npm.")
-    endif()
-    if(NOT NPX_EXE)
-        message(FATAL_ERROR "npx not found. Install npx.")
-    endif()
-
-    message(STATUS "Found node: ${NODE_EXE}")
-    message(STATUS "Found npm:  ${NPM_EXE}")
-
-    if(WIN32)
-        set(PKG_TARGET "node18-win-x64")
-    elseif(APPLE)
-        set(PKG_TARGET "node18-macos-x64")
-    else()
-        set(PKG_TARGET "node18-linux-x64")
-    endif()
-
-    set(ESBUILD_CMD
-        ${NPX_EXE}
-        esbuild
-        "${SRC_JS}"
-        --bundle
-        --platform=node
-        --target=node18
-        "--outfile=${DIST_JS}"
-        --minify)
-
-    set(PKG_CMD
-        ${NPX_EXE}
-        pkg
-        "${DIST_JS}"
-        --targets
-        ${PKG_TARGET}
-        --output
-        "${OUT_BIN}")
-
-    add_custom_command(
-        OUTPUT ${DIST_JS}
-        WORKING_DIRECTORY ${NODE_SUBDIR}
-        COMMAND ${CMAKE_COMMAND} -E echo "[0] prepare building folder"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E echo "[1] npm ci (local deps)"
-        COMMAND ${NPM_EXE} ci
-        COMMAND ${CMAKE_COMMAND} -E echo "[2] building with esbuild"
-        COMMAND ${NPX_EXE} tsc
-        COMMAND ${ESBUILD_CMD}
-        COMMAND ${CMAKE_COMMAND} -E echo
-                "Building JS bundle with esbuild -> ${DIST_JS}"
-        VERBATIM)
-
-    if(WIN32)
-        add_custom_command(
-            OUTPUT ${OUT_BIN}
-            DEPENDS ${DIST_JS}
-            WORKING_DIRECTORY ${NODE_SUBDIR}
-            COMMAND ${CMAKE_COMMAND} -E echo
-                    "[3] packaging with pkg/npm exec/npx"
-            COMMAND ${PKG_CMD}
-            COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
-            COMMAND ${NODE_EXE} "${NODE_SUBDIR}/modIcon_win.js"
-                    "--basedir=${BUILD_BIN_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E echo "[5] Modifying exe icon"
-            VERBATIM)
-    else()
-        add_custom_command(
-            OUTPUT ${OUT_BIN}
-            DEPENDS ${DIST_JS}
-            WORKING_DIRECTORY ${NODE_SUBDIR}
-            COMMAND ${CMAKE_COMMAND} -E echo
-                    "[3] packaging with pkg/npm exec/npx"
-            COMMAND ${PKG_CMD}
-            COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
-            VERBATIM)
-    endif()
-
-    add_custom_target(build_angel_lsp ALL DEPENDS ${OUT_BIN})
-    add_dependencies(WingHexExplorer2 build_angel_lsp)
-endif()

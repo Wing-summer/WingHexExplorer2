@@ -102,14 +102,9 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             new QListWidgetItem(pco.isNull() ? pico : pco, p->pluginName());
         auto info = plgsys.getPluginInfo(p);
         auto flags = lwi->flags();
-        if (Q_LIKELY(p != plgsys.angelApi())) {
-            flags.setFlag(Qt::ItemIsUserCheckable);
-            lwi->setFlags(flags);
-            lwi->setCheckState(Qt::Checked);
-        } else {
-            flags.setFlag(Qt::ItemIsUserCheckable, false);
-            lwi->setFlags(flags);
-        }
+        flags.setFlag(Qt::ItemIsUserCheckable);
+        lwi->setFlags(flags);
+        lwi->setCheckState(Qt::Checked);
 
         lwi->setData(PLUIGN_META, QVariant::fromValue(info));
         lwi->setData(PLUIGN_NAME, p->pluginName());
@@ -195,12 +190,9 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
                     const auto deps = this->dep.at(idx);
                     for (const auto &idx : deps) {
-                        // exclude WingAngelAPI
-                        if (idx || !PluginSystem::instance().angelApi()) {
-                            auto item = ui->plglist->item(idx);
-                            Q_ASSERT(item);
-                            item->setCheckState(Qt::Unchecked);
-                        }
+                        auto item = ui->plglist->item(idx);
+                        Q_ASSERT(item);
+                        item->setCheckState(Qt::Unchecked);
                     }
                     _plgChanged.pushRemoveItem(id);
                 } break;
@@ -208,12 +200,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
                     const auto deps = this->host.at(idx);
                     for (const auto &idx : deps) {
-                        if (idx || !PluginSystem::instance().angelApi()) {
-                            auto item = ui->plglist->item(idx);
-                            Q_ASSERT(item);
-                            item->setCheckState(Qt::Checked);
-                        }
+                        auto item = ui->plglist->item(idx);
+                        Q_ASSERT(item);
+                        item->setCheckState(Qt::Checked);
                     }
+
                     _plgChanged.pushAddItem(id);
                 } break;
                 case Qt::PartiallyChecked:

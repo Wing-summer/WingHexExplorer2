@@ -17,8 +17,6 @@
 
 #include "codeinfotip.h"
 
-#include "class/angellsp.h"
-
 #include <QHash>
 #include <QMetaEnum>
 
@@ -76,29 +74,29 @@ void CodeInfoTip::resolve() const {
         return;
     }
 
-    auto &lsp = AngelLsp::instance();
-    if (!lsp.isActive()) {
-        return;
-    }
+    // auto &lsp = AngelLsp::instance();
+    // if (!lsp.isActive()) {
+    //     return;
+    // }
 
-    auto v = lsp.requestResolve(value);
-    auto label = v["label"].toString();
+    // auto v = lsp.requestResolve(value);
+    // auto label = v["label"].toString();
 
-    if (_comment.isEmpty()) {
-        _comment = v["detail"].toString();
+    // if (_comment.isEmpty()) {
+    //     _comment = v["detail"].toString();
 
-        if (_comment.isEmpty()) {
-            _comment = label;
-        }
-    }
+    //     if (_comment.isEmpty()) {
+    //         _comment = label;
+    //     }
+    // }
 
-    if (_completion.isEmpty()) {
-        _completion = v["insertText"].toString();
-        if (_completion.isEmpty()) {
-            _completion = label;
-        }
-    }
+    // if (_completion.isEmpty()) {
+    //     _completion = v["insertText"].toString();
+    //     if (_completion.isEmpty()) {
+    //         _completion = label;
+    //     }
+    // }
 
-    _isSnippet =
-        v["insertTextFormat"].toInt() == int(LSP::InsertTextFormat::Snippet);
+    // _isSnippet =
+    //     v["insertTextFormat"].toInt() == int(LSP::InsertTextFormat::Snippet);
 }

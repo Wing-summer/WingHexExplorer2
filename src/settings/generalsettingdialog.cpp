@@ -20,7 +20,6 @@
 
 #include <QMetaEnum>
 
-#include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/languagemanager.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
@@ -52,7 +51,6 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
                        QApplication::platformName());
     ui->lblSoftVersion->setText(WINGHEX_VERSION);
     ui->lblPlgSDKVersion->setNum(WingHex::SDKVERSION);
-    ui->lblScriptVersion->setText(ANGELSCRIPT_VERSION_STRING);
 
     Utilities::addSpecialMark(ui->lblLanguage);
     Utilities::addSpecialMark(ui->lblTheme);

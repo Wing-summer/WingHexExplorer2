@@ -17,7 +17,6 @@
 
 #include "ascompletion.h"
 
-#include "class/angellsp.h"
 #include "class/snippetprocessor.h"
 #include "model/codecompletionmodel.h"
 #include "wingcodeedit.h"
@@ -131,10 +130,10 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return false;
     }
 
-    auto &lsp = AngelLsp::instance();
-    if (!lsp.isActive()) {
-        return false;
-    }
+    // auto &lsp = AngelLsp::instance();
+    // if (!lsp.isActive()) {
+    //     return false;
+    // }
 
     auto url = editor->lspFileNameURL();
 
@@ -176,10 +175,10 @@ bool AsCompletion::processTrigger(const QString &trigger,
 
     editor->syncUpdate();
 
-    auto ret = lsp.requestCompletion(url, line, character, trigger);
-    auto nodes = parseCompletion(ret);
+    // auto ret = lsp.requestCompletion(url, line, character, trigger);
+    // auto nodes = parseCompletion(ret);
 
-    setModel(new CodeCompletionModel(nodes, this));
+    setModel(new CodeCompletionModel(/*nodes*/ {}, this));
     setCompletionPrefix(prefix);
     _ok = false;
     _timer->reset(300);
@@ -225,10 +224,10 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
     }
     auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
     if (v.type == LSP::CompletionItemKind::Function) {
-        auto &lsp = AngelLsp::instance();
-        if (!lsp.isActive()) {
-            return;
-        }
+        // auto &lsp = AngelLsp::instance();
+        // if (!lsp.isActive()) {
+        //     return;
+        // }
 
         auto tc = editor->currentPosition();
         auto line = tc.blockNumber;
@@ -238,8 +237,10 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         editor->syncUpdate();
 
         auto url = editor->lspFileNameURL();
-        auto r = lsp.requestSignatureHelp(url, line, character);
-        const auto sigs = r["signatures"].toArray();
+        // auto r = lsp.requestSignatureHelp(url, line, character);
+        // const auto sigs = r["signatures"].toArray();
+        // TODO
+        QJsonArray sigs;
 
         QList<WingSignatureTooltip::Signature> ss;
         for (const auto &&sig : sigs) {

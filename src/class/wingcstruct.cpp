@@ -17,353 +17,351 @@
 
 #include "wingcstruct.h"
 
-#include "scriptaddon/scriptany.h"
-
 #include "WingPlugin/iwingangel.h"
-#include "angelscripthelper.h"
 #include "define.h"
 #include "utilities.h"
-#include "wingangelapi.h"
 
 #include <QScopedPointer>
 
-class ScriptStructParser : public StructParser {
-public:
-    ScriptStructParser(WingCStruct *api) : StructParser(api), m_ref(1) {}
-    ~ScriptStructParser() = default;
+// class ScriptStructParser : public StructParser {
+// public:
+//     ScriptStructParser(WingCStruct *api) : StructParser(api), m_ref(1) {}
+//     ~ScriptStructParser() = default;
 
-    void AddRef() { ++m_ref; }
-    void Release() {
-        if (--m_ref == 0) {
-            this->~ScriptStructParser();
-            asFreeMem(const_cast<ScriptStructParser *>(this));
-        }
-    }
+//     void AddRef() { ++m_ref; }
+//     void Release() {
+//         if (--m_ref == 0) {
+//             this->~ScriptStructParser();
+//             asFreeMem(const_cast<ScriptStructParser *>(this));
+//         }
+//     }
 
-    bool parse(const QString &fileName) {
-        auto ctx = asGetActiveContext();
-        if (ctx == nullptr) {
-            return false;
-        }
+//     bool parse(const QString &fileName) {
+//         auto ctx = asGetActiveContext();
+//         if (ctx == nullptr) {
+//             return false;
+//         }
 
-        QString path;
-        auto ptr = static_cast<const QString *>(
-            ctx->GetUserData(AsUserDataType::UserData_Section_StringPtr));
-        if (ptr) {
-            QFileInfo sinfo(*ptr);
-            QFileInfo finfo(sinfo.absoluteDir(), fileName);
-            path = finfo.absoluteFilePath();
-        } else {
-            path = fileName;
-        }
+//         QString path;
+//         auto ptr = static_cast<const QString *>(
+//             ctx->GetUserData(AsUserDataType::UserData_Section_StringPtr));
+//         if (ptr) {
+//             QFileInfo sinfo(*ptr);
+//             QFileInfo finfo(sinfo.absoluteDir(), fileName);
+//             path = finfo.absoluteFilePath();
+//         } else {
+//             path = fileName;
+//         }
 
-        return StructParser::parse(path);
-    }
+//         return StructParser::parse(path);
+//     }
 
-public:
-    CScriptArray *structTypeDefs() {
-        return stringListWrapper(StructParser::structTypeDefs());
-    }
-    CScriptArray *unionTypeDefs() {
-        return stringListWrapper(StructParser::unionTypeDefs());
-    }
-    CScriptArray *typedefTypeDefs() {
-        return stringListWrapper(StructParser::typedefTypeDefs());
-    }
-    CScriptArray *enumTypeDefs() {
-        return stringListWrapper(StructParser::enumTypeDefs());
-    }
-    CScriptArray *constVarDefs() {
-        return stringListWrapper(StructParser::constVarDefs());
-    }
+// public:
+//     CScriptArray *structTypeDefs() {
+//         return stringListWrapper(StructParser::structTypeDefs());
+//     }
+//     CScriptArray *unionTypeDefs() {
+//         return stringListWrapper(StructParser::unionTypeDefs());
+//     }
+//     CScriptArray *typedefTypeDefs() {
+//         return stringListWrapper(StructParser::typedefTypeDefs());
+//     }
+//     CScriptArray *enumTypeDefs() {
+//         return stringListWrapper(StructParser::enumTypeDefs());
+//     }
+//     CScriptArray *constVarDefs() {
+//         return stringListWrapper(StructParser::constVarDefs());
+//     }
 
-    CScriptArray *enumValueNames(const QString &name) {
-        return stringListWrapper(StructParser::enumValueNames(name));
-    }
+//     CScriptArray *enumValueNames(const QString &name) {
+//         return stringListWrapper(StructParser::enumValueNames(name));
+//     }
 
-    CScriptArray *getMissingDependencise(const QString &name) {
-        return stringListWrapper(StructParser::getMissingDependencise(name));
-    }
+//     CScriptArray *getMissingDependencise(const QString &name) {
+//         return stringListWrapper(StructParser::getMissingDependencise(name));
+//     }
 
-    CScriptArray *getParsedErrors() const {
-        return stringListWrapper(StructParser::getParsedErrors());
-    }
-    CScriptArray *getParsedWarns() const {
-        return stringListWrapper(StructParser::getParsedWarns());
-    }
+//     CScriptArray *getParsedErrors() const {
+//         return stringListWrapper(StructParser::getParsedErrors());
+//     }
+//     CScriptArray *getParsedWarns() const {
+//         return stringListWrapper(StructParser::getParsedWarns());
+//     }
 
-    CScriptArray *structOrUnionMemberNames(const QString &type) const {
-        return stringListWrapper(StructParser::structOrUnionMemberNames(type));
-    }
+//     CScriptArray *structOrUnionMemberNames(const QString &type) const {
+//         return
+//         stringListWrapper(StructParser::structOrUnionMemberNames(type));
+//     }
 
-    CScriptArray *structOrUnionMemberDataTypes(const QString &type) const {
-        return stringListWrapper(
-            StructParser::structOrUnionMemberDataTypes(type));
-    }
+//     CScriptArray *structOrUnionMemberDataTypes(const QString &type) const {
+//         return stringListWrapper(
+//             StructParser::structOrUnionMemberDataTypes(type));
+//     }
 
-    CScriptArray *structOrUnionMemberDecls(const QString &type) const {
-        return stringListWrapper(StructParser::structOrUnionMemberDecls(type));
-    }
+//     CScriptArray *structOrUnionMemberDecls(const QString &type) const {
+//         return
+//         stringListWrapper(StructParser::structOrUnionMemberDecls(type));
+//     }
 
-    CScriptArray *
-    structOrUnionMemberDeclWithoutNames(const QString &type) const {
-        return stringListWrapper(
-            StructParser::structOrUnionMemberDeclWithoutNames(type));
-    }
+//     CScriptArray *
+//     structOrUnionMemberDeclWithoutNames(const QString &type) const {
+//         return stringListWrapper(
+//             StructParser::structOrUnionMemberDeclWithoutNames(type));
+//     }
 
-    CScriptDictionary *read(qsizetype offset, const QString &type) {
-        return convert2AsDictionary(__read(offset, type, true));
-    }
+//     CScriptDictionary *read(qsizetype offset, const QString &type) {
+//         return convert2AsDictionary(__read(offset, type, true));
+//     }
 
-    CScriptDictionary *readMembers(qsizetype offset, const QString &type,
-                                   CScriptArray *members) {
-        return convert2AsDictionary(__readMembers(
-            offset, type,
-            [members](uint index) -> QString {
-                return *reinterpret_cast<const QString *>(members->At(index));
-            },
-            members->GetSize(), true));
-    }
+//     CScriptDictionary *readMembers(qsizetype offset, const QString &type,
+//                                    CScriptArray *members) {
+//         return convert2AsDictionary(__readMembers(
+//             offset, type,
+//             [members](uint index) -> QString {
+//                 return *reinterpret_cast<const QString
+//                 *>(members->At(index));
+//             },
+//             members->GetSize(), true));
+//     }
 
-    CScriptAny *readMember(qsizetype offset, const QString &type,
-                           const QString &member) {
-        auto ctx = asGetActiveContext();
-        if (ctx == nullptr) {
-            return {};
-        }
+//     CScriptAny *readMember(qsizetype offset, const QString &type,
+//                            const QString &member) {
+//         auto ctx = asGetActiveContext();
+//         if (ctx == nullptr) {
+//             return {};
+//         }
 
-        auto ret = __readMember(offset, type, member, false);
-        auto engine = ctx->GetEngine();
-        auto any = new CScriptAny(engine);
+//         auto ret = __readMember(offset, type, member, false);
+//         auto engine = ctx->GetEngine();
+//         auto any = new CScriptAny(engine);
 
-        auto meta = ret.isNull() ? QMetaType::Type::Void
-                                 : QMetaType::Type(ret.typeId());
+//         auto meta = ret.isNull() ? QMetaType::Type::Void
+//                                  : QMetaType::Type(ret.typeId());
 
-        switch (meta) {
-        case QMetaType::Bool: {
-            auto v = ret.toBool();
-            any->Store(&v, asTYPEID_BOOL);
-            break;
-        }
-        case QMetaType::UChar: {
-            auto v = ret.value<uchar>();
-            any->Store(&v, asTYPEID_UINT8);
-            break;
-        }
-        case QMetaType::SChar: {
-            auto v = ret.value<uchar>();
-            any->Store(&v, asTYPEID_INT8);
-            break;
-        }
-        case QMetaType::Short: {
-            auto v = ret.value<short>();
-            static_assert(sizeof(short) == 2, "sizeof(short) != 2");
-            any->Store(&v, asTYPEID_INT16);
-            break;
-        }
-        case QMetaType::UShort: {
-            auto v = ret.value<ushort>();
-            static_assert(sizeof(short) == 2, "sizeof(short) != 2");
-            any->Store(&v, asTYPEID_UINT16);
-            break;
-        }
-        case QMetaType::Int:
-        case QMetaType::Long: {
-            auto v = ret.toInt();
-            any->Store(&v, asTYPEID_INT32);
-        }
-        case QMetaType::LongLong: {
-            auto v = ret.toLongLong();
-            any->Store(&v, asTYPEID_INT64);
-            break;
-        }
-        case QMetaType::UInt:
-        case QMetaType::ULong: {
-            auto v = ret.toUInt();
-            any->Store(&v, asTYPEID_UINT32);
-            break;
-        }
-        case QMetaType::ULongLong: {
-            auto v = ret.toULongLong();
-            any->Store(&v, asTYPEID_UINT64);
-            break;
-        }
-        case QMetaType::Double: {
-            auto v = ret.toDouble();
-            any->Store(&v, asTYPEID_DOUBLE);
-            break;
-        }
-        case QMetaType::Float: {
-            auto v = ret.toFloat();
-            any->Store(&v, asTYPEID_FLOAT);
-            break;
-        }
-        case QMetaType::Char: {
-            auto v = ret.value<char>();
-            QChar ch(v);
-            auto type = static_cast<asITypeInfo *>(
-                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
-            auto id = type->GetTypeId();
-            any->Store(&ch, id);
-            break;
-        }
-        case QMetaType::Char16: {
-            auto v = ret.value<char16_t>();
-            QChar ch(v);
-            auto type = static_cast<asITypeInfo *>(
-                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
-            auto id = type->GetTypeId();
-            any->Store(&ch, id);
-            break;
-        }
-        case QMetaType::Char32: {
-            auto v = ret.value<char32_t>();
-            QChar ch(v);
-            auto type = static_cast<asITypeInfo *>(
-                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
-            auto id = type->GetTypeId();
-            any->Store(&ch, id);
-            break;
-        }
-        case QMetaType::QVariantList: {
-            // note: empty list is not allowed!
-            // If empty, it will be ignored
-            auto v = ret.toList();
-            if (!v.isEmpty()) {
-                // reguard the first element type is the specilization
-                auto var = v.first();
-                auto type = var.isNull() ? QMetaType::Type::Void
-                                         : QMetaType::Type(var.typeId());
-                if (type == QMetaType::Type::Void) {
-                    // ignore
-                    break;
-                }
-                if (!isValidCStructMetaType(type)) {
-                    // ignore
-                    break;
-                }
+//         switch (meta) {
+//         case QMetaType::Bool: {
+//             auto v = ret.toBool();
+//             any->Store(&v, asTYPEID_BOOL);
+//             break;
+//         }
+//         case QMetaType::UChar: {
+//             auto v = ret.value<uchar>();
+//             any->Store(&v, asTYPEID_UINT8);
+//             break;
+//         }
+//         case QMetaType::SChar: {
+//             auto v = ret.value<uchar>();
+//             any->Store(&v, asTYPEID_INT8);
+//             break;
+//         }
+//         case QMetaType::Short: {
+//             auto v = ret.value<short>();
+//             static_assert(sizeof(short) == 2, "sizeof(short) != 2");
+//             any->Store(&v, asTYPEID_INT16);
+//             break;
+//         }
+//         case QMetaType::UShort: {
+//             auto v = ret.value<ushort>();
+//             static_assert(sizeof(short) == 2, "sizeof(short) != 2");
+//             any->Store(&v, asTYPEID_UINT16);
+//             break;
+//         }
+//         case QMetaType::Int:
+//         case QMetaType::Long: {
+//             auto v = ret.toInt();
+//             any->Store(&v, asTYPEID_INT32);
+//         }
+//         case QMetaType::LongLong: {
+//             auto v = ret.toLongLong();
+//             any->Store(&v, asTYPEID_INT64);
+//             break;
+//         }
+//         case QMetaType::UInt:
+//         case QMetaType::ULong: {
+//             auto v = ret.toUInt();
+//             any->Store(&v, asTYPEID_UINT32);
+//             break;
+//         }
+//         case QMetaType::ULongLong: {
+//             auto v = ret.toULongLong();
+//             any->Store(&v, asTYPEID_UINT64);
+//             break;
+//         }
+//         case QMetaType::Double: {
+//             auto v = ret.toDouble();
+//             any->Store(&v, asTYPEID_DOUBLE);
+//             break;
+//         }
+//         case QMetaType::Float: {
+//             auto v = ret.toFloat();
+//             any->Store(&v, asTYPEID_FLOAT);
+//             break;
+//         }
+//         case QMetaType::Char: {
+//             auto v = ret.value<char>();
+//             QChar ch(v);
+//             auto type = static_cast<asITypeInfo *>(
+//                 engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+//             auto id = type->GetTypeId();
+//             any->Store(&ch, id);
+//             break;
+//         }
+//         case QMetaType::Char16: {
+//             auto v = ret.value<char16_t>();
+//             QChar ch(v);
+//             auto type = static_cast<asITypeInfo *>(
+//                 engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+//             auto id = type->GetTypeId();
+//             any->Store(&ch, id);
+//             break;
+//         }
+//         case QMetaType::Char32: {
+//             auto v = ret.value<char32_t>();
+//             QChar ch(v);
+//             auto type = static_cast<asITypeInfo *>(
+//                 engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+//             auto id = type->GetTypeId();
+//             any->Store(&ch, id);
+//             break;
+//         }
+//         case QMetaType::QVariantList: {
+//             // note: empty list is not allowed!
+//             // If empty, it will be ignored
+//             auto v = ret.toList();
+//             if (!v.isEmpty()) {
+//                 // reguard the first element type is the specilization
+//                 auto var = v.first();
+//                 auto type = var.isNull() ? QMetaType::Type::Void
+//                                          : QMetaType::Type(var.typeId());
+//                 if (type == QMetaType::Type::Void) {
+//                     // ignore
+//                     break;
+//                 }
+//                 if (!isValidCStructMetaType(type)) {
+//                     // ignore
+//                     break;
+//                 }
 
-                QString idStr;
+//                 QString idStr;
 
-                if (QMetaType::fromType<CEnumValue>().id() == int(type)) {
-                    idStr = QStringLiteral("WingCStruct::EnumValue");
-                } else if (QMetaType::fromType<CINT_TYPE>().id() == int(type)) {
-                    idStr = QStringLiteral("WingCStruct::IntType");
-                } else {
-                    idStr = WingAngelAPI::qvariantCastASString(type);
-                }
+//                 if (QMetaType::fromType<CEnumValue>().id() == int(type)) {
+//                     idStr = QStringLiteral("WingCStruct::EnumValue");
+//                 } else if (QMetaType::fromType<CINT_TYPE>().id() ==
+//                 int(type)) {
+//                     idStr = QStringLiteral("WingCStruct::IntType");
+//                 } else {
+//                     idStr = WingAngelAPI::qvariantCastASString(type);
+//                 }
 
-                if (idStr.isEmpty()) {
-                    // ignore
-                    break;
-                }
-                QString arrType =
-                    QStringLiteral("array<") + idStr + QStringLiteral(">");
-                auto arrTypeID = engine->GetTypeIdByDecl(arrType.toUtf8());
-                if (arrTypeID < 0) {
-                    // ignore
-                    break;
-                }
+//                 if (idStr.isEmpty()) {
+//                     // ignore
+//                     break;
+//                 }
+//                 QString arrType =
+//                     QStringLiteral("array<") + idStr + QStringLiteral(">");
+//                 auto arrTypeID = engine->GetTypeIdByDecl(arrType.toUtf8());
+//                 if (arrTypeID < 0) {
+//                     // ignore
+//                     break;
+//                 }
 
-                any->Store(convert2AsArray(v, type, arrTypeID), arrTypeID);
-            }
-            break;
-        }
-        case QMetaType::QVariantHash: {
-            auto type = static_cast<asITypeInfo *>(engine->GetUserData(
-                AsUserDataType::UserData_DictionaryTypeInfo));
-            auto id = type->GetTypeId();
-            any->Store(convert2AsDictionary(ret.toHash()), id);
-            break;
-        }
-        default:
-            if (QMetaType::fromType<CEnumValue>().id() == int(meta)) {
-                static auto type =
-                    engine->GetTypeInfoByName("WingCStruct::EnumValue");
-                Q_ASSERT(type);
-                if (type) {
-                    auto id = type->GetTypeId();
-                    Q_ASSERT(id >= 0);
-                    auto v = ret.value<CEnumValue>();
-                    any->Store(&v, id);
-                }
-            } else if (QMetaType::fromType<CINT_TYPE>().id() == int(meta)) {
-                static auto type =
-                    engine->GetTypeInfoByName("WingCStruct::IntType");
-                Q_ASSERT(type);
-                if (type) {
-                    auto id = type->GetTypeId();
-                    Q_ASSERT(id >= 0);
-                    auto v = ret.value<CEnumValue>();
-                    any->Store(&v, id);
-                }
-            }
-            break;
-        }
-        return any;
-    }
+//                 any->Store(convert2AsArray(v, type, arrTypeID), arrTypeID);
+//             }
+//             break;
+//         }
+//         case QMetaType::QVariantHash: {
+//             auto type = static_cast<asITypeInfo *>(engine->GetUserData(
+//                 AsUserDataType::UserData_DictionaryTypeInfo));
+//             auto id = type->GetTypeId();
+//             any->Store(convert2AsDictionary(ret.toHash()), id);
+//             break;
+//         }
+//         default:
+//             if (QMetaType::fromType<CEnumValue>().id() == int(meta)) {
+//                 static auto type =
+//                     engine->GetTypeInfoByName("WingCStruct::EnumValue");
+//                 Q_ASSERT(type);
+//                 if (type) {
+//                     auto id = type->GetTypeId();
+//                     Q_ASSERT(id >= 0);
+//                     auto v = ret.value<CEnumValue>();
+//                     any->Store(&v, id);
+//                 }
+//             } else if (QMetaType::fromType<CINT_TYPE>().id() == int(meta)) {
+//                 static auto type =
+//                     engine->GetTypeInfoByName("WingCStruct::IntType");
+//                 Q_ASSERT(type);
+//                 if (type) {
+//                     auto id = type->GetTypeId();
+//                     Q_ASSERT(id >= 0);
+//                     auto v = ret.value<CEnumValue>();
+//                     any->Store(&v, id);
+//                 }
+//             }
+//             break;
+//         }
+//         return any;
+//     }
 
-    CScriptArray *readRaw(qsizetype offset, const QString &type) {
-        return byteArrayWrapper(__readRaw(offset, type));
-    }
+//     CScriptArray *readRaw(qsizetype offset, const QString &type) {
+//         return byteArrayWrapper(__readRaw(offset, type));
+//     }
 
-private:
-    int m_ref;
-};
+// private:
+//     int m_ref;
+// };
 
-WING_DECLARE_STATIC_API;
+// WING_DECLARE_STATIC_API;
 
-static void ScriptStructParser_ConstVarValue(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
-    auto self = static_cast<ScriptStructParser *>(g->object());
-    auto param = static_cast<QString *>(g->argObject(0));
-    *(CINT_TYPE *)g->addressOfReturnLocation() = self->constVarValue(*param);
-};
+// static void ScriptStructParser_ConstVarValue(WingHex::asIWingGeneric *gen) {
+//     auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
+//     auto self = static_cast<ScriptStructParser *>(g->object());
+//     auto param = static_cast<QString *>(g->argObject(0));
+//     *(CINT_TYPE *)g->addressOfReturnLocation() = self->constVarValue(*param);
+// };
 
-static void CINT_TYPE_Construct_Default(CINT_TYPE *self) {
-    new (self) CINT_TYPE();
-}
+// static void CINT_TYPE_Construct_Default(CINT_TYPE *self) {
+//     new (self) CINT_TYPE();
+// }
 
-static void CINT_TYPE_Construct_Copy(const CINT_TYPE &other, CINT_TYPE *self) {
-    new (self) CINT_TYPE(other);
-}
+// static void CINT_TYPE_Construct_Copy(const CINT_TYPE &other, CINT_TYPE *self)
+// {
+//     new (self) CINT_TYPE(other);
+// }
 
-static void CINT_TYPE_Construct_FromInt(qint64 v, CINT_TYPE *self) {
-    new (self) CINT_TYPE(v);
-}
+// static void CINT_TYPE_Construct_FromInt(qint64 v, CINT_TYPE *self) {
+//     new (self) CINT_TYPE(v);
+// }
 
-static void CINT_TYPE_Construct_FromUInt(quint64 v, CINT_TYPE *self) {
-    new (self) CINT_TYPE(v);
-}
+// static void CINT_TYPE_Construct_FromUInt(quint64 v, CINT_TYPE *self) {
+//     new (self) CINT_TYPE(v);
+// }
 
-static void CINT_TYPE_Destruct(CINT_TYPE *self) { self->~CINT_TYPE(); }
+// static void CINT_TYPE_Destruct(CINT_TYPE *self) { self->~CINT_TYPE(); }
 
-static WingCStruct *self = nullptr;
+// static WingCStruct *self = nullptr;
 
-static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
-    auto mem = static_cast<ScriptStructParser *>(
-        asAllocMem(sizeof(ScriptStructParser)));
+// static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
+//     auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
+//     auto mem = static_cast<ScriptStructParser *>(
+//         asAllocMem(sizeof(ScriptStructParser)));
 
-    *(ScriptStructParser **)g->addressOfReturnLocation() =
-        new (mem) ScriptStructParser(self);
-};
+//     *(ScriptStructParser **)g->addressOfReturnLocation() =
+//         new (mem) ScriptStructParser(self);
+// };
 
-static void ScriptStructParser_String_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
-    auto param = static_cast<QString *>(g->argObject(0));
-    auto mem = static_cast<ScriptStructParser *>(
-        asAllocMem(sizeof(ScriptStructParser)));
-    *(ScriptStructParser **)g->addressOfReturnLocation() =
-        new (mem) ScriptStructParser(self);
+// static void ScriptStructParser_String_Factory(WingHex::asIWingGeneric *gen) {
+//     auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
+//     auto param = static_cast<QString *>(g->argObject(0));
+//     auto mem = static_cast<ScriptStructParser *>(
+//         asAllocMem(sizeof(ScriptStructParser)));
+//     *(ScriptStructParser **)g->addressOfReturnLocation() =
+//         new (mem) ScriptStructParser(self);
 
-    mem->parse(*param);
-};
+//     mem->parse(*param);
+// };
 
-WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
-    self = this;
-    WING_INIT_STATIC_API;
-}
+WingCStruct::WingCStruct() : WingHex::IWingPlugin() {}
 
 WingCStruct::~WingCStruct() {
     qDeleteAll(_parsers);
@@ -402,26 +400,28 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
     o->registerObjectType("IntType", sizeof(CINT_TYPE),
                           WingHex::IWingAngel::asOBJ_VALUE |
                               WingHex::asGetTypeTraits<CINT_TYPE>());
-    o->registerObjectBehaviour(
-        "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f()",
-        asWINGFUNCTION(CINT_TYPE_Construct_Default),
-        asCallConvTypes::asCALL_CDECL_OBJLAST);
-    o->registerObjectBehaviour(
-        "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(int64 v)",
-        asWINGFUNCTION(CINT_TYPE_Construct_FromInt),
-        asCallConvTypes::asCALL_CDECL_OBJLAST);
-    o->registerObjectBehaviour(
-        "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT,
-        "void f(const IntType &in)", asWINGFUNCTION(CINT_TYPE_Construct_Copy),
-        asCallConvTypes::asCALL_CDECL_OBJLAST);
-    o->registerObjectBehaviour(
-        "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(uint64 v)",
-        asWINGFUNCTION(CINT_TYPE_Construct_FromUInt),
-        asCallConvTypes::asCALL_CDECL_OBJLAST);
-    o->registerObjectBehaviour("IntType",
-                               WingHex::IWingAngel::asBEHAVE_DESTRUCT,
-                               "void f()", asWINGFUNCTION(CINT_TYPE_Destruct),
-                               asCallConvTypes::asCALL_CDECL_OBJLAST);
+    // o->registerObjectBehaviour(
+    //     "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f()",
+    //     asWINGFUNCTION(CINT_TYPE_Construct_Default),
+    //     asCallConvTypes::asCALL_CDECL_OBJLAST);
+    // o->registerObjectBehaviour(
+    //     "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(int64
+    //     v)", asWINGFUNCTION(CINT_TYPE_Construct_FromInt),
+    //     asCallConvTypes::asCALL_CDECL_OBJLAST);
+    // o->registerObjectBehaviour(
+    //     "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT,
+    //     "void f(const IntType &in)",
+    //     asWINGFUNCTION(CINT_TYPE_Construct_Copy),
+    //     asCallConvTypes::asCALL_CDECL_OBJLAST);
+    // o->registerObjectBehaviour(
+    //     "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(uint64
+    //     v)", asWINGFUNCTION(CINT_TYPE_Construct_FromUInt),
+    //     asCallConvTypes::asCALL_CDECL_OBJLAST);
+    // o->registerObjectBehaviour("IntType",
+    //                            WingHex::IWingAngel::asBEHAVE_DESTRUCT,
+    //                            "void f()",
+    //                            asWINGFUNCTION(CINT_TYPE_Destruct),
+    //                            asCallConvTypes::asCALL_CDECL_OBJLAST);
     o->registerObjectMethod("IntType", "bool isInt() const",
                             asWINGMETHOD(CINT_TYPE, isInt),
                             asCallConvTypes::asCALL_THISCALL);
@@ -520,218 +520,234 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
         });
 
     o->registerObjectType("parser", 0, WingHex::IWingAngel::asOBJ_REF);
-    o->registerObjectBehaviour("parser", WingHex::IWingAngel::asBEHAVE_ADDREF,
-                               "void f()",
-                               asWINGMETHOD(ScriptStructParser, AddRef),
-                               asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectBehaviour("parser", WingHex::IWingAngel::asBEHAVE_RELEASE,
-                               "void f()",
-                               asWINGMETHOD(ScriptStructParser, Release),
-                               asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectBehaviour("parser", WingHex::IWingAngel::asBEHAVE_FACTORY,
-                               "parser@ f()",
-                               asWINGFUNCTION(ScriptStructParser_Factory),
-                               asCallConvTypes::asCALL_GENERIC);
-    o->registerObjectBehaviour(
-        "parser", WingHex::IWingAngel::asBEHAVE_FACTORY,
-        "parser@ f(const string&in)",
-        asWINGFUNCTION(ScriptStructParser_String_Factory),
-        asCallConvTypes::asCALL_GENERIC);
-    o->registerObjectMethod("parser",
-                            "bool parseFromSource(const string&in header)",
-                            asWINGMETHOD(ScriptStructParser, parseFromSource),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "bool parse(const string&in fileName)",
-                            asWINGMETHOD(ScriptStructParser, parse),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "void setIsLittleEndian(bool)",
-                            asWINGMETHOD(ScriptStructParser, setIsLittleEndian),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "bool isLittleEndian() const",
-                            asWINGMETHOD(ScriptStructParser, isLittleEndian),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "void reset()",
-                            asWINGMETHOD(ScriptStructParser, reset),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "bool setPadAlignment(int)",
-                            asWINGMETHOD(ScriptStructParser, setPadAlignment),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "int padAlignment() const",
-                            asWINGMETHOD(ScriptStructParser, padAlignment),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ structTypeDefs() const",
-                            asWINGMETHOD(ScriptStructParser, structTypeDefs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ unionTypeDefs() const",
-                            asWINGMETHOD(ScriptStructParser, unionTypeDefs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ typedefTypeDefs() const",
-                            asWINGMETHOD(ScriptStructParser, typedefTypeDefs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ enumTypeDefs() const",
-                            asWINGMETHOD(ScriptStructParser, enumTypeDefs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ constVarDefs() const",
-                            asWINGMETHOD(ScriptStructParser, constVarDefs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "int64 sizeOf(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, sizeOf),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsType(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsType),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool isBasicType(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, isBasicType),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "bool isUnsignedBasicType(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, isUnsignedBasicType),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsEnum(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsEnum),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsStruct(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsStruct),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsUnion(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsUnion),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsTypeDef(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsTypeDef),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool containsConstVar(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, containsConstVar),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool isCompletedType(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, isCompletedType),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "string[]@ enumValueNames(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, enumValueNames),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "bool isCompletedStruct(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, isCompletedStruct),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "bool isCompletedUnion(const string&in type) const",
-                            asWINGMETHOD(ScriptStructParser, isCompletedUnion),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "string[]@ getMissingDependencise(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, getMissingDependencise),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "int64 constVarValueInt(const string &in type) const",
-        asWINGMETHOD(ScriptStructParser, constVarValueInt),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "uint64 constVarValueUInt(const string &in type) const",
-        asWINGMETHOD(ScriptStructParser, constVarValueUInt),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "WingCStruct::IntType constVarValue(const string &in type) const",
-        asWINGFUNCTION(ScriptStructParser_ConstVarValue),
-        asCallConvTypes::asCALL_GENERIC);
-    o->registerObjectMethod("parser", "int recursiveDepth() const",
-                            asWINGMETHOD(ScriptStructParser, recursiveDepth),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "void setRecursiveDepth(int)",
-                            asWINGMETHOD(ScriptStructParser, setRecursiveDepth),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "uint32 structSizeLimit() const",
-                            asWINGMETHOD(ScriptStructParser, structSizeLimit),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "void setStructSizeLimit(uint32)",
-        asWINGMETHOD(ScriptStructParser, setStructSizeLimit),
-        asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectBehaviour("parser",
+    // WingHex::IWingAngel::asBEHAVE_ADDREF,
+    //                            "void f()",
+    //                            asWINGMETHOD(ScriptStructParser, AddRef),
+    //                            asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectBehaviour("parser",
+    // WingHex::IWingAngel::asBEHAVE_RELEASE,
+    //                            "void f()",
+    //                            asWINGMETHOD(ScriptStructParser, Release),
+    //                            asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectBehaviour("parser",
+    // WingHex::IWingAngel::asBEHAVE_FACTORY,
+    //                            "parser@ f()",
+    //                            asWINGFUNCTION(ScriptStructParser_Factory),
+    //                            asCallConvTypes::asCALL_GENERIC);
+    // o->registerObjectBehaviour(
+    //     "parser", WingHex::IWingAngel::asBEHAVE_FACTORY,
+    //     "parser@ f(const string&in)",
+    //     asWINGFUNCTION(ScriptStructParser_String_Factory),
+    //     asCallConvTypes::asCALL_GENERIC);
+    // o->registerObjectMethod("parser",
+    //                         "bool parseFromSource(const string&in header)",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         parseFromSource),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "bool parse(const string&in fileName)",
+    //                         asWINGMETHOD(ScriptStructParser, parse),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "void setIsLittleEndian(bool)",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         setIsLittleEndian),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "bool isLittleEndian() const",
+    //                         asWINGMETHOD(ScriptStructParser, isLittleEndian),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "void reset()",
+    //                         asWINGMETHOD(ScriptStructParser, reset),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "bool setPadAlignment(int)",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         setPadAlignment),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "int padAlignment() const",
+    //                         asWINGMETHOD(ScriptStructParser, padAlignment),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ structTypeDefs() const",
+    //                         asWINGMETHOD(ScriptStructParser, structTypeDefs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ unionTypeDefs() const",
+    //                         asWINGMETHOD(ScriptStructParser, unionTypeDefs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ typedefTypeDefs() const",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         typedefTypeDefs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ enumTypeDefs() const",
+    //                         asWINGMETHOD(ScriptStructParser, enumTypeDefs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ constVarDefs() const",
+    //                         asWINGMETHOD(ScriptStructParser, constVarDefs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "int64 sizeOf(const string&in type) const",
+    //                         asWINGMETHOD(ScriptStructParser, sizeOf),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsType(const string&in type) const",
+    //                         asWINGMETHOD(ScriptStructParser, containsType),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool isBasicType(const string&in type) const",
+    //                         asWINGMETHOD(ScriptStructParser, isBasicType),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "bool isUnsignedBasicType(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, isUnsignedBasicType),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsEnum(const string&in type) const",
+    //                         asWINGMETHOD(ScriptStructParser, containsEnum),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsStruct(const string&in type)
+    //                         const", asWINGMETHOD(ScriptStructParser,
+    //                         containsStruct),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsUnion(const string&in type) const",
+    //                         asWINGMETHOD(ScriptStructParser, containsUnion),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsTypeDef(const string&in type)
+    //                         const", asWINGMETHOD(ScriptStructParser,
+    //                         containsTypeDef),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool containsConstVar(const string&in type)
+    //                         const", asWINGMETHOD(ScriptStructParser,
+    //                         containsConstVar),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool isCompletedType(const string&in type)
+    //                         const", asWINGMETHOD(ScriptStructParser,
+    //                         isCompletedType),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "string[]@ enumValueNames(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, enumValueNames),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "bool isCompletedStruct(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, isCompletedStruct),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "bool isCompletedUnion(const string&in type)
+    //                         const", asWINGMETHOD(ScriptStructParser,
+    //                         isCompletedUnion),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "string[]@ getMissingDependencise(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, getMissingDependencise),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "int64 constVarValueInt(const string &in type) const",
+    //     asWINGMETHOD(ScriptStructParser, constVarValueInt),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "uint64 constVarValueUInt(const string &in type) const",
+    //     asWINGMETHOD(ScriptStructParser, constVarValueUInt),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "WingCStruct::IntType constVarValue(const string &in type) const",
+    //     asWINGFUNCTION(ScriptStructParser_ConstVarValue),
+    //     asCallConvTypes::asCALL_GENERIC);
+    // o->registerObjectMethod("parser", "int recursiveDepth() const",
+    //                         asWINGMETHOD(ScriptStructParser, recursiveDepth),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "void setRecursiveDepth(int)",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         setRecursiveDepth),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "uint32 structSizeLimit() const",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         structSizeLimit),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "void setStructSizeLimit(uint32)",
+    //     asWINGMETHOD(ScriptStructParser, setStructSizeLimit),
+    //     asCallConvTypes::asCALL_THISCALL);
 
-    static_assert(sizeof(qsizetype) == sizeof(quint64));
+    // static_assert(sizeof(qsizetype) == sizeof(quint64));
 
-    o->registerObjectMethod(
-        "parser", "dictionary@ read(int64 offset, const string &in type) const",
-        asWINGMETHOD(ScriptStructParser, read),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "any@ readMember(int64 offset, const string &in "
-                            "type, const string &in member) const",
-                            asWINGMETHOD(ScriptStructParser, readMember),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "dictionary@ readMembers(int64 offset, const string &in type, "
-        "const string[] &in members) const",
-        asWINGMETHOD(ScriptStructParser, readMembers),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser", "byte[]@ readRaw(int64 offset, const string &in type) const",
-        asWINGMETHOD(ScriptStructParser, readRaw),
-        asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "dictionary@ read(int64 offset, const string &in type)
+    //     const", asWINGMETHOD(ScriptStructParser, read),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser",
+    //                         "any@ readMember(int64 offset, const string &in "
+    //                         "type, const string &in member) const",
+    //                         asWINGMETHOD(ScriptStructParser, readMember),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "dictionary@ readMembers(int64 offset, const string &in type, "
+    //     "const string[] &in members) const",
+    //     asWINGMETHOD(ScriptStructParser, readMembers),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "byte[]@ readRaw(int64 offset, const string &in type)
+    //     const", asWINGMETHOD(ScriptStructParser, readRaw),
+    //     asCallConvTypes::asCALL_THISCALL);
 
-    o->registerObjectMethod("parser", "string dumpAllTypes() const",
-                            asWINGMETHOD(ScriptStructParser, dumpAllTypes),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string dumpTypeDefines() const",
-                            asWINGMETHOD(ScriptStructParser, dumpTypeDefines),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string dumpConstants() const",
-                            asWINGMETHOD(ScriptStructParser, dumpConstants),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string dumpStructs()",
-                            asWINGMETHOD(ScriptStructParser, dumpStructs),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string dumpUnions() const",
-                            asWINGMETHOD(ScriptStructParser, dumpUnions),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string dumpEnums() const",
-                            asWINGMETHOD(ScriptStructParser, dumpEnums),
-                            asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpAllTypes() const",
+    //                         asWINGMETHOD(ScriptStructParser, dumpAllTypes),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpTypeDefines() const",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         dumpTypeDefines),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpConstants() const",
+    //                         asWINGMETHOD(ScriptStructParser, dumpConstants),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpStructs()",
+    //                         asWINGMETHOD(ScriptStructParser, dumpStructs),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpUnions() const",
+    //                         asWINGMETHOD(ScriptStructParser, dumpUnions),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string dumpEnums() const",
+    //                         asWINGMETHOD(ScriptStructParser, dumpEnums),
+    //                         asCallConvTypes::asCALL_THISCALL);
 
-    o->registerObjectMethod("parser", "string[]@ getParsedErrors() const",
-                            asWINGMETHOD(ScriptStructParser, getParsedErrors),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser", "string[]@ getParsedWarns() const",
-                            asWINGMETHOD(ScriptStructParser, getParsedWarns),
-                            asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ getParsedErrors() const",
+    //                         asWINGMETHOD(ScriptStructParser,
+    //                         getParsedErrors),
+    //                         asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod("parser", "string[]@ getParsedWarns() const",
+    //                         asWINGMETHOD(ScriptStructParser, getParsedWarns),
+    //                         asCallConvTypes::asCALL_THISCALL);
 
-    o->registerObjectMethod(
-        "parser",
-        "string[]@ structOrUnionMemberNames(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, structOrUnionMemberNames),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "string[]@ structOrUnionMemberDataTypes(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, structOrUnionMemberDataTypes),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "string[]@ structOrUnionMemberDecls(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, structOrUnionMemberDecls),
-        asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod(
-        "parser",
-        "string[]@ structOrUnionMemberDeclWithoutNames(const string&in type) "
-        "const",
-        asWINGMETHOD(ScriptStructParser, structOrUnionMemberDeclWithoutNames),
-        asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "string[]@ structOrUnionMemberNames(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, structOrUnionMemberNames),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "string[]@ structOrUnionMemberDataTypes(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, structOrUnionMemberDataTypes),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "string[]@ structOrUnionMemberDecls(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, structOrUnionMemberDecls),
+    //     asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser",
+    //     "string[]@ structOrUnionMemberDeclWithoutNames(const string&in type)
+    //     " "const", asWINGMETHOD(ScriptStructParser,
+    //     structOrUnionMemberDeclWithoutNames),
+    //     asCallConvTypes::asCALL_THISCALL);
 
-    o->registerObjectMethod(
-        "parser", "string resolveTypeName(const string&in type) const",
-        asWINGMETHOD(ScriptStructParser, resolveTypeName),
-        asCallConvTypes::asCALL_THISCALL);
+    // o->registerObjectMethod(
+    //     "parser", "string resolveTypeName(const string&in type) const",
+    //     asWINGMETHOD(ScriptStructParser, resolveTypeName),
+    //     asCallConvTypes::asCALL_THISCALL);
 }
 
 bool WingCStruct::createParser(const WingHex::SenderInfo &sender) {

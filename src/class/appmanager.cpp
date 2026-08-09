@@ -21,7 +21,7 @@
 
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
-#include "angelscript.h"
+#include "class/scriptmanager.h"
 #include "control/toast.h"
 #include "crashhandler.h"
 #include "dbghelper.h"
@@ -63,20 +63,6 @@ AppManager::AppManager(int &argc, char *argv[])
         throw CrashCode::AlreadyStart;
     }
 
-#ifndef ANGELSCRIPT_H
-#error "You should include angelscript.h header to check the PORTABILITY"
-#else
-#ifdef AS_MAX_PORTABILITY
-#error "Generic call is NOT FULLY SUPPORTED in WingHexExplorer2 library!"
-#endif
-#endif
-
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
-        WingMessageBox::critical(nullptr, qAppName(),
-                                 tr("GenericCallNotFullySupported"));
-        throw CrashCode::GenericCallNotSupported;
-    }
-
     auto &set = SettingManager::instance();
     Logger::instance();
     QFont font(set.appFontFamily(), set.appfontSize());
@@ -84,9 +70,9 @@ AppManager::AppManager(int &argc, char *argv[])
 
     SkinManager::instance();
 
-    // add angelscript highlight support
+    // add luau highlight support
     auto &repo = WingCodeEdit::syntaxRepo();
-    repo.addCustomSearchPath(QStringLiteral(":/WingScript/Angelscript"));
+    repo.addCustomSearchPath(QStringLiteral(":/WingScript/Luau"));
 
     auto dontSplash = set.dontUseSplash();
 
@@ -192,13 +178,13 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         QFileInfo finfo(file);
         if (Utilities::isTextFile(finfo)) {
             auto suffix = finfo.suffix();
-            if (suffix.compare(QStringLiteral("wingpro")) == 0) {
+            if (suffix.compare(QLatin1String("wingpro")) == 0) {
                 ret = _w->openWorkSpace(file, &editor);
                 if (ret == ErrFile::Success) {
                     isWS = true;
                 }
             } else if (!skipScripting &&
-                       suffix.compare(QStringLiteral("as")) == 0) {
+                       ScriptManager::isScriptFileSuffix(suffix)) {
                 _w->openScriptFile(file, splash);
                 ret = ErrFile::Success;
             }

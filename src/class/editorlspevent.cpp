@@ -17,7 +17,7 @@
 
 #include "editorlspevent.h"
 
-#include "angellsp.h"
+// #include "angellsp.h"
 
 #include <QJsonArray>
 #include <QToolTip>
@@ -29,73 +29,73 @@ bool EditorLspEvent::processEvent(QEvent *event, LspEditorInterace *editor) {
         if (e->modifiers() == Qt::NoModifier) {
             auto key = e->key();
             if (key == Qt::Key_Comma) {
-                auto &lsp = AngelLsp::instance();
-                if (!lsp.isActive()) {
-                    return false;
-                }
+                // auto &lsp = AngelLsp::instance();
+                // if (!lsp.isActive()) {
+                //     return false;
+                // }
 
-                auto url = editor->lspFileNameURL();
-                auto tc = editor->currentPosition();
-                auto line = tc.blockNumber;
-                auto character = tc.positionInBlock;
+                // auto url = editor->lspFileNameURL();
+                // auto tc = editor->currentPosition();
+                // auto line = tc.blockNumber;
+                // auto character = tc.positionInBlock;
 
-                editor->sendDocChange();
-                while (editor->isContentLspUpdated()) {
-                    // wait for a moment
-                }
+                // editor->sendDocChange();
+                // while (editor->isContentLspUpdated()) {
+                //     // wait for a moment
+                // }
 
-                auto r = lsp.requestSignatureHelp(url, line, character);
-                auto sigs = r["signatures"].toArray();
-                QList<WingSignatureTooltip::Signature> ss;
-                for (const auto &&sig : std::as_const(sigs)) {
-                    QJsonValue js = sig;
-                    WingSignatureTooltip::Signature s;
-                    s.label = js["label"].toString();
-                    s.doc = js["documentation"].toString();
-                    ss.append(s);
-                }
-                editor->showFunctionTip(ss);
+                // auto r = lsp.requestSignatureHelp(url, line, character);
+                // auto sigs = r["signatures"].toArray();
+                // QList<WingSignatureTooltip::Signature> ss;
+                // for (const auto &&sig : std::as_const(sigs)) {
+                //     QJsonValue js = sig;
+                //     WingSignatureTooltip::Signature s;
+                //     s.label = js["label"].toString();
+                //     s.doc = js["documentation"].toString();
+                //     ss.append(s);
+                // }
+                // editor->showFunctionTip(ss);
             } else if (key == Qt::Key_Semicolon) {
                 editor->clearFunctionTip();
             }
         }
     } else if (type == QEvent::ToolTip) {
-        auto &lsp = AngelLsp::instance();
-        if (!lsp.isActive()) {
-            return false;
-        }
+        // auto &lsp = AngelLsp::instance();
+        // if (!lsp.isActive()) {
+        //     return false;
+        // }
 
-        auto helpEvent = static_cast<QHelpEvent *>(event);
-        auto eptr = editor->editorPtr();
-        auto point = helpEvent->pos();
-        point.setX(point.x() - eptr->lineMarginWidth());
-        auto cursor = eptr->cursorForPosition(point);
-        auto pos = editor->cursorPosition(cursor);
+        // auto helpEvent = static_cast<QHelpEvent *>(event);
+        // auto eptr = editor->editorPtr();
+        // auto point = helpEvent->pos();
+        // point.setX(point.x() - eptr->lineMarginWidth());
+        // auto cursor = eptr->cursorForPosition(point);
+        // auto pos = editor->cursorPosition(cursor);
 
-        auto url = editor->lspFileNameURL();
-        auto line = pos.blockNumber;
-        auto character = pos.positionInBlock;
+        // auto url = editor->lspFileNameURL();
+        // auto line = pos.blockNumber;
+        // auto character = pos.positionInBlock;
 
-        auto r = lsp.requestHover(url, line, character);
-        if (!r.isNull()) {
-            auto c = r["contents"];
-            if (!c.isNull()) {
-                auto v = c["value"].toString();
-                if (v.isEmpty()) {
-                    QToolTip::hideText();
-                } else {
-                    QString text;
-                    if (c["kind"].toString() == QLatin1String("markdown")) {
-                        QTextDocument doc;
-                        doc.setMarkdown(v);
-                        text = doc.toHtml();
-                    } else {
-                        text = v;
-                    }
-                    QToolTip::showText(helpEvent->globalPos(), text);
-                }
-            }
-        }
+        // auto r = lsp.requestHover(url, line, character);
+        // if (!r.isNull()) {
+        //     auto c = r["contents"];
+        //     if (!c.isNull()) {
+        //         auto v = c["value"].toString();
+        //         if (v.isEmpty()) {
+        //             QToolTip::hideText();
+        //         } else {
+        //             QString text;
+        //             if (c["kind"].toString() == QLatin1String("markdown")) {
+        //                 QTextDocument doc;
+        //                 doc.setMarkdown(v);
+        //                 text = doc.toHtml();
+        //             } else {
+        //                 text = v;
+        //             }
+        //             QToolTip::showText(helpEvent->globalPos(), text);
+        //         }
+        //     }
+        // }
         return true;
     }
     return false;

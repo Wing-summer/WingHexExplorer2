@@ -571,9 +571,6 @@ private:
         m_editorViewWidgets;
     QList<SettingPage *> m_settingPages;
 
-    // done in shownEvent
-    std::function<void()> _showEvents;
-
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr;

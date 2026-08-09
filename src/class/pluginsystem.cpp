@@ -16,7 +16,6 @@
 */
 
 #include "pluginsystem.h"
-#include "class/asscriptobjects.h"
 #include "class/fileaccesscheck.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
@@ -25,7 +24,6 @@
 #include "class/wingangel.h"
 #include "class/wingcstruct.h"
 #include "class/wingfiledialog.h"
-#include "class/winggeneric.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "class/wingplugincert.h"
@@ -34,11 +32,8 @@
 #include "dialog/colorpickerdialog.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
-#include "fmtlibext.h"
 #include "predefgen.h"
-#include "scriptaddon/scriptany.h"
 
-#include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 
 #include <QDir>
@@ -91,31 +86,6 @@ PluginSystem::PluginSystem() : QObject() {
             _api._fnTable.insert(msig, m);
         }
     }
-
-    WingHex::ASScriptArray::_deleter = [](void *data) {
-        if (data) {
-            auto d = static_cast<CScriptArray *>(data);
-            d->Release();
-        }
-    };
-    WingHex::ASScriptDictionary::_deleter = [](void *data) {
-        if (data) {
-            auto d = static_cast<CScriptDictionary *>(data);
-            d->Release();
-        }
-    };
-    WingHex::ASScriptGrid::_deleter = [](void *data) {
-        if (data) {
-            auto d = static_cast<CScriptGrid *>(data);
-            d->Release();
-        }
-    };
-    WingHex::ASScriptAny::_deleter = [](void *data) {
-        if (data) {
-            auto d = static_cast<CScriptAny *>(data);
-            d->Release();
-        }
-    };
 
     _api._fnCaller = this;
 
@@ -2240,16 +2210,6 @@ bool PluginSystem::clearBookMark(const QObject *sender) {
     return false;
 }
 
-void PluginSystem::__raiseContextException(const QObject *sender,
-                                           const QString &exception,
-                                           bool allowCatch) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto info = exception.toUtf8();
-        ctx->SetException(info, allowCatch);
-    }
-}
-
 void PluginSystem::setSwitchingContext(bool newSwitchingContext) {
     _switchingContext = newSwitchingContext;
 }
@@ -2268,64 +2228,6 @@ bool PluginSystem::eventFilter(QObject *watched, QEvent *event) {
         }
     }
     return QObject::eventFilter(watched, event);
-}
-
-ASScript2DArray *PluginSystem::__createScript2DArray(const QObject *sender,
-                                                     const QString &type) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto engine = ctx->GetEngine();
-        auto elementType = fmt::format(FMT_STRING("array<{}>"), type);
-        auto typeInfo = engine->GetTypeInfoByDecl(elementType.c_str());
-        if (!typeInfo) {
-            return nullptr;
-        }
-        return new ScriptGrid(CScriptGrid::Create(typeInfo));
-    }
-    return nullptr;
-}
-
-ASScriptAny *PluginSystem::__createScriptAny(const QObject *sender) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto engine = ctx->GetEngine();
-        return new ScriptAny(new CScriptAny(engine));
-    }
-    return nullptr;
-}
-
-ASScriptDictionary *
-PluginSystem::__createScriptDictionary(const QObject *sender) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto engine = ctx->GetEngine();
-        return new ScriptDictionary(CScriptDictionary::Create(engine));
-    }
-    return nullptr;
-}
-
-ASScriptArray *PluginSystem::__createScriptArray(const QObject *sender,
-                                                 const QString &type) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto engine = ctx->GetEngine();
-        auto elementType = fmt::format(FMT_STRING("array<{}>"), type);
-        auto typeInfo = engine->GetTypeInfoByDecl(elementType.c_str());
-        if (!typeInfo) {
-            return nullptr;
-        }
-        return new ScriptArray(CScriptArray::Create(typeInfo));
-    }
-    return nullptr;
-}
-
-IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
-                                                 void *ctx) {
-    auto gen = reinterpret_cast<asIScriptGeneric *>(ctx);
-    if (gen) {
-        return new WingGeneric(gen);
-    }
-    return nullptr;
 }
 
 const QList<PluginSystem::BlockInfo> &PluginSystem::blockedDevPlugins() const {
@@ -2387,45 +2289,45 @@ const QList<PluginSystem::BlockInfo> &PluginSystem::blockedPlugins() const {
 }
 
 void PluginSystem::doneRegisterScriptObj() {
-    Q_ASSERT(_angelplg);
-    // ok, then, we will register all script objects
-    auto api = QScopedPointer(new WingAngel(_angelplg, _scriptMarcos));
+    // TODO
+    // // ok, then, we will register all script objects
+    // auto api = QScopedPointer(new WingAngel(_angelplg, _scriptMarcos));
 
-    // don't register evalutors for internal types
-    auto &m = ScriptMachine::instance();
-    auto engine = m.engine();
-    auto total = engine->GetObjectTypeCount();
-    QList<int> excludeTypeId;
-    excludeTypeId.reserve(total);
-    for (asUINT i = 0; i < total; ++i) {
-        auto obj = engine->GetObjectTypeByIndex(i);
-        auto typeId = obj->GetTypeId();
-        typeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
-        if (typeId) {
-            excludeTypeId.append(typeId);
-        }
-    }
-    api->setExcludeEvalIDs(excludeTypeId);
+    // // don't register evalutors for internal types
+    // auto &m = ScriptMachine::instance();
+    // auto engine = m.engine();
+    // auto total = engine->GetObjectTypeCount();
+    // QList<int> excludeTypeId;
+    // excludeTypeId.reserve(total);
+    // for (asUINT i = 0; i < total; ++i) {
+    //     auto obj = engine->GetObjectTypeByIndex(i);
+    //     auto typeId = obj->GetTypeId();
+    //     typeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
+    //     if (typeId) {
+    //         excludeTypeId.append(typeId);
+    //     }
+    // }
+    // api->setExcludeEvalIDs(excludeTypeId);
 
-    auto ptr = api.data();
-    for (const auto &p : std::as_const(_loadedplgs)) {
-        auto puid = getPUID(p);
-        ptr->setCurrentPluginSession(puid.toUtf8());
-        p->onRegisterScriptObj(ptr);
-    }
+    // auto ptr = api.data();
+    // for (const auto &p : std::as_const(_loadedplgs)) {
+    //     auto puid = getPUID(p);
+    //     ptr->setCurrentPluginSession(puid.toUtf8());
+    //     p->onRegisterScriptObj(ptr);
+    // }
 
-    for (const auto &p : std::as_const(_loadeddevs)) {
-        auto puid = getPUID(p);
-        ptr->setCurrentPluginSession(puid.toUtf8());
-        p->onRegisterScriptObj(ptr);
-    }
+    // for (const auto &p : std::as_const(_loadeddevs)) {
+    //     auto puid = getPUID(p);
+    //     ptr->setCurrentPluginSession(puid.toUtf8());
+    //     p->onRegisterScriptObj(ptr);
+    // }
 
-    auto evals = api->customEvals();
-    m.setCustomEvals(evals);
+    // auto evals = api->customEvals();
+    // m.setCustomEvals(evals);
 
-    ptr->setCurrentPluginSession({});
-    generateScriptPredefined(ScriptMachine::instance().engine(),
-                             Utilities::getASPredefPath());
+    // ptr->setCurrentPluginSession({});
+    // generateScriptPredefined(ScriptMachine::instance().engine(),
+    //                          Utilities::getASPredefPath());
 }
 
 IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
@@ -2598,9 +2500,10 @@ QSet<int> PluginSystem::scriptHandles() const {
     static QSet<int> ret;
     if (_handleDirty) {
         ret.clear();
-        for (const auto &ctx : m_plgviewMap[_angelplg].contexts) {
-            ret.insert(getUIDHandle(ctx->fid));
-        }
+        // TODO
+        // for (const auto &ctx : m_plgviewMap[_angelplg].contexts) {
+        //     ret.insert(getUIDHandle(ctx->fid));
+        // }
     }
     return ret;
 }
@@ -2608,7 +2511,8 @@ QSet<int> PluginSystem::scriptHandles() const {
 void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
     const auto diff = scriptHandles() - handles;
     for (const auto &h : diff) {
-        closeHandle(_angelplg, h);
+        // TODO
+        // closeHandle(_angelplg, h);
     }
 }
 
@@ -2631,8 +2535,6 @@ const QList<IWingDevice *> &PluginSystem::devices() const {
 IWingDevice *PluginSystem::device(qsizetype index) const {
     return _loadeddevs.at(index);
 }
-
-WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
 
 EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
     if (plg == nullptr) {
@@ -2707,9 +2609,10 @@ int PluginSystem::assginHandleForOpenPluginView(IWingPlugin *plg,
     m_plgviewMap[plg].contexts.append(context);
     m_viewBindings[view].linkedplg.append(plg);
 
-    if (plg == _angelplg) {
-        _handleDirty = true;
-    }
+    // TODO
+    // if (plg == _angelplg) {
+    //     _handleDirty = true;
+    // }
 
     return handle;
 }
@@ -3890,27 +3793,6 @@ void PluginSystem::loadAllPlugins() {
 
     _enabledExtIDs = set.enabledExtPlugins();
     _enabledDevIDs = set.enabledDevPlugins();
-
-    // manager plugin can be blocked by settings only
-    if (set.scriptEnabled()) {
-        _angelplg = new WingAngelAPI;
-
-        QFile angeljson(QStringLiteral(
-            ":/com.wingsummer.winghex/src/class/WingAngelAPI.json"));
-        auto ret = angeljson.open(QFile::ReadOnly);
-        Q_ASSERT(ret);
-        Q_UNUSED(ret);
-        auto angelapi = angeljson.readAll();
-        angeljson.close();
-
-        QJsonDocument doc = QJsonDocument::fromJson(angelapi);
-        auto meta = parsePluginMetadata(doc.object());
-        Q_ASSERT(checkPluginMetadata(meta) == PluginStatus::Valid);
-        retranslateMetadata(_angelplg, meta);
-        auto r = loadPlugin(_angelplg, meta, std::nullopt);
-        ASSERT(r);
-        _enabledExtIDs.prepend(meta.id);
-    }
 
     if (marco_Enabled) {
         QFile cstructjson(QStringLiteral(

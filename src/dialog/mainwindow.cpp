@@ -23,7 +23,6 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
-#include "class/angellsp.h"
 #include "class/appmanager.h"
 #include "class/dockcomponentsfactory.h"
 #include "class/inspectqtloghelper.h"
@@ -307,7 +306,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             m_scriptConsole->setMode(QConsoleWidget::Output);
             auto cfgerr = sm.checkEngineConfigError();
 
-            // At this time, AngelScript service plugin has started
+            // At this time, service plugin has started
             if (cfgerr) {
                 ScriptMachine::MessageInfo msg;
                 msg.type = ScriptMachine::MessageType::Error;
@@ -350,39 +349,20 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Input);
 
-                auto &lsp = AngelLsp::instance();
-                // apply defines
-                for (auto &m : plg.scriptMarcos()) {
-                    lsp.defineMacroWord(m);
-                }
-                for (auto &&m :
-                     AsPreprocesser::defaultRuntimeMarcos().asKeyValueRange()) {
-                    lsp.defineMacroWord(m.first, m.second);
-                }
+                // TODO LSP
                 // then start the server
-                if (lsp.start()) {
-                    auto ret = lsp.initializeSync();
-                    if (!ret.isNull()) {
-                        lsp.initialized();
-                        connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-                            Toast::toast(
-                                this, NAMEICONRES(QStringLiteral("angellsp")),
-                                tr("AngelLspExited"));
-                        });
-                    } else {
-                        _showEvents = [this]() {
-                            Toast::toast(
-                                this, NAMEICONRES(QStringLiteral("angellsp")),
-                                tr("AngelLspInitFailed"));
-                        };
-                    }
-                } else {
-                    _showEvents = [this]() {
-                        Toast::toast(this,
-                                     NAMEICONRES(QStringLiteral("angellsp")),
-                                     tr("AngelLspInitFailed"));
-                    };
-                }
+                // if (lsp.start()) {
+                //     auto ret = lsp.initializeSync();
+                //     if (!ret.isNull()) {
+                //         lsp.initialized();
+                //         connect(&lsp, &AngelLsp::serverExited, this, [this]()
+                //         {
+                //             Toast::toast(
+                //                 this,
+                //                 NAMEICONRES(QStringLiteral("angellsp")),
+                //                 tr("AngelLspExited"));
+                //         });
+
                 m_scriptConsole->enableLSP();
             }
         } else {
@@ -1249,65 +1229,70 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
     _scriptObjView = new asIDBTreeView(this);
     _scriptObjView->header()->setDefaultSectionSize(200);
 
-    connect(
-        m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished, this,
-        [this]() {
-            auto &m = ScriptMachine::instance();
-            auto mod = m.module(ScriptMachine::Interactive);
-            if (mod == nullptr) {
-                return;
-            }
-            auto globals = std::make_shared<asIDBVariable>(*m.debugger());
-            globals->ptr = globals;
+    connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished, this,
+            [this]() {
+                auto &m = ScriptMachine::instance();
+                // auto mod = m.module(ScriptMachine::Interactive);
+                // if (mod == nullptr) {
+                //     return;
+                // }
+                // auto globals =
+                // std::make_shared<asIDBVariable>(*m.debugger()); globals->ptr
+                // = globals;
 
-            auto total = mod->GetGlobalVarCount();
-            for (asUINT n = 0; n < total; n++) {
-                const char *name;
-                const char *nameSpace;
-                int typeId;
-                void *ptr;
-                bool isConst;
+                // auto total = mod->GetGlobalVarCount();
+                // for (asUINT n = 0; n < total; n++) {
+                //     const char *name;
+                //     const char *nameSpace;
+                //     int typeId;
+                //     void *ptr;
+                //     bool isConst;
 
-                mod->GetGlobalVar(n, &name, &nameSpace, &typeId, &isConst);
-                ptr = mod->GetAddressOfGlobalVar(n);
+                //     mod->GetGlobalVar(n, &name, &nameSpace, &typeId,
+                //     &isConst); ptr = mod->GetAddressOfGlobalVar(n);
 
-                const auto viewType = m.getAsTypeName(typeId);
-                asIDBVarAddr idKey{typeId, isConst, ptr};
+                //     const auto viewType = m.getAsTypeName(typeId);
+                //     asIDBVarAddr idKey{typeId, isConst, ptr};
 
-                globals->CreateChildVariable(
-                    asIDBVarName((nameSpace && nameSpace[0]) ? nameSpace : "",
-                                 name),
-                    idKey, viewType);
-            }
-            auto engine = mod->GetEngine();
-            total = engine->GetGlobalPropertyCount();
-            for (asUINT n = 0; n < total; n++) {
-                const char *name;
-                const char *nameSpace;
-                int typeId;
-                void *ptr;
-                bool isConst;
+                //     globals->CreateChildVariable(
+                //         asIDBVarName((nameSpace && nameSpace[0]) ? nameSpace
+                //         :
+                //         "",
+                //                      name),
+                //         idKey, viewType);
+                // }
+                // auto engine = mod->GetEngine();
+                // total = engine->GetGlobalPropertyCount();
+                // for (asUINT n = 0; n < total; n++) {
+                //     const char *name;
+                //     const char *nameSpace;
+                //     int typeId;
+                //     void *ptr;
+                //     bool isConst;
 
-                engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId,
-                                                 &isConst, nullptr, &ptr);
-                const auto viewType = m.getAsTypeName(typeId);
-                asIDBVarAddr idKey{typeId, isConst, ptr};
-                std::string localName =
-                    (nameSpace && nameSpace[0])
-                        ? fmt::format(FMT_STRING("{}::{}"), nameSpace, name)
-                        : name;
+                //     engine->GetGlobalPropertyByIndex(n, &name, &nameSpace,
+                //     &typeId,
+                //                                      &isConst, nullptr,
+                //                                      &ptr);
+                //     const auto viewType = m.getAsTypeName(typeId);
+                //     asIDBVarAddr idKey{typeId, isConst, ptr};
+                //     std::string localName =
+                //         (nameSpace && nameSpace[0])
+                //             ? fmt::format(FMT_STRING("{}::{}"), nameSpace,
+                //             name) : name;
 
-                globals->CreateChildVariable(std::move(localName), idKey,
-                                             viewType);
-            }
+                //     globals->CreateChildVariable(std::move(localName), idKey,
+                //                                  viewType);
+                // }
 
-            globals->evaluated = globals->expanded = true;
+                // globals->evaluated = globals->expanded = true;
 
-            if (!globals->namedProps.empty() || !globals->indexedProps.empty())
-                globals->SetRefId();
+                // if (!globals->namedProps.empty() ||
+                // !globals->indexedProps.empty())
+                //     globals->SetRefId();
 
-            _scriptObjView->refreshWithNewRoot(globals);
-        });
+                // _scriptObjView->refreshWithNewRoot(globals);
+            });
 
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleObj"),
                               tr("ConsoleObj"), _scriptObjView);
@@ -4638,11 +4623,11 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         event->ignore();
     }
 
-    auto &lsp = AngelLsp::instance();
-    if (lsp.isActive()) {
-        lsp.blockSignals(true);
-        lsp.shutdownAndExit();
-    }
+    // auto &lsp = AngelLsp::instance();
+    // if (lsp.isActive()) {
+    //     lsp.blockSignals(true);
+    //     lsp.shutdownAndExit();
+    // }
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
@@ -4660,11 +4645,6 @@ void MainWindow::showEvent(QShowEvent *event) {
     FramelessMainWindow::showEvent(event);
     static bool firstInit = true;
     if (firstInit) {
-        if (_showEvents) {
-            _showEvents();
-            _showEvents = {};
-        }
-
         connect(
             m_findresult->horizontalHeader(), &QHeaderView::sectionResized,
             this,

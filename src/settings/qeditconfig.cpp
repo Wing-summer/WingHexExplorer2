@@ -61,17 +61,18 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         console->write(
             QStringLiteral(R"(print("WingHexExplorer2 by wingsummer!");)"));
         console->appendCommandPrompt();
-        console->write(QStringLiteral(R"(for(auto i = 0; i < 5; i++) { \)"));
+        console->write(QStringLiteral(R"(for i = 0, 4 do)"));
         console->appendCommandPrompt(true);
-        console->write(QStringLiteral(R"(print(i); \)"));
+        console->write(QStringLiteral(R"(print(i))"));
         console->appendCommandPrompt(true);
-        console->write(QStringLiteral("}"));
+        console->write(QStringLiteral("end"));
         console->newLine();
         console->stdOutLine(QStringLiteral("01234"));
         _edit = console;
     } else {
         _edit = new WingCodeEdit(this);
-        QFile code(QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.as"));
+        QFile code(
+            QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.luau"));
         auto ret = code.open(QFile::ReadOnly);
         Q_ASSERT(ret);
         Q_UNUSED(ret);
@@ -81,8 +82,8 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
 
     _edit->setReadOnly(true);
     _edit->setUndoRedoEnabled(false);
-    _edit->setSyntax(WingCodeEdit::syntaxRepo().definitionForName(
-        QStringLiteral("AngelScript")));
+    _edit->setSyntax(
+        WingCodeEdit::syntaxRepo().definitionForName(QStringLiteral("Luau")));
 
     ui->layoutEdit->addWidget(_edit);
 
@@ -106,6 +107,7 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
             });
 
     auto font = _edit->font();
+    ui->cbFont->setFontFilters(QFontComboBox::MonospacedFonts);
     ui->cbFont->setCurrentFont(font);
     ui->spnFontSize->setValue(font.pointSize());
     connect(ui->cbFont, &QFontComboBox::currentFontChanged, _edit,
@@ -279,7 +281,7 @@ void QEditConfig::reload() {
         if (theme.isEmpty()) {
             ui->cbTheme->setCurrentIndex(0);
         } else {
-            ui->cbTheme->setCurrentText(set.consoleTheme());
+            ui->cbTheme->setCurrentText(set.editorTheme());
         }
 
         auto dfont = QFont(set.editorFontFamily());

@@ -22,7 +22,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "WingCodeEdit/wingsymbolcenter.h"
 #include "aboutsoftwaredialog.h"
-#include "class/angellsp.h"
+// #include "class/angellsp.h"
 #include "class/languagemanager.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
@@ -124,64 +124,66 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     ScriptMachine::instance().registerCallBack(ScriptMachine::Scripting,
                                                callbacks);
 
-    auto &lsp = AngelLsp::instance();
-    if (lsp.isActive()) {
-        connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
-            // only happened when restarting
-            for (const auto &view : ScriptEditor::instances()) {
-                view->onReconnectLsp();
-                view->setCompleterEnabled(true);
-            }
-        });
-        connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-            for (const auto &view : ScriptEditor::instances()) {
-                view->setCompleterEnabled(false);
-            }
-        });
-        connect(
-            &lsp, &AngelLsp::diagnosticsPublished, this,
-            [this](const QString &url,
-                   const QList<LSP::Diagnostics> &diagnostics) {
-                if (url.startsWith(QStringLiteral("dev"))) {
-                    // a device not a file
-                    return;
-                }
-                QUrl path(url);
-                if (path.isValid()) {
-                    auto fileName = path.toLocalFile();
-                    auto view = findEditorView(fileName);
-                    if (view) {
-                        auto editor = view->editor();
-                        editor->clearSquiggle();
-                        auto lsps = [](LSP::DiagnosticSeverity s)
-                            -> WingCodeEdit::SeverityLevel {
-                            switch (s) {
-                            case LSP::DiagnosticSeverity::None:
-                                return WingCodeEdit::SeverityLevel::Information;
-                            case LSP::DiagnosticSeverity::Error:
-                                return WingCodeEdit::SeverityLevel::Error;
-                            case LSP::DiagnosticSeverity::Warning:
-                                return WingCodeEdit::SeverityLevel::Warning;
-                            case LSP::DiagnosticSeverity::Information:
-                                return WingCodeEdit::SeverityLevel::Information;
-                            case LSP::DiagnosticSeverity::Hint:
-                                return WingCodeEdit::SeverityLevel::Hint;
-                            }
-                            return WingCodeEdit::SeverityLevel::Information;
-                        };
-                        for (const auto &d : diagnostics) {
-                            editor->addSquiggle(
-                                lsps(d.severity),
-                                {d.range.start.line + 1,
-                                 d.range.start.character},
-                                {d.range.end.line + 1, d.range.end.character},
-                                d.message);
-                        }
-                        editor->highlightAllSquiggle();
-                    }
-                }
-            });
-    }
+    // auto &lsp = AngelLsp::instance();
+    // if (lsp.isActive()) {
+    //     connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
+    //         // only happened when restarting
+    //         for (const auto &view : ScriptEditor::instances()) {
+    //             view->onReconnectLsp();
+    //             view->setCompleterEnabled(true);
+    //         }
+    //     });
+    //     connect(&lsp, &AngelLsp::serverExited, this, [this]() {
+    //         for (const auto &view : ScriptEditor::instances()) {
+    //             view->setCompleterEnabled(false);
+    //         }
+    //     });
+    //     connect(
+    //         &lsp, &AngelLsp::diagnosticsPublished, this,
+    //         [this](const QString &url,
+    //                const QList<LSP::Diagnostics> &diagnostics) {
+    //             if (url.startsWith(QStringLiteral("dev"))) {
+    //                 // a device not a file
+    //                 return;
+    //             }
+    //             QUrl path(url);
+    //             if (path.isValid()) {
+    //                 auto fileName = path.toLocalFile();
+    //                 auto view = findEditorView(fileName);
+    //                 if (view) {
+    //                     auto editor = view->editor();
+    //                     editor->clearSquiggle();
+    //                     auto lsps = [](LSP::DiagnosticSeverity s)
+    //                         -> WingCodeEdit::SeverityLevel {
+    //                         switch (s) {
+    //                         case LSP::DiagnosticSeverity::None:
+    //                             return
+    //                             WingCodeEdit::SeverityLevel::Information;
+    //                         case LSP::DiagnosticSeverity::Error:
+    //                             return WingCodeEdit::SeverityLevel::Error;
+    //                         case LSP::DiagnosticSeverity::Warning:
+    //                             return WingCodeEdit::SeverityLevel::Warning;
+    //                         case LSP::DiagnosticSeverity::Information:
+    //                             return
+    //                             WingCodeEdit::SeverityLevel::Information;
+    //                         case LSP::DiagnosticSeverity::Hint:
+    //                             return WingCodeEdit::SeverityLevel::Hint;
+    //                         }
+    //                         return WingCodeEdit::SeverityLevel::Information;
+    //                     };
+    //                     for (const auto &d : diagnostics) {
+    //                         editor->addSquiggle(
+    //                             lsps(d.severity),
+    //                             {d.range.start.line + 1,
+    //                              d.range.start.character},
+    //                             {d.range.end.line + 1,
+    //                             d.range.end.character}, d.message);
+    //                     }
+    //                     editor->highlightAllSquiggle();
+    //                 }
+    //             }
+    //         });
+    // }
 
     this->setUpdatesEnabled(true);
     this->setAttribute(Qt::WA_DeleteOnClose);
@@ -196,113 +198,116 @@ void ScriptingDialog::initConsole() {
 
     m_consoleout->init();
     auto &machine = ScriptMachine::instance();
-    auto dbg = machine.debugger();
-    Q_ASSERT(dbg);
-    connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
-            [this](const QString &file, int oldLineNbr, int newLineNbr) {
-                auto editor = findEditorView(file);
-                if (editor) {
-                    removeBreakPoint(editor, oldLineNbr);
-                    addBreakPoint(editor, newLineNbr);
-                }
-            });
-    connect(dbg, &asDebugger::onPullVariables, this, [this]() {
-        auto dbg = ScriptMachine::instance().debugger();
-        auto &cache = dbg->cache;
-        cache->CacheGlobals();
-        m_gvarshow->refreshWithNewRoot(cache->globals);
-        auto &cs = cache->call_stack;
-        if (!cs.empty()) {
-            cache->CacheCallstack();
-            auto l = cs.at(0).scope.locals;
-            m_varshow->refreshWithNewRoot(l);
-        }
-        m_watchModel->refresh();
-    });
-    connect(
-        dbg, &asDebugger::onRunCurrentLine, this,
-        [this](const QString &file, int lineNr) {
-            ScriptEditor *e = nullptr;
-#ifdef Q_OS_WIN
-            if (file.compare(m_curEditor->fileName(), Qt::CaseInsensitive)) {
-#else
-            if (file != m_curEditor->fileName()) {
-#endif
-                e = findEditorView(file);
-                if (e) {
-                    e->setFocus();
-                    e->raise();
-                } else {
-                    if (_curDbgData.contains(file)) {
-                        auto cs = Utilities::getMd5(file);
-                        auto &data = _curDbgData[file];
-                        if (data.checksum != cs) {
-                            // the file has been modified outside
-                            e = createFakeEditor(file, data.source);
-                        }
-                    }
-                }
+    //     auto dbg = machine.debugger();
+    //     Q_ASSERT(dbg);
+    //     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
+    //             [this](const QString &file, int oldLineNbr, int newLineNbr) {
+    //                 auto editor = findEditorView(file);
+    //                 if (editor) {
+    //                     removeBreakPoint(editor, oldLineNbr);
+    //                     addBreakPoint(editor, newLineNbr);
+    //                 }
+    //             });
+    //     connect(dbg, &asDebugger::onPullVariables, this, [this]() {
+    //         auto dbg = ScriptMachine::instance().debugger();
+    //         auto &cache = dbg->cache;
+    //         cache->CacheGlobals();
+    //         m_gvarshow->refreshWithNewRoot(cache->globals);
+    //         auto &cs = cache->call_stack;
+    //         if (!cs.empty()) {
+    //             cache->CacheCallstack();
+    //             auto l = cs.at(0).scope.locals;
+    //             m_varshow->refreshWithNewRoot(l);
+    //         }
+    //         m_watchModel->refresh();
+    //     });
+    //     connect(
+    //         dbg, &asDebugger::onRunCurrentLine, this,
+    //         [this](const QString &file, int lineNr) {
+    //             ScriptEditor *e = nullptr;
+    // #ifdef Q_OS_WIN
+    //             if (file.compare(m_curEditor->fileName(),
+    //             Qt::CaseInsensitive)) {
+    // #else
+    //             if (file != m_curEditor->fileName()) {
+    // #endif
+    //                 e = findEditorView(file);
+    //                 if (e) {
+    //                     e->setFocus();
+    //                     e->raise();
+    //                 } else {
+    //                     if (_curDbgData.contains(file)) {
+    //                         auto cs = Utilities::getMd5(file);
+    //                         auto &data = _curDbgData[file];
+    //                         if (data.checksum != cs) {
+    //                             // the file has been modified outside
+    //                             e = createFakeEditor(file, data.source);
+    //                         }
+    //                     }
+    //                 }
 
-                if (e == nullptr) {
-                    e = openFile(file);
-                    if (e) {
-                        e->setReadOnly(true);
-                        _reditors.append(e);
-                        e->setFocus();
-                        e->raise();
+    //                 if (e == nullptr) {
+    //                     e = openFile(file);
+    //                     if (e) {
+    //                         e->setReadOnly(true);
+    //                         _reditors.append(e);
+    //                         e->setFocus();
+    //                         e->raise();
 
-                        addRecentFile(e, file);
-                    } else {
-                        e = createFakeEditor(file, _curDbgData[file].source);
-                    }
-                }
-            } else {
-                e = m_curEditor;
-            }
+    //                         addRecentFile(e, file);
+    //                     } else {
+    //                         e = createFakeEditor(file,
+    //                         _curDbgData[file].source);
+    //                     }
+    //                 }
+    //             } else {
+    //                 e = m_curEditor;
+    //             }
 
-            const auto bpMark = QStringLiteral("bp");
-            const auto curSym = QStringLiteral("cur");
-            const auto hitCur = QStringLiteral("curbp");
+    //             const auto bpMark = QStringLiteral("bp");
+    //             const auto curSym = QStringLiteral("cur");
+    //             const auto hitCur = QStringLiteral("curbp");
 
-            // remove the last mark
-            if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                auto lastCur = findEditorView(_lastCurLine.first);
-                if (lastCur) {
-                    auto e = lastCur->editor();
-                    auto symID = e->symbolMark(_lastCurLine.second);
+    //             // remove the last mark
+    //             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >=
+    //             0) {
+    //                 auto lastCur = findEditorView(_lastCurLine.first);
+    //                 if (lastCur) {
+    //                     auto e = lastCur->editor();
+    //                     auto symID = e->symbolMark(_lastCurLine.second);
 
-                    if (symID == curSym) {
-                        e->removeSymbolMark(_lastCurLine.second);
-                    } else if (symID == hitCur) {
-                        e->addSymbolMark(_lastCurLine.second, bpMark);
-                    }
-                }
-            }
+    //                     if (symID == curSym) {
+    //                         e->removeSymbolMark(_lastCurLine.second);
+    //                     } else if (symID == hitCur) {
+    //                         e->addSymbolMark(_lastCurLine.second, bpMark);
+    //                     }
+    //                 }
+    //             }
 
-            auto editor = e->editor();
+    //             auto editor = e->editor();
 
-            // add the new mark
-            auto symID = editor->symbolMark(lineNr);
-            if (symID == bpMark) {
-                editor->addSymbolMark(lineNr, hitCur);
-            } else {
-                editor->addSymbolMark(lineNr, curSym);
-            }
+    //             // add the new mark
+    //             auto symID = editor->symbolMark(lineNr);
+    //             if (symID == bpMark) {
+    //                 editor->addSymbolMark(lineNr, hitCur);
+    //             } else {
+    //                 editor->addSymbolMark(lineNr, curSym);
+    //             }
 
-            editor->ensureLineVisible(lineNr);
+    //             editor->ensureLineVisible(lineNr);
 
-            _lastCurLine = {file, lineNr};
-            updateRunDebugMode();
+    //             _lastCurLine = {file, lineNr};
+    //             updateRunDebugMode();
 
-            if (_fakeEditor) {
-                if (file != _fakeEditor->windowFilePath()) {
-                    destoryFakeEditor();
-                }
-            }
-        });
-    connect(dbg, &asDebugger::onDebugActionExec, this,
-            [this]() { updateRunDebugMode(); });
-    m_sym->setEngine(machine.engine());
+    //             if (_fakeEditor) {
+    //                 if (file != _fakeEditor->windowFilePath()) {
+    //                     destoryFakeEditor();
+    //                 }
+    //             }
+    //         });
+    //     connect(dbg, &asDebugger::onDebugActionExec, this,
+    //             [this]() { updateRunDebugMode(); });
+    //     m_sym->setEngine(machine.engine());
 }
 
 bool ScriptingDialog::about2Close() {
@@ -587,9 +592,9 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
 
         isRun = runner.isRunning(ScriptMachine::Scripting);
         isDbg = runner.isDebugMode();
-        auto dbg = runner.debugger();
+        // auto dbg = runner.debugger();
 
-        isPaused = dbg->action == asIDBAction::Pause;
+        // isPaused = dbg->action == asIDBAction::Pause;
 
         if (isRun && isDbg && isPaused) {
             m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
@@ -616,7 +621,7 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     });
 
     addPannelAction(pannel, QStringLiteral("angelrestart"), tr("RestartAngel"),
-                    [this] { AngelLsp::instance().restartWithGUI(this); });
+                    [this] { /*AngelLsp::instance().restartWithGUI(this);*/ });
 
     return tab;
 }
@@ -1024,12 +1029,12 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
         auto e = editor->editor();
         e->setContentModified(true);
-        if (isVisible() && currentEditor() == editor &&
-            !_curDbgData.contains(editor->fileName())) {
-            reloadEditor(editor);
-        } else {
-            editor->setReloadLater(true);
-        }
+        // if (isVisible() && currentEditor() == editor &&
+        //     !_curDbgData.contains(editor->fileName())) {
+        //     reloadEditor(editor);
+        // } else {
+        //     editor->setReloadLater(true);
+        // }
     });
 
     auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
@@ -1116,9 +1121,9 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     _squinfoModel->setEditor(editor);
     updateCursorPosition();
 
-    if (cur && !_curDbgData.contains(cur->fileName())) {
-        try2ReloadEditor(cur);
-    }
+    // if (cur && !_curDbgData.contains(cur->fileName())) {
+    //     try2ReloadEditor(cur);
+    // }
 }
 
 void ScriptingDialog::updateWindowTitle() {
@@ -1164,8 +1169,8 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 
     isRun = runner.isRunning(ScriptMachine::Scripting);
     isDbg = runner.isDebugMode();
-    auto dbg = runner.debugger();
-    isPaused = dbg->action == asIDBAction::Pause;
+    // auto dbg = runner.debugger();
+    // isPaused = dbg->action == asIDBAction::Pause;
 
     m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION]->setEnabled(!isRun);
     m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->setEnabled(!isRun);
@@ -1237,9 +1242,9 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
         return nullptr;
     }
 
-    if (_curDbgData.contains(filename)) {
-        editor->setReadOnly(true);
-    }
+    // if (_curDbgData.contains(filename)) {
+    //     editor->setReadOnly(true);
+    // }
 
     registerEditorView(editor.get());
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
@@ -1305,93 +1310,94 @@ bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
     return true;
 }
 
-void ScriptingDialog::runDbgCommand(asIDBAction action) {
-    updateRunDebugMode(true);
-    auto &machine = ScriptMachine::instance();
-    if (machine.isDebugMode()) {
-        auto dbg = machine.debugger();
-        dbg->SetAction(action);
-    }
-}
+// void ScriptingDialog::runDbgCommand(asIDBAction action) {
+//     updateRunDebugMode(true);
+//     auto &machine = ScriptMachine::instance();
+//     if (machine.isDebugMode()) {
+//         auto dbg = machine.debugger();
+//         dbg->SetAction(action);
+//     }
+// }
 
 void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_ribbon->setCurrentIndex(3);
     m_consoleout->clear();
 
-    auto dbg = ScriptMachine::instance().debugger();
-    m_callstack->attachDebugger(dbg);
-    m_watchModel->attachDebugger(dbg);
+    // auto dbg = ScriptMachine::instance().debugger();
+    // m_callstack->attachDebugger(dbg);
+    // m_watchModel->attachDebugger(dbg);
 
-    this->updateRunDebugMode();
-    ScriptMachine::instance().executeScript(
-        ScriptMachine::Scripting, fileName, true,
-        [this](const QHash<QString, AsPreprocesser::Result> &sdata) -> void {
-            _curDbgData = sdata;
+    // this->updateRunDebugMode();
+    // ScriptMachine::instance().executeScript(
+    //     ScriptMachine::Scripting, fileName, true,
+    //     [this](const QHash<QString, AsPreprocesser::Result> &sdata) -> void {
+    //         _curDbgData = sdata;
 
-            auto dbg = ScriptMachine::instance().debugger();
-            for (const auto &&[file, data] : sdata.asKeyValueRange()) {
-                auto view = findEditorView(file);
-                if (view) {
-                    auto e = view->editor();
-                    auto totalblk = e->blockCount();
-                    // add breakpoints
-                    for (int i = 0; i < totalblk; ++i) {
-                        if (!e->symbolMark(i).isEmpty()) {
-                            dbg->addFileBreakPoint(file, i);
-                        }
-                    }
-                    view->setReadOnly(true);
-                    _reditors.append(view);
-                }
-            }
+    //         auto dbg = ScriptMachine::instance().debugger();
+    //         for (const auto &&[file, data] : sdata.asKeyValueRange()) {
+    //             auto view = findEditorView(file);
+    //             if (view) {
+    //                 auto e = view->editor();
+    //                 auto totalblk = e->blockCount();
+    //                 // add breakpoints
+    //                 for (int i = 0; i < totalblk; ++i) {
+    //                     if (!e->symbolMark(i).isEmpty()) {
+    //                         dbg->addFileBreakPoint(file, i);
+    //                     }
+    //                 }
+    //                 view->setReadOnly(true);
+    //                 _reditors.append(view);
+    //             }
+    //         }
 
-            PluginSystem::instance().scriptPragmaBegin();
-        },
-        [this, fileName](bool isNotBusy) {
-            for (const auto &e : std::as_const(_reditors)) {
-                e->setReadOnly(false);
-            }
+    //         PluginSystem::instance().scriptPragmaBegin();
+    //     },
+    //     [this, fileName](bool isNotBusy) {
+    //         for (const auto &e : std::as_const(_reditors)) {
+    //             e->setReadOnly(false);
+    //         }
 
-            this->updateRunDebugMode();
-            m_callstack->attachDebugger(nullptr);
-            m_watchModel->attachDebugger(nullptr);
-            m_varshow->refreshWithNewRoots({});
-            m_gvarshow->refreshWithNewRoots({});
+    //         this->updateRunDebugMode();
+    //         m_callstack->attachDebugger(nullptr);
+    //         m_watchModel->attachDebugger(nullptr);
+    //         m_varshow->refreshWithNewRoots({});
+    //         m_gvarshow->refreshWithNewRoots({});
 
-            // clean up
-            if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
-                // remove the last mark
-                if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                    auto lastCur = findEditorView(_lastCurLine.first);
-                    auto e = lastCur->editor();
-                    auto symID = e->symbolMark(_lastCurLine.second);
+    //         // clean up
+    //         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
+    //             // remove the last mark
+    //             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >=
+    //             0) {
+    //                 auto lastCur = findEditorView(_lastCurLine.first);
+    //                 auto e = lastCur->editor();
+    //                 auto symID = e->symbolMark(_lastCurLine.second);
 
-                    const auto bpMark = QStringLiteral("bp");
-                    const auto curSym = QStringLiteral("cur");
-                    const auto hitCur = QStringLiteral("curbp");
+    //                 const auto bpMark = QStringLiteral("bp");
+    //                 const auto curSym = QStringLiteral("cur");
+    //                 const auto hitCur = QStringLiteral("curbp");
 
-                    if (symID == curSym) {
-                        e->removeSymbolMark(_lastCurLine.second);
-                    } else if (symID == hitCur) {
-                        e->addSymbolMark(_lastCurLine.second, bpMark);
-                    }
-                }
-                _lastCurLine.first.clear();
-                _lastCurLine.second = -1;
-            }
-            _reditors.clear();
-            _curDbgData.clear();
-            destoryFakeEditor();
+    //                 if (symID == curSym) {
+    //                     e->removeSymbolMark(_lastCurLine.second);
+    //                 } else if (symID == hitCur) {
+    //                     e->addSymbolMark(_lastCurLine.second, bpMark);
+    //                 }
+    //             }
+    //             _lastCurLine.first.clear();
+    //             _lastCurLine.second = -1;
+    //         }
+    //         _reditors.clear();
+    //         _curDbgData.clear();
+    //         destoryFakeEditor();
 
-            if (isNotBusy) {
-                if (_needRestart) {
-                    _needRestart = false;
-                    startDebugScript(fileName);
-                }
-            } else {
-                reportBusyScriptRun();
-            }
-        });
+    //         if (isNotBusy) {
+    //             if (_needRestart) {
+    //                 _needRestart = false;
+    //                 startDebugScript(fileName);
+    //             }
+    //         } else {
+    //             reportBusyScriptRun();
+    //         }
+    //     });
 }
 
 void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
@@ -1403,21 +1409,21 @@ void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
     const auto hitCur = QStringLiteral("curbp");
 
     auto &m = ScriptMachine::instance();
-    if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-        auto dbg = m.debugger();
-        auto symID = e->symbolMark(line);
-        if (curSym == symID) {
-            e->addSymbolMark(line, hitCur);
-            dbg->addFileBreakPoint(editor->fileName(), line);
-        } else {
-            if (symID.isEmpty()) {
-                e->addSymbolMark(line, bpMark);
-                dbg->addFileBreakPoint(editor->fileName(), line);
-            }
-        }
-    } else {
-        e->addSymbolMark(line, bpMark);
-    }
+    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
+    //     auto dbg = m.debugger();
+    //     auto symID = e->symbolMark(line);
+    //     if (curSym == symID) {
+    //         e->addSymbolMark(line, hitCur);
+    //         dbg->addFileBreakPoint(editor->fileName(), line);
+    //     } else {
+    //         if (symID.isEmpty()) {
+    //             e->addSymbolMark(line, bpMark);
+    //             dbg->addFileBreakPoint(editor->fileName(), line);
+    //         }
+    //     }
+    // } else {
+    //     e->addSymbolMark(line, bpMark);
+    // }
 }
 
 void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
@@ -1425,26 +1431,26 @@ void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
     auto e = editor->editor();
 
     auto &m = ScriptMachine::instance();
-    if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-        auto dbg = m.debugger();
-        auto symID = e->symbolMark(line);
+    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
+    //     auto dbg = m.debugger();
+    //     auto symID = e->symbolMark(line);
 
-        const auto bpMark = QStringLiteral("bp");
-        const auto curSym = QStringLiteral("cur");
-        const auto hitCur = QStringLiteral("curbp");
+    //     const auto bpMark = QStringLiteral("bp");
+    //     const auto curSym = QStringLiteral("cur");
+    //     const auto hitCur = QStringLiteral("curbp");
 
-        if (hitCur == symID) {
-            e->addSymbolMark(line, curSym);
-            dbg->removeFileBreakPoint(editor->fileName(), line);
-        } else {
-            if (bpMark == symID) {
-                e->removeSymbolMark(line);
-                dbg->removeFileBreakPoint(editor->fileName(), line);
-            }
-        }
-    } else {
-        e->removeSymbolMark(line);
-    }
+    //     if (hitCur == symID) {
+    //         e->addSymbolMark(line, curSym);
+    //         dbg->removeFileBreakPoint(editor->fileName(), line);
+    //     } else {
+    //         if (bpMark == symID) {
+    //             e->removeSymbolMark(line);
+    //             dbg->removeFileBreakPoint(editor->fileName(), line);
+    //         }
+    //     }
+    // } else {
+    //     e->removeSymbolMark(line);
+    // }
 }
 
 void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
@@ -1452,38 +1458,38 @@ void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
     auto e = editor->editor();
 
     auto &m = ScriptMachine::instance();
-    if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-        auto dbg = m.debugger();
-        auto symID = e->symbolMark(line);
+    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
+    //     auto dbg = m.debugger();
+    //     auto symID = e->symbolMark(line);
 
-        const auto bpMark = QStringLiteral("bp");
-        const auto curSym = QStringLiteral("cur");
-        const auto hitCur = QStringLiteral("curbp");
+    //     const auto bpMark = QStringLiteral("bp");
+    //     const auto curSym = QStringLiteral("cur");
+    //     const auto hitCur = QStringLiteral("curbp");
 
-        auto fileName = editor->fileName();
-        if (hitCur == symID) {
-            e->addSymbolMark(line, curSym);
-            dbg->removeFileBreakPoint(fileName, line);
-        } else if (curSym == symID) {
-            e->addSymbolMark(line, hitCur);
-            dbg->addFileBreakPoint(fileName, line);
-        } else {
-            if (bpMark == symID) {
-                e->removeSymbolMark(line);
-                dbg->removeFileBreakPoint(fileName, line);
-            } else {
-                e->addSymbolMark(line, bpMark);
-                dbg->addFileBreakPoint(fileName, line);
-            }
-        }
-    } else {
-        auto symID = e->symbolMark(line);
-        if (symID.isEmpty()) {
-            e->addSymbolMark(line, QStringLiteral("bp"));
-        } else {
-            e->removeSymbolMark(line);
-        }
-    }
+    //     auto fileName = editor->fileName();
+    //     if (hitCur == symID) {
+    //         e->addSymbolMark(line, curSym);
+    //         dbg->removeFileBreakPoint(fileName, line);
+    //     } else if (curSym == symID) {
+    //         e->addSymbolMark(line, hitCur);
+    //         dbg->addFileBreakPoint(fileName, line);
+    //     } else {
+    //         if (bpMark == symID) {
+    //             e->removeSymbolMark(line);
+    //             dbg->removeFileBreakPoint(fileName, line);
+    //         } else {
+    //             e->addSymbolMark(line, bpMark);
+    //             dbg->addFileBreakPoint(fileName, line);
+    //         }
+    //     }
+    // } else {
+    //     auto symID = e->symbolMark(line);
+    //     if (symID.isEmpty()) {
+    //         e->addSymbolMark(line, QStringLiteral("bp"));
+    //     } else {
+    //         e->removeSymbolMark(line);
+    //     }
+    // }
 }
 
 void ScriptingDialog::updateCursorPosition() {
@@ -1558,22 +1564,23 @@ void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
         return;
     }
-    auto filename = WingFileDialog::getSaveFileName(
-        this, tr("ChooseFile"), m_lastusedpath,
-        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    auto filename =
+        WingFileDialog::getSaveFileName(this, tr("ChooseFile"), m_lastusedpath,
+                                        QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
-        if (_curDbgData.contains(filename)) {
-            auto ret = WingMessageBox::warning(
-                this, tr("New"), tr("NewFileWithDbgExists"),
-                QMessageBox::Yes | QMessageBox::No);
-            if (ret == QMessageBox::No) {
-                return;
-            }
-            if (ScriptMachine::instance().isRunning(ScriptMachine::Scripting)) {
-                on_stopscript();
-            }
-        }
+        // if (_curDbgData.contains(filename)) {
+        //     auto ret = WingMessageBox::warning(
+        //         this, tr("New"), tr("NewFileWithDbgExists"),
+        //         QMessageBox::Yes | QMessageBox::No);
+        //     if (ret == QMessageBox::No) {
+        //         return;
+        //     }
+        //     if
+        //     (ScriptMachine::instance().isRunning(ScriptMachine::Scripting)) {
+        //         on_stopscript();
+        //     }
+        // }
 
         auto e = findEditorView(filename);
         if (e) {
@@ -1586,7 +1593,6 @@ void ScriptingDialog::on_newfile() {
         // create an empty file
         QFile f(filename);
         if (f.open(QFile::WriteOnly | QFile::Text)) {
-            f.write(QByteArrayLiteral("int main() {\n    return 0;\n}\n"));
             f.close();
         }
 
@@ -1610,9 +1616,9 @@ void ScriptingDialog::on_openfile() {
     if (!newOpenFileSafeCheck()) {
         return;
     }
-    auto filename = WingFileDialog::getOpenFileName(
-        this, tr("ChooseFile"), m_lastusedpath,
-        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    auto filename =
+        WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath,
+                                        QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
         if (auto e = openFile(filename)) {
@@ -1647,10 +1653,10 @@ void ScriptingDialog::on_save() {
         return;
     }
 
-    auto &lsp = AngelLsp::instance();
-    if (lsp.isActive() && lsp.autofmt()) {
-        editor->formatCode();
-    }
+    // auto &lsp = AngelLsp::instance();
+    // if (lsp.isActive() && lsp.autofmt()) {
+    //     editor->formatCode();
+    // }
 
     auto res = editor->save();
     if (res) {
@@ -1672,7 +1678,7 @@ void ScriptingDialog::on_saveas() {
 
     auto filename = WingFileDialog::getSaveFileName(
         this, tr("ChooseSaveFile"), m_lastusedpath,
-        QStringLiteral("AngelScript (*.as *.angelscript)"));
+        QStringLiteral("Luau (*.luau *.lua)"));
     if (filename.isEmpty())
         return;
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
@@ -1784,9 +1790,8 @@ void ScriptingDialog::on_sponsor() {
 }
 
 void ScriptingDialog::on_wiki() {
-    QDesktopServices::openUrl(QUrl(
-        QStringLiteral("https://www.angelcode.com/angelscript/sdk/docs/manual/"
-                       "doc_script.html")));
+    QDesktopServices::openUrl(
+        QUrl(QStringLiteral("https://luau.org/getting-started/")));
 }
 
 void ScriptingDialog::on_fullScreen() {
@@ -1861,7 +1866,7 @@ void ScriptingDialog::on_runscript() {
         editor->setReadOnly(true);
         updateRunDebugMode();
         ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
-                                                editor->fileName(), false, {},
+                                                editor->fileName(), false,
                                                 [this, editor](bool isNotBusy) {
                                                     editor->setReadOnly(false);
                                                     m_outConsole->raise();
@@ -1895,10 +1900,11 @@ void ScriptingDialog::on_rundbgscript() {
     }
 }
 
-void ScriptingDialog::on_pausescript() { runDbgCommand(asIDBAction::Pause); }
+void ScriptingDialog::on_pausescript() { /*runDbgCommand(asIDBAction::Pause);*/
+}
 
 void ScriptingDialog::on_continuescript() {
-    runDbgCommand(asIDBAction::Continue);
+    // runDbgCommand(asIDBAction::Continue);
 }
 
 void ScriptingDialog::on_stopscript() {
@@ -1912,15 +1918,15 @@ void ScriptingDialog::on_restartscript() {
 }
 
 void ScriptingDialog::on_stepinscript() {
-    runDbgCommand(asIDBAction::StepInto);
+    // runDbgCommand(asIDBAction::StepInto);
 }
 
 void ScriptingDialog::on_stepoutscript() {
-    runDbgCommand(asIDBAction::StepOut);
+    // runDbgCommand(asIDBAction::StepOut);
 }
 
 void ScriptingDialog::on_stepoverscript() {
-    runDbgCommand(asIDBAction::StepOver);
+    // runDbgCommand(asIDBAction::StepOver);
 }
 
 void ScriptingDialog::on_togglebreakpoint() {

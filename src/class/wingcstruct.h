@@ -21,10 +21,6 @@
 #include "WingPlugin/iwingplugin.h"
 #include "structparser.h"
 
-class CScriptDictionary;
-class asIScriptEngine;
-class CScriptArray;
-
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
     Q_INTERFACES(WingHex::IWingPlugin)

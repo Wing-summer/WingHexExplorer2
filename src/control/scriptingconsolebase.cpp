@@ -29,7 +29,7 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     _warnCharFmt.setForeground(QColorConstants::Svg::gold);
     _errCharFmt.setForeground(Qt::red);
     setHighlighter(new WingConsoleHighligher);
-    setSyntax(syntaxRepo().definitionForName("AngelScript"));
+    setSyntax(syntaxRepo().definitionForName("Luau"));
 
     _s.setDevice(this->device());
 }
@@ -95,8 +95,6 @@ void ScriptingConsoleBase::flush() { _s << Qt::flush; }
 void ScriptingConsoleBase::initOutput() {
     stdWarnLine(tr("Scripting console for WingHexExplorer"));
     newLine();
-    stdWarnLine(tr(">>>> Powered by AngelScript <<<<"));
-    newLine();
     newLine();
     appendCommandPrompt();
 }
@@ -116,9 +114,9 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     }
 
     if (storeOnly) {
-        commandPrompt += QStringLiteral("... > ");
+        commandPrompt += QStringLiteral(".... > ");
     } else {
-        commandPrompt += QStringLiteral("as > ");
+        commandPrompt += QStringLiteral("luau > ");
     }
 
     _lastCommandPrompt = storeOnly;

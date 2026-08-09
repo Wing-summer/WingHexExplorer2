@@ -124,6 +124,8 @@ public:
 
     static bool isScriptFile(const QString &file);
 
+    static bool isScriptFileSuffix(const QString &suffix);
+
 private:
     explicit ScriptManager();
     virtual ~ScriptManager();

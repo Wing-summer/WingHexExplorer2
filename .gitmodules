@@ -4,10 +4,6 @@
 [submodule "qwindowkit"]
 	path = 3rdparty/qwindowkit
 	url = git@github.com:Wing-summer/qwindowkit.git
-[submodule "3rdparty/AngelScript"]
-	path = 3rdparty/AngelScript
-	url = git@github.com:Wing-summer/angelscript.git
-	branch=stable
 [submodule "3rdparty/cpptrace"]
 	path = 3rdparty/cpptrace
 	url = git@github.com:Wing-summer/cpptrace.git
@@ -20,12 +16,12 @@
 [submodule "3rdparty/antlr4-cpp"]
 	path = 3rdparty/antlr4-cpp
 	url = git@github.com:Wing-summer/antlr4-cpp.git
-[submodule "3rdparty/angel-lsp"]
-	path = 3rdparty/angel-lsp
-	url = git@github.com:Wing-summer/angel-lsp.git
-[submodule "3rdparty/fmt"]
-	path = 3rdparty/fmt
-	url = git@github.com:Wing-summer/fmt.git
 [submodule "3rdparty/CRaC"]
 	path = 3rdparty/CRaC
 	url = git@github.com:Wing-summer/CRaC.git
+[submodule "3rdparty/luau"]
+	path = 3rdparty/luau
+	url = git@github.com:Wing-summer/luau.git
+[submodule "3rdparty/LuaBridge3"]
+	path = 3rdparty/LuaBridge3
+	url = git@github.com:Wing-summer/LuaBridge3.git

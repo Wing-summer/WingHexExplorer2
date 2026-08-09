@@ -18,7 +18,6 @@
 #include "lspsettingdialog.h"
 #include "ui_lspsettingdialog.h"
 
-#include "class/angellsp.h"
 #include "class/scriptmachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
@@ -31,11 +30,11 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::LspSettingDialog) {
     ui->setupUi(this);
 
-    auto e = QMetaEnum::fromType<AngelLsp::TraceMode>();
-    auto total = e.keyCount();
-    for (int i = 0; i < total; ++i) {
-        ui->cbTrace->addItem(QString::fromLatin1(e.key(i)));
-    }
+    // auto e = QMetaEnum::fromType<AngelLsp::TraceMode>();
+    // auto total = e.keyCount();
+    // for (int i = 0; i < total; ++i) {
+    //     ui->cbTrace->addItem(QString::fromLatin1(e.key(i)));
+    // }
     ui->cbTrace->setCurrentIndex(0);
 
     reload();
@@ -43,54 +42,58 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
     Utilities::addSpecialMark(ui->cbEnabled);
 
     if (SettingManager::instance().scriptEnabled()) {
-        connect(ui->cbEnabled,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                &QCheckBox::checkStateChanged,
-#else
-                &QCheckBox::stateChanged,
-#endif
-                this, [this](Qt::CheckState state) {
-                    auto &lsp = AngelLsp::instance();
-                    lsp.setEnabled(state != Qt::Unchecked);
-                    Q_EMIT optionNeedRestartChanged();
-                });
+        //         connect(ui->cbEnabled,
+        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+        //                 &QCheckBox::checkStateChanged,
+        // #else
+        //                 &QCheckBox::stateChanged,
+        // #endif
+        //                 this, [this](Qt::CheckState state) {
+        //                     auto &lsp = AngelLsp::instance();
+        //                     lsp.setEnabled(state != Qt::Unchecked);
+        //                     Q_EMIT optionNeedRestartChanged();
+        //                 });
 
-        connect(ui->sbIndent, &QSpinBox::valueChanged, this, [](int value) {
-            auto &lsp = AngelLsp::instance();
-            lsp.setIndentSpace(value);
-        });
+        //         connect(ui->sbIndent, &QSpinBox::valueChanged, this, [](int
+        //         value) {
+        //             auto &lsp = AngelLsp::instance();
+        //             lsp.setIndentSpace(value);
+        //         });
 
-        connect(ui->cbUseTabStop,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                &QCheckBox::checkStateChanged,
-#else
-            &QCheckBox::stateChanged,
-#endif
-                this, [](Qt::CheckState state) {
-                    auto &lsp = AngelLsp::instance();
-                    lsp.setUseTabIndent(state != Qt::Unchecked);
-                });
+        //         connect(ui->cbUseTabStop,
+        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+        //                 &QCheckBox::checkStateChanged,
+        // #else
+        //             &QCheckBox::stateChanged,
+        // #endif
+        //                 this, [](Qt::CheckState state) {
+        //                     auto &lsp = AngelLsp::instance();
+        //                     lsp.setUseTabIndent(state != Qt::Unchecked);
+        //                 });
 
-        connect(ui->cbAutoFmt,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                &QCheckBox::checkStateChanged,
-#else
-                &QCheckBox::stateChanged,
-#endif
-                this, [](Qt::CheckState state) {
-                    auto &lsp = AngelLsp::instance();
-                    lsp.setAutofmt(state != Qt::Unchecked);
-                });
+        //         connect(ui->cbAutoFmt,
+        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+        //                 &QCheckBox::checkStateChanged,
+        // #else
+        //                 &QCheckBox::stateChanged,
+        // #endif
+        //                 this, [](Qt::CheckState state) {
+        //                     auto &lsp = AngelLsp::instance();
+        //                     lsp.setAutofmt(state != Qt::Unchecked);
+        //                 });
 
-        connect(ui->cbTrace,
-                QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-                [](int index) {
-                    Q_STATIC_ASSERT(int(AngelLsp::TraceMode::off) == 0);
-                    Q_STATIC_ASSERT(int(AngelLsp::TraceMode::messages) == 1);
-                    Q_STATIC_ASSERT(int(AngelLsp::TraceMode::verbose) == 2);
-                    auto &lsp = AngelLsp::instance();
-                    lsp.setTraceMode(AngelLsp::TraceMode(index));
-                });
+        //         connect(ui->cbTrace,
+        //                 QOverload<int>::of(&QComboBox::currentIndexChanged),
+        //                 this,
+        //                 [](int index) {
+        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::off) ==
+        //                     0);
+        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::messages)
+        //                     == 1);
+        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::verbose)
+        //                     == 2); auto &lsp = AngelLsp::instance();
+        //                     lsp.setTraceMode(AngelLsp::TraceMode(index));
+        //                 });
 
         connect(ui->btnExportPredef, &QPushButton::clicked, this, [parent]() {
             auto path = WingFileDialog::getExistingDirectory(
@@ -109,17 +112,19 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
                     return;
                 }
             }
-            generateScriptPredefined(ScriptMachine::instance().engine(), file);
+            // generateScriptPredefined(ScriptMachine::instance().engine(),
+            // file);
             Toast::toast(parent, NAMEICONRES("angellsp"),
                          tr("ExportSuccessfully"));
         });
-        connect(ui->btnRestartlsp, &QPushButton::clicked, this,
-                [parent]() { AngelLsp::instance().restartWithGUI(parent); });
+        // connect(ui->btnRestartlsp, &QPushButton::clicked, this,
+        //         [parent]() { AngelLsp::instance().restartWithGUI(parent); });
 
-        auto &lsp = AngelLsp::instance();
-        connect(&lsp, &AngelLsp::serverStarted, this,
-                &LspSettingDialog::reload);
-        connect(&lsp, &AngelLsp::serverExited, this, &LspSettingDialog::reload);
+        // auto &lsp = AngelLsp::instance();
+        // connect(&lsp, &AngelLsp::serverStarted, this,
+        //         &LspSettingDialog::reload);
+        // connect(&lsp, &AngelLsp::serverExited, this,
+        // &LspSettingDialog::reload);
     }
 }
 
@@ -134,29 +139,29 @@ QString LspSettingDialog::name() const { return tr("AngelLSP"); }
 QString LspSettingDialog::id() const { return QStringLiteral("AngelLSP"); }
 
 void LspSettingDialog::restore() {
-    auto &lsp = AngelLsp::instance();
-    lsp.resetSettings();
+    // auto &lsp = AngelLsp::instance();
+    // lsp.resetSettings();
 }
 
 void LspSettingDialog::reload() {
     if (SettingManager::instance().scriptEnabled()) {
-        auto &lsp = AngelLsp::instance();
-        if (lsp.isActive()) {
-            ui->gbDebug->setEnabled(true);
-            ui->gbFormat->setEnabled(true);
+        // auto &lsp = AngelLsp::instance();
+        // if (lsp.isActive()) {
+        //     ui->gbDebug->setEnabled(true);
+        //     ui->gbFormat->setEnabled(true);
 
-            ui->cbEnabled->setChecked(lsp.enabled());
-            ui->cbUseTabStop->setChecked(lsp.useTabIndent());
-            ui->sbIndent->setValue(lsp.indentSpace());
-            ui->cbAutoFmt->setChecked(lsp.autofmt());
+        //     ui->cbEnabled->setChecked(lsp.enabled());
+        //     ui->cbUseTabStop->setChecked(lsp.useTabIndent());
+        //     ui->sbIndent->setValue(lsp.indentSpace());
+        //     ui->cbAutoFmt->setChecked(lsp.autofmt());
 
-            ui->cbTrace->setCurrentIndex(int(lsp.traceMode()));
-            ui->gbOther->setEnabled(true);
-        } else {
-            ui->gbDebug->setEnabled(false);
-            ui->gbFormat->setEnabled(false);
-            ui->gbOther->setEnabled(false);
-        }
+        //     ui->cbTrace->setCurrentIndex(int(lsp.traceMode()));
+        //     ui->gbOther->setEnabled(true);
+        // } else {
+        //     ui->gbDebug->setEnabled(false);
+        //     ui->gbFormat->setEnabled(false);
+        //     ui->gbOther->setEnabled(false);
+        // }
     } else {
         setEnabled(false);
     }

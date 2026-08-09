@@ -16,7 +16,6 @@
 */
 
 #include "crashhandler.h"
-#include "angelscript.h"
 #include "class/pluginsystem.h"
 #include "dialog/crashreport.h"
 
@@ -77,8 +76,6 @@ void CrashHandler::reportCrashAndExit() {
     ss << QStringLiteral("* Qt: ") << QLibraryInfo::build() << Qt::endl;
     ss << QStringLiteral("* OS: ") << QSysInfo::prettyProductName() << Qt::endl;
     ss << QStringLiteral("* Version: ") << WINGHEX_VERSION << Qt::endl;
-    ss << QStringLiteral("* ScriptEngine: ") << ANGELSCRIPT_VERSION_STRING
-       << Qt::endl;
 
     ss << Qt::endl;
 

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -17,49 +17,27 @@
 
 #include "scriptmachine.h"
 
-#include "grammar/ASConsole/AngelscriptConsoleLexer.h"
-#include "grammar/ASConsole/AngelscriptConsoleParser.h"
+#include "Luau/CodeGen.h"
+#include "Luau/Common.h"
+#include "Luau/Compiler.h"
+#include "lualib.h"
 
-#include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
-#include "AngelScript/sdk/add_on/scripthandle/scripthandle.h"
-#include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
-#include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
-#include "AngelScript/sdk/add_on/weakref/weakref.h"
-#include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
-
-#include "class/angelscriptconsolevisitor.h"
-#include "class/angelscripthelper.h"
 #include "class/appmanager.h"
-#include "class/asbuilder.h"
 #include "class/logger.h"
 #include "class/pluginsystem.h"
 #include "class/settingmanager.h"
 #include "define.h"
 
-#include "scriptaddon/scriptany.h"
-#include "scriptaddon/scriptcolor.h"
-#include "scriptaddon/scriptcrypto.h"
-#include "scriptaddon/scriptdatetime.h"
-#include "scriptaddon/scriptenv.h"
-#include "scriptaddon/scriptfile.h"
-#include "scriptaddon/scriptfilesystem.h"
-#include "scriptaddon/scriptjson.h"
-#include "scriptaddon/scriptoptbox.h"
-#include "scriptaddon/scriptqdictionary.h"
-#include "scriptaddon/scriptqstring.h"
-#include "scriptaddon/scriptreflection.h"
-#include "scriptaddon/scriptregex.h"
-#include "scriptaddon/scriptrunable.h"
-#include "scriptaddon/scripturl.h"
-
-#include "class/fmtlibext.h"
-
-#include <fmt/ranges.h>
+#include "LuaBridge/LuaBridge.h"
+#include "luau/CodeGen/include/Luau/CodeGenOptions.h"
+#include "luau/Require/include/Luau/Require.h"
 
 #include <QClipboard>
 #include <QMimeData>
-#include <QProcess>
 #include <QScopeGuard>
+
+LUAU_FASTFLAG(LuauAutoStack)
+constexpr auto *MAIN_THREAD_TAG = "_TH_MODE_";
 
 bool ScriptMachine::init() {
     if (isInited()) {
@@ -68,509 +46,303 @@ bool ScriptMachine::init() {
 
     qRegisterMetaType<MessageInfo>();
 
-    _engine = asCreateScriptEngine();
-    if (!ScriptMachine::configureEngine()) {
-        _engine->ShutDownAndRelease();
-        _engine = nullptr;
+    _main = luaL_newstate();
+    if (_main == nullptr) {
         return false;
+    }
+    if (!configureEngine(_main)) {
+        lua_close(_main);
+        _main = nullptr;
+        return false;
+    }
+
+    for (int i = 0; i < ConsoleModeCount; ++i) {
+        auto &l = _ctx[i];
+        auto s = lua_newthread(_main);
+        if (s == nullptr) {
+            lua_close(_main);
+            _main = nullptr;
+            return false;
+        }
+
+        auto id = lua_ref(_main, -1);
+        if (id == LUA_REFNIL) {
+            lua_close(_main);
+            _main = nullptr;
+            return false;
+        }
+        l.state = s;
+        l.refID = id;
+        auto d = &_tdata[i];
+        d->mode = ConsoleMode(i + 1);
+        d->parent = &l;
+        l.data = d;
+        lua_setthreaddata(s, d);
+        luaL_sandboxthread(s);
     }
 
     // create the debugger
-    _workspace = new asIDBFileWorkspace("", _engine);
-    _debugger = new asDebugger(_workspace);
+    // _debugger = new asDebugger(_workspace);
 
-    _regcalls.resize(Console_MaxCount, {});
-    _ctx.resize(Console_MaxCount, nullptr);
-    _ctxMgr.resize(Console_MaxCount, nullptr);
+    // config callbacks
+    auto &&cbs = lua_callbacks(_main);
+    cbs->interrupt = ScriptMachine::onLuauInterrupt;
+    cbs->userthread = ScriptMachine::onLuauThreadCreated;
+    luaL_sandbox(_main);
 
+    _regcalls.resize(ConsoleModeCount, {});
+    _inited = true;
     return true;
 }
 
-bool ScriptMachine::isInited() const { return _engine != nullptr; }
+bool ScriptMachine::isInited() const { return _inited; }
 
 bool ScriptMachine::isRunning(ConsoleMode mode) const {
-    return _ctx.value(mode) != nullptr;
+    Q_ASSERT(mode > Console_Begin && mode < Console_End);
+    return context(mode)->isRunning;
 }
 
 bool ScriptMachine::checkEngineConfigError() const {
-    if (_engine) {
-        auto e = static_cast<asCScriptEngine *>(_engine);
-        if (e) {
-            e->PrepareEngine();
-            return e->configFailed;
+    // TODO
+    // if (_engine) {
+    //     auto e = static_cast<asCScriptEngine *>(_engine);
+    //     if (e) {
+    //         e->PrepareEngine();
+    //         return e->configFailed;
+    //     }
+    // }
+    return false;
+}
+
+bool ScriptMachine::configureEngine(lua_State *L) {
+    if (L == nullptr) {
+        return false;
+    }
+
+    luabridge::registerMainThread(L);
+
+    luaL_openlibs(L);
+
+    luabridge::enableExceptions(L);
+
+    luabridge::getGlobalNamespace(L)
+        .addFunction("print", &ScriptMachine::print)
+        .addFunction("println", &ScriptMachine::println)
+        .addFunction("warnprint", &ScriptMachine::warnprint)
+        .addFunction("warnprintln", &ScriptMachine::warnprintln)
+        .addFunction("infoprint", &ScriptMachine::infoprint)
+        .addFunction("infoprintln", &ScriptMachine::infoprintln)
+        .addFunction("errprint", &ScriptMachine::errprint)
+        .addFunction("errprintln", &ScriptMachine::errprintln);
+
+    // TODO
+
+    // r = _engine->RegisterGlobalFunction("string input()",
+    //                                     asMETHOD(ScriptMachine, input),
+    //                                     asCALL_THISCALL_ASGLOBAL, this);
+
+    // PluginSystem::instance().angelApi()->installAPI(this);
+
+    return true;
+}
+
+LuauThreadData *ScriptMachine::contextData(lua_State *l) {
+    return static_cast<LuauThreadData *>(lua_getthreaddata(l));
+}
+
+int ScriptMachine::consoleModeIdx(ConsoleMode mode) { return mode - 1; }
+
+int ScriptMachine::__output(MessageType type, lua_State *L) {
+    int n = lua_gettop(L);
+
+    QString msg;
+    msg.reserve(256);
+    for (int i = 1; i <= n; i++) {
+        size_t len;
+        const char *s = luaL_tolstring(L, i, &len);
+        if (i > 1) {
+            msg.append(' ');
         }
+        msg.append(QString::fromUtf8(s, len));
+        lua_pop(L, 1);
     }
-    return true;
+
+    MessageInfo info;
+    info.type = type;
+    info.mode = ConsoleMode(contextData(L)->mode);
+    info.message = msg;
+    ScriptMachine::instance().outputMessage(info);
+    return 0;
 }
 
-bool ScriptMachine::configureEngine() {
-    if (_engine == nullptr) {
-        return false;
+int ScriptMachine::__outputln(MessageType type, lua_State *L) {
+    int n = lua_gettop(L);
+
+    QString msg;
+    msg.reserve(256);
+    for (int i = 1; i <= n; i++) {
+        size_t len;
+        const char *s = luaL_tolstring(L, i, &len);
+        if (i > 1) {
+            msg.append('\n');
+        }
+        msg.append(QString::fromUtf8(s, len));
+        lua_pop(L, 1);
     }
 
-    // we need utf8, the default is what we want
-    _engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
-    _engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, true);
-    _engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, false);
-    _engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, false);
-    _engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false);
-    _engine->SetEngineProperty(asEP_DISABLE_INTEGER_DIVISION, false);
-    _engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, false);
-    _engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 0);
-    _engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
-    _engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE,
-                               true); // enum class like
-
-    // The script compiler will send any compiler messages to the callback
-    auto r = _engine->SetMessageCallback(asFUNCTION(messageCallback), this,
-                                         asCALL_CDECL);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    _engine->SetTranslateAppExceptionCallback(asFUNCTION(translateAppException),
-                                              this, asCALL_CDECL);
-
-    _engine->SetFunctionUserDataCleanupCallback(
-        &ScriptMachine::cleanUpPluginSysIDFunction,
-        AsUserDataType::UserData_PluginFn);
-
-    registerEngineAddon(_engine);
-
-    _engine->SetDefaultAccessMask(0x1);
-
-    // Register a couple of extra functions for the scripts
-    r = _engine->RegisterGlobalFunction(
-        "void print(const ? &in obj, const ? &in ...)", asFUNCTION(print),
-        asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void printf(const string &in fmt, const ? &in ...)",
-        asFUNCTION(printf), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void println(const ? &in obj, const ? &in ...)", asFUNCTION(println),
-        asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction(
-        "void warnprint(const ? &in obj, const ? &in ...)",
-        asFUNCTION(warnprint), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void warnprintf(const string &in fmt, const ? &in ...)",
-        asFUNCTION(warnprintf), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void warnprintln(const ? &in obj, const ? &in ...)",
-        asFUNCTION(warnprintln), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction(
-        "void infoprint(const ? &in obj, const ? &in ...)",
-        asFUNCTION(infoprint), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void infoprintf(const string &in fmt, const ? &in ...)",
-        asFUNCTION(infoprintf), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void infoprintln(const ? &in obj, const ? &in ...)",
-        asFUNCTION(infoprintln), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction(
-        "void errprint(const ? &in obj, const ? &in ...)", asFUNCTION(errprint),
-        asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void errprintf(const string &in fmt, const ? &in ...)",
-        asFUNCTION(errprintf), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-    r = _engine->RegisterGlobalFunction(
-        "void errprintln(const ? &in obj, const ? &in ...)",
-        asFUNCTION(errprintln), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction("string input()",
-                                        asMETHOD(ScriptMachine, input),
-                                        asCALL_THISCALL_ASGLOBAL, this);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction("string stringify(? &in obj)",
-                                        asMETHOD(ScriptMachine, stringify),
-                                        asCALL_THISCALL_ASGLOBAL, this);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction(
-        "int exec(string &out output, const string &in exe, "
-        "const string &in params = \"\", int timeout = 3000)",
-        asFUNCTION(execSystemCmd), asCALL_CDECL);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    CContextMgr::RegisterCoRoutineSupport(_engine);
-    CContextMgr::SetGetTimeCallback([]() -> asUINT {
-        return AppManager::instance()->currentMSecsSinceEpoch();
-    });
-    CContextMgr::RegisterThreadSupport(_engine);
-
-    // Tell the engine to use our context pool. This will also
-    // allow us to debug internal script calls made by the engine
-    r = _engine->SetContextCallbacks(requestContextCallback,
-                                     returnContextCallback, this);
-    ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    PluginSystem::instance().angelApi()->installAPI(this);
-
-    // create module for Console
-    auto mod = _engine->GetModule("WINGCONSOLE", asGM_ALWAYS_CREATE);
-    mod->SetAccessMask(0x1);
-
-    return true;
-}
-
-QString ScriptMachine::getCallStack(asIScriptContext *context) {
-    QString str = QStringLiteral("AngelScript callstack:\n");
-
-    // Append the call stack
-    for (asUINT i = 0; i < context->GetCallstackSize(); i++) {
-        asIScriptFunction *func;
-        const char *scriptSection;
-        int line, column;
-        func = context->GetFunction(i);
-        line = context->GetLineNumber(i, &column, &scriptSection);
-        str +=
-            (QStringLiteral("\t") + QString::fromUtf8(scriptSection) +
-             QStringLiteral(":") + QString::fromUtf8(func->GetDeclaration()) +
-             QStringLiteral(":") + QString::number(line) + QStringLiteral(",") +
-             QString::number(column) + QStringLiteral("\n"));
-    }
-
-    return str;
-}
-
-void ScriptMachine::printf(asIScriptGeneric *args) {
-    __outputfmt(MessageType::Print, args);
+    MessageInfo info;
+    info.type = type;
+    info.mode = ConsoleMode(contextData(L)->mode);
+    info.message = msg;
+    ScriptMachine::instance().outputMessage(info);
+    return 0;
 }
 
 void ScriptMachine::destoryMachine() {
-    if (_engine) {
-        _engine->SetContextCallbacks(nullptr, nullptr);
-        delete _debugger;
-        delete _workspace;
-
-        for (const auto &mgr : std::as_const(_ctxMgr)) {
-            if (mgr) {
-                mgr->AbortAll();
-                delete mgr;
-            }
-        }
-        _ctx.clear();
-
-        _engine->ShutDownAndRelease();
-        _engine = nullptr;
-        _ctxPool.clear();
+    for (auto &c : _ctx) {
+        c.destory();
     }
+    lua_close(_main);
 }
 
 void ScriptMachine::setCustomEvals(
     const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals) {
-    _debugger->setCustomEvals(evals);
+    // _debugger->setCustomEvals(evals);
 }
 
-void ScriptMachine::exceptionCallback(asIScriptContext *context) {
-    if (context) {
-        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            context->GetUserData(AsUserDataType::UserData_ContextMode)));
-        QString message =
-            QStringLiteral("- Exception '%1' in '%2'\n")
-                .arg(context->GetExceptionString(),
-                     context->GetExceptionFunction()->GetDeclaration()) +
-            getCallStack(context);
+// void ScriptMachine::attachDebugBreak(asIScriptContext *ctx) {
+//     if (!ctx)
+//         ctx = asGetActiveContext();
 
-        const char *section;
-        int col;
-        MessageInfo msg;
-        msg.mode = mode;
-        msg.row = context->GetExceptionLineNumber(&col, &section);
-        msg.col = col;
-        msg.section = QString::fromUtf8(section);
-        msg.type = MessageType::Error;
-        msg.message = message;
+//     checkDebugger(ctx);
 
-        outputMessage(msg);
-    }
+//     if (_debugger)
+//         _debugger->DebugBreak(ctx);
+// }
+
+// void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
+//     if (_debugger == nullptr) {
+//         return;
+//     }
+//     // hook the context
+//     if (_debugger->HasWork()) {
+//         _debugger->HookContext(ctx, true);
+//     } else {
+//         _debugger->HookContext(ctx, false);
+//         ctx->SetLineCallback(asFUNCTION(ScriptMachine::lineCallback),
+//         nullptr,
+//                              asCALL_CDECL);
+//     }
+// }
+
+int ScriptMachine::print(lua_State *L) {
+    return __output(MessageType::Print, L);
 }
 
-void ScriptMachine::attachDebugBreak(asIScriptContext *ctx) {
-    if (!ctx)
-        ctx = asGetActiveContext();
-
-    checkDebugger(ctx);
-
-    if (_debugger)
-        _debugger->DebugBreak(ctx);
+int ScriptMachine::println(lua_State *L) {
+    return __outputln(MessageType::Print, L);
 }
 
-void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
-    if (_debugger == nullptr) {
-        return;
-    }
-    // hook the context
-    if (_debugger->HasWork()) {
-        _debugger->HookContext(ctx, true);
-    } else {
-        _debugger->HookContext(ctx, false);
-        ctx->SetLineCallback(asFUNCTION(ScriptMachine::lineCallback), nullptr,
-                             asCALL_CDECL);
-    }
+int ScriptMachine::warnprint(lua_State *L) {
+    return __output(MessageType::Warn, L);
 }
 
-void ScriptMachine::__output(MessageType type, asIScriptGeneric *args) {
-    auto context = asGetActiveContext();
-    if (context) {
-        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            context->GetUserData(AsUserDataType::UserData_ContextMode)));
-
-        auto &m = ScriptMachine::instance();
-
-        MessageInfo info;
-        info.mode = mode;
-        info.type = type;
-
-        for (int i = 0; i < args->GetArgCount(); ++i) {
-            void *ref = args->GetArgAddress(i);
-            int typeId = args->GetArgTypeId(i);
-            info.message.append(m.stringify(ref, typeId));
-        }
-
-        m.outputMessage(info);
-    }
+int ScriptMachine::warnprintln(lua_State *L) {
+    return __outputln(MessageType::Warn, L);
 }
 
-void ScriptMachine::print(asIScriptGeneric *args) {
-    __output(MessageType::Print, args);
+int ScriptMachine::errprint(lua_State *L) {
+    return __output(MessageType::Error, L);
 }
 
-void ScriptMachine::__outputln(MessageType type, asIScriptGeneric *args) {
-    auto context = asGetActiveContext();
-    if (context) {
-        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            context->GetUserData(AsUserDataType::UserData_ContextMode)));
-
-        auto &m = ScriptMachine::instance();
-
-        MessageInfo info;
-        info.mode = mode;
-        info.type = type;
-
-        for (int i = 0; i < args->GetArgCount(); ++i) {
-            void *ref = args->GetArgAddress(i);
-            int typeId = args->GetArgTypeId(i);
-
-            if (typeId) {
-                info.message = (m.stringify(ref, typeId).append('\n'));
-                m.outputMessage(info);
-            }
-        }
-    }
+int ScriptMachine::errprintln(lua_State *L) {
+    return __outputln(MessageType::Error, L);
 }
 
-void ScriptMachine::__outputfmt(MessageType type, asIScriptGeneric *args) {
-    auto context = asGetActiveContext();
-    if (context) {
-        auto fmt = static_cast<const QString *>(args->GetArgObject(0));
-        fmt::dynamic_format_arg_store<fmt::format_context> store;
-        auto total = args->GetArgCount();
-
-        auto &m = ScriptMachine::instance();
-        for (int i = 1; i < total; ++i) {
-            auto typeId = args->GetArgTypeId(i);
-            void *ref = args->GetArgAddress(i);
-
-            switch (typeId) {
-            case asTYPEID_BOOL:
-                store.push_back(*static_cast<bool *>(ref));
-                break;
-            case asTYPEID_INT8:
-                store.push_back(*static_cast<qint8 *>(ref));
-                break;
-            case asTYPEID_INT16:
-                store.push_back(*static_cast<qint16 *>(ref));
-                break;
-            case asTYPEID_INT32:
-                store.push_back(*static_cast<qint32 *>(ref));
-                break;
-            case asTYPEID_INT64:
-                store.push_back(*static_cast<qint64 *>(ref));
-                break;
-            case asTYPEID_UINT8:
-                store.push_back(*static_cast<quint8 *>(ref));
-                break;
-            case asTYPEID_UINT16:
-                store.push_back(*static_cast<quint16 *>(ref));
-                break;
-            case asTYPEID_UINT32:
-                store.push_back(*static_cast<quint32 *>(ref));
-                break;
-            case asTYPEID_UINT64:
-                store.push_back(*static_cast<quint64 *>(ref));
-                break;
-            case asTYPEID_FLOAT:
-                store.push_back(*static_cast<float *>(ref));
-                break;
-            case asTYPEID_DOUBLE:
-                store.push_back(*static_cast<double *>(ref));
-                break;
-            default: {
-                if (m.isAngelChar(typeId)) {
-                    // char
-                    store.push_back(*resolveObjAs<QChar>(ref, typeId));
-                } else if (m.isAngelString(typeId)) {
-                    // string
-                    store.push_back(*resolveObjAs<QString>(ref, typeId));
-                } else if (m.isAngelArray(typeId)) {
-                    // array<?>
-                    store.push_back(CScriptArrayView(
-                        resolveObjAs<CScriptArray>(ref, typeId)));
-                } else if (m.isAngelDictionary(typeId)) {
-                    // dictionary
-                    store.push_back(CScriptDictionaryView(
-                        resolveObjAs<CScriptDictionary>(ref, typeId)));
-                } else {
-                    store.push_back(m.stringify_helper(ref, typeId));
-                }
-            } break;
-            }
-        }
-
-        auto fmtStr = fmt->toUtf8();
-        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            context->GetUserData(AsUserDataType::UserData_ContextMode)));
-        MessageInfo info;
-        info.mode = mode;
-        try {
-            auto r = fmt::vformat({}, fmtStr.data(), store);
-            info.type = type;
-            info.message = QString::fromStdString(r);
-        } catch (const std::exception &ex) {
-            auto sectionPtr = static_cast<QString *>(context->GetUserData(
-                AsUserDataType::UserData_Section_StringPtr));
-            if (sectionPtr) {
-                info.section = *sectionPtr;
-            }
-            info.type = MessageType::Error;
-            info.message = QString::fromStdString(ex.what());
-        }
-        m.outputMessage(info);
-    }
+int ScriptMachine::infoprint(lua_State *L) {
+    return __output(MessageType::Info, L);
 }
 
-void ScriptMachine::println(asIScriptGeneric *args) {
-    __outputln(MessageType::Print, args);
-}
-
-void ScriptMachine::warnprint(asIScriptGeneric *args) {
-    __output(MessageType::Warn, args);
-}
-
-void ScriptMachine::warnprintf(asIScriptGeneric *args) {
-    __outputfmt(MessageType::Warn, args);
-}
-
-void ScriptMachine::warnprintln(asIScriptGeneric *args) {
-    __outputln(MessageType::Warn, args);
-}
-
-void ScriptMachine::errprint(asIScriptGeneric *args) {
-    __output(MessageType::Error, args);
-}
-
-void ScriptMachine::errprintf(asIScriptGeneric *args) {
-    __outputfmt(MessageType::Error, args);
-}
-
-void ScriptMachine::errprintln(asIScriptGeneric *args) {
-    __outputln(MessageType::Error, args);
-}
-
-void ScriptMachine::infoprint(asIScriptGeneric *args) {
-    __output(MessageType::Info, args);
-}
-
-void ScriptMachine::infoprintf(asIScriptGeneric *args) {
-    __outputfmt(MessageType::Info, args);
-}
-
-void ScriptMachine::infoprintln(asIScriptGeneric *args) {
-    __outputln(MessageType::Info, args);
+int ScriptMachine::infoprintln(lua_State *L) {
+    return __outputln(MessageType::Info, L);
 }
 
 QString ScriptMachine::input() {
-    auto context = asGetActiveContext();
-    if (context) {
-        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            context->GetUserData(AsUserDataType::UserData_ContextMode)));
+    // auto context = asGetActiveContext();
+    // if (context) {
+    //     ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
+    //         context->GetUserData(AsUserDataType::UserData_ContextMode)));
 
-        auto cbs = _regcalls.value(mode);
-        if (cbs.getInputFn) {
-            return cbs.getInputFn();
-        }
-    }
+    //     auto cbs = _regcalls.value(mode);
+    //     if (cbs.getInputFn) {
+    //         return cbs.getInputFn();
+    //     }
+    // }
     return {};
 }
 
+void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
+    Q_UNUSED(gc);
+    if (L == nullptr) {
+        return;
+    }
+
+    auto d = contextData(L);
+    if (d == nullptr) {
+        lua_pushstring(L, "Thread context data not found");
+        lua_error(L);
+        return;
+    }
+
+    constexpr const auto INVALID_CONTEXT_ERROR =
+        "Thread context data is invalid";
+
+    auto lastTime = d->lastInteruptTime;
+    if (lastTime < d->startTime) {
+        lua_pushstring(L, INVALID_CONTEXT_ERROR);
+        lua_error(L);
+        return;
+    }
+    auto nowTime = AppManager::instance()->currentMSecsSinceEpoch();
+    if (nowTime < lastTime) {
+        lua_pushstring(L, INVALID_CONTEXT_ERROR);
+        lua_error(L);
+        return;
+    }
+
+    if (d->timeOutTime) {
+        if (nowTime - lastTime > d->timeOutTime) {
+            lua_pushstring(L, "Thread execution is timed-out");
+            lua_error(L);
+            return;
+        }
+    }
+
+    if (lua_isyieldable(L)) {
+        constexpr auto TIME_OUT_TIME = 10; // 10ms
+        if (nowTime - lastTime >= TIME_OUT_TIME) {
+            lua_yield(L, 0);
+        }
+        d->lastInteruptTime = nowTime;
+    }
+}
+
+void ScriptMachine::onLuauThreadCreated(lua_State *LP, lua_State *L) {
+    if (LP) {
+        // create
+        auto pd = reinterpret_cast<LuauThreadData *>(lua_getthreaddata(LP));
+        if (pd) {
+            lua_setthreaddata(L, pd);
+        }
+        luaL_sandboxthread(L);
+    } else {
+        // destory
+        lua_setthreaddata(L, nullptr);
+    }
+}
+
 void ScriptMachine::outputMessage(const MessageInfo &info) {
-    auto cbs = _regcalls.value(info.mode);
+    auto cbs = _regcalls.value(consoleModeIdx(info.mode));
     if (cbs.printMsgFn) {
         cbs.printMsgFn(info);
     }
@@ -581,472 +353,182 @@ QString ScriptMachine::getGlobalDecls() const {
         return _cachedGlobalStrs;
     }
 
-    auto mod = module(ScriptMachine::Interactive);
-    if (mod == nullptr) {
-        return {};
-    }
+    // auto ctx = context(ScriptMachine::Interactive);
 
-    auto total = mod->GetGlobalVarCount();
-    for (asUINT n = 0; n < total; n++) {
-        auto decl = mod->GetGlobalVarDeclaration(n, true);
-        _cachedGlobalStrs.append(decl).append(';');
-    }
+    // auto total = mod->GetGlobalVarCount();
+    // for (asUINT n = 0; n < total; n++) {
+    //     auto decl = mod->GetGlobalVarDeclaration(n, true);
+    //     _cachedGlobalStrs.append(decl).append(';');
+    // }
     return _cachedGlobalStrs;
 }
 
-int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
-                                 const QString &params, int timeout) {
-    if (Utilities::isRoot()) {
-        auto ctx = asGetActiveContext();
-        if (ctx) {
-            ctx->SetException(
-                "Running this with root privileges is not allowed");
-        }
-        return -1;
-    }
-    QProcess ps;
-    ps.setProgram(exe);
-    ps.setArguments(QProcess::splitCommand(params));
-    ps.start();
-    if (ps.waitForFinished(timeout)) {
-        out = QString::fromUtf8(ps.readAllStandardOutput());
-        return ps.exitCode();
-    } else {
-        ps.kill();
-        return -1;
-    }
-}
-
-QString ScriptMachine::stringify(void *ref, int typeId) {
-    return QString::fromStdString(stringify_helper(ref, typeId));
-}
-
-std::string ScriptMachine::getAsTypeName(int typeId) {
-    return getAsTypeNameById(_engine, typeId);
-}
-
-std::string ScriptMachine::stringify_helper(const void *ref, int typeId) {
-    ASSERT(ref && typeId);
-    if (ref == nullptr) {
-        return {};
-    }
-
-    switch (typeId & asTYPEID_MASK_SEQNBR) {
-    case asTYPEID_BOOL:
-        return fmt::to_string(*static_cast<const bool *>(ref));
-    case asTYPEID_INT8:
-        return fmt::to_string(*static_cast<const qint8 *>(ref));
-    case asTYPEID_INT16:
-        return fmt::to_string(*static_cast<const qint16 *>(ref));
-    case asTYPEID_INT32:
-        return fmt::to_string(*static_cast<const qint32 *>(ref));
-    case asTYPEID_INT64:
-        return fmt::to_string(*static_cast<const qint64 *>(ref));
-    case asTYPEID_UINT8:
-        return fmt::to_string(*static_cast<const quint8 *>(ref));
-    case asTYPEID_UINT16:
-        return fmt::to_string(*static_cast<const quint16 *>(ref));
-    case asTYPEID_UINT32:
-        return fmt::to_string(*static_cast<const quint32 *>(ref));
-    case asTYPEID_UINT64:
-        return fmt::to_string(*static_cast<const quint64 *>(ref));
-    case asTYPEID_FLOAT:
-        return fmt::to_string(*static_cast<const float *>(ref));
-    case asTYPEID_DOUBLE:
-        return fmt::to_string(*static_cast<const double *>(ref));
-    }
-
-    if (isAngelChar(typeId)) {
-        // char
-        auto pch = resolveObjAs<QChar>(ref, typeId);
-        return QString(*pch).toStdString();
-    } else if (isAngelString(typeId)) {
-        // string
-        return resolveObjAs<QString>(ref, typeId)->toStdString();
-    } else if (isAngelArray(typeId)) {
-        // array<?>
-        return fmt::to_string(
-            CScriptArrayView(resolveObjAs<CScriptArray>(ref, typeId)));
-    } else if (isAngelDictionary(typeId)) {
-        // dictionary
-        return fmt::to_string(CScriptDictionaryView(
-            resolveObjAs<CScriptDictionary>(ref, typeId)));
-    } else if (isAngelDicValue(typeId)) {
-        // dictonaryValue
-        auto dicv = resolveObjAs<CScriptDictValue>(ref, typeId);
-        return stringify_helper(const_cast<void *>(dicv->GetAddressOfValue()),
-                                dicv->GetTypeId());
-    } else if (isAngelAny(typeId)) {
-        // any
-        auto obj = resolveObjAs<CScriptAny>(ref, typeId);
-        return stringify_helper(const_cast<void *>(obj->GetAddressOfValue()),
-                                obj->GetTypeId());
-    }
-
-    // if type has toString() function
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        auto info = _engine->GetTypeInfoById(typeId);
-        if (info) {
-            auto func = info->GetMethodByDecl("string toString() const");
-            if (func) {
-                ctx->PushState();
-                ctx->Prepare(func);
-                ctx->SetObject(
-                    const_cast<void *>(resolveObjAs<void>(ref, typeId)));
-                ctx->Execute();
-                auto rstr = *static_cast<QString *>(ctx->GetReturnObject());
-                ctx->PopState();
-                return rstr.toStdString();
-            }
-        }
-    }
-
-    return fmt::format(FMT_STRING("{}<#{}>"), getAsTypeName(typeId),
-                       fmt::ptr(ref));
-}
-
-bool ScriptMachine::executeScript(
-    ConsoleMode mode, const QString &script, bool isInDebug,
-    std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
-        sections,
-    const std::function<void(bool)> &onFinished) {
+void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
+                                  bool isInDebug,
+                                  const std::function<void(bool)> &onFinished) {
     Q_ASSERT(onFinished);
-    if (_engine == nullptr) {
+    if (_main == nullptr) {
         Logger::warning(QStringLiteral("The script engine is not initialized"));
         onFinished(true);
-        return false;
+        return;
     }
 
     ASSERT(mode != Interactive);
     // script-running is not allowed in interactive mode
     if (mode == Interactive) {
         onFinished(true);
-        return false;
+        return;
+    }
+
+    if (fileName.isEmpty()) {
+        onFinished(true);
+        return;
     }
 
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
         onFinished(true);
-        return false;
+        return;
     }
 
-    if (script.isEmpty()) {
-        onFinished(true);
-        return true;
-    }
-
+    auto ctx = context(mode);
     if (isRunning(mode)) {
         onFinished(false);
-        return false;
+        return;
     }
+
+    QFile script(fileName);
+    if (!script.open(QFile::ReadOnly | QFile::Text)) {
+        onFinished(true);
+        return;
+    }
+
+    // TODO: limit source code size
+    auto source = script.readAll();
 
     // Compile the script
-    auto mod = createModuleIfNotExist(mode);
-    if (mod == nullptr) {
-        onFinished(true);
-        return false;
-    }
-
-    asPWORD isDbg = 0;
+    auto chunkname = ('@' + fileName).toUtf8();
+    Luau::CompileOptions opts;
     if (mode == Scripting) {
         if (isInDebug) {
-            isDbg = 1;
+            opts.debugLevel = 2;
+            opts.optimizationLevel = 1;
+        } else {
+            opts.debugLevel = 0;
+            opts.optimizationLevel = 2;
         }
     }
-    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, isDbg == 0);
 
-    asBuilder builder(_engine);
-    const auto marcos = PluginSystem::instance().scriptMarcos();
-    for (const auto &m : marcos) {
-        builder.defineMacroWord(m);
-    }
+    auto T = ctx->state;
+    auto bytecode = Luau::compile(source.data(), opts);
+    if (luau_load(T, chunkname.data(), bytecode.data(), bytecode.size(), 0) ==
+        LUA_OK) {
+        if (!isInDebug) {
+            Luau::CodeGen::compile(T, -1, {});
+        }
+    } else {
+        size_t len;
+        const char *msg = lua_tolstring(T, -1, &len);
 
-    // Set the pragma callback so we can detect
-    builder.setPragmaCallback(&ScriptMachine::pragmaCallback);
-    builder.setErrorHandler(
-        [this, mode](const AsPreprocesser::PreprocError &error) {
-            MessageInfo info;
-            info.mode = mode;
-            info.row = error.line;
-            info.col = error.column;
-            info.message = error.message;
-            info.section = error.file;
-
-            switch (error.severity) {
-            case AsPreprocesser::Severity::Info:
-                info.type = MessageType::Info;
-                break;
-            case AsPreprocesser::Severity::Warning:
-                info.type = MessageType::Warn;
-                break;
-            case AsPreprocesser::Severity::Error:
-                info.type = MessageType::Error;
-                break;
-            }
-
-            outputMessage(info);
-        });
-
-    asPWORD umode = asPWORD(mode);
-    _engine->SetUserData(reinterpret_cast<void *>(umode),
-                         AsUserDataType::UserData_ContextMode);
-
-    auto r = builder.loadSectionFromFile(script);
-    if (r < 0) {
         MessageInfo info;
-        info.mode = mode;
-        info.section = script;
-        info.message = QStringLiteral("Script failed to pre-processed");
         info.type = MessageType::Error;
-        outputMessage(info);
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished(true);
-        return false;
-    }
-
-    r = builder.build(mod);
-    if (r < 0) {
-        MessageInfo info;
         info.mode = mode;
-        info.section = script;
-        info.message = QStringLiteral("Script failed to build");
-        info.type = MessageType::Error;
+        info.message = QString::fromUtf8(msg, len);
         outputMessage(info);
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        lua_pop(T, 1);
         onFinished(true);
-        return false;
-    }
-
-    // Find the main function
-    asIScriptFunction *func = mod->GetFunctionByDecl("int main()");
-    if (func == nullptr) {
-        // Try again with "void main()"
-        func = mod->GetFunctionByDecl("void main()");
-    }
-
-    if (func == nullptr) {
-        MessageInfo info;
-        info.mode = mode;
-        info.section = script;
-        info.message =
-            QStringLiteral("Cannot find 'int main()' or 'void main()'");
-        info.type = MessageType::Error;
-        outputMessage(info);
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished(true);
-        return false;
-    }
-
-    if (sections) {
-        auto data = builder.scriptData();
-        sections(data);
+        return;
     }
 
     if (isInDebug) {
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.mode = mode;
-        info.section = script;
+        info.section = fileName;
         info.message = QStringLiteral("Debugging, waiting for commands.");
         info.type = MessageType::Info;
         outputMessage(info);
     }
 
-    // Set up a context to execute the script
-    // The context manager will request the context from the
-    // pool, which will automatically attach the debugger
-    auto ctxMgr = new CContextMgr;
-    asIScriptContext *ctx = ctxMgr->SetMainFunction(_engine, func, mode);
-    _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-    if (ctx == nullptr) {
-        MessageInfo info;
-        info.mode = mode;
-        info.section = script;
-        info.message = QStringLiteral("Cannot prepare context for execution.");
-        info.type = MessageType::Error;
-        outputMessage(info);
-        delete ctxMgr;
-        onFinished(true);
-        return false;
-    }
-
-    ctxMgr->setScriptName(script);
-
     if (mode == Background) {
         MessageInfo info;
         info.mode = mode;
-        info.message = QStringLiteral("Run > ") + script;
+        info.message = QStringLiteral("Run > ") + fileName;
         info.type = MessageType::ExecInfo;
         outputMessage(info);
     }
 
-    mod->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(
-                         AppManager::instance()->currentMSecsSinceEpoch()),
-                     AsUserDataType::UserData_Timer);
-    auto timeOutRaw = SettingManager::instance().scriptTimeout();
-    auto timeOut = asPWORD(timeOutRaw) * 60000; // min -> ms
-    ctx->SetUserData(reinterpret_cast<void *>(timeOut),
-                     AsUserDataType::UserData_TimeOut);
+    // mod->SetUserData(reinterpret_cast<void *>(isDbg),
+    //                  AsUserDataType::UserData_isDbg);
+    // ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+    //                  AsUserDataType::UserData_isDbg);
 
-    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
-                              asCALL_THISCALL);
+    auto d = ctx->data;
+    Q_ASSERT(d);
+    d->startTime = AppManager::instance()->currentMSecsSinceEpoch();
+    d->lastInteruptTime = d->startTime;
+    // min -> ms
+    d->timeOutTime =
+        quint64(SettingManager::instance().scriptTimeout()) * 60000;
 
     // collect the handle info
     auto &api = PluginSystem::instance();
     auto handles = api.scriptHandles();
 
-    _ctx[mode] = ctx;
-    _ctxMgr[mode] = ctxMgr;
-
-    auto runner = new ScriptRunable(ctxMgr, mode);
+    auto runner = new LuauScheduler(ctx);
     QObject::connect(
-        runner, &QObject::destroyed, runner,
-        [this, ctx, script, mode, handles, func, mod, onFinished]() {
-            _ctx[mode] = nullptr;
+        runner, &LuauScheduler::finished, runner,
+        [this, runner, mode, fileName, handles, onFinished](int status) {
+            auto &&R = _ctx[consoleModeIdx(mode)];
+            auto T = R.state;
 
-            // Check if the main script finished normally
-            int r = ctx->GetState();
-            if (r != asEXECUTION_FINISHED) {
-                if (r == asEXECUTION_EXCEPTION) {
-                    r = -1;
-                } else if (r == asEXECUTION_ABORTED) {
+            if (status != LUA_OK) {
+                auto err = runner->executeError();
+                if (!err.isEmpty()) {
                     MessageInfo info;
                     info.mode = mode;
-                    info.section = script;
-                    info.message = QStringLiteral("The script was aborted");
+                    info.section = fileName;
+                    info.message = err;
                     info.type = MessageType::Error;
                     outputMessage(info);
-                    r = -1;
-                } else {
-                    auto e = QMetaEnum::fromType<asEContextState>();
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.section = script;
-                    info.message =
-                        QStringLiteral("The script terminated unexpectedly (") +
-                        QString::fromLatin1(e.valueToKey(r)) +
-                        QStringLiteral(")");
-                    info.type = MessageType::Error;
-                    outputMessage(info);
-                    r = -1;
                 }
-            } else {
-                // Get the return value from the script
-                if (func->GetReturnTypeId() == asTYPEID_INT32) {
-                    r = *(int *)ctx->GetAddressOfReturnValue();
-                } else
-                    r = 0;
             }
 
             MessageInfo info;
             info.mode = mode;
-            info.section = script;
-            info.message =
-                QStringLiteral("The script exited with ") + QString::number(r);
+            info.section = fileName;
+            info.message = QStringLiteral("The script exited with ") +
+                           QString::number(status);
             info.type = MessageType::ExecInfo;
             outputMessage(info);
 
-            // Return the context after retrieving the return value
-            auto mgr = _ctxMgr[mode];
-            mgr->DoneWithContext(ctx);
-            _ctxMgr[mode] = nullptr;
-
-            // Before leaving, allow the engine to clean up remaining objects by
-            // discarding the module and doing a full garbage collection so that
-            // this can also be debugged if desired
-
+            // Before leaving, allow the engine to clean up
+            // remaining objects by discarding the module and doing
+            // a full garbage collection so that this can also be
+            // debugged if desired
             auto &api = PluginSystem::instance();
             api.cleanScriptHandles(handles);
 
-            auto isDbg = mod->GetUserData(AsUserDataType::UserData_isDbg);
-            if (isDbg) {
-                _debugger->reset();
-            }
+            // auto isDbg =
+            //     mod->GetUserData(AsUserDataType::UserData_isDbg);
+            // if (isDbg) {
+            //     _debugger->reset();
+            // }
 
-            // Before leaving, allow the engine to clean up remaining objects by
-            // discarding the module and doing a full garbage collection so that
-            // this can also be debugged if desired
-            mod->Discard();
             onFinished(true);
         });
     runner->start();
-    return true;
 }
 
 void ScriptMachine::abortDbgScript() {
-    if (_debugger) {
-        abortScript(ConsoleMode::Scripting);
-        _debugger->Resume();
-    }
+    // if (_debugger) {
+    abortScript(ConsoleMode::Scripting);
+    //     _debugger->Resume();
+    // }
 }
 
 void ScriptMachine::abortScript(ConsoleMode mode) {
-    auto ctxMgr = _ctxMgr[mode];
-    if (ctxMgr) {
-        ctxMgr->AbortAll();
-    }
-}
-
-void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
-    ConsoleMode mode;
-    auto ins = static_cast<ScriptMachine *>(param);
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
-    } else {
-        mode = ConsoleMode(reinterpret_cast<asPWORD>(
-            ins->engine()->GetUserData(AsUserDataType::UserData_ContextMode)));
-    }
-
-    MessageType t = MessageType::Print;
-    switch (msg->type) {
-    case asMSGTYPE_ERROR:
-        t = MessageType::Error;
-        break;
-    case asMSGTYPE_WARNING:
-        t = MessageType::Warn;
-        break;
-    case asMSGTYPE_INFORMATION:
-        t = MessageType::Info;
-        break;
-    }
-
-    MessageInfo info;
-    info.mode = mode;
-    info.row = msg->row;
-    info.col = msg->col;
-    info.section = QString::fromUtf8(msg->section);
-    info.message = QString::fromUtf8(msg->message);
-    info.type = t;
-    ins->outputMessage(info);
-}
-
-void ScriptMachine::translateAppException(asIScriptContext *ctx,
-                                          void *userParam) {
-    Q_UNUSED(userParam);
-    try {
-        // Retrow the original exception so we can catch it again
-        throw;
-    } catch (const std::exception &e) {
-        // Tell the VM the type of exception that occurred
-        ctx->SetException(e.what());
-    } catch (...) {
-        // The callback must not allow any exception to be thrown, but it is not
-        // necessary to explicitly set an exception string if the default
-        // exception string is sufficient
-    }
-}
-
-void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *) {
-    // do nothing
-    // UserData_API is readonly and it will delete later by its allocator
-    // UserData_PluginFn is just an id, not a valid pointer to data
+    context(mode)->requestStop = true;
 }
 
 ScriptMachine &ScriptMachine::instance() {
@@ -1056,449 +538,71 @@ ScriptMachine &ScriptMachine::instance() {
 
 ScriptMachine::ScriptMachine() {}
 
-asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
-    if (isModuleExists(mode)) {
-        return nullptr;
-    }
-
-    asIScriptModule *mod = nullptr;
-
-    switch (mode) {
-    case Interactive:
-        mod = nullptr;
-    case Scripting:
-        mod = _engine->GetModule("WINGSCRIPT", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x1);
-        break;
-    case Background:
-        mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x1);
-        break;
-    default:
-        break;
-    }
-
-    return mod;
+LuauThread *ScriptMachine::context(ConsoleMode mode) const {
+    Q_ASSERT(mode > Console_Begin && mode < Console_End);
+    return &_ctx[consoleModeIdx(mode)];
 }
 
-asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
-    asIScriptModule *mod = nullptr;
-    switch (mode) {
-    case Interactive:
-        mod = _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
-        mod->SetAccessMask(0x1);
-        break;
-    case Scripting:
-        mod = _engine->GetModule("WINGSCRIPT", asGM_CREATE_IF_NOT_EXISTS);
-        mod->SetAccessMask(0x1);
-        break;
-    case Background:
-        mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
-        mod->SetAccessMask(0x1);
-        break;
-    default:
-        break;
-    }
-
-    return mod;
+lua_State *ScriptMachine::contextState(ConsoleMode mode) const {
+    Q_ASSERT(mode > Console_Begin && mode < Console_End);
+    return _ctx[consoleModeIdx(mode)].state;
 }
 
-asIScriptModule *ScriptMachine::module(ConsoleMode mode) const {
-    switch (mode) {
-    case Interactive:
-        return _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
-    case Scripting:
-        return _engine->GetModule("WINGSCRIPT", asGM_ONLY_IF_EXISTS);
-    case Background:
-        return _engine->GetModule("WINGSRV", asGM_ONLY_IF_EXISTS);
-    default:
-        break;
-    }
-    return nullptr;
+LuauThreadData *ScriptMachine::contextData(ConsoleMode mode) const {
+    auto ctx = contextState(mode);
+    return contextData(ctx);
 }
 
-bool ScriptMachine::isModuleExists(ConsoleMode mode) {
-    return module(mode) != nullptr;
-}
+// void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("clipboard");
+//     ASSERT(r >= 0);
 
-asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
-                                                        void *param) {
-    asIScriptContext *ctx = nullptr;
-    auto p = reinterpret_cast<ScriptMachine *>(param);
-    ASSERT(p);
+//     // The string type must be available
+//     ASSERT(engine->GetTypeInfoByDecl("string"));
 
-    // Check if there is a free context available in the pool
-    if (p->_ctxPool.isEmpty()) {
-        // No free context was available so we'll have to create a new one
-        ctx = engine->CreateContext();
-    } else {
-        ctx = p->_ctxPool.dequeue();
-    }
+//     r = engine->RegisterGlobalFunction("void setText(const string &in text)",
+//                                        asFUNCTION(clip_setText),
+//                                        asCALL_CDECL);
+//     ASSERT(r >= 0);
 
-    auto mode = engine->GetUserData(AsUserDataType::UserData_ContextMode);
-    ctx->SetUserData(mode, AsUserDataType::UserData_ContextMode);
-    // Attach the debugger
-    p->checkDebugger(ctx);
+//     r = engine->RegisterGlobalFunction("string text()",
+//                                        asFUNCTION(clip_getText),
+//                                        asCALL_CDECL);
+//     ASSERT(r >= 0);
 
-    return ctx;
-}
+//     r = engine->RegisterGlobalFunction("void setBinary(const uint8[]@ data)",
+//                                        asFUNCTION(clip_setBinary),
+//                                        asCALL_CDECL);
+//     ASSERT(r >= 0);
 
-void ScriptMachine::lineCallback(asIScriptContext *ctx, void *) {
-    if (ctx->GetUserData(AsUserDataType::UserData_NeedYeild)) {
-        // return the control
-        ctx->Suspend();
-    }
-}
+//     r = engine->RegisterGlobalFunction(
+//         "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
+//     ASSERT(r >= 0);
 
-void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
-                                          asIScriptContext *ctx, void *param) {
-    Q_UNUSED(engine);
-
-    if (ctx) {
-        if (ctx->GetState() == asEXECUTION_SUSPENDED) {
-            ctx->Abort();
-        }
-
-        // Unprepare the context to free any objects it may still hold (e.g.
-        // return value) This must be done before making the context available
-        // for re-use, as the clean up may trigger other script executions, e.g.
-        // if a destructor needs to call a function.
-        if (ctx->Unprepare() < 0) {
-            ctx->Release();
-            return;
-        }
-
-        // reset userdata
-        for (int i = AsUserDataType::UserData_CopyAttr_Begin;
-             i < AsUserDataType::UserData_CopyAttr_End; ++i) {
-            ctx->SetUserData(0, i);
-        }
-
-        auto p = reinterpret_cast<ScriptMachine *>(param);
-        ASSERT(p);
-
-        // Place the context into the pool for when it will be needed again
-        p->_ctxPool.enqueue(ctx);
-    }
-}
-
-void ScriptMachine::debug_break() {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto &m = ScriptMachine::instance();
-        auto isDbg = reinterpret_cast<asPWORD>(
-            ctx->GetUserData(AsUserDataType::UserData_isDbg));
-        if (isDbg && m._ctx[ConsoleMode::Scripting] == ctx) {
-            m._debugger->DebugBreak(ctx);
-        } else {
-            ctx->SetException("debug::setBreak can be only used in scripting");
-        }
-    }
-}
-
-quint64 ScriptMachine::debug_elapsedTime() {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        return AppManager::instance()->currentMSecsSinceEpoch() -
-               reinterpret_cast<quint64>(
-                   ctx->GetUserData(AsUserDataType::UserData_Timer));
-    }
-    return 0;
-}
-
-QString ScriptMachine::debug_backtrace() {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        auto &m = ScriptMachine::instance();
-        if (m._ctx[ConsoleMode::Interactive] == ctx) {
-            ctx->SetException("debug::break cannot be used in console");
-            return {};
-        }
-
-        auto cs = ctx->GetCallstackSize();
-
-        QString ret;
-        for (asUINT i = 0; i < cs; i++) {
-            auto f = ctx->GetFunction(i);
-            int col;
-            const char *section;
-            int row = ctx->GetLineNumber(i, &col, &section);
-            ret.append(QStringLiteral("%1 %2[%3:%4]\n")
-                           .arg(QString::fromUtf8(
-                                    f->GetDeclaration(true, false, true)),
-                                QString::fromUtf8(section))
-                           .arg(row)
-                           .arg(col));
-        }
-
-        return ret;
-    }
-
-    return {};
-}
-
-PragmaResult ScriptMachine::pragmaCallback(const QString &pragmaText,
-                                           AsPreprocesser *builder,
-                                           const QString &sectionname) {
-    asIScriptEngine *engine = builder->getEngine();
-
-    // Filter the pragmaText so only what is of interest remains
-    // With this the user can add comments and use different whitespaces
-    // without affecting the result
-    asUINT pos = 0;
-    asUINT length = 0;
-    QStringList tokens;
-    auto pcodes = pragmaText.toUtf8();
-    while (pos < pragmaText.size()) {
-        asETokenClass tokenClass =
-            engine->ParseToken(pcodes.data() + pos, 0, &length);
-        if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
-            tokenClass == asTC_VALUE) {
-            auto token = pcodes.mid(pos, length);
-            tokens << QString::fromUtf8(token);
-        }
-        if (tokenClass == asTC_UNKNOWN)
-            return {};
-        pos += length;
-    }
-
-    auto pn = tokens.takeFirst();
-    return PluginSystem::instance().processPragma(sectionname, pn, tokens);
-}
-
-void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
-    // all modules can access
-    engine->SetDefaultAccessMask(0x3);
-
-    auto r = engine->RegisterTypedef("byte", "uint8"); // register alias
-    ASSERT(r >= 0);
-
-    RegisterScriptArray(engine, true);
-    RegisterQString(engine);
-    RegisterScriptRegex(engine);
-    RegisterQStringUtils(engine);
-    RegisterQStringRegExSupport(engine);
-
-    r = engine->SetDefaultNamespace("math");
-    ASSERT(r >= 0);
-
-    RegisterScriptMath(engine);
-    RegisterScriptMathComplex(engine);
-    engine->SetDefaultNamespace("");
-
-    RegisterScriptWeakRef(engine);
-    RegisterScriptAny(engine);
-    RegisterScriptDictionary(engine);
-    RegisterScriptGrid(engine);
-    RegisterScriptHandle(engine);
-    RegisterColor(engine);
-    RegisterQJson(engine);
-    RegisterEnv(engine);
-    RegisterScriptFile(engine);
-    RegisterScriptDateTime(engine);
-    RegisterScriptFileSystem(engine);
-    RegisterScriptUrl(engine);
-    RegisterScriptCrypto(engine);
-    RegisterASReflection(engine);
-    RegisterOptBox(engine);
-
-    engine->SetDefaultAccessMask(0x1);
-    registerExceptionRoutines(engine);
-    registerEngineAssert(engine);
-    registerEngineClipboard(engine);
-    registerEngineDebug(engine);
-
-    // cache typeids and typeinfos we all must use
-    auto type = engine->GetTypeInfoByName("char");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_CharTypeInfo);
-
-    type = engine->GetTypeInfoByName("string");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_StringTypeInfo);
-
-    type = engine->GetTypeInfoByName("datetime");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_DateTimeTypeInfo);
-
-    type = engine->GetTypeInfoByName("array");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_ArrayTypeInfo);
-
-    type = engine->GetTypeInfoByName("dictionary");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_DictionaryTypeInfo);
-
-    type = engine->GetTypeInfoByName("dictionaryValue");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_DictionaryValueTypeInfo);
-
-    type = engine->GetTypeInfoByName("any");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_AnyTypeInfo);
-
-    type = engine->GetTypeInfoByName("json::value");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_JsonValueTypeInfo);
-
-    type = engine->GetTypeInfoByDecl("array<byte>");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_ByteArrayTypeInfo);
-
-    type = engine->GetTypeInfoByDecl("array<string>");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_StringListTypeInfo);
-
-    type = engine->GetTypeInfoByDecl("array<char>");
-    ASSERT(type);
-    engine->SetUserData(type, AsUserDataType::UserData_CharArrayTypeInfo);
-}
-
-void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
-    int r;
-
-    // The string type must be available
-    ASSERT(engine->GetTypeInfoByDecl("string"));
-
-    r = engine->RegisterGlobalFunction("void assert(bool expression)",
-                                       asFUNCTION(scriptAssert), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction(
-        "void assert_x(bool expression, const string &in msg)",
-        asFUNCTION(scriptAssert_X), asCALL_CDECL);
-    ASSERT(r >= 0);
-}
-
-void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("clipboard");
-    ASSERT(r >= 0);
-
-    // The string type must be available
-    ASSERT(engine->GetTypeInfoByDecl("string"));
-
-    r = engine->RegisterGlobalFunction("void setText(const string &in text)",
-                                       asFUNCTION(clip_setText), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction("string text()",
-                                       asFUNCTION(clip_getText), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction("void setBinary(const uint8[]@ data)",
-                                       asFUNCTION(clip_setBinary),
-                                       asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction(
-        "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    engine->SetDefaultNamespace("");
-}
-
-void ScriptMachine::registerEngineDebug(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("debug");
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction("void setBreak()",
-                                       asFUNCTION(debug_break), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction(
-        "uint64 elapsedTime()", asFUNCTION(debug_elapsedTime), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    r = engine->RegisterGlobalFunction(
-        "string backtrace()", asFUNCTION(debug_backtrace), asCALL_CDECL);
-    ASSERT(r >= 0);
-
-    engine->SetDefaultNamespace("");
-}
+//     engine->SetDefaultNamespace("");
+// }
 
 void ScriptMachine::registerCallBack(ConsoleMode mode,
                                      const RegCallBacks &callbacks) {
-    _regcalls.insert(mode, callbacks);
-}
-
-bool ScriptMachine::isAngelChar(int typeID) const {
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
-    return typeID == type->GetTypeId();
-}
-
-bool ScriptMachine::isAngelString(int typeID) const {
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_StringTypeInfo));
-    return typeID == type->GetTypeId();
-}
-
-bool ScriptMachine::isAngelArray(int typeID) const {
-    if (typeID & asTYPEID_TEMPLATE) {
-        auto t = _engine->GetTypeInfoById(typeID);
-        t = _engine->GetTypeInfoByName(t->GetName());
-        ASSERT(t);
-        typeID = t->GetTypeId();
-    }
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_ArrayTypeInfo));
-    return typeID == type->GetTypeId();
-}
-
-bool ScriptMachine::isAngelDictionary(int typeID) const {
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_DictionaryTypeInfo));
-    return typeID == type->GetTypeId();
-}
-
-bool ScriptMachine::isAngelDicValue(int typeID) const {
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_DictionaryValueTypeInfo));
-    return typeID == type->GetTypeId();
-}
-
-bool ScriptMachine::isAngelAny(int typeID) const {
-    auto type = static_cast<asITypeInfo *>(
-        _engine->GetUserData(AsUserDataType::UserData_AnyTypeInfo));
-    return typeID == type->GetTypeId();
+    _regcalls[consoleModeIdx(mode)] = callbacks;
 }
 
 void ScriptMachine::setFileEnableOverwrite(bool b) {
-    CScriptFile::ENABLE_OVERWRITE = b;
+    // CScriptFile::ENABLE_OVERWRITE = b;
 }
 
 void ScriptMachine::setFileSystemWrite(bool b) {
-    CScriptFileSystem::ENABLE_WRITE = b;
+    // CScriptFileSystem::ENABLE_WRITE = b;
 }
 
 bool ScriptMachine::fileEnableOverwrite() const {
-    return CScriptFile::ENABLE_OVERWRITE;
+    // return CScriptFile::ENABLE_OVERWRITE;
+    return false;
 }
 
 bool ScriptMachine::fileSystemWrite() const {
-    return CScriptFileSystem::ENABLE_WRITE;
-}
-
-void ScriptMachine::scriptAssert(bool b) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        if (!b) {
-            ctx->SetException("Assert failed", false);
-        }
-    }
-}
-
-void ScriptMachine::scriptAssert_X(bool b, const QString &msg) {
-    auto ctx = asGetActiveContext();
-    if (ctx) {
-        if (!b) {
-            auto m = msg;
-            if (m.isEmpty()) {
-                m = QStringLiteral("Assert failed");
-            }
-            ctx->SetException(m.toUtf8(), false);
-        }
-    }
+    // return CScriptFileSystem::ENABLE_WRITE;
+    return false;
 }
 
 void ScriptMachine::clip_setText(const QString &text) {
@@ -1506,270 +610,1071 @@ void ScriptMachine::clip_setText(const QString &text) {
 }
 
 void ScriptMachine::clip_setBinary(const CScriptArray &array) {
-    QByteArray buffer;
-    buffer.reserve(array.GetSize());
-    array.AddRef();
-    for (asUINT i = 0; i < array.GetSize(); ++i) {
-        auto item = reinterpret_cast<const asBYTE *>(array.At(i));
-        buffer.append(*item);
-    }
-    array.Release();
+    // QByteArray buffer;
+    // buffer.reserve(array.GetSize());
+    // array.AddRef();
+    // for (asUINT i = 0; i < array.GetSize(); ++i) {
+    //     auto item = reinterpret_cast<const asBYTE *>(array.At(i));
+    //     buffer.append(*item);
+    // }
+    // array.Release();
 
-    auto c = qApp->clipboard();
-    auto mime = new QMimeData;
-    mime->setData(QStringLiteral("application/octet-stream"),
-                  buffer); // don't use setText()
-    c->setMimeData(mime);
+    // auto c = qApp->clipboard();
+    // auto mime = new QMimeData;
+    // mime->setData(QStringLiteral("application/octet-stream"),
+    //               buffer); // don't use setText()
+    // c->setMimeData(mime);
 }
 
 QString ScriptMachine::clip_getText() { return qApp->clipboard()->text(); }
 
 CScriptArray *ScriptMachine::clip_getBinary() {
-    QClipboard *c = qApp->clipboard();
+    // QClipboard *c = qApp->clipboard();
 
-    QByteArray data;
-    auto d = c->mimeData();
-    data = d->data(QStringLiteral("application/octet-stream"));
+    // QByteArray data;
+    // auto d = c->mimeData();
+    // data = d->data(QStringLiteral("application/octet-stream"));
 
-    auto engine = ScriptMachine::instance().engine();
-    auto len = data.size();
-    auto arr =
-        CScriptArray::Create(engine->GetTypeInfoByDecl("array<uint8>"), len);
-    arr->AddRef();
-    for (int i = 0; i < len; ++i) {
-        auto addr = arr->At(i);
-        *reinterpret_cast<char *>(addr) = data.at(i);
-    }
-    arr->Release();
-    return arr;
-}
-
-void ScriptMachine::scriptThrow(const QString &msg) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        ctx->SetException(msg.toUtf8());
-    }
+    // auto engine = ScriptMachine::instance().context();
+    // auto len = data.size();
+    // auto arr =
+    //     CScriptArray::Create(engine->GetTypeInfoByDecl("array<uint8>"), len);
+    // arr->AddRef();
+    // for (int i = 0; i < len; ++i) {
+    //     auto addr = arr->At(i);
+    //     *reinterpret_cast<char *>(addr) = data.at(i);
+    // }
+    // arr->Release();
+    // return arr;
+    return nullptr;
 }
 
 bool ScriptMachine::isDebugMode(ConsoleMode mode) {
-    if (mode == Scripting) {
-        auto mod = module(mode);
-        if (mod) {
-            return reinterpret_cast<asPWORD>(
-                mod->GetUserData(AsUserDataType::UserData_isDbg));
-        }
-    }
+    // if (mode == Scripting) {
+    //     auto mod = module(mode);
+    //     if (mod) {
+    //         return reinterpret_cast<asPWORD>(
+    //             mod->GetUserData(AsUserDataType::UserData_isDbg));
+    //     }
+    // }
 
     return false;
 }
 
-asIScriptEngine *ScriptMachine::engine() const { return _engine; }
-
-asDebugger *ScriptMachine::debugger() const { return _debugger; }
+// asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                                 const std::function<void(bool)> &onFinished) {
+
+#define RETURN_NEED_MORE_CODE                                                  \
+    onFinished(false);                                                         \
+    return
+
+#define RETURN_DEFAULT                                                         \
+    onFinished(true);                                                          \
+    return
+
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
-        onFinished(true);
-        return;
+        RETURN_DEFAULT;
     }
 
-    if (_engine == nullptr) {
+    if (_main == nullptr) {
         Logger::warning(QStringLiteral("The script engine is not initialized"));
-        onFinished(true);
-        return;
+        RETURN_DEFAULT;
     }
 
     if (code.isEmpty()) {
-        onFinished(true);
-        return;
+        RETURN_DEFAULT;
     }
+
+    auto ctx = context(mode);
 
     if (isRunning(mode)) {
-        onFinished(false);
-        return;
+        RETURN_DEFAULT;
     }
 
-    asIScriptModule *mod = createModuleIfNotExist(mode);
-    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
+    auto T = ctx->state;
+    auto source = code.toUtf8();
+    auto bytecode = Luau::compile(source.data(), Luau::CompileOptions());
 
-    // first, valid the input
-    auto ccode = code.toUtf8();
-    antlr4::ANTLRInputStream input(ccode.constData(), ccode.length());
-    AngelscriptConsoleLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-
-    AngelscriptConsoleParser parser(&tokens);
-    parser.removeErrorListeners();
-    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-
-    AngelScriptConsoleVisitor visitor(tokens);
-    bool isDecl = true;
-    try {
-        visitor.visit(parser.script());
-    } catch (...) {
-        isDecl = false;
-    }
-
-    asPWORD umode = asPWORD(mode);
-    _engine->SetUserData(reinterpret_cast<void *>(umode),
-                         AsUserDataType::UserData_ContextMode);
-    if (isDecl) {
-        auto decls = visitor.declCode();
-        if (!decls.isEmpty()) {
-            const auto codes = visitor.declCode();
-            for (const auto &s : codes) {
-                auto r = mod->CompileGlobalVar(nullptr, s, 0);
-                if (r < 0) {
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.message =
-                        QStringLiteral("Invalid global variable declaration:") +
-                        QString::fromUtf8(s);
-                    info.type = MessageType::Error;
-                    outputMessage(info);
-                }
-            }
-            if (mode == ScriptMachine::Interactive) {
-                _cachedGlobalStrs.clear();
-            }
+    if (luau_load(T, "=stdin", bytecode.data(), bytecode.size(), 0) != LUA_OK) {
+        size_t len;
+        const char *msg = lua_tolstring(T, -1, &len);
+        auto error = QString::fromUtf8(msg, len);
+        lua_pop(T, 1);
+        if (error.endsWith(QLatin1String("<eof>"))) {
+            RETURN_NEED_MORE_CODE;
         }
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished(true);
-        return;
-    }
-
-    asIScriptFunction *func = nullptr;
-
-    ccode = code.toUtf8();
-    if (ccode.isEmpty()) {
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished(true);
-        return;
-    }
-
-    // ok, wrap the codes
-    ccode.prepend("void f(){\n").append("\n}");
-
-    // start to compile
-    auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
-    if (cr < 0) {
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-        onFinished(true);
-        return;
-    }
-
-    // Set up a context to execute the script
-    // The context manager will request the context from the
-    // pool, which will automatically attach the debugger
-    auto ctxMgr = new CContextMgr;
-    asIScriptContext *ctx = ctxMgr->SetMainFunction(_engine, func, mode);
-    _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-    if (ctx == nullptr) {
         MessageInfo info;
-        info.mode = mode;
-        info.message = QStringLiteral("Cannot prepare context for execution.");
         info.type = MessageType::Error;
+        info.mode = mode;
+        info.message = error;
         outputMessage(info);
-        delete ctxMgr;
-        onFinished(true);
-        return;
+        RETURN_DEFAULT;
     }
-    _ctx[mode] = ctx;
 
-    asPWORD isDbg = 0;
-    mod->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(
-                         AppManager::instance()->currentMSecsSinceEpoch()),
-                     AsUserDataType::UserData_Timer);
-    auto timeOutRaw = SettingManager::instance().scriptTimeout();
-    auto timeOut = asPWORD(timeOutRaw) * 60000; // min -> ms
-    ctx->SetUserData(reinterpret_cast<void *>(timeOut),
-                     AsUserDataType::UserData_TimeOut);
+    // asPWORD isDbg = 0;
+    // mod->SetUserData(reinterpret_cast<void *>(isDbg),
+    //                  AsUserDataType::UserData_isDbg);
+    // ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+    //                  AsUserDataType::UserData_isDbg);
 
-    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
-                              asCALL_THISCALL);
+    auto d = contextData(mode);
+    Q_ASSERT(d);
+    d->startTime = AppManager::instance()->currentMSecsSinceEpoch();
+    d->lastInteruptTime = d->startTime;
+    // min -> ms
+    d->timeOutTime =
+        quint64(SettingManager::instance().scriptTimeout()) * 60000;
 
-    _ctx[mode] = ctx;
-    _ctxMgr[mode] = ctxMgr;
-
-    auto runner = new ScriptRunable(ctxMgr, mode);
-    QObject::connect(
-        runner, &QObject::destroyed, runner,
-        [this, ctx, mode, func, mod, onFinished]() {
-            _ctx[mode] = nullptr;
-
-            // Check if the main script finished normally
-            int r = ctx->GetState();
-            if (r != asEXECUTION_FINISHED) {
-                if (r == asEXECUTION_EXCEPTION) {
-                } else if (r == asEXECUTION_ABORTED) {
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.message = QStringLiteral("The script was aborted");
-                    info.type = MessageType::Error;
-                    outputMessage(info);
-                } else {
-                    auto e = QMetaEnum::fromType<asEContextState>();
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.message =
-                        QStringLiteral("The script terminated unexpectedly (") +
-                        QString::fromLatin1(e.valueToKey(r)) +
-                        QStringLiteral(")");
-                    info.type = MessageType::Error;
-                    outputMessage(info);
-                }
-            }
-
-            // Return the context after retrieving the return value
-            auto mgr = _ctxMgr[mode];
-            mgr->DoneWithContext(ctx);
-            _ctxMgr[mode] = nullptr;
-
-            // Before leaving, allow the engine to clean up remaining objects by
-            // discarding the module and doing a full garbage collection so that
-            // this can also be debugged if desired
-            if (mode != Interactive) {
-                mod->Discard();
-            } else {
-                func->Release();
-                _engine->GarbageCollect();
-            }
-            onFinished(true);
-        });
+    auto runner = new LuauScheduler(ctx);
+    QObject::connect(runner, &LuauScheduler::finished, runner,
+                     [this, mode, onFinished](int status) {
+                         auto &&R = _ctx[consoleModeIdx(mode)];
+                         auto T = R.state;
+                         if (status == LUA_OK) {
+                             int n = lua_gettop(T);
+                             if (n) {
+                                 luaL_checkstack(T, LUA_MINSTACK,
+                                                 "too many results to print");
+                                 lua_getglobal(T, "_PRETTYPRINT");
+                                 // If _PRETTYPRINT is nil, then use the
+                                 // standard print function instead
+                                 if (lua_isnil(T, -1)) {
+                                     lua_pop(T, 1);
+                                     lua_getglobal(T, "print");
+                                 }
+                                 lua_insert(T, 1);
+                                 lua_pcall(T, n, 0, 0);
+                             }
+                         } else {
+                             size_t len;
+                             const char *str = lua_tolstring(T, -1, &len);
+                             if (str) {
+                                 auto error = QString::fromUtf8(str, len);
+                                 error +=
+                                     QStringLiteral("\nstack backtrace:\n");
+                                 error += QString::fromUtf8(lua_debugtrace(T));
+                                 MessageInfo info;
+                                 info.mode = mode;
+                                 info.message = error;
+                                 info.type = MessageType::Error;
+                                 outputMessage(info);
+                             }
+                         }
+                         // clear and reset for reusing
+                         R.reset();
+                         onFinished(true);
+                     });
 
     runner->start();
+#undef RETURN_DEFAULT
+#undef RETURN_NEED_MORE_CODE
 }
 
-QString ScriptMachine::scriptGetExceptionInfo() {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (!ctx)
-        return {};
+// void WingAngelAPI::installAPI(ScriptMachine *machine) {
+//     ASSERT(machine);
+//     auto engine = machine->engine();
 
-    const char *msg = ctx->GetExceptionString();
-    if (msg == 0)
-        return {};
+//     installBasicTypes(engine);
+//     installExtAPI(engine);
+//     installLogAPI(engine);
+//     installMsgboxAPI(engine);
+//     installInputboxAPI(engine);
+//     installFileDialogAPI(engine);
+//     installColorDialogAPI(engine);
 
-    return QString::fromUtf8(msg);
-}
+//     installHexReaderAPI(engine);
+//     installHexControllerAPI(engine);
+//     installInvokeServiceAPI(engine);
 
-void ScriptMachine::registerExceptionRoutines(asIScriptEngine *engine) {
-    int r;
+//            // plugin script objects will be install later
+// }
 
-    // The string type must be available
-    ASSERT(engine->GetTypeInfoByDecl("string"));
+// void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("msgbox");
+//     ASSERT(r >= 0);
 
-    r = engine->RegisterGlobalFunction("void throw(const string &in)",
-                                       asFUNCTION(scriptThrow), asCALL_CDECL);
-    ASSERT(r >= 0);
+//     registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
+//     registerAngelType<QMessageBox::Icon>(engine, "icon");
 
-    r = engine->RegisterGlobalFunction("string getExceptionInfo()",
-                                       asFUNCTION(scriptGetExceptionInfo),
-                                       asCALL_CDECL);
-    ASSERT(r >= 0);
-}
+//     r = engine->SetDefaultNamespace("inputbox");
+//     ASSERT(r >= 0);
+
+//     registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
+//     registerAngelType<Qt::InputMethodHints>(engine, "InputMethodHints");
+
+//     r = engine->SetDefaultNamespace("filedlg");
+//     ASSERT(r >= 0);
+
+//     registerAngelType<QFileDialog::Options>(engine, "options");
+
+//     engine->SetDefaultNamespace("");
+
+//     installHexBaseType(engine);
+// }
+
+// void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("log");
+//     ASSERT(r >= 0);
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, logInfo, (const QString &) const, void),
+//         "void info(const string &in message)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, logTrace, (const QString &) const, void),
+//         "void trace(const string &in message)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, logDebug, (const QString &) const, void),
+//         "void debug(const string &in message)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, logWarn, (const QString &) const, void),
+//         "void warn(const string &in message)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, logError, (const QString &) const, void),
+//         "void error(const string &in message)");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installExtAPI(asIScriptEngine *engine) {
+//     // toast(message, iconPath)
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _UI_Toast, (const QString &, const QString
+//         &),
+//                    void),
+//         "void toast(const string &in message, const string &in icon =\"\")");
+// }
+
+// void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("msgbox");
+//     ASSERT(r >= 0);
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_AboutQt, (const QString &),
+//                 void), "void aboutQt(const string &in title =\"\")");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _MSG_Information,
+//                    (const QString &, const QString &, int,
+//                     QMessageBox::StandardButton),
+//                    QMessageBox::StandardButton),
+//         "void information(const string &in title, const string &in text, "
+//         "int buttons = msgbox::buttons::Ok, "
+//         "msgbox::buttons defaultButton = msgbox::buttons::NoButton)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_Question,
+//                            (const QString &, const QString &, int,
+//                             QMessageBox::StandardButton),
+//                            QMessageBox::StandardButton),
+//                 "void question(const string &in title, const string &in text,
+//                 " "int buttons = msgbox::buttons::Yes | msgbox::buttons::No,
+//                 " "msgbox::buttons defaultButton =
+//                 msgbox::buttons::NoButton)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_Warning,
+//                            (const QString &, const QString &, int,
+//                             QMessageBox::StandardButton),
+//                            QMessageBox::StandardButton),
+//                 "void warning(const string &in title, const string &in text,
+//                 " "int buttons = msgbox::buttons::Ok, " "msgbox::buttons
+//                 defaultButton = msgbox::buttons::NoButton)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_Critical,
+//                            (const QString &, const QString &, int,
+//                             QMessageBox::StandardButton),
+//                            QMessageBox::StandardButton),
+//                 "void critical(const string &in title, const string &in text,
+//                 " "int buttons = msgbox::buttons::Ok, " "msgbox::buttons
+//                 defaultButton = msgbox::buttons::NoButton)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_msgbox,
+//                            (QMessageBox::Icon, const QString &, const QString
+//                            &,
+//                             int, QMessageBox::StandardButton),
+//                            QMessageBox::StandardButton),
+//                 "void msgbox(msgbox::icon icon, const string &in title, "
+//                 "const string &in text, "
+//                 "int buttons = msgbox::buttons::NoButton, "
+//                 "msgbox::buttons defaultButton =
+//                 msgbox::buttons::NoButton)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _MSG_About,
+//                            (const QString &, const QString &), void),
+//                 "void about(const string &in title, const string &in text)");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("inputbox");
+//     ASSERT(r >= 0);
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _InputBox_GetText,
+//                    (const QString &, const QString &, QLineEdit::EchoMode,
+//                     const QString &, bool *, int),
+//                    QString),
+//         "string getText(const string &in title, const string &in label, "
+//         "inputbox::EchoMode echo = inputbox::EchoMode::Normal, "
+//         "const string &in text = \"\", bool &out ok = void, "
+//         "int inputMethodHints = inputbox::InputMethodHints::ImhNone)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _InputBox_GetMultiLineText,
+//                            (const QString &, const QString &, const QString
+//                            &,
+//                             bool *, int),
+//                            QString),
+//                 "string getMultiLineText(const string &in title, "
+//                 "const string &in label, "
+//                 "const string &in text = \"\", bool &out ok = void, "
+//                 "int inputMethodHints =
+//                 inputbox::InputMethodHints::ImhNone)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _InputBox_GetInt,
+//                            (const QString &, const QString &, int, int, int,
+//                             int, bool *),
+//                            int),
+//                 "int getInt(const string &in title, const string &in label, "
+//                 "int &in value = 0, int &in minValue = -2147483647, "
+//                 "int &in maxValue = 2147483647, "
+//                 "int &in step = 1, bool &out ok = void)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _InputBox_GetDouble,
+//                    (const QString &, const QString &, double, double, double,
+//                     int, bool *, double),
+//                    double),
+//         "double getDouble(const string &in title, const string &in label, "
+//         "double &in value = 0, double &in minValue = -2147483647, "
+//         "double &in maxValue = 2147483647, int &in decimals = 1, "
+//         "bool &out ok = void, double &in step = 1)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _InputBox_getItem,
+//                    (const QString &, const QString &, const CScriptArray &,
+//                    int,
+//                     bool, bool *, int),
+//                    QString),
+//         "string getItem(const string &in title, const string &in label, "
+//         "const string[] &in items, int current = 0, "
+//         "bool editable = true, bool &out ok = void, "
+//         "int inputMethodHints = inputbox::InputMethodHints::ImhNone)");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("filedlg");
+//     ASSERT(r >= 0);
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _FileDialog_GetExistingDirectory,
+//                            (const QString &, const QString &, int), QString),
+//                 "string getExistingDirectory(const string &in caption = \"\",
+//                 " "const string &in dir = \"\", " "int options =
+//                 filedlg::options::ShowDirsOnly)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _FileDialog_GetOpenFileName,
+//                            (const QString &, const QString &, const QString
+//                            &,
+//                             QString *, int),
+//                            QString),
+//                 "string getOpenFileName(const string &in caption = \"\", "
+//                 "const string &in dir = \"\", const string &in filter = \"\",
+//                 " "string &out selectedFilter = void, int options = 0)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _FileDialog_GetSaveFileName,
+//                            (const QString &, const QString &, const QString
+//                            &,
+//                             QString *, int),
+//                            QString),
+//                 "string getSaveFileName(const string &in caption = \"\", "
+//                 "const string &in dir = \"\", const string &in filter = \"\",
+//                 " "string &out selectedFilter = void, int options = 0)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _FileDialog_getOpenFileNames,
+//                            (const QString &, const QString &, const QString
+//                            &,
+//                             QString *, int),
+//                            CScriptArray *),
+//                 "string[]@ getOpenFileNames(const string &in caption = \"\",
+//                 " "const string &in dir = \"\", const string &in filter =
+//                 \"\", " "string &out selectedFilter = void, int options =
+//                 0)");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("colordlg");
+//     ASSERT(r >= 0);
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _Color_get, (const QString &),
+//                 QColor), "color getColor(const string &in caption)");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
+//     registerAngelType<WingHex::ErrFile>(engine, "ErrFile");
+//     registerAngelType<WingHex::SelectionMode>(engine, "SelectionMode");
+
+//            // HexPosition
+//     auto r = engine->RegisterObjectType(
+//         "HexPosition", sizeof(WingHex::HexPosition),
+//         asOBJ_VALUE | asOBJ_POD | ::asGetTypeTraits<WingHex::HexPosition>());
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectProperty("HexPosition", QSIZETYPE_WRAP("line"),
+//                                        asOFFSET(WingHex::HexPosition, line));
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectProperty("HexPosition", "int column",
+//                                        asOFFSET(WingHex::HexPosition,
+//                                        column));
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectProperty(
+//         "HexPosition", "uint8 lineWidth",
+//         asOFFSET(WingHex::HexPosition, lineWidth));
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectProperty(
+//         "HexPosition", "int nibbleindex",
+//         asOFFSET(WingHex::HexPosition, nibbleindex));
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectMethod("HexPosition",
+//     QSIZETYPE_WRAP("offset()"),
+//                                      asMETHOD(WingHex::HexPosition, offset),
+//                                      asCALL_THISCALL);
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectMethod(
+//         "HexPosition", "int opSub(const HexPosition &in) const",
+//         asMETHODPR(WingHex::HexPosition, operator-,
+//                    (const WingHex::HexPosition &) const, qsizetype),
+//         asCALL_THISCALL);
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectMethod(
+//         "HexPosition", "bool opEquals(const HexPosition &in) const",
+//         asMETHODPR(WingHex::HexPosition, operator==,
+//                    (const WingHex::HexPosition &) const, bool),
+//         asCALL_THISCALL);
+//     ASSERT(r >= 0);
+
+//            // MetadataInfo
+//     r = engine->RegisterObjectType(
+//         "MetadataInfo", sizeof(WingHex::MetadataInfo),
+//         asOBJ_VALUE | asOBJ_POD |
+//         ::asGetTypeTraits<WingHex::MetadataInfo>());
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterObjectProperty("MetadataInfo",
+//     QSIZETYPE_WRAP("begin"),
+//                                        asOFFSET(WingHex::MetadataInfo,
+//                                        begin));
+//     ASSERT(r >= 0);
+//     r = engine->RegisterObjectProperty("MetadataInfo", QSIZETYPE_WRAP("end"),
+//                                        asOFFSET(WingHex::MetadataInfo, end));
+//     ASSERT(r >= 0);
+//     r = engine->RegisterObjectProperty(
+//         "MetadataInfo", "color foreground",
+//         asOFFSET(WingHex::MetadataInfo, foreground));
+//     ASSERT(r >= 0);
+//     r = engine->RegisterObjectProperty(
+//         "MetadataInfo", "color background",
+//         asOFFSET(WingHex::MetadataInfo, background));
+//     ASSERT(r >= 0);
+//     r = engine->RegisterObjectProperty(
+//         "MetadataInfo", "string comment",
+//         asOFFSET(WingHex::MetadataInfo, comment));
+//     ASSERT(r >= 0);
+// }
+
+// void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("reader");
+//     ASSERT(r >= 0);
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, isCurrentDocEditing,
+//                            (void) const, bool),
+//                 "bool isCurrentDocEditing()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, currentDocFile, (void) const, QUrl),
+//         "url currentDocFile()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentDocFileName,
+//                            (void) const, QString),
+//                 "string currentDocFileName()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentDocWorkSpace,
+//                            (void) const, QUrl),
+//                 "url currentDocWorkSpace()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentDocWorkSpaceName,
+//                            (void) const, QString),
+//                 "string currentDocWorkSpaceName()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, isInsertionMode, (void) const,
+//         bool), "bool isInsertionMode()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, isReadOnly, (void) const, bool),
+//         "bool isReadOnly()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, isKeepSize, (void) const, bool),
+//         "bool isKeepSize()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, isLocked, (void) const,
+//                 bool), "bool isLocked()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentPos, (void) const,
+//                            WingHex::HexPosition),
+//                 "HexPosition currentPos()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, stringVisible, (void) const, bool),
+//         "bool stringVisible()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, addressVisible, (void) const, bool),
+//         "bool addressVisible()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, headerVisible, (void) const, bool),
+//         "bool headerVisible()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, isModified, (void) const, bool),
+//         "bool isModified()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, documentLines, (void) const,
+//                            qsizetype),
+//                 QSIZETYPE_WRAP("documentLines()"));
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, documentBytes, (void) const,
+//                            qsizetype),
+//                 QSIZETYPE_WRAP("documentBytes()"));
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, currentRow, (void) const,
+//         qsizetype), QSIZETYPE_WRAP("currentRow()"));
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentColumn, (void) const,
+//                            qsizetype),
+//                 QSIZETYPE_WRAP("currentColumn()"));
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, currentOffset, (void) const,
+//                            qsizetype),
+//                 QSIZETYPE_WRAP("currentOffset()"));
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, selectedLength, (void)
+//                 const,
+//                            qsizetype),
+//                 QSIZETYPE_WRAP("selectedLength()"));
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexReader_selectedBytes,
+//                 (qsizetype),
+//                            CScriptArray *),
+//                 "byte[]@ selectedBytes(" QSIZETYPE " index)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexReader_selectionBytes, (void),
+//                            CScriptArray *),
+//                 "byte[][]@ selectionBytes()");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, selectionStart,
+//                            (qsizetype) const, WingHex::HexPosition),
+//                 "HexPosition selectionStart(" QSIZETYPE " index)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, selectionEnd,
+//                            (qsizetype) const, WingHex::HexPosition),
+//                 "HexPosition selectionEnd(" QSIZETYPE " index)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, selectionLength,
+//                            (qsizetype) const, qsizetype),
+//                 QSIZETYPE_WRAP("selectionLength(" QSIZETYPE " index)"));
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, selectionCount, () const,
+//         qsizetype), QSIZETYPE_WRAP("selectionCount()"));
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, addressBase, (void) const,
+//         quintptr), QPTR_WRAP("addressBase()"));
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexReader_readBytes,
+//                            (qsizetype, qsizetype), CScriptArray *),
+//                 "byte[]@ readBytes(" QSIZETYPE " offset," QSIZETYPE " len)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readInt8, (qsizetype) const, qint8),
+//         "int8 readInt8(" QSIZETYPE " offset)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readUInt8, (qsizetype) const,
+//         quint8), "uint8 readUInt8(" QSIZETYPE " offset)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readInt16, (qsizetype) const,
+//         qint16), "int16 readInt16(" QSIZETYPE " offset)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, readUInt16, (qsizetype)
+//                 const,
+//                            quint16),
+//                 "uint16 readUInt16(" QSIZETYPE " offset)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readInt32, (qsizetype) const,
+//         qint32), "int readInt32(" QSIZETYPE " offset)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, readUInt32, (qsizetype)
+//                 const,
+//                            quint32),
+//                 "uint readUInt32(" QSIZETYPE " offset)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readInt64, (qsizetype) const,
+//         qint64), "int64 readInt64(" QSIZETYPE " offset)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, readUInt64, (qsizetype)
+//                 const,
+//                            quint64),
+//                 "uint64 readUInt64(" QSIZETYPE " offset)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readFloat, (qsizetype) const,
+//         float), "float readFloat(" QSIZETYPE " offset)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, readDouble, (qsizetype) const,
+//         double), "double readDouble(" QSIZETYPE " offset)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, readString,
+//                            (qsizetype, const QString &) const, QString),
+//                 "string readString(" QSIZETYPE
+//                 " offset, string &in encoding = \"\")");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexReader_findNext,
+//                            (qsizetype, const CScriptArray &), qsizetype),
+//                 QSIZETYPE_WRAP("findNext(" QSIZETYPE " begin, byte[] &in
+//                 ba)"));
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingAngelAPI, _HexReader_findPrevious,
+//                    (qsizetype, const CScriptArray &), qsizetype),
+//         QSIZETYPE_WRAP("findPrevious(" QSIZETYPE " begin, byte[] &in ba)"));
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, bookMarkComment,
+//                            (qsizetype) const, QString),
+//                 "string bookMarkComment(" QSIZETYPE " pos)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, existBookMark,
+//                            (qsizetype) const, bool),
+//                 "bool existBookMark(" QSIZETYPE " pos)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, metadataInfo,
+//                            (qsizetype) const, WingHex::MetadataInfo),
+//                 "MetadataInfo metadataInfo(" QSIZETYPE " offset)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, metadataInfoByIndex,
+//                            (qsizetype) const, WingHex::MetadataInfo),
+//                 "MetadataInfo metadataInfoByIndex(" QSIZETYPE " index)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, bookMarkCount, () const, qint64),
+//         "int64 bookMarkCount()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, bookMarkPos, (qsizetype)
+//                 const,
+//                            qint64),
+//                 "int64 bookMarkPos(" QSIZETYPE " index)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, metadataCount, () const, qint64),
+//         "int64 metadataCount()");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
+//     int r = engine->SetDefaultNamespace("ctl");
+//     ASSERT(r >= 0);
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, switchDocument, (int),
+//                 bool), "bool switchDocument(int handle)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, setLockedFile, (bool),
+//                 bool), "bool setLockedFile(bool b)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, setKeepSize, (bool), bool),
+//                 "bool setKeepSize(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setStringVisible, (bool), bool),
+//         "bool setStringVisible(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setAddressVisible, (bool), bool),
+//         "bool setAddressVisible(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setHeaderVisible, (bool), bool),
+//         "bool setHeaderVisible(bool b)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setAddressBase, (quintptr), bool),
+//         "bool setAddressBase(" QPTR " base)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, beginMarco, (const QString &),
+//         bool), "bool beginMarco(string &in name = \"\")");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, endMarco, (void), bool),
+//                 "bool endMarco()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, isMacroEmpty, (void) const, bool),
+//         "bool isMacroEmpty()");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, resetMarco, (void), bool),
+//                 "bool resetMarco()");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeInt8, (qsizetype, qint8),
+//         bool), "bool writeInt8(" QSIZETYPE " offset, int8 value)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeUInt8, (qsizetype, quint8),
+//         bool), "bool writeUInt8(" QSIZETYPE " offset, uint8 value)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeInt16, (qsizetype, qint16),
+//         bool), "bool writeInt16(" QSIZETYPE " offset, int16 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, writeUInt16,
+//                            (qsizetype, quint16), bool),
+//                 "bool writeUInt16(" QSIZETYPE " offset, uint16 value)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeInt32, (qsizetype, qint32),
+//         bool), "bool writeInt32(" QSIZETYPE " offset, int value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, writeUInt32,
+//                            (qsizetype, quint32), bool),
+//                 "bool writeUInt32(" QSIZETYPE " offset, uint value)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeInt64, (qsizetype, qint64),
+//         bool), "bool writeInt64(" QSIZETYPE " offset, int64 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, writeUInt64,
+//                            (qsizetype, quint64), bool),
+//                 "bool writeUInt64(" QSIZETYPE " offset, uint64 value)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, writeFloat, (qsizetype, float),
+//         bool), "bool writeFloat(" QSIZETYPE " offset, float value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, writeDouble,
+//                            (qsizetype, double), bool),
+//                 "bool writeDouble(" QSIZETYPE " offset, double value)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexController_writeBytes,
+//                            (qsizetype, const CScriptArray &), bool),
+//                 "bool writeBytes(" QSIZETYPE " offset, byte[] &in data)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, writeString,
+//                            (qsizetype, const QString &, const QString &),
+//                            bool),
+//                 "bool writeString(" QSIZETYPE " offset, string &in value, "
+//                 "string &in encoding = \"\")");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, insertInt8, (qsizetype, qint8),
+//         bool), "bool insertInt8(" QSIZETYPE " offset, int8 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertUInt8,
+//                            (qsizetype, quint8), bool),
+//                 "bool insertUInt8(" QSIZETYPE " offset, uint8 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertInt16,
+//                            (qsizetype, qint16), bool),
+//                 "bool insertInt16(" QSIZETYPE " offset, int16 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertUInt16,
+//                            (qsizetype, quint16), bool),
+//                 "bool insertUInt16(" QSIZETYPE " offset, uint16 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertInt32,
+//                            (qsizetype, qint32), bool),
+//                 "bool insertInt32(" QSIZETYPE " offset, int value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertUInt32,
+//                            (qsizetype, quint32), bool),
+//                 "bool insertUInt32(" QSIZETYPE " offset, uint value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertInt64,
+//                            (qsizetype, qint64), bool),
+//                 "bool insertInt64(" QSIZETYPE " offset, int64 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertUInt64,
+//                            (qsizetype, quint64), bool),
+//                 "bool insertUInt64(" QSIZETYPE " offset, uint64 value)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, insertFloat, (qsizetype, float),
+//         bool), "bool insertFloat(" QSIZETYPE " offset, float value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertDouble,
+//                            (qsizetype, double), bool),
+//                 "bool insertDouble(" QSIZETYPE " offset, double value)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexController_insertBytes,
+//                            (qsizetype, const CScriptArray &), bool),
+//                 "bool insertBytes(" QSIZETYPE " offset, byte[] &in data)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, insertString,
+//                            (qsizetype, const QString &, const QString &),
+//                            bool),
+//                 "bool insertString(" QSIZETYPE " offset, string &in value, "
+//                 "string &in encoding = \"\")");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendInt8, (qint8), bool),
+//                 "bool appendInt8(int8 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendUInt8, (quint8),
+//                 bool), "bool appendUInt8(uint8 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendInt16, (qint16),
+//                 bool), "bool appendInt16(int16 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendUInt16, (quint16),
+//                 bool), "bool appendUInt16(uint16 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendInt32, (qint32),
+//                 bool), "bool appendInt32(int value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendUInt32, (quint32),
+//                 bool), "bool appendUInt32(uint value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendInt64, (qint64),
+//                 bool), "bool appendInt64(int64 value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendUInt64, (quint64),
+//                 bool), "bool appendUInt64(uint value)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendFloat, (float), bool),
+//                 "bool appendFloat(float value)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, appendDouble, (double),
+//                 bool), "bool appendDouble(double value)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingAngelAPI, _HexController_appendBytes,
+//                            (const CScriptArray &), bool),
+//                 "bool appendBytes(byte[] &in data)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, appendString,
+//                    (const QString &, const QString &), bool),
+//         "bool appendString(string &in value, string &in encoding = \"\")");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, removeBytes,
+//                            (qsizetype, qsizetype), bool),
+//                 "bool removeBytes(" QSIZETYPE " offset, " QSIZETYPE " len)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, moveTo,
+//                            (qsizetype, qsizetype, int, bool), bool),
+//                 "bool moveTo(" QSIZETYPE " line, " QSIZETYPE
+//                 " column, int nibbleindex = -1, bool clearSelection =
+//                 true)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, moveTo, (qsizetype, bool), bool),
+//         "bool moveTo(" QSIZETYPE " offset, bool clearSelection = true)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, select,
+//                            (qsizetype, qsizetype, WingHex::SelectionMode),
+//                            bool),
+//                 "bool select(" QSIZETYPE " offset, " QSIZETYPE
+//                 " len, SelectionMode mode = SelectionMode::Add)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setInsertionMode, (bool), bool),
+//         "bool setInsertionMode(bool b)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, metadata,
+//                    (qsizetype, qsizetype, const QColor &, const QColor &,
+//                     const QString &),
+//                    bool),
+//         "bool metadata(" QSIZETYPE " begin, " QSIZETYPE
+//         " length, color &in fgcolor, color &in bgcolor, string &in
+//         comment)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, removeMetadata, (qsizetype), bool),
+//         "bool removeMetadata(" QSIZETYPE " offset)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, clearMetadata, (), bool),
+//                 "bool clearMetadata()");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, foreground,
+//                            (qsizetype, qsizetype, const QColor &), bool),
+//                 "bool foreground(" QSIZETYPE " begin, " QSIZETYPE
+//                 " length, color &in fgcolor)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, background,
+//                            (qsizetype, qsizetype, const QColor &), bool),
+//                 "bool background(" QSIZETYPE " begin, " QSIZETYPE
+//                 " length, color &in bgcolor)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, comment,
+//                            (qsizetype, qsizetype, const QString &), bool),
+//                 "bool comment(" QSIZETYPE " begin, " QSIZETYPE
+//                 " length, string &in comment)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, setMetaVisible, (bool),
+//                 bool), "bool setMetaVisible(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setMetafgVisible, (bool), bool),
+//         "bool setMetafgVisible(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setMetabgVisible, (bool), bool),
+//         "bool setMetabgVisible(bool b)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, setMetaCommentVisible, (bool),
+//         bool), "bool setMetaCommentVisible(bool b)");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, openFile, (const QUrl &),
+//                 int), "int openFile(url &in file)");
+
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, closeFile, (int), WingHex::ErrFile),
+//         "ErrFile closeFile(int handle)");
+
+//     registerAPI(engine, asMETHODPR(WingHex::IWingPlugin, openCurrent, (),
+//     int),
+//                 "int openCurrent()");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, closeCurrent, (), WingHex::ErrFile),
+//         "ErrFile closeCurrent()");
+
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, addBookMark,
+//                            (qsizetype, const QString &), bool),
+//                 "bool addBookMark(" QSIZETYPE " pos, string &in comment)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, modBookMark,
+//                            (qsizetype, const QString &), bool),
+//                 "bool modBookMark(" QSIZETYPE " pos, string &in comment)");
+//     registerAPI(
+//         engine,
+//         asMETHODPR(WingHex::IWingPlugin, removeBookMark, (qsizetype), bool),
+//         "bool removeBookMark(" QSIZETYPE " pos)");
+//     registerAPI(engine,
+//                 asMETHODPR(WingHex::IWingPlugin, clearBookMark, (), bool),
+//                 "bool clearBookMark()");
+
+//     engine->SetDefaultNamespace("");
+// }
+
+// void WingAngelAPI::installInvokeServiceAPI(asIScriptEngine *engine) {
+//     auto r = engine->RegisterGlobalFunction(
+//         "bool invokeService(const string&in puid, const string&in method, "
+//         "?&out result, const ?&in ...)",
+//         asFUNCTION(_invoke_service), asCALL_GENERIC);
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterGlobalFunction(
+//         "bool invokeService(const string&in puid, const string&in method, "
+//         "?&out result)",
+//         asFUNCTION(_invoke_service), asCALL_GENERIC);
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterGlobalFunction(
+//         "bool invokeService(const string&in puid, const string&in method)",
+//         asFUNCTION(_invoke_service_p_r), asCALL_GENERIC);
+//     ASSERT(r >= 0);
+
+//     r = engine->RegisterGlobalFunction(
+//         "bool invokeServiceVoid(const string&in puid, const string&in method,
+//         " "const ?&in ...)", asFUNCTION(_invoke_service_p_p),
+//         asCALL_GENERIC);
+//     ASSERT(r >= 0);
+// }

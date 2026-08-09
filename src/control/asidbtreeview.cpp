@@ -23,45 +23,46 @@
 
 asIDBTreeView::asIDBTreeView(QWidget *parent) : QTreeView(parent) {
     Utilities::applyTreeViewProperty(this);
-    auto mod = new AsIDBTreeModel(this);
-    connect(mod, &AsIDBTreeModel::modelAboutToBeReset, this,
-            &asIDBTreeView::saveExpansionState);
-    connect(mod, &AsIDBTreeModel::modelReset, this, [this]() {
-        QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
-    });
-    QTreeView::setModel(mod);
+    // auto mod = new AsIDBTreeModel(this);
+    // connect(mod, &AsIDBTreeModel::modelAboutToBeReset, this,
+    //         &asIDBTreeView::saveExpansionState);
+    // connect(mod, &AsIDBTreeModel::modelReset, this, [this]() {
+    //     QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
+    // });
+    // QTreeView::setModel(mod);
 }
 
-asIDBTreeView::asIDBTreeView(AsIDBTreeModel *model, QWidget *parent)
-    : QTreeView(parent) {
-    Utilities::applyTreeViewProperty(this);
-    header()->setDefaultSectionSize(200);
-    if (model) {
-        connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
-                &asIDBTreeView::saveExpansionState);
-        connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
-            QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
-        });
-        QTreeView::setModel(model);
-    }
-}
+// asIDBTreeView::asIDBTreeView(AsIDBTreeModel *model, QWidget *parent)
+//     : QTreeView(parent) {
+//     Utilities::applyTreeViewProperty(this);
+//     header()->setDefaultSectionSize(200);
+//     if (model) {
+//         // connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
+//         //         &asIDBTreeView::saveExpansionState);
+//         // connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
+//         //     QTimer::singleShot(0, this,
+//         //     &asIDBTreeView::restoreExpansionState);
+//         // });
+//         // QTreeView::setModel(model);
+//     }
+// }
 
-void asIDBTreeView::refreshWithNewRoots(
-    const QVector<asIDBVariable::Ptr> &newRoots) {
-    auto model = qobject_cast<AsIDBTreeModel *>(this->model());
-    if (model) {
-        model->setRoots(newRoots);
-        _newRoot.reset();
-    }
-}
+// void asIDBTreeView::refreshWithNewRoots(
+//     const QVector<asIDBVariable::Ptr> &newRoots) {
+//     auto model = qobject_cast<AsIDBTreeModel *>(this->model());
+//     if (model) {
+//         model->setRoots(newRoots);
+//         _newRoot.reset();
+//     }
+// }
 
-void asIDBTreeView::refreshWithNewRoot(const asIDBVariable::Ptr &newRoot) {
-    auto model = qobject_cast<AsIDBTreeModel *>(this->model());
-    if (model) {
-        model->setRoot(newRoot);
-        _newRoot = newRoot;
-    }
-}
+// void asIDBTreeView::refreshWithNewRoot(const asIDBVariable::Ptr &newRoot) {
+//     // auto model = qobject_cast<AsIDBTreeModel *>(this->model());
+//     // if (model) {
+//     //     model->setRoot(newRoot);
+//     //     _newRoot = newRoot;
+//     // }
+// }
 
 void asIDBTreeView::setModel(QAbstractItemModel *model) {
     if (this->model()) {
@@ -69,11 +70,12 @@ void asIDBTreeView::setModel(QAbstractItemModel *model) {
     }
     if (model) {
         model->setParent(this);
-        connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
-                &asIDBTreeView::saveExpansionState);
-        connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
-            QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
-        });
+        // connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
+        //         &asIDBTreeView::saveExpansionState);
+        // connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
+        //     QTimer::singleShot(0, this,
+        //     &asIDBTreeView::restoreExpansionState);
+        // });
         QTreeView::setModel(model);
     }
 }
@@ -123,19 +125,19 @@ QString asIDBTreeView::getIndexIdentifier(const QModelIndex &index) const {
     if (!internalPtr)
         return {};
 
-    AsIDBTreeModel *idbModel = qobject_cast<AsIDBTreeModel *>(model());
-    if (!idbModel)
-        return {};
+    // AsIDBTreeModel *idbModel = qobject_cast<AsIDBTreeModel *>(model());
+    // if (!idbModel)
+    //     return {};
 
-    if (idbModel->isProxyNode(index)) {
-        auto proxyInfo = idbModel->getProxyNodeInfo(index);
-        if (proxyInfo.isValid) {
-            return QStringLiteral("proxy_%1_%2_%3")
-                .arg(proxyInfo.ownerIdentifier)
-                .arg(proxyInfo.pageIndex)
-                .arg(proxyInfo.startIndex);
-        }
-    }
+    // if (idbModel->isProxyNode(index)) {
+    //     auto proxyInfo = idbModel->getProxyNodeInfo(index);
+    //     if (proxyInfo.isValid) {
+    //         return QStringLiteral("proxy_%1_%2_%3")
+    //             .arg(proxyInfo.ownerIdentifier)
+    //             .arg(proxyInfo.pageIndex)
+    //             .arg(proxyInfo.startIndex);
+    //     }
+    // }
 
     auto varData = model()->data(index, Qt::UserRole);
     if (varData.isValid()) {

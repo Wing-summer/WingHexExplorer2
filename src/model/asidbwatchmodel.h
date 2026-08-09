@@ -19,7 +19,7 @@
 #define ASIDBWATCHMODEL_H
 
 #include "asidbtreemodel.h"
-#include "class/asdebugger.h"
+// #include "class/asdebugger.h"
 #include <memory>
 
 class AsIDBWatchModel : public AsIDBTreeModel {
@@ -27,13 +27,13 @@ class AsIDBWatchModel : public AsIDBTreeModel {
 private:
     struct WatchItem {
         std::string expression;
-        asIDBExpected<asIDBVariable::WeakPtr> result;
+        // asIDBExpected<asIDBVariable::WeakPtr> result;
         bool expanded = false;
 
-        bool isValid() const {
-            return result.has_value() && !result.value().expired();
-        }
-        bool hasError() const { return !result.has_value(); }
+        // bool isValid() const {
+        //     return result.has_value() && !result.value().expired();
+        // }
+        // bool hasError() const { return !result.has_value(); }
     };
 
 public:
@@ -43,11 +43,11 @@ public:
     QStringList expressionList() const;
 
 public slots:
-    void attachDebugger(asDebugger *debugger);
+    // void attachDebugger(asDebugger *debugger);
     void addWatchExpression(const QString &expression);
-    void removeWatchExpression(qsizetype index);
+    // void removeWatchExpression(qsizetype index);
     void removeWatchExpressions(const QModelIndexList &indexes);
-    bool editWatchExpression(qsizetype index, const QString &newExpression);
+    // bool editWatchExpression(qsizetype index, const QString &newExpression);
     void refresh();
 
     void reloadExpressionList(const QStringList &expressions);
@@ -76,13 +76,13 @@ private:
     // use shared_ptr so WatchItem* (shared_ptr.get()) remains stable across
     // QVector reallocs
     QVector<std::shared_ptr<WatchItem>> m_watchItems;
-    asDebugger *_dbg = nullptr;
+    // asDebugger *_dbg = nullptr;
 
     // helper: consistent user role id
     QString makeTopLevelUserRole(const WatchItem &item) const;
 
     // helper: build roots vector from current m_watchItems
-    QVector<asIDBVariable::Ptr> buildRootsFromWatchItems() const;
+    // QVector<asIDBVariable::Ptr> buildRootsFromWatchItems() const;
 };
 
 #endif // ASIDBWATCHMODEL_H

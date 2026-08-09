@@ -156,9 +156,6 @@ def main():
     shutil.copytree(os.path.join(build_path, "lang"),
                     os.path.join(installer_path_exec, "lang"), dirs_exist_ok=True)
 
-    shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
-        installer_path_exec, "lsp"), dirs_exist_ok=True)
-
     # copying deployment files
     deploy_files = ["qt.conf", "uninstall.sh",
                     "purge.sh", f"{PACKAGE_NAME}.sh"]

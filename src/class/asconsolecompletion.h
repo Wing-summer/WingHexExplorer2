@@ -19,7 +19,6 @@
 #define ASCONSOLECOMPLETION_H
 
 #include "ascompletion.h"
-#include "control/consolecodeedit.h"
 
 class ScriptingConsole;
 
@@ -27,7 +26,6 @@ class AsConsoleCompletion : public AsCompletion {
     Q_OBJECT
 public:
     explicit AsConsoleCompletion(ScriptingConsole *p);
-    explicit AsConsoleCompletion(ConsoleCodeEdit *p);
     virtual ~AsConsoleCompletion() = default;
 
 protected:

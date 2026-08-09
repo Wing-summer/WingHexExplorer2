@@ -467,7 +467,6 @@ private slots:
     // theme
     WingHex::AppTheme currentAppTheme(const QObject *caller);
 
-    // not available for AngelScript
     // only for plugin UI extenstion
     QDialog *createDialog(const QObject *caller, QWidget *content);
 

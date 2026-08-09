@@ -1,1 +1,0 @@
-antlr4 -Dlanguage=Cpp -visitor -no-listener AngelscriptExprParser.g4 -o .

@@ -23,9 +23,6 @@
 AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
     : AsCompletion(p), _console(p) {}
 
-AsConsoleCompletion::AsConsoleCompletion(ConsoleCodeEdit *p)
-    : AsCompletion(p), _console(p) {}
-
 QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
     static QList<CodeInfoTip> marcos;
     if (marcos.isEmpty()) {
