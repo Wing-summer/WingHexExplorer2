@@ -1,19 +1,19 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-** =============================================================================
-*/
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
 
 #include "mainwindow.h"
 
@@ -40,6 +40,7 @@
 #include "class/wingupdater.h"
 #include "class/workspacemanager.h"
 #include "control/toast.h"
+#include "debugger/luauvariableregistry.h"
 #include "define.h"
 #include "dialog/layoutdeldialog.h"
 #include "dialog/mutisavedialog.h"
@@ -365,6 +366,13 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
                 m_scriptConsole->enableLSP();
             }
+
+            // attach REPL env to display
+            auto *model = _scriptObjView->dataModel();
+            model->setRoot(&_scriptObjReg,
+                           LuauVariableRegistry::getGlobalScope(
+                               ScriptMachine::instance().contextState(
+                                   ScriptMachine::Interactive)));
         } else {
             WingMessageBox::critical(nullptr, qAppName(),
                                      tr("ScriptEngineInitFailed"));
@@ -1226,74 +1234,10 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                                  ads::DockWidgetArea area,
                                  ads::CDockAreaWidget *areaw) {
-    _scriptObjView = new asIDBTreeView(this);
+    _scriptObjView = new IDBTreeView(this);
     _scriptObjView->header()->setDefaultSectionSize(200);
-
-    connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished, this,
-            [this]() {
-                auto &m = ScriptMachine::instance();
-                // auto mod = m.module(ScriptMachine::Interactive);
-                // if (mod == nullptr) {
-                //     return;
-                // }
-                // auto globals =
-                // std::make_shared<asIDBVariable>(*m.debugger()); globals->ptr
-                // = globals;
-
-                // auto total = mod->GetGlobalVarCount();
-                // for (asUINT n = 0; n < total; n++) {
-                //     const char *name;
-                //     const char *nameSpace;
-                //     int typeId;
-                //     void *ptr;
-                //     bool isConst;
-
-                //     mod->GetGlobalVar(n, &name, &nameSpace, &typeId,
-                //     &isConst); ptr = mod->GetAddressOfGlobalVar(n);
-
-                //     const auto viewType = m.getAsTypeName(typeId);
-                //     asIDBVarAddr idKey{typeId, isConst, ptr};
-
-                //     globals->CreateChildVariable(
-                //         asIDBVarName((nameSpace && nameSpace[0]) ? nameSpace
-                //         :
-                //         "",
-                //                      name),
-                //         idKey, viewType);
-                // }
-                // auto engine = mod->GetEngine();
-                // total = engine->GetGlobalPropertyCount();
-                // for (asUINT n = 0; n < total; n++) {
-                //     const char *name;
-                //     const char *nameSpace;
-                //     int typeId;
-                //     void *ptr;
-                //     bool isConst;
-
-                //     engine->GetGlobalPropertyByIndex(n, &name, &nameSpace,
-                //     &typeId,
-                //                                      &isConst, nullptr,
-                //                                      &ptr);
-                //     const auto viewType = m.getAsTypeName(typeId);
-                //     asIDBVarAddr idKey{typeId, isConst, ptr};
-                //     std::string localName =
-                //         (nameSpace && nameSpace[0])
-                //             ? fmt::format(FMT_STRING("{}::{}"), nameSpace,
-                //             name) : name;
-
-                //     globals->CreateChildVariable(std::move(localName), idKey,
-                //                                  viewType);
-                // }
-
-                // globals->evaluated = globals->expanded = true;
-
-                // if (!globals->namedProps.empty() ||
-                // !globals->indexedProps.empty())
-                //     globals->SetRefId();
-
-                // _scriptObjView->refreshWithNewRoot(globals);
-            });
-
+    connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished,
+            _scriptObjView, &IDBTreeView::refreshData);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleObj"),
                               tr("ConsoleObj"), _scriptObjView);
     return dock->addDockWidget(area, dw, areaw);

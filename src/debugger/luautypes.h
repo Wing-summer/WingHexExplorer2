@@ -1,0 +1,36 @@
+/*==============================================================================
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
+
+#ifndef LUAUTYPES_H
+#define LUAUTYPES_H
+
+#include "lua.h"
+
+#include <QString>
+
+#include <type_traits>
+#include <utility>
+
+namespace LuauTypes {
+
+QString toString(lua_State *L, int index);
+QString toDbgString(lua_State *L, int index);
+QString getTypeName(int type);
+
+} // namespace LuauTypes
+
+#endif // LUAUTYPES_H

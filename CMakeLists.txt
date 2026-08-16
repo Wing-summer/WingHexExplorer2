@@ -250,10 +250,10 @@ set(STRUCT_LIB_SRC
     src/structlib/structdefine.h)
 
 set(CONTROL_SRC
-    src/control/asidbtreeview.cpp
-    src/control/asidbtreeview.h
-    src/control/asobjtreewidget.cpp
-    src/control/asobjtreewidget.h
+    src/control/idbtreeview.cpp
+    src/control/idbtreeview.h
+    src/control/objtreewidget.cpp
+    src/control/objtreewidget.h
     src/control/codeedit.cpp
     src/control/codeedit.h
     src/control/codeeditcontrolwidget.cpp
@@ -378,6 +378,22 @@ set(CLASS_SRC
 set(INTERNAL_PLG_SRC src/class/structparser.cpp src/class/structparser.h
                      src/class/wingcstruct.cpp src/class/wingcstruct.h)
 
+set(LUAU_DBG_SRC
+    src/debugger/luauutil.h
+    src/debugger/luauutil.cpp
+    src/debugger/luauinspector.h
+    src/debugger/luauinspector.cpp
+    src/debugger/luauscope.h
+    src/debugger/luauscope.cpp
+    src/debugger/luaudebugger.h
+    src/debugger/luaudebugger.cpp
+    src/debugger/luautypes.h
+    src/debugger/luautypes.cpp
+    src/debugger/luauvariable.h
+    src/debugger/luauvariable.cpp
+    src/debugger/luauvariableregistry.h
+    src/debugger/luauvariableregistry.cpp)
+
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
         src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
@@ -390,10 +406,10 @@ else()
 endif()
 
 set(MODEL_SRC
-    src/model/asidbtreemodel.cpp
-    src/model/asidbtreemodel.h
-    src/model/asidbwatchmodel.cpp
-    src/model/asidbwatchmodel.h
+    src/model/idbtreemodel.cpp
+    src/model/idbtreemodel.h
+    src/model/idbwatchmodel.cpp
+    src/model/idbwatchmodel.h
     src/model/bookmarksmodel.cpp
     src/model/bookmarksmodel.h
     src/model/checksummodel.cpp
@@ -519,6 +535,7 @@ set(PROJECT_SOURCES
     ${ANTLR4_GRAMMAR}
     ${CLASS_SRC}
     ${CONTROL_SRC}
+    ${LUAU_DBG_SRC}
     ${DIALOG_SRC}
     ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}

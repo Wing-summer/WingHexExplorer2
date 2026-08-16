@@ -20,6 +20,7 @@
 #include "Luau/CodeGen.h"
 #include "Luau/Common.h"
 #include "Luau/Compiler.h"
+#include "debugger/luauutil.h"
 #include "lualib.h"
 
 #include "class/appmanager.h"
@@ -37,7 +38,41 @@
 #include <QScopeGuard>
 
 LUAU_FASTFLAG(LuauAutoStack)
-constexpr auto *MAIN_THREAD_TAG = "_TH_MODE_";
+
+namespace {
+
+class DbgStackPusher {
+public:
+    DbgStackPusher(lua_State *L) : L_(L) {
+        auto &m = ScriptMachine::instance();
+        auto thd = m.contextData(L_);
+        if (thd == nullptr) {
+            return;
+        }
+        auto bridge = thd->debugger;
+        if (bridge == nullptr) {
+            return;
+        }
+        bridge->pushThreadStack(L_);
+    }
+    ~DbgStackPusher() {
+        auto &m = ScriptMachine::instance();
+        auto thd = m.contextData(L_);
+        if (thd == nullptr) {
+            return;
+        }
+        auto bridge = thd->debugger;
+        if (bridge == nullptr) {
+            return;
+        }
+        bridge->popThreadStack();
+    }
+
+private:
+    lua_State *L_;
+};
+
+} // namespace
 
 bool ScriptMachine::init() {
     if (isInited()) {
@@ -81,14 +116,21 @@ bool ScriptMachine::init() {
         luaL_sandboxthread(s);
     }
 
-    // create the debugger
-    // _debugger = new asDebugger(_workspace);
-
     // config callbacks
     auto &&cbs = lua_callbacks(_main);
     cbs->interrupt = ScriptMachine::onLuauInterrupt;
     cbs->userthread = ScriptMachine::onLuauThreadCreated;
     luaL_sandbox(_main);
+
+    // init inspect options
+    _printOptions.maxDepth = 8;
+    _printOptions.maxItems = 50;
+    _printOptions.maxStringLength = 4096;
+    _printOptions.stringMode = LuauInspector::StringMode::Raw;
+
+    // create the debugger
+    _debugger = new LuauDebugger;
+    _debugger->pushThreadStack(_main);
 
     _regcalls.resize(ConsoleModeCount, {});
     _inited = true;
@@ -125,8 +167,8 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 
     luabridge::enableExceptions(L);
 
-    luabridge::getGlobalNamespace(L)
-        .addFunction("print", &ScriptMachine::print)
+    auto &&ns = luabridge::getGlobalNamespace(L);
+    ns.addFunction("print", &ScriptMachine::print)
         .addFunction("println", &ScriptMachine::println)
         .addFunction("warnprint", &ScriptMachine::warnprint)
         .addFunction("warnprintln", &ScriptMachine::warnprintln)
@@ -134,6 +176,11 @@ bool ScriptMachine::configureEngine(lua_State *L) {
         .addFunction("infoprintln", &ScriptMachine::infoprintln)
         .addFunction("errprint", &ScriptMachine::errprint)
         .addFunction("errprintln", &ScriptMachine::errprintln);
+
+    ns.beginNamespace("coroutine")
+        .addFunction("wrap", &ScriptMachine::cowrap)
+        .addFunction("resume", &ScriptMachine::coresume)
+        .endNamespace();
 
     // TODO
 
@@ -158,12 +205,10 @@ int ScriptMachine::__output(MessageType type, lua_State *L) {
     QString msg;
     msg.reserve(256);
     for (int i = 1; i <= n; i++) {
-        size_t len;
-        const char *s = luaL_tolstring(L, i, &len);
         if (i > 1) {
             msg.append(' ');
         }
-        msg.append(QString::fromUtf8(s, len));
+        msg.append(LuauInspector::inspect(L, i, _printOptions));
         lua_pop(L, 1);
     }
 
@@ -181,13 +226,10 @@ int ScriptMachine::__outputln(MessageType type, lua_State *L) {
     QString msg;
     msg.reserve(256);
     for (int i = 1; i <= n; i++) {
-        size_t len;
-        const char *s = luaL_tolstring(L, i, &len);
         if (i > 1) {
             msg.append('\n');
         }
-        msg.append(QString::fromUtf8(s, len));
-        lua_pop(L, 1);
+        msg.append(LuauInspector::inspect(L, i, _printOptions));
     }
 
     MessageInfo info;
@@ -199,10 +241,27 @@ int ScriptMachine::__outputln(MessageType type, lua_State *L) {
 }
 
 void ScriptMachine::destoryMachine() {
+    delete _debugger;
+    _debugger = nullptr;
     for (auto &c : _ctx) {
         c.destory();
     }
     lua_close(_main);
+    _main = nullptr;
+}
+
+QVector<lua_State *> ScriptMachine::getThreadAncestors(lua_State *L) const {
+    if (L == nullptr) {
+        return {};
+    }
+    auto thd = contextData(L);
+    if (thd) {
+        auto dbg = thd->debugger;
+        if (dbg) {
+            return dbg->getThreadAncestors(L);
+        }
+    }
+    return {L, _main};
 }
 
 void ScriptMachine::setCustomEvals(
@@ -265,6 +324,43 @@ int ScriptMachine::infoprint(lua_State *L) {
 
 int ScriptMachine::infoprintln(lua_State *L) {
     return __outputln(MessageType::Info, L);
+}
+
+int ScriptMachine::cowrap(lua_State *L) {
+    int top = lua_gettop(L);
+    lua_checkstack(L, 1 + top);
+    lua_pushvalue(L, lua_upvalueindex(1));
+    for (int i = 1; i <= top; ++i)
+        lua_pushvalue(L, i);
+    lua_call(L, top, 1);
+
+    if (auto *cl = LuauUtil::getCFunction(L, -1)) {
+        auto *cont = cl->c.cont;
+        lua_checkstack(L, 1);
+        lua_pushcclosurek(
+            L,
+            [](lua_State *L) {
+                DbgStackPusher _(L);
+                return forward(L, lua_upvalueindex(1));
+            },
+            nullptr, 1, cont);
+    }
+    return 1;
+}
+
+int ScriptMachine::coresume(lua_State *L) {
+    DbgStackPusher _(L);
+    return forward(L, lua_upvalueindex(1));
+}
+
+int ScriptMachine::forward(lua_State *L, int index) {
+    int top = lua_gettop(L);
+    lua_checkstack(L, 1 + top);
+    lua_pushvalue(L, index);
+    for (int i = 1; i <= top; ++i)
+        lua_pushvalue(L, i);
+    lua_call(L, top, LUA_MULTRET);
+    return lua_gettop(L) - top;
 }
 
 QString ScriptMachine::input() {
@@ -346,21 +442,6 @@ void ScriptMachine::outputMessage(const MessageInfo &info) {
     if (cbs.printMsgFn) {
         cbs.printMsgFn(info);
     }
-}
-
-QString ScriptMachine::getGlobalDecls() const {
-    if (!_cachedGlobalStrs.isEmpty()) {
-        return _cachedGlobalStrs;
-    }
-
-    // auto ctx = context(ScriptMachine::Interactive);
-
-    // auto total = mod->GetGlobalVarCount();
-    // for (asUINT n = 0; n < total; n++) {
-    //     auto decl = mod->GetGlobalVarDeclaration(n, true);
-    //     _cachedGlobalStrs.append(decl).append(';');
-    // }
-    return _cachedGlobalStrs;
 }
 
 void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
@@ -458,11 +539,6 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
         outputMessage(info);
     }
 
-    // mod->SetUserData(reinterpret_cast<void *>(isDbg),
-    //                  AsUserDataType::UserData_isDbg);
-    // ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-    //                  AsUserDataType::UserData_isDbg);
-
     auto d = ctx->data;
     Q_ASSERT(d);
     d->startTime = AppManager::instance()->currentMSecsSinceEpoch();
@@ -470,6 +546,10 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     // min -> ms
     d->timeOutTime =
         quint64(SettingManager::instance().scriptTimeout()) * 60000;
+
+    if (isInDebug) {
+        _debugger->attach(T);
+    }
 
     // collect the handle info
     auto &api = PluginSystem::instance();
@@ -650,18 +730,17 @@ CScriptArray *ScriptMachine::clip_getBinary() {
 }
 
 bool ScriptMachine::isDebugMode(ConsoleMode mode) {
-    // if (mode == Scripting) {
-    //     auto mod = module(mode);
-    //     if (mod) {
-    //         return reinterpret_cast<asPWORD>(
-    //             mod->GetUserData(AsUserDataType::UserData_isDbg));
-    //     }
-    // }
+    if (mode == Scripting) {
+        auto thd = contextData(mode);
+        if (thd) {
+            return thd->debugger;
+        }
+    }
 
     return false;
 }
 
-// asDebugger *ScriptMachine::debugger() const { return _debugger; }
+LuauDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                                 const std::function<void(bool)> &onFinished) {
@@ -714,12 +793,6 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         RETURN_DEFAULT;
     }
 
-    // asPWORD isDbg = 0;
-    // mod->SetUserData(reinterpret_cast<void *>(isDbg),
-    //                  AsUserDataType::UserData_isDbg);
-    // ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-    //                  AsUserDataType::UserData_isDbg);
-
     auto d = contextData(mode);
     Q_ASSERT(d);
     d->startTime = AppManager::instance()->currentMSecsSinceEpoch();
@@ -763,7 +836,6 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                                  outputMessage(info);
                              }
                          }
-                         // clear and reset for reusing
                          R.reset();
                          onFinished(true);
                      });

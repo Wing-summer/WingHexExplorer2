@@ -18,8 +18,8 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
-#include "control/asidbtreeview.h"
-#include "control/asobjtreewidget.h"
+#include "control/idbtreeview.h"
+#include "control/objtreewidget.h"
 #include "control/scriptingconsole.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
@@ -31,8 +31,8 @@
 #include "WingCodeEdit/wingsquiggleinfomodel.h"
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
-#include "model/asidbwatchmodel.h"
 #include "model/dbgcallstackmodel.h"
+#include "model/idbwatchmodel.h"
 #include "utilities.h"
 
 #include <QKeySequence>
@@ -335,11 +335,11 @@ private:
 
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;
-    asIDBTreeView *m_varshow = nullptr;
-    asIDBTreeView *m_gvarshow = nullptr;
-    AsIDBWatchModel *m_watchModel = nullptr;
+    IDBTreeView *m_varshow = nullptr;
+    IDBTreeView *m_gvarshow = nullptr;
+    IDBWatchModel *m_watchModel = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
-    ASObjTreeWidget *m_sym = nullptr;
+    ObjTreeWidget *m_sym = nullptr;
     ScriptEditor *_fakeEditor = nullptr;
 
     QLabel *_status = nullptr;

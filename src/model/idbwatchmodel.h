@@ -1,28 +1,28 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-** =============================================================================
-*/
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
 
-#ifndef ASIDBWATCHMODEL_H
-#define ASIDBWATCHMODEL_H
+#ifndef IDBWATCHMODEL_H
+#define IDBWATCHMODEL_H
 
-#include "asidbtreemodel.h"
+#include "idbtreemodel.h"
 // #include "class/asdebugger.h"
 #include <memory>
 
-class AsIDBWatchModel : public AsIDBTreeModel {
+class IDBWatchModel : public IDBTreeModel {
     Q_OBJECT
 private:
     struct WatchItem {
@@ -37,7 +37,7 @@ private:
     };
 
 public:
-    explicit AsIDBWatchModel(QObject *parent = nullptr);
+    explicit IDBWatchModel(QObject *parent = nullptr);
 
 public:
     QStringList expressionList() const;
@@ -85,4 +85,4 @@ private:
     // QVector<asIDBVariable::Ptr> buildRootsFromWatchItems() const;
 };
 
-#endif // ASIDBWATCHMODEL_H
+#endif // IDBWATCHMODEL_H

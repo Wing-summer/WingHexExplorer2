@@ -34,7 +34,7 @@
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
 #include "dialog/mutisavedialog.h"
-#include "model/asidbwatchmodel.h"
+#include "model/idbwatchmodel.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -651,10 +651,10 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
     auto vars = new QTabWidget(this);
     vars->setTabPosition(QTabWidget::South);
 
-    m_varshow = new asIDBTreeView(this);
+    m_varshow = new IDBTreeView(this);
     vars->addTab(m_varshow, tr("Local"));
 
-    m_gvarshow = new asIDBTreeView(this);
+    m_gvarshow = new IDBTreeView(this);
     vars->addTab(m_gvarshow, tr("Global"));
 
     auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
@@ -668,8 +668,8 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
 
-    m_watchModel = new AsIDBWatchModel;
-    auto watchVar = new asIDBTreeView(this);
+    m_watchModel = new IDBWatchModel;
+    auto watchVar = new IDBTreeView(this);
     Utilities::applyTreeViewProperty(watchVar);
     watchVar->setEditTriggers(QTreeView::DoubleClicked);
     watchVar->setModel(m_watchModel);
@@ -768,7 +768,7 @@ ScriptingDialog::buildSymbolShowDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
     Q_ASSERT(m_consoleout);
-    m_sym = new ASObjTreeWidget(this);
+    m_sym = new ObjTreeWidget(this);
     auto dw =
         buildDockWidget(dock, QStringLiteral("Symbol"), tr("Symbol"), m_sym);
     return dock->addDockWidget(area, dw, areaw);

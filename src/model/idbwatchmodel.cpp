@@ -1,32 +1,32 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-** =============================================================================
-*/
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
 
-#include "asidbwatchmodel.h"
+#include "idbwatchmodel.h"
 #include <QString>
 #include <algorithm>
 
-AsIDBWatchModel::AsIDBWatchModel(QObject *parent) : AsIDBTreeModel(parent) {}
+IDBWatchModel::IDBWatchModel(QObject *parent) : IDBTreeModel(parent) {}
 
-// void AsIDBWatchModel::attachDebugger(asDebugger *debugger) {
+// void IDBWatchModel::attachDebugger(asDebugger *debugger) {
 //     _dbg = debugger;
 //     refresh();
 // }
 
-QStringList AsIDBWatchModel::expressionList() const {
+QStringList IDBWatchModel::expressionList() const {
     QStringList ret;
     for (const auto &item : m_watchItems) {
         if (item) {
@@ -36,7 +36,7 @@ QStringList AsIDBWatchModel::expressionList() const {
     return ret;
 }
 
-void AsIDBWatchModel::addWatchExpression(const QString &expression) {
+void IDBWatchModel::addWatchExpression(const QString &expression) {
     auto exp = expression.trimmed();
     if (exp.isEmpty()) {
         return;
@@ -79,7 +79,7 @@ void AsIDBWatchModel::addWatchExpression(const QString &expression) {
 //     // endResetModel();
 // }
 
-void AsIDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
+void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
     if (indexes.isEmpty()) {
         return;
     }
@@ -146,7 +146,7 @@ void AsIDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
 //     return true;
 // }
 
-void AsIDBWatchModel::refresh() {
+void IDBWatchModel::refresh() {
     // if (_dbg) {
     //     auto &cache = _dbg->cache;
     //     if (cache) {
@@ -189,7 +189,7 @@ void AsIDBWatchModel::refresh() {
     // }
 }
 
-void AsIDBWatchModel::reloadExpressionList(const QStringList &expressions) {
+void IDBWatchModel::reloadExpressionList(const QStringList &expressions) {
     for (const auto &expression : expressions) {
         auto exp = expression.trimmed();
         if (exp.isEmpty()) {
@@ -210,16 +210,16 @@ void AsIDBWatchModel::reloadExpressionList(const QStringList &expressions) {
     // endResetModel();
 }
 
-Qt::ItemFlags AsIDBWatchModel::flags(const QModelIndex &index) const {
-    Qt::ItemFlags flags = AsIDBTreeModel::flags(index);
+Qt::ItemFlags IDBWatchModel::flags(const QModelIndex &index) const {
+    Qt::ItemFlags flags = IDBTreeModel::flags(index);
     if (!index.parent().isValid() && index.column() == 0) {
         flags |= Qt::ItemIsEditable;
     }
     return flags;
 }
 
-bool AsIDBWatchModel::setData(const QModelIndex &index, const QVariant &value,
-                              int role) {
+bool IDBWatchModel::setData(const QModelIndex &index, const QVariant &value,
+                            int role) {
     if (role != Qt::EditRole || !index.isValid() || index.column() != 0) {
         return false;
     }
@@ -234,14 +234,14 @@ bool AsIDBWatchModel::setData(const QModelIndex &index, const QVariant &value,
     return {};
 }
 
-void AsIDBWatchModel::clearAll() {
+void IDBWatchModel::clearAll() {
     m_watchItems.clear();
     beginResetModel();
     // replaceRoots({});
     endResetModel();
 }
 
-QString AsIDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
+QString IDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
     // QString idPart;
     // if (item.isValid()) {
     //     auto wp = item.result.value();
@@ -262,7 +262,7 @@ QString AsIDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
     return {};
 }
 
-// QVector<asIDBVariable::Ptr> AsIDBWatchModel::buildRootsFromWatchItems() const
+// QVector<asIDBVariable::Ptr> IDBWatchModel::buildRootsFromWatchItems() const
 // {
 //     QVector<asIDBVariable::Ptr> roots;
 //     roots.reserve(m_watchItems.size());
@@ -277,7 +277,7 @@ QString AsIDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
 //     return roots;
 // }
 
-QVariant AsIDBWatchModel::data(const QModelIndex &index, int role) const {
+QVariant IDBWatchModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid())
         return {};
 
@@ -331,10 +331,10 @@ QVariant AsIDBWatchModel::data(const QModelIndex &index, int role) const {
     }
 
     // non top-level: delegate to base class (variables/proxy/paging)
-    return AsIDBTreeModel::data(index, role);
+    return IDBTreeModel::data(index, role);
 }
 
-bool AsIDBWatchModel::hasChildren(const QModelIndex &parent) const {
+bool IDBWatchModel::hasChildren(const QModelIndex &parent) const {
     if (!parent.isValid())
         return !m_watchItems.empty();
 
@@ -359,10 +359,10 @@ bool AsIDBWatchModel::hasChildren(const QModelIndex &parent) const {
         return false;
     }
 
-    return AsIDBTreeModel::hasChildren(parent);
+    return IDBTreeModel::hasChildren(parent);
 }
 
-int AsIDBWatchModel::rowCount(const QModelIndex &parent) const {
+int IDBWatchModel::rowCount(const QModelIndex &parent) const {
     if (!parent.isValid())
         return static_cast<int>(m_watchItems.size());
     if (!parent.parent().isValid()) {
@@ -386,11 +386,11 @@ int AsIDBWatchModel::rowCount(const QModelIndex &parent) const {
         // auto show = std::min(totalIndexed, getPageSize());
         // return totalNamed + show + (totalIndexed > show ? 1 : 0);
     }
-    return AsIDBTreeModel::rowCount(parent);
+    return IDBTreeModel::rowCount(parent);
 }
 
-QModelIndex AsIDBWatchModel::index(int row, int column,
-                                   const QModelIndex &parent) const {
+QModelIndex IDBWatchModel::index(int row, int column,
+                                 const QModelIndex &parent) const {
     if (row < 0 || column < 0) {
         return {};
     }
@@ -423,10 +423,10 @@ QModelIndex AsIDBWatchModel::index(int row, int column,
         }
     }
 
-    return AsIDBTreeModel::index(row, column, parent);
+    return IDBTreeModel::index(row, column, parent);
 }
 
-QModelIndex AsIDBWatchModel::parent(const QModelIndex &child) const {
+QModelIndex IDBWatchModel::parent(const QModelIndex &child) const {
     if (!child.isValid()) {
         return {};
     }
@@ -453,7 +453,7 @@ QModelIndex AsIDBWatchModel::parent(const QModelIndex &child) const {
     //     }
     // }
 
-    auto baseParent = AsIDBTreeModel::parent(child);
+    auto baseParent = IDBTreeModel::parent(child);
     if (!baseParent.isValid()) {
         return {};
     }

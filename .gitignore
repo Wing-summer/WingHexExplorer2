@@ -43,6 +43,9 @@ build/
 *.pro.user*
 CMakeLists.txt.user*
 
+# KDevelop
+.kdev4/
+
 # xemacs temporary files
 *.flc
 

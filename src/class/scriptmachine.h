@@ -21,6 +21,8 @@
 #include "WingPlugin/iwingangel.h"
 
 #include "class/luauscheduler.h"
+#include "debugger/luaudebugger.h"
+#include "debugger/luauinspector.h"
 
 #include <QObject>
 #include <QQueue>
@@ -60,24 +62,25 @@ public:
         std::function<void(const ScriptMachine::MessageInfo &)> printMsgFn;
     };
 
-private:
+public:
+    LuauThread *context(ConsoleMode mode) const;
+    LuauThreadData *contextData(ConsoleMode mode) const;
+    lua_State *contextState(ConsoleMode mode) const;
+
+    static LuauThreadData *contextData(lua_State *l);
+
 private:
     explicit ScriptMachine();
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
-    LuauThread *context(ConsoleMode mode) const;
-    lua_State *contextState(ConsoleMode mode) const;
-    LuauThreadData *contextData(ConsoleMode mode) const;
-
     static bool configureEngine(lua_State *l);
-
-    static LuauThreadData *contextData(lua_State *l);
     static int consoleModeIdx(ConsoleMode mode);
 
 public:
     static ScriptMachine &instance();
     void destoryMachine();
 
+    QVector<lua_State *> getThreadAncestors(lua_State *L) const;
     void setCustomEvals(
         const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals);
 
@@ -100,11 +103,9 @@ public:
     bool fileSystemWrite() const;
 
 public:
-    // asDebugger *debugger() const;
+    LuauDebugger *debugger() const;
 
     void outputMessage(const MessageInfo &info);
-
-    QString getGlobalDecls() const;
 
 public:
     static void clip_setText(const QString &text);
@@ -147,6 +148,10 @@ private:
     static int infoprint(lua_State *L);
     static int infoprintln(lua_State *L);
 
+    static int cowrap(lua_State *L);
+    static int coresume(lua_State *L);
+    static int forward(lua_State *L, int index);
+
     QString input();
 
 private:
@@ -157,14 +162,15 @@ private:
     // void attachDebugBreak(asIScriptContext *ctx);
 
 private:
-    QVector<RegCallBacks> _regcalls;
-    mutable QString _cachedGlobalStrs;
-
-private:
     bool _inited = false;
     lua_State *_main = nullptr;
+    LuauDebugger *_debugger = nullptr;
     mutable LuauThread _ctx[ConsoleModeCount]{};
     mutable LuauThreadData _tdata[ConsoleModeCount]{};
+
+    inline static LuauInspector::Options _printOptions;
+
+    QVector<RegCallBacks> _regcalls;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

@@ -81,8 +81,18 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     if (iodevice_->isOpen())
         iodevice_->consoleWidgetInput(code);
 
-    if (!_isWaitingRead) {
-        Q_EMIT consoleCommand(code);
+    if (mod == Qt::ControlModifier) {
+        if (_codes.isEmpty()) {
+            _codes = code;
+        } else {
+            _codes.append('\n').append(code);
+        }
+        appendCommandPrompt(true);
+        setEditMode(Input);
+    } else {
+        if (!_isWaitingRead) {
+            Q_EMIT consoleCommand(code);
+        }
     }
 }
 
@@ -264,112 +274,23 @@ void ScriptingConsole::onSendFullTextChangeCompleted() {
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     hideHelpTooltip();
     auto exec = code.trimmed();
-    if (exec == QStringLiteral("#ls")) {
-        auto &ins = ScriptMachine::instance();
-        // auto mod = ins.module(ScriptMachine::Interactive);
-        // if (mod) {
-        //     auto total = mod->GetGlobalVarCount();
-
-        //     setEditMode(Output);
-
-        //     if (total == 0) {
-        //         stdOutLine("<none>");
-        //     } else {
-        //         auto &sm = ScriptMachine::instance();
-        //         for (asUINT i = 0; i < total; ++i) {
-        //             const char *name;
-        //             int typeID;
-        //             auto decl = mod->GetGlobalVarDeclaration(i);
-        //             if (decl && mod->GetGlobalVar(i, &name, nullptr, &typeID)
-        //             ==
-        //                             asSUCCESS) {
-        //                 stdOutLine(QString::fromUtf8(decl) +
-        //                            QStringLiteral(";"));
-        //                 newLine();
-        //             }
-        //         }
-        //     }
-
-        _codes.clear();
-        appendCommandPrompt();
-        setEditMode(Input);
-        // }
-    } else if (exec.startsWith(QStringLiteral("#del"))) {
-        // this is special command
-        auto &ins = ScriptMachine::instance();
-        // auto mod = ins.module(ScriptMachine::Interactive);
-        // if (mod) {
-        //     // first check whether contains \n
-        //     auto idx = exec.indexOf('\n');
-        //     if (idx >= 0) {
-        //         setEditMode(Output);
-        //         stdErrLine(tr("InvalidDelCmd"));
-        //     } else {
-        //         // ok, then tokens should be devided by the space
-        //         exec.remove(0, 4);
-        //         const auto vars = exec.split(' ', Qt::SkipEmptyParts);
-
-        //         QList<asUINT> indices;
-
-        //         // then check
-        //         setEditMode(Output);
-        //         for (const auto &v : vars) {
-        //             auto idx = mod->GetGlobalVarIndexByName(v.toUtf8());
-        //             if (idx >= 0) {
-        //                 indices.append(idx);
-        //             } else {
-        //                 stdWarnLine(tr("NotFoundIgnore:") + v);
-        //             }
-        //         }
-
-        //         std::sort(indices.begin(), indices.end(),
-        //         std::greater<int>());
-
-        //         // ok, remove
-        //         for (auto i : indices) {
-        //             mod->RemoveGlobalVar(i);
-        //         }
-        //     }
-        // }
-        _codes.clear();
-        appendCommandPrompt();
-        setEditMode(Input);
-        Q_EMIT consoleScriptRunFinished();
-    } else if (exec == QStringLiteral("#cls")) {
-        auto &ins = ScriptMachine::instance();
-        // auto mod = ins.module(ScriptMachine::Interactive);
-        // if (mod) {
-        //     auto total = mod->GetGlobalVarCount();
-        //     if (total) {
-        //         asUINT i = total;
-        //         do {
-        //             --i;
-        //             mod->RemoveGlobalVar(i);
-        //         } while (i);
-        //     }
-        // }
-        // _codes.clear();
-        appendCommandPrompt();
-        setEditMode(Input);
-        Q_EMIT consoleScriptRunFinished();
-    } else if (exec == QStringLiteral("#hiscls")) {
-        history_.strings_.clear();
-    } else {
-        setEditMode(Output);
-        _codes.append('\n').append(exec);
-        ScriptMachine::instance().executeCode(
-            ScriptMachine::Interactive, _codes, [this, exec](bool finished) {
-                if (finished) {
-                    _codes.clear();
-                    appendCommandPrompt(false);
-                    setEditMode(Input);
-                    Q_EMIT consoleScriptRunFinished();
-                } else {
-                    appendCommandPrompt(true);
-                    setEditMode(Input);
-                }
-            });
-    }
+    // if (exec == QStringLiteral("#hiscls")) {
+    //     history_.strings_.clear();
+    // } else {
+    setEditMode(Output);
+    _codes.append('\n').append(exec);
+    ScriptMachine::instance().executeCode(
+        ScriptMachine::Interactive, _codes, [this, exec](bool finished) {
+            if (finished) {
+                _codes.clear();
+                appendCommandPrompt(false);
+                setEditMode(Input);
+                Q_EMIT consoleScriptRunFinished();
+            } else {
+                appendCommandPrompt(true);
+                setEditMode(Input);
+            }
+        });
 }
 
 QString ScriptingConsole::getInput() {

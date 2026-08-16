@@ -1,27 +1,26 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-** =============================================================================
-*/
-
-#include "asobjtreewidget.h"
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
+#include "objtreewidget.h"
 
 #include "utilities.h"
 
 #include <QHeaderView>
 
-ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
+ObjTreeWidget::ObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
     Utilities::applyTreeViewProperty(this);
     setColumnCount(2);
     auto header = this->header();
@@ -63,8 +62,8 @@ ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
 //     resizeColumnToContents(0);
 // }
 
-QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
-                                                QTreeWidgetItem *parent) {
+QTreeWidgetItem *ObjTreeWidget::createObjNode(const CodeInfoTip &node,
+                                              QTreeWidgetItem *parent) {
     Q_ASSERT(parent);
     QStringList contents{node.name, node.comment()};
     auto c = new QTreeWidgetItem(contents);
@@ -75,8 +74,8 @@ QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
     return c;
 }
 
-void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
-                                     QTreeWidgetItem *parent) {
+void ObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
+                                   QTreeWidgetItem *parent) {
 
     for (const auto &n : nodes) {
         // only for code namespace completion
@@ -87,7 +86,7 @@ void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
     }
 }
 
-void ASObjTreeWidget::addGlobalFunctionCompletion(
+void ObjTreeWidget::addGlobalFunctionCompletion(
     asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
 
@@ -103,8 +102,8 @@ void ASObjTreeWidget::addGlobalFunctionCompletion(
     // }
 }
 
-void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
-                                        QHash<QString, QList<CodeInfoTip>> &c) {
+void ObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
+                                      QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
 
     // for (asUINT i = 0; i < engine->GetEnumCount(); ++i) {
@@ -132,8 +131,8 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
     // }
 }
 
-void ASObjTreeWidget::addClassCompletion(
-    asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
+void ObjTreeWidget::addClassCompletion(asIScriptEngine *engine,
+                                       QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
 
     // for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
@@ -202,7 +201,7 @@ void ASObjTreeWidget::addClassCompletion(
     // }
 }
 
-void ASObjTreeWidget::focusOutEvent(QFocusEvent *event) {
+void ObjTreeWidget::focusOutEvent(QFocusEvent *event) {
     clearSelection();
     QTreeWidget::focusOutEvent(event);
 }

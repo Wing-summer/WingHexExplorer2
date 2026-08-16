@@ -1,19 +1,19 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-** =============================================================================
-*/
+ ** Copyright (C) 2026-2029 WingSummer
+ **
+ ** This program is free software: you can redistribute it and/or modify it
+ ** under the terms of the GNU Affero General Public License as published by the
+ ** Free Software Foundation, version 3.
+ **
+ ** This program is distributed in the hope that it will be useful, but WITHOUT
+ ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ ** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+ ** for more details.
+ **
+ ** You should have received a copy of the GNU Affero General Public License
+ ** along with this program. If not, see <https://www.gnu.org/licenses/>.
+ ** =============================================================================
+ */
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
@@ -41,8 +41,8 @@
 #include "WingPlugin/iwingplugin.h"
 #include "class/consolehighlighanim.h"
 #include "class/recentfilemanager.h"
-#include "control/asidbtreeview.h"
 #include "control/editorview.h"
+#include "control/idbtreeview.h"
 #include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
 #include "model/bookmarksmodel.h"
@@ -547,7 +547,8 @@ private:
     size_t m_newIndex = 1;
     ads::CDockWidget *m_console = nullptr;
 
-    asIDBTreeView *_scriptObjView = nullptr;
+    IDBTreeView *_scriptObjView = nullptr;
+    LuauVariableRegistry _scriptObjReg;
 
     QAction *m_aDelBookMark = nullptr;
     QAction *m_aDelMetaData = nullptr;

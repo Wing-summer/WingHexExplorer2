@@ -23,12 +23,14 @@
 #include "lua.h"
 
 struct LuauThread;
+class LuauDebugger;
 
 struct LuauThreadData {
     LuauThread *parent = nullptr;
     quint64 startTime = 0;
     quint64 lastInteruptTime = 0;
     quint64 timeOutTime = 0;
+    LuauDebugger *debugger = nullptr;
     int mode = 0;
 };
 

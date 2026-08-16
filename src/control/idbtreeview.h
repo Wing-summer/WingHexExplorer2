@@ -15,26 +15,25 @@
 ** =============================================================================
 */
 
-#ifndef ASIDBTREEVIEW_H
-#define ASIDBTREEVIEW_H
+#ifndef IDBTREEVIEW_H
+#define IDBTREEVIEW_H
 
-// #include "as-debugger/as_debugger.h"
-// #include "model/asidbtreemodel.h"
+#include "model/idbtreemodel.h"
 
 #include <QTreeView>
 
-class asIDBTreeView : public QTreeView {
+class IDBTreeView : public QTreeView {
     Q_OBJECT
 public:
-    explicit asIDBTreeView(QWidget *parent = nullptr);
-    // explicit asIDBTreeView(AsIDBTreeModel *model, QWidget *parent = nullptr);
+    explicit IDBTreeView(QWidget *parent = nullptr);
+    explicit IDBTreeView(IDBTreeModel *model, QWidget *parent = nullptr);
 
 public:
-    // void refreshWithNewRoots(const QVector<asIDBVariable::Ptr> &newRoots);
-    // void refreshWithNewRoot(const asIDBVariable::Ptr &newRoot);
+    IDBTreeModel *dataModel() const;
 
 public slots:
     void setModel(QAbstractItemModel *model) override;
+    void refreshData();
 
 private:
     void saveExpansionState();
@@ -49,8 +48,6 @@ private:
 
 private:
     QSet<QString> m_expansionState;
-
-    // asIDBVariable::Ptr _newRoot; // hold the reference
 };
 
-#endif // ASIDBTREEVIEW_H
+#endif // IDBTREEVIEW_H

@@ -15,8 +15,8 @@
 ** =============================================================================
 */
 
-#ifndef ASOBJTREEWIDGET_H
-#define ASOBJTREEWIDGET_H
+#ifndef OBJTREEWIDGET_H
+#define OBJTREEWIDGET_H
 
 #include "class/codeinfotip.h"
 
@@ -27,10 +27,10 @@
 // TODO
 class asIScriptEngine;
 
-class ASObjTreeWidget : public QTreeWidget {
+class ObjTreeWidget : public QTreeWidget {
     Q_OBJECT
 public:
-    explicit ASObjTreeWidget(QWidget *parent = nullptr);
+    explicit ObjTreeWidget(QWidget *parent = nullptr);
 
     // void setEngine(asIScriptEngine *engine);
 
@@ -56,4 +56,4 @@ protected:
     virtual void focusOutEvent(QFocusEvent *event) override;
 };
 
-#endif // ASOBJTREEWIDGET_H
+#endif // OBJTREEWIDGET_H
