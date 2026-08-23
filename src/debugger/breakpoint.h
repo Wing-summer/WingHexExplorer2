@@ -15,32 +15,31 @@
  ** =============================================================================
  */
 
-#include "luautypes.h"
+#ifndef BREAKPOINT_H
+#define BREAKPOINT_H
 
-#include "debugger/luauinspector.h"
-#include "debugger/luauutil.h"
-#include "lualib.h"
+#include "lua.h"
 
-QString LuauTypes::toString(lua_State *L, int index) {
-    LuauUtil::DisableDebugStep _(L);
-    lua_checkstack(L, 1);
-    QString result;
-    size_t len;
-    const char *s = luaL_tolstring(L, index, &len);
-    if (s) {
-        result = QString::fromUtf8(s, len);
-    }
-    lua_pop(L, 1);
-    return result;
-}
+#include <QString>
 
-QString LuauTypes::toDbgString(lua_State *L, int index) {
-    InspectOptions options(InspectMode::Compact);
-    options.depth = 8;
-    options.maxItems = 20;
-    return LuauInspector::inspect(L, index, options);
-}
+class BreakPoint {
+public:
+    static BreakPoint create(int line);
 
-QString LuauTypes::getTypeName(int type) {
-    return QString::fromUtf8(lua_typename(nullptr, type));
-}
+    int line() const;
+    int targetLine() const;
+    int enable(lua_State *L, int func_index, bool enable);
+
+private:
+    int line_ = 0;
+    int target_line_ = -1;
+};
+
+struct BreakContext {
+    QString source_;
+    int line_ = 0;
+    int depth_ = 0;
+    lua_State *L_ = nullptr;
+};
+
+#endif // BREAKPOINT_H

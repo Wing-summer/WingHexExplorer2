@@ -381,6 +381,10 @@ set(INTERNAL_PLG_SRC src/class/structparser.cpp src/class/structparser.h
 set(LUAU_DBG_SRC
     src/debugger/luauutil.h
     src/debugger/luauutil.cpp
+    src/debugger/luaufile.h
+    src/debugger/luaufile.cpp
+    src/debugger/breakpoint.h
+    src/debugger/breakpoint.cpp
     src/debugger/luauinspector.h
     src/debugger/luauinspector.cpp
     src/debugger/luauscope.h

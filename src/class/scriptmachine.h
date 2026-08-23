@@ -168,7 +168,7 @@ private:
     mutable LuauThread _ctx[ConsoleModeCount]{};
     mutable LuauThreadData _tdata[ConsoleModeCount]{};
 
-    inline static LuauInspector::Options _printOptions;
+    inline static InspectOptions _printOptions;
 
     QVector<RegCallBacks> _regcalls;
 };

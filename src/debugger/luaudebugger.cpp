@@ -29,6 +29,46 @@ void LuauDebugger::attach(lua_State *L) {
 
 void LuauDebugger::detach() {}
 
+bool LuauDebugger::isDebugBreak() {}
+
+void LuauDebugger::stepOver() {
+    if (!isDebugBreak())
+        return;
+
+    // TODO
+
+    resumeInternal();
+}
+
+void LuauDebugger::stepIn() {}
+
+void LuauDebugger::stepOut() {}
+
+int LuauDebugger::getStackDepth(lua_State *L) const {
+    int depth = lua_stackdepth(L);
+    auto *parent = getParent(L);
+    while (parent != nullptr) {
+        depth += lua_stackdepth(parent);
+        parent = getParent(parent);
+    }
+    return depth;
+}
+
+BreakContext LuauDebugger::getBreakContext(lua_State *L) const {
+    lua_Debug ar;
+    lua_getinfo(L, 0, "sl", &ar);
+    BreakContext ctx;
+    ctx.source_ = QString::fromUtf8(ar.source);
+    ctx.line_ = ar.currentline;
+    ctx.depth_ = getStackDepth(L);
+    ctx.L_ = L;
+    return ctx;
+}
+
+void LuauDebugger::enableDebugStep(bool enable) {}
+
+void LuauDebugger::resumeInternal() {}
+
 QVector<lua_State *> LuauDebugger::getThreadAncestors(lua_State *L) {
     QVector<lua_State *> ancestors;
     while (L != nullptr) {

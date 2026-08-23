@@ -22,6 +22,7 @@
 #include <luau/VM/src/lapi.h>
 #include <luau/VM/src/lstate.h>
 
+#include <QHash>
 #include <QString>
 
 class LuauScope {
@@ -98,11 +99,8 @@ private:
     int level_ = 0;
 };
 
-template <>
-struct std::hash<LuauScope> {
-    std::size_t operator()(const LuauScope &scope) const {
-        return std::hash<int>{}(scope.getKey());
-    }
-};
+inline size_t qHash(const LuauScope &key, size_t seed = 0) noexcept {
+    return qHash(key.getKey(), seed);
+}
 
 #endif // LUAUSCOPE_H

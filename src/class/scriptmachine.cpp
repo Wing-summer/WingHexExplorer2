@@ -20,6 +20,7 @@
 #include "Luau/CodeGen.h"
 #include "Luau/Common.h"
 #include "Luau/Compiler.h"
+#include "debugger/luauinspector.h"
 #include "debugger/luauutil.h"
 #include "lualib.h"
 
@@ -91,6 +92,8 @@ bool ScriptMachine::init() {
         return false;
     }
 
+    // TODO: only REPL thread can be reused, other threads should be re-created
+    // when needed
     for (int i = 0; i < ConsoleModeCount; ++i) {
         auto &l = _ctx[i];
         auto s = lua_newthread(_main);
@@ -123,10 +126,10 @@ bool ScriptMachine::init() {
     luaL_sandbox(_main);
 
     // init inspect options
-    _printOptions.maxDepth = 8;
+    _printOptions.setMode(InspectMode::Pretty);
+    _printOptions.depth = 8;
     _printOptions.maxItems = 50;
-    _printOptions.maxStringLength = 4096;
-    _printOptions.stringMode = LuauInspector::StringMode::Raw;
+    _printOptions.quoteString = false;
 
     // create the debugger
     _debugger = new LuauDebugger;

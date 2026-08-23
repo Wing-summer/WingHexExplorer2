@@ -17,685 +17,618 @@
 
 #include "luauinspector.h"
 
-QString LuauInspector::inspect(lua_State *L, int index,
-                               const Options &options) {
-    if (!L) {
-        return {};
-    }
+#include <lualib.h>
 
-    LuauInspector inspector(L, options);
-    index = lua_absindex(L, index);
-    inspector.countCycles(index, options.maxDepth < 0
-                                     ? std::numeric_limits<int>::max()
-                                     : options.maxDepth);
-    inspector.putValue(index, ValueContext::Root);
-    return inspector.m_output;
-}
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <limits>
+#include <qstringview.h>
+#include <unordered_map>
+#include <vector>
 
-LuauInspector::LuauInspector(lua_State *L, Options options)
-    : m_L(L), m_options(std::move(options)) {}
+#include <LuaBridge/LuaBridge.h>
 
-LuauInspector::ObjectKey LuauInspector::objectKey(lua_State *L, int index) {
-    index = lua_absindex(L, index);
-    const int type = lua_type(L, index);
+namespace {
 
-    switch (type) {
-    case LUA_TTABLE:
-    case LUA_TFUNCTION:
-    case LUA_TUSERDATA:
-    case LUA_TTHREAD:
-    case LUA_TBUFFER:
-    case LUA_TCLASS:
-    case LUA_TOBJECT:
-#if defined(LUA_TVECTOR)
-    case LUA_TVECTOR:
-#endif
-        return {type, reinterpret_cast<quintptr>(lua_topointer(L, index))};
+// ============================================================================
+// Helper functions
+// ============================================================================
 
-    default:
-        return {type, 0};
-    }
-}
-
-void LuauInspector::append(const QString &text) { m_output += text; }
-
-void LuauInspector::append(QLatin1Char c) { m_output += c; }
-
-void LuauInspector::tabify() {
-    append(m_options.newline);
-    for (int i = 0; i < m_level; ++i) {
-        append(m_options.indent);
-    }
-}
-
-bool LuauInspector::isLuaKeyword(const QString &str) {
-    static const QSet<QString> keywords = {
-        QStringLiteral("and"),      QStringLiteral("break"),
-        QStringLiteral("do"),       QStringLiteral("else"),
-        QStringLiteral("elseif"),   QStringLiteral("end"),
-        QStringLiteral("false"),    QStringLiteral("for"),
-        QStringLiteral("function"), QStringLiteral("goto"),
-        QStringLiteral("if"),       QStringLiteral("in"),
-        QStringLiteral("local"),    QStringLiteral("nil"),
-        QStringLiteral("not"),      QStringLiteral("or"),
-        QStringLiteral("repeat"),   QStringLiteral("return"),
-        QStringLiteral("then"),     QStringLiteral("true"),
-        QStringLiteral("until"),    QStringLiteral("while")};
-
-    return keywords.contains(str);
-}
-
-bool LuauInspector::isLuaIdentifier(const QString &str) {
-    if (str.isEmpty()) {
-        return false;
-    }
-
-    auto isAlpha = [](QChar c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    };
-    auto isDigit = [](QChar c) { return c >= '0' && c <= '9'; };
-    auto isIdentChar = [&](QChar c) {
-        return c == '_' || isAlpha(c) || isDigit(c);
-    };
-
-    const QChar first = str.at(0);
-    if (!(first == '_' || isAlpha(first))) {
-        return false;
-    }
-    for (qsizetype i = 1; i < str.size(); ++i) {
-        if (!isIdentChar(str.at(i))) {
-            return false;
-        }
-    }
-
-    return !isLuaKeyword(str);
-}
-
-QString LuauInspector::escapeBytes(const QByteArray &bytes) {
-    QString result;
-    result.reserve(bytes.size() * 2);
-
-    for (int i = 0; i < bytes.size(); ++i) {
-        const unsigned char c = static_cast<unsigned char>(bytes.at(i));
-
-        switch (c) {
-        case '\\':
-            result += QStringLiteral("\\\\");
-            break;
-
-        case '\a':
-            result += QStringLiteral("\\a");
-            break;
-
-        case '\b':
-            result += QStringLiteral("\\b");
-            break;
-
-        case '\f':
-            result += QStringLiteral("\\f");
-            break;
-
-        case '\n':
-            result += QStringLiteral("\\n");
-            break;
-
-        case '\r':
-            result += QStringLiteral("\\r");
-            break;
-
-        case '\t':
-            result += QStringLiteral("\\t");
-            break;
-
-        case '\v':
-            result += QStringLiteral("\\v");
-            break;
-
-        case 127:
-            result += QStringLiteral("\\127");
-            break;
-
-        default:
-            if (c < 32) {
-                result += QStringLiteral("\\%1").arg(static_cast<int>(c), 3, 10,
-                                                     QLatin1Char('0'));
-            } else {
-                result += QChar::fromLatin1(static_cast<char>(c));
-            }
-            break;
-        }
-    }
-
-    return result;
-}
-
-QString LuauInspector::quote(const QString &escaped) {
-    // Same strategy as inspect.lua:
-    //
-    // if string contains " but not '
-    //     use single quotes
-    //
-    // otherwise use double quotes.
-
-    if (escaped.contains('"') && !escaped.contains('\'')) {
-        return '\'' + escaped + '\'';
-    }
-
-    QString result;
-    result.reserve(escaped.size() + 2);
-    result += '"';
-    for (const QChar c : escaped) {
-        if (c == '"')
-            result += QStringLiteral("\\\"");
-        else
-            result += c;
-    }
-    result += '"';
-
-    return result;
-}
-
-QString LuauInspector::rawLuaString(lua_State *L, int index) {
-    size_t length = 0;
-
-    const char *data = lua_tolstring(L, index, &length);
-
-    if (!data)
-        return {};
-
-    return QString::fromUtf8(data, qsizetype(length));
-}
-
-QString LuauInspector::makeString(lua_State *L, int index,
-                                  ValueContext context) {
-    size_t length = 0;
-
-    const char *data = lua_tolstring(L, index, &length);
-
-    if (!data)
-        return {};
-
-    qsizetype usableLength = qsizetype(length);
-
-    bool truncated = false;
-
-    if (m_options.maxStringLength >= 0 &&
-        usableLength > m_options.maxStringLength) {
-        usableLength = m_options.maxStringLength;
-
-        truncated = true;
-    }
-
-    QByteArray bytes(data, usableLength);
-
-    /*
-     * Root + Raw:
-     *
-     * print("hello")
-     *     -> hello
-     *
-     * Do not escape here either. This is intentionally
-     * closer to print() semantics.
-     */
-    if (context == ValueContext::Root &&
-        m_options.stringMode == StringMode::Raw) {
-        QString result = QString::fromUtf8(bytes.constData(), bytes.size());
-
-        if (truncated)
-            result += QStringLiteral("...");
-
-        return result;
-    }
-
-    QString escaped = escapeBytes(bytes);
-
-    if (truncated)
-        escaped += QStringLiteral("...");
-
-    return quote(escaped);
-}
-
-int LuauInspector::typeOrder(int type) {
+int typeOrder(int type) {
     switch (type) {
     case LUA_TNUMBER:
-#ifdef LUA_TINTEGER
-    case LUA_TINTEGER:
-#endif
         return 1;
-
     case LUA_TBOOLEAN:
         return 2;
-
     case LUA_TSTRING:
         return 3;
-
     case LUA_TTABLE:
         return 4;
-
     case LUA_TFUNCTION:
         return 5;
-
     case LUA_TUSERDATA:
         return 6;
-
     case LUA_TTHREAD:
         return 7;
-
     default:
         return 100;
     }
 }
 
-bool LuauInspector::compareKeys(lua_State *L, const KeyInfo &a,
-                                const KeyInfo &b) {
-    if (a.type == b.type) {
-        if (a.type == LUA_TSTRING)
-            return a.stringValue < b.stringValue;
+bool isIdentifier(const char *s, size_t len) {
+    if (!s || len == 0)
+        return false;
+    // first char must be underscore or letter
+    if (!(std::isalpha(s[0]) || s[0] == '_'))
+        return false;
+    for (size_t i = 1; i < len; ++i) {
+        char c = s[i];
+        if (!(std::isalnum(c) || c == '_'))
+            return false;
+    }
+    // Lua keywords are not identifiers
+    static const char *keywords[] = {
+        "and",      "break",  "do",   "else", "elseif", "end",  "false", "for",
+        "function", "goto",   "if",   "in",   "local",  "nil",  "not",   "or",
+        "repeat",   "return", "then", "true", "until",  "while"};
 
-        if (a.type == LUA_TNUMBER
-#ifdef LUA_TINTEGER
-            || a.type == LUA_TINTEGER
-#endif
-        ) {
-            return a.numberValue < b.numberValue;
+    for (auto keyword : keywords) {
+        if (strlen(keyword) == len && strncmp(s, keyword, len) == 0) {
+            return false;
         }
-
-        return a.objectValue < b.objectValue;
     }
-
-    const int oa = typeOrder(a.type);
-    const int ob = typeOrder(b.type);
-
-    if (oa != ob)
-        return oa < ob;
-
-    const char *ta = lua_typename(L, a.type);
-
-    const char *tb = lua_typename(L, b.type);
-
-    return qstrcmp(ta, tb) < 0;
+    return true;
 }
 
-int LuauInspector::sequenceLength(int index) {
-    index = lua_absindex(m_L, index);
-
-    int sequenceLength = 0;
-
-    while (true) {
-        lua_rawgeti(m_L, index, sequenceLength + 1);
-
-        const int type = lua_type(m_L, -1);
-
-        lua_pop(m_L, 1);
-
-        if (type == LUA_TNIL)
-            break;
-
-        ++sequenceLength;
+QByteArray escapeString(const char *s, size_t len) {
+    QByteArray out;
+    out.reserve(len * 2);
+    for (size_t i = 0; i < len; ++i) {
+        auto c = s[i];
+        if (c == '\\') {
+            out.append('\\');
+        } else if (c < 32 || c == 127) {
+            // Check if next character is a digit; if so use long escape
+            bool nextIsDigit = (i + 1 < len) && std::isdigit(s[i + 1]);
+            if (nextIsDigit) {
+                out += QByteArrayLiteral(R"(\)") +
+                       QByteArray::number(c).rightJustified(3, '0');
+            } else {
+                switch (c) {
+                case '\a':
+                    out.append(QByteArrayLiteral(R"(\a)"));
+                    break;
+                case '\b':
+                    out.append(QByteArrayLiteral(R"(\b)"));
+                    break;
+                case '\f':
+                    out.append(QByteArrayLiteral(R"(\f)"));
+                    break;
+                case '\n':
+                    out.append(QByteArrayLiteral(R"(\n)"));
+                    break;
+                case '\r':
+                    out.append(QByteArrayLiteral(R"(\r)"));
+                    break;
+                case '\t':
+                    out.append(QByteArrayLiteral(R"(\t)"));
+                    break;
+                case '\v':
+                    out.append(QByteArrayLiteral(R"(\v)"));
+                    break;
+                case 127:
+                    out.append(QByteArrayLiteral(R"(\127)"));
+                    break;
+                default: {
+                    out += QByteArrayLiteral(R"(\)") +
+                           QByteArray::number(c).rightJustified(3, '0');
+                    break;
+                }
+                }
+            }
+        } else {
+            out.append(c);
+        }
     }
-
-    return sequenceLength;
+    return out;
 }
 
-void LuauInspector::countCycles(int index, int depth) {
-    index = lua_absindex(m_L, index);
+QByteArray smartQuote(const QByteArray &escaped) {
+    if (escaped.contains('"') && !escaped.contains('\'')) {
+        return '\'' + escaped + '\'';
+    } else {
+        QByteArray result(1, '"');
+        for (char c : escaped) {
+            if (c == '"')
+                result += QByteArrayLiteral(R"(\")");
+            else
+                result += c;
+        }
+        result += QByteArrayLiteral(R"(")");
+        return result;
+    }
+}
 
-    if (lua_type(m_L, index) != LUA_TTABLE)
+// Compare two Lua keys that are on the stack at absolute indices idxA and idxB.
+// Returns true if keyA < keyB according to inspect.lua's sortKeys.
+bool compareLuaKeys(lua_State *L, int idxA, int idxB) {
+    int ta = lua_type(L, idxA);
+    int tb = lua_type(L, idxB);
+    if (ta == tb && (ta == LUA_TSTRING || ta == LUA_TNUMBER)) {
+        if (ta == LUA_TNUMBER) {
+            return lua_tonumber(L, idxA) < lua_tonumber(L, idxB);
+        } else {
+            size_t la, lb;
+            const char *sa = lua_tolstring(L, idxA, &la);
+            const char *sb = lua_tolstring(L, idxB, &lb);
+            int cmp = std::strncmp(sa, sb, std::min(la, lb));
+            if (cmp != 0)
+                return cmp < 0;
+            return la < lb;
+        }
+    }
+    int oa = typeOrder(ta);
+    int ob = typeOrder(tb);
+    if (oa == ob) {
+        return std::strcmp(lua_typename(L, ta), lua_typename(L, tb)) < 0;
+    }
+    return oa < ob;
+}
+
+bool sequenceKey(lua_State *L, int idx, lua_Integer &value) {
+    if (lua_type(L, idx) != LUA_TNUMBER)
+        return false;
+
+    auto n = lua_tonumber(L, idx);
+    if (!std::isfinite(n) || std::floor(n) != n || n < 1)
+        return false;
+
+    if (n > lua_Number(std::numeric_limits<int>::max()))
+        return false;
+
+    value = lua_Integer(n);
+    return lua_Number(value) == n;
+}
+
+// ============================================================================
+// Cycle counting
+// ============================================================================
+void countCyclesRec(lua_State *L, int absIdx, int depth,
+                    std::unordered_map<const void *, int> &cycles) {
+    if (lua_type(L, absIdx) != LUA_TTABLE)
         return;
 
-    countCyclesImpl(index, depth);
-}
+    const void *ptr = lua_topointer(L, absIdx);
 
-void LuauInspector::countCyclesImpl(int index, int depth) {
-    index = lua_absindex(m_L, index);
-
-    const ObjectKey key = objectKey(m_L, index);
-
-    /*
-     * This exactly follows inspect.lua's important
-     * semantic:
-     *
-     *   first occurrence:
-     *       cycles[x] = 1
-     *
-     *   later occurrence:
-     *       cycles[x]++
-     *
-     * and only the first occurrence is recursively
-     * traversed.
-     */
-    auto it = m_cycleExpanded.find(key);
-
-    if (it != m_cycleExpanded.end()) {
-        m_cycles[key] = m_cycles.value(key) + 1;
+    auto it = cycles.find(ptr);
+    if (it != cycles.end()) {
+        ++it->second;
         return;
     }
 
-    m_cycleExpanded.insert(key);
-    m_cycles[key] = 1;
+    cycles[ptr] = 1;
 
     if (depth <= 0)
         return;
 
-    const int top = lua_gettop(m_L);
+    const int baseTop = lua_gettop(L);
 
-    lua_pushnil(m_L);
-
-    while (lua_next(m_L, index) != 0) {
-        /*
-         * stack:
-         *
-         *   ...
-         *   key
-         *   value
-         */
-
-        countCyclesValue(-2, depth - 1);
-
-        countCyclesValue(-1, depth - 1);
-
-        /*
-         * Remove value.
-         * Keep key for lua_next().
-         */
-        lua_pop(m_L, 1);
+    for (int iter = 0; (iter = lua_rawiter(L, absIdx, iter)) != -1;) {
+        // key at -2, value at -1
+        countCyclesRec(L, lua_absindex(L, -2), depth - 1, cycles);
+        countCyclesRec(L, lua_absindex(L, -1), depth - 1, cycles);
+        lua_pop(L, 2);
     }
 
-    /*
-     * Metatable.
-     */
-    if (lua_getmetatable(m_L, index)) {
-        countCyclesValue(-1, depth - 1);
-
-        lua_pop(m_L, 1);
+    // Metatable
+    if (lua_getmetatable(L, absIdx)) {
+        countCyclesRec(L, lua_absindex(L, -1), depth - 1, cycles);
+        lua_pop(L, 1);
     }
 
-    Q_ASSERT(lua_gettop(m_L) == top);
-
-    lua_settop(m_L, top);
+    Q_ASSERT(lua_gettop(L) == baseTop);
 }
 
-void LuauInspector::countCyclesValue(int index, int depth) {
-    if (lua_type(m_L, index) == LUA_TTABLE) {
-        countCyclesImpl(index, depth);
-    }
-}
+// ============================================================================
+// Inspector class
+// ============================================================================
 
-QVector<LuauInspector::KeyInfo> LuauInspector::getKeys(int index,
-                                                       int sequenceLen) {
-    index = lua_absindex(m_L, index);
+class Inspector {
+public:
+    Inspector(lua_State *L, const InspectOptions &opts)
+        : L(L), options(opts), level(0), nextIdByType{}, items(0),
+          pretty(opts.getMode() == InspectMode::Pretty) {}
 
-    QVector<KeyInfo> keys;
+    void putValue(int absIdx, bool quoteString) {
+        if (truncated)
+            return;
 
-    const int top = lua_gettop(m_L);
-
-    lua_pushnil(m_L);
-
-    while (lua_next(m_L, index) != 0) {
-        // stack:
-        //   ...
-        //   key
-        //   value
-
-        const int keyIndex = lua_gettop(m_L) - 1;
-        const int type = lua_type(m_L, keyIndex);
-
-        bool isSequenceKey = false;
-
-        if (type == LUA_TNUMBER) {
-            const lua_Number number = lua_tonumber(m_L, keyIndex);
-
-            isSequenceKey = std::isfinite(number) && number >= 1 &&
-                            number <= sequenceLen &&
-                            std::floor(number) == number;
+        if (items++ >= options.maxItems) {
+            buf += QByteArrayLiteral("...");
+            truncated = true;
+            return;
         }
 
-        if (!isSequenceKey) {
-            KeyInfo info;
-            info.type = type;
+        int type = lua_type(L, absIdx);
 
-            switch (type) {
-            case LUA_TSTRING:
-                info.stringValue = rawLuaString(m_L, keyIndex);
-                break;
+        switch (type) {
+        case LUA_TSTRING: {
+            size_t len = 0;
+            const char *s = lua_tolstring(L, absIdx, &len);
 
-            case LUA_TNUMBER:
-                info.numberValue = lua_tonumber(m_L, keyIndex);
-                break;
-
-            default:
-                info.objectValue =
-                    reinterpret_cast<quintptr>(lua_topointer(m_L, keyIndex));
-                break;
-            }
-
-            info.registryRef = lua_ref(m_L, keyIndex);
-            keys.push_back(std::move(info));
-        }
-
-        lua_pop(m_L, 1);
-    }
-
-    Q_ASSERT(lua_gettop(m_L) == top);
-
-    std::sort(keys.begin(), keys.end(),
-              [this](const KeyInfo &a, const KeyInfo &b) {
-                  return compareKeys(m_L, a, b);
-              });
-
-    return keys;
-}
-
-int LuauInspector::getId(int index) {
-    index = lua_absindex(m_L, index);
-
-    const ObjectKey key = objectKey(m_L, index);
-
-    const auto it = m_ids.constFind(key);
-
-    if (it != m_ids.constEnd())
-        return it.value();
-
-    const int type = lua_type(m_L, index);
-
-    const int id = m_typeIds.value(type) + 1;
-
-    m_typeIds[type] = id;
-    m_ids.insert(key, id);
-
-    return id;
-}
-
-QString LuauInspector::objectTypeName(int type) const {
-    const char *name = lua_typename(m_L, type);
-
-    if (!name)
-        return QStringLiteral("unknown");
-
-    return QString::fromLatin1(name);
-}
-
-void LuauInspector::putObject(int index) {
-    const int id = getId(index);
-    const QString typeName = objectTypeName(lua_type(m_L, index));
-    append(QStringLiteral("<%1 %2>").arg(typeName).arg(id));
-}
-
-void LuauInspector::putValue(int index, ValueContext context) {
-    index = lua_absindex(m_L, index);
-
-    const int type = lua_type(m_L, index);
-
-    switch (type) {
-    case LUA_TNIL:
-        append(QStringLiteral("nil"));
-        return;
-
-    case LUA_TBOOLEAN:
-        append(lua_toboolean(m_L, index) ? QStringLiteral("true")
-                                         : QStringLiteral("false"));
-        return;
-
-    case LUA_TNUMBER:
-#ifdef LUA_TINTEGER
-    case LUA_TINTEGER:
-#endif
-    {
-        /*
-         * lua_tolstring() gives us Luau's textual
-         * representation instead of relying on
-         * QString formatting.
-         */
-        size_t length = 0;
-        const char *text = lua_tolstring(m_L, index, &length);
-
-        if (text) {
-            append(QString::fromUtf8(text, qsizetype(length)));
-        }
-        return;
-    }
-
-    case LUA_TSTRING:
-        append(makeString(m_L, index, context));
-        return;
-
-    case LUA_TTABLE:
-        putTable(index);
-        return;
-
-    default:
-        putObject(index);
-        return;
-    }
-}
-
-void LuauInspector::putTable(int index) {
-    index = lua_absindex(m_L, index);
-
-    const ObjectKey key = objectKey(m_L, index);
-    const auto existingId = m_ids.constFind(key);
-
-    if (existingId != m_ids.constEnd()) {
-        append(QStringLiteral("<table %1>").arg(existingId.value()));
-        return;
-    }
-
-    if (m_options.maxDepth >= 0 && m_level >= m_options.maxDepth) {
-        append(QStringLiteral("{...}"));
-        return;
-    }
-
-    const int cycleCount = m_cycles.value(key);
-
-    if (cycleCount > 1) {
-        const int id = getId(index);
-
-        append(QStringLiteral("<%1>").arg(id));
-    }
-
-    const int sequenceLen = sequenceLength(index);
-
-    QVector<KeyInfo> keys = getKeys(index, sequenceLen);
-
-    const int totalItems = sequenceLen + keys.size();
-
-    if (m_options.maxItems == 0 && totalItems > 0) {
-        append(QStringLiteral("{...}"));
-
-        for (const KeyInfo &keyInfo : keys) {
-            lua_unref(m_L, keyInfo.registryRef);
-        }
-
-        return;
-    }
-
-    append(QLatin1Char('{'));
-
-    ++m_level;
-
-    int itemLimit = totalItems;
-
-    if (m_options.maxItems >= 0) {
-        itemLimit = std::min(itemLimit, m_options.maxItems);
-    }
-
-    for (int i = 1; i <= itemLimit; ++i) {
-        if (i > 1)
-            append(QLatin1Char(','));
-
-        if (i <= sequenceLen) {
-            append(QLatin1Char(' '));
-            lua_rawgeti(m_L, index, i);
-            putValue(-1, ValueContext::TableValue);
-            lua_pop(m_L, 1);
-        } else {
-            // map key/value
-            const KeyInfo &keyInfo = keys.at(i - sequenceLen);
-            tabify();
-            lua_getref(m_L, keyInfo.registryRef);
-            const int keyIndex = lua_gettop(m_L);
-
-            const QString keyString = (keyInfo.type == LUA_TSTRING)
-                                          ? rawLuaString(m_L, keyIndex)
-                                          : QString();
-
-            if (keyInfo.type == LUA_TSTRING && isLuaIdentifier(keyString)) {
-                append(keyString);
+            if (quoteString) {
+                buf += smartQuote(escapeString(s, len));
             } else {
-                append(QLatin1Char('['));
-                putValue(keyIndex, ValueContext::TableKey);
-                append(QLatin1Char(']'));
+                buf += QByteArray(s, len);
+            }
+            break;
+        }
+
+        case LUA_TNUMBER:
+        case LUA_TINTEGER: {
+            size_t len = 0;
+            const char *s = luaL_tolstring(L, absIdx, &len);
+
+            if (s) {
+                buf += QByteArray(s, len);
             }
 
-            lua_pop(m_L, 1);
-            append(QStringLiteral(" = "));
-            lua_getref(m_L, keyInfo.registryRef);
-            lua_rawget(m_L, index);
-            putValue(-1, ValueContext::TableValue);
+            lua_pop(L, 1);
+            break;
+        }
 
-            // pop value + key
-            lua_pop(m_L, 2);
+        case LUA_TBOOLEAN:
+            buf += lua_toboolean(L, absIdx) ? QByteArrayLiteral("true")
+                                            : QByteArrayLiteral("false");
+            break;
+
+        case LUA_TNIL:
+            buf += QByteArrayLiteral("nil");
+            break;
+
+        case LUA_TVECTOR: {
+            const float *v = lua_tovector(L, absIdx);
+
+            if (v) {
+                if (LUA_VECTOR_SIZE == 4) {
+                    buf += QByteArrayLiteral("(");
+                    buf += QByteArray::number(v[0]);
+                    buf += QByteArrayLiteral(", ");
+                    buf += QByteArray::number(v[1]);
+                    buf += QByteArrayLiteral(", ");
+                    buf += QByteArray::number(v[2]);
+                    buf += QByteArrayLiteral(", ");
+                    buf += QByteArray::number(v[3]);
+                    buf += QByteArrayLiteral(")");
+                } else {
+                    buf += QByteArrayLiteral("(");
+                    buf += QByteArray::number(v[0]);
+                    buf += QByteArrayLiteral(", ");
+                    buf += QByteArray::number(v[1]);
+                    buf += QByteArrayLiteral(", ");
+                    buf += QByteArray::number(v[2]);
+                    buf += QByteArrayLiteral(")");
+                }
+            } else {
+                buf += QByteArrayLiteral("<vector>");
+            }
+            break;
+        }
+
+        case LUA_TBUFFER: {
+            size_t len = 0;
+            lua_tobuffer(L, absIdx, &len);
+            buf += QByteArrayLiteral("<buffer ") + QByteArray::number(len) +
+                   QByteArrayLiteral(">");
+            break;
+        }
+
+        case LUA_TLIGHTUSERDATA:
+            buf +=
+                QByteArrayLiteral("<") + QByteArray(luaL_typename(L, absIdx)) +
+                QByteArrayLiteral(" ") +
+                QByteArray::number(
+                    reinterpret_cast<quintptr>(lua_touserdata(L, absIdx)), 16) +
+                QByteArrayLiteral(">");
+            break;
+
+        case LUA_TFUNCTION:
+        case LUA_TUSERDATA:
+        case LUA_TTHREAD:
+        case LUA_TCLASS:
+        case LUA_TOBJECT:
+            buf += QByteArrayLiteral("<") +
+                   QByteArray(luaL_typename(L, absIdx)) +
+                   QByteArrayLiteral(" ") +
+                   QByteArray::number(getId(type, lua_topointer(L, absIdx))) +
+                   QByteArrayLiteral(">");
+            break;
+
+        case LUA_TTABLE:
+            putTable(absIdx);
+            break;
+
+        default:
+            // Unknown type, use tostring if available
+            {
+                size_t len = 0;
+                const char *s = luaL_tolstring(L, absIdx, &len);
+
+                if (s) {
+                    buf += QByteArray(s, len);
+                } else {
+                    buf += QByteArrayLiteral("<") +
+                           QByteArray(luaL_typename(L, absIdx)) +
+                           QByteArrayLiteral(">");
+                }
+
+                lua_pop(L, 1);
+            }
+            break;
         }
     }
 
-    const bool truncated = itemLimit < totalItems;
+public:
+    const QByteArray &output() const { return buf; }
 
-    if (truncated) {
-        if (itemLimit > 0)
-            append(QLatin1Char(','));
+private:
+    struct Entry {
+        luabridge::LuaRef key;
+        luabridge::LuaRef value;
+    };
 
-        tabify();
-        append(QStringLiteral("..."));
+    lua_State *L;
+    const InspectOptions &options;
+    QByteArray buf;
+    int level;
+    std::unordered_map<int, int> nextIdByType;
+    std::unordered_map<int, std::unordered_map<const void *, int>> idsByType;
+    int items;
+    bool pretty;
+    bool truncated = false;
+
+    int getId(int type, const void *ptr) {
+        auto &typeIds = idsByType[type];
+        auto it = typeIds.find(ptr);
+        if (it != typeIds.end())
+            return it->second;
+        int id = ++nextIdByType[type];
+        typeIds[ptr] = id;
+        return id;
     }
 
-    bool hasMetatable = false;
-
-    if (!truncated && lua_getmetatable(m_L, index)) {
-        hasMetatable = true;
-
-        if (totalItems > 0)
-            append(QLatin1Char(','));
-
-        tabify();
-
-        append(QStringLiteral("<metatable> = "));
-
-        putValue(-1, ValueContext::Metatable);
-
-        lua_pop(m_L, 1);
+    void tabify() {
+        buf += options.getNewline();
+        for (int i = 0; i < level; ++i) {
+            buf += options.getIndent();
+        }
     }
 
-    --m_level;
+    void putTable(int absIdx) {
+        const void *ptr = lua_topointer(L, absIdx);
 
-    if (truncated || !keys.isEmpty() || hasMetatable) {
-        tabify();
-    } else if (sequenceLen > 0) {
-        append(QLatin1Char(' '));
+        // Check if this table has already been output (by id)
+        auto &typeIds = idsByType[LUA_TTABLE];
+        auto existing = typeIds.find(ptr);
+        if (existing != typeIds.end()) {
+            buf += QByteArrayLiteral("<table ") +
+                   QByteArray::number(existing->second) +
+                   QByteArrayLiteral(">");
+            return;
+        }
+
+        // Depth limit
+        if (level >= options.depth) {
+            buf += QByteArrayLiteral("{...}");
+            return;
+        }
+
+        // Assign id (needed for cycle prefix)
+        int id = getId(LUA_TTABLE, ptr);
+        // If cycle count > 1, output prefix <id>
+        auto cycleIt = cycles.find(ptr);
+        if (cycleIt != cycles.end() && cycleIt->second > 1) {
+            buf += QByteArrayLiteral("<") + QByteArray::number(id) +
+                   QByteArrayLiteral(">");
+        }
+
+        std::vector<Entry> entries;
+        std::unordered_map<lua_Integer, size_t> integerKeys;
+
+        const int initialTop = lua_gettop(L);
+
+        for (int iter = 0; (iter = lua_rawiter(L, absIdx, iter)) != -1;) {
+            // key at -2, value at -1
+            const size_t entryIndex = entries.size();
+
+            entries.push_back({luabridge::LuaRef::fromStack(L, -2),
+                               luabridge::LuaRef::fromStack(L, -1)});
+
+            lua_Integer sequenceIndex = 0;
+            if (sequenceKey(L, lua_absindex(L, -2), sequenceIndex)) {
+                integerKeys.emplace(sequenceIndex, entryIndex);
+            }
+
+            lua_pop(L, 2);
+        }
+
+        Q_ASSERT(lua_gettop(L) == initialTop);
+
+        std::vector<size_t> sequenceEntries;
+        std::vector<size_t> mapEntries;
+
+        for (lua_Integer i = 1;; ++i) {
+            auto it = integerKeys.find(i);
+            if (it == integerKeys.end()) {
+                break;
+            }
+
+            sequenceEntries.push_back(it->second);
+        }
+
+        std::vector<bool> isSequence(entries.size(), false);
+
+        for (size_t entryIndex : sequenceEntries) {
+            isSequence[entryIndex] = true;
+        }
+
+        for (size_t i = 0; i < entries.size(); ++i) {
+            if (!isSequence[i]) {
+                mapEntries.push_back(i);
+            }
+        }
+
+        // Sort keys
+        std::sort(
+            mapEntries.begin(), mapEntries.end(), [&](size_t a, size_t b) {
+                entries[a].key.push(L);
+                entries[b].key.push(L);
+                bool less =
+                    compareLuaKeys(L, lua_absindex(L, -2), lua_absindex(L, -1));
+                lua_pop(L, 2);
+                return less;
+            });
+
+        buf += QByteArrayLiteral("{");
+        ++level;
+
+        bool first = true;
+        auto beginElement = [&]() {
+            if (first) {
+                tabify();
+                first = false;
+            } else {
+                buf += QByteArrayLiteral(",");
+
+                if (pretty) {
+                    tabify();
+                } else {
+                    buf += QByteArrayLiteral(" ");
+                }
+            }
+        };
+
+        // Output sequence part (array-like items)
+        for (size_t entryIndex : sequenceEntries) {
+            if (truncated) {
+                break;
+            }
+
+            beginElement();
+            entries[entryIndex].value.push(L);
+            putValue(lua_absindex(L, -1), true);
+            lua_pop(L, 1);
+
+            if (truncated) {
+                break;
+            }
+        }
+
+        // Output key-value pairs (non-sequence keys)
+        for (size_t entryIndex : mapEntries) {
+            if (truncated) {
+                break;
+            }
+
+            beginElement();
+            entries[entryIndex].key.push(L);
+            const int keyAbs = lua_absindex(L, -1);
+
+            // Output key
+            if (lua_type(L, keyAbs) == LUA_TSTRING) {
+                size_t len;
+                const char *s = lua_tolstring(L, keyAbs, &len);
+
+                if (isIdentifier(s, len)) {
+                    buf += QByteArray(s, static_cast<int>(len));
+                } else {
+                    buf += QByteArrayLiteral("[");
+                    lua_pushvalue(L, keyAbs);
+                    putValue(lua_absindex(L, -1), true);
+                    lua_pop(L, 1);
+                    buf += QByteArrayLiteral("]");
+                }
+            } else {
+                buf += QByteArrayLiteral("[");
+                lua_pushvalue(L, keyAbs);
+                putValue(lua_absindex(L, -1), true);
+                lua_pop(L, 1);
+                buf += QByteArrayLiteral("]");
+            }
+
+            if (truncated) {
+                lua_pop(L, 1);
+                break;
+            }
+
+            buf += QByteArrayLiteral(" = ");
+
+            entries[entryIndex].value.push(L);
+            putValue(lua_absindex(L, -1), true);
+            lua_pop(L, 1);
+
+            lua_pop(L, 1);
+
+            if (truncated) {
+                break;
+            }
+        }
+
+        // Metatable handling
+        if (!truncated && lua_getmetatable(L, absIdx)) {
+            if (lua_type(L, -1) == LUA_TTABLE) {
+                beginElement();
+                buf += QByteArrayLiteral("<metatable> = ");
+                putValue(lua_absindex(L, -1), true);
+            }
+
+            lua_pop(L, 1);
+        }
+
+        --level;
+
+        // If Pretty mode and there are elements, add newline and indent before
+        // closing '}'
+        if (!first) {
+            tabify();
+        }
+
+        buf += QByteArrayLiteral("}");
+        Q_ASSERT(lua_gettop(L) == initialTop);
     }
 
-    append(QLatin1Char('}'));
+public:
+    std::unordered_map<const void *, int> cycles;
+};
 
-    for (const KeyInfo &keyInfo : keys) {
-        lua_unref(m_L, keyInfo.registryRef);
-    }
+} // namespace
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+QString LuauInspector::inspect(lua_State *L, int index,
+                               const InspectOptions &options) {
+    const int baseTop = lua_gettop(L);
+    const int absIndex = lua_absindex(L, index);
+
+    std::unordered_map<const void *, int> cycles;
+    countCyclesRec(L, absIndex, options.depth, cycles);
+
+    Inspector inspector(L, options);
+    inspector.cycles = std::move(cycles);
+    inspector.putValue(absIndex, options.quoteString);
+
+    const QByteArray result = inspector.output();
+    Q_ASSERT(lua_gettop(L) == baseTop);
+    lua_settop(L, baseTop);
+    return QString::fromUtf8(result);
+}
+
+QString LuauInspector::inspect(lua_State *L, int index, InspectMode mode) {
+    InspectOptions options(mode);
+    return inspect(L, index, options);
 }

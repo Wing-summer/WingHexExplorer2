@@ -19,18 +19,48 @@
 #define LUAUDEBUGGER_H
 
 #include <QStack>
+#include <qdir.h>
 
+#include "debugger/breakpoint.h"
 #include "debugger/luauvariableregistry.h"
 
 #include "lua.h"
 
 class LuauDebugger {
 public:
+public:
+    enum class BreakReason { Step, BreakPoint, Entry, Pause };
+
+public:
     LuauDebugger();
 
 public:
     void attach(lua_State *L);
     void detach();
+
+public:
+    void onDebugBreak(lua_State *L, lua_Debug *ar, BreakReason reason);
+
+public:
+    bool isDebugBreak();
+
+    // step to next line
+    void stepOver();
+
+    // step into function
+    void stepIn();
+
+    // step out of function
+    void stepOut();
+
+private:
+    int getStackDepth(lua_State *L) const;
+
+    BreakContext getBreakContext(lua_State *L) const;
+
+    void enableDebugStep(bool enable);
+
+    void resumeInternal();
 
 public:
     QVector<lua_State *> getThreadAncestors(lua_State *L);
