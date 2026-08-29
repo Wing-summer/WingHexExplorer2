@@ -2598,104 +2598,104 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3179"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3273"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3178"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3272"/>
         <source>LoadingPlugin</source>
         <translation>加載插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2872"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2871"/>
         <source>AppClosingCanceled:</source>
         <translation>程式關閉被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3220"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3219"/>
         <source>FoundDrvPluginCount</source>
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3482"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3550"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3481"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3549"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3503"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3502"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3512"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3511"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3513"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3512"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3514"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3513"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3553"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3552"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3554"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3553"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3571"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3570"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3594"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3593"/>
         <source>ChooseFile</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3631"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3630"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3641"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3640"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3649"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3648"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3764"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3763"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1379"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1378"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>監測到異常推入的撤銷命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2965"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2964"/>
         <source>FoundPluginCount</source>
         <translation>總計發現插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3843"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3809"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>忽略證書驗證存在嚴重風險，確認繼續嗎？</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3877"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3843"/>
         <source>PluginLoadingFinished</source>
         <translation>加載插件完畢！</translation>
     </message>
@@ -3846,19 +3846,6 @@
         <location filename="../../src/control/settingspopup.cpp" line="185"/>
         <source>Plain Text</source>
         <translation>純文字</translation>
-    </message>
-</context>
-<context>
-    <name>WingCStruct</name>
-    <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="381"/>
-        <source>WingCStruct</source>
-        <translation>羽雲檔結構分析器</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="384"/>
-        <source>Providing basic support for analyzing file structures</source>
-        <translation>提供基礎的檔結構分析支持</translation>
     </message>
 </context>
 <context>

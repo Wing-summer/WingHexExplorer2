@@ -123,7 +123,6 @@
         <file>src/LICENSE.md</file>
         <file>src/TESTCODE.luau</file>
         <file>src/WingCloudStudio.crt</file>
-        <file>src/class/WingCStruct.json</file>
         <file>src/components.md</file>
         <file>src/translist.md</file>
     </qresource>

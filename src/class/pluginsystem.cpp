@@ -22,7 +22,6 @@
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
 #include "class/wingangel.h"
-#include "class/wingcstruct.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
@@ -3793,39 +3792,6 @@ void PluginSystem::loadAllPlugins() {
 
     _enabledExtIDs = set.enabledExtPlugins();
     _enabledDevIDs = set.enabledDevPlugins();
-
-    if (marco_Enabled) {
-        QFile cstructjson(QStringLiteral(
-            ":/com.wingsummer.winghex/src/class/WingCStruct.json"));
-        auto ret = cstructjson.open(QFile::ReadOnly);
-        Q_ASSERT(ret);
-        Q_UNUSED(ret);
-        auto cstruct = cstructjson.readAll();
-        cstructjson.close();
-
-        QJsonDocument doc = QJsonDocument::fromJson(cstruct);
-        auto meta = parsePluginMetadata(doc.object());
-        Q_ASSERT(checkPluginMetadata(meta) == PluginStatus::Valid);
-
-        // internal plugin has no filename
-        if (_enabledExtIDs.contains(meta.id)) {
-            auto cstructplg = new WingCStruct;
-            QDir setd(Utilities::getAppDataPath());
-            auto plgset = QStringLiteral("plgset");
-            if (!setd.exists(plgset)) {
-                setd.mkdir(plgset);
-            }
-            retranslateMetadata(cstructplg, meta);
-            auto r = loadPlugin(cstructplg, meta, setd);
-            ASSERT(r);
-            if (r) {
-                preLoadedPlg = meta.id;
-            }
-        }
-        if (preLoadedPlg.isEmpty()) {
-            _blkplgs.append({PluginStatus::Blocked, meta});
-        }
-    }
 
     if (enableSet) {
         if (marco_Enabled) {

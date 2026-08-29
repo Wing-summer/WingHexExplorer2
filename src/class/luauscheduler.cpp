@@ -27,6 +27,10 @@ LuauScheduler::~LuauScheduler() {}
 
 void LuauScheduler::start() {
     if (!lua_isfunction(m_th->state, -1)) {
+        m_executeError =
+            QStringLiteral("thread stack does not contain a function");
+        Q_EMIT finished(LUA_ERRRUN);
+        deleteLater();
         return;
     }
     m_th->isRunning = true;
@@ -37,10 +41,21 @@ void LuauScheduler::requestStop() { m_th->requestStop = true; }
 
 void LuauScheduler::step() {
     try {
-        int status = lua_resume(m_th->state, nullptr, 0);
+        auto L = m_th->state;
+        int status = lua_resume(L, nullptr, 0);
         if (status == LUA_YIELD) {
             QTimer::singleShot(0, this, &LuauScheduler::step);
         } else {
+            if (status != LUA_OK) {
+                size_t len;
+                const char *str = lua_tolstring(L, -1, &len);
+                if (str) {
+                    m_executeError = QString::fromUtf8(str, len);
+                } else {
+                    m_executeError = QStringLiteral("Unknown error");
+                }
+                lua_pop(L, 1);
+            }
             m_th->isRunning = false;
             Q_EMIT finished(status);
             deleteLater();

@@ -48,12 +48,15 @@ struct LuauThread {
         Q_ASSERT(data);
         data->startTime = 0;
         data->lastInteruptTime = 0;
+        data->debugger = nullptr;
     }
 
     inline void destory() {
         if (refID != LUA_REFNIL) {
             reset();
             lua_unref(lua_mainthread(state), refID);
+            state = nullptr;
+            refID = LUA_REFNIL;
         }
     }
 };

@@ -25,3 +25,6 @@
 [submodule "3rdparty/LuaBridge3"]
 	path = 3rdparty/LuaBridge3
 	url = git@github.com:Wing-summer/LuaBridge3.git
+[submodule "3rdparty/cffi-luau"]
+	path = 3rdparty/cffi-luau
+	url = git@github.com:Wing-summer/cffi-luau.git

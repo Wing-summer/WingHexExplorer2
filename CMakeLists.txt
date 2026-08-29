@@ -40,17 +40,12 @@ install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 option(WINGHEX_USE_FRAMELESS "Enable custom titlebar support" ON)
 option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
 option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
-option(WINGHEX_BUILD_TEST "Build test data generator for WingCStruct" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
        "Build with native optimization(less portable)" OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
-
-if(WINGHEX_BUILD_TEST)
-    add_subdirectory(test/TestStructGen)
-endif()
-
+ 
 include(src/WingPlugin.cmake)
 
 if(WINGHEX_BUILD_TEST_PLUGIN)
@@ -142,16 +137,6 @@ set(NUMCAL_GRAMMAR
     src/grammar/NumCal/NumCalVisitor.cpp
     src/grammar/NumCal/NumCalVisitor.h)
 
-set(CSTRUCT_GRAMMAR
-    src/grammar/c/CStructBaseVisitor.cpp
-    src/grammar/c/CStructBaseVisitor.h
-    src/grammar/c/CStructLexer.cpp
-    src/grammar/c/CStructLexer.h
-    src/grammar/c/CStructParser.cpp
-    src/grammar/c/CStructParser.h
-    src/grammar/c/CStructVisitor.cpp
-    src/grammar/c/CStructVisitor.h)
-
 set(SNIPPET_GRAMMAR
     src/grammar/Snippet/SnippetBaseVisitor.cpp
     src/grammar/Snippet/SnippetBaseVisitor.h
@@ -162,17 +147,24 @@ set(SNIPPET_GRAMMAR
     src/grammar/Snippet/SnippetVisitor.cpp
     src/grammar/Snippet/SnippetVisitor.h)
 
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${SNIPPET_GRAMMAR})
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${SNIPPET_GRAMMAR})
 
-set(LUAU_BUILD_CLI OFF)
-set(LUAU_BUILD_TESTS OFF)
-set(LUAU_BUILD_WEB OFF)
+# these settings commted out because cffi-luau will add luau subdirectory automatically
+# set(LUAU_BUILD_CLI OFF)
+# set(LUAU_BUILD_TESTS OFF)
+# set(LUAU_BUILD_WEB OFF)
 set(LUAU_WERROR OFF)
 set(LUAU_STATIC_CRT OFF)
-set(LUAU_EXTERN_C OFF)
+# set(LUAU_EXTERN_C OFF)
 set(LUAU_BUILD_SHARED OFF)
-add_subdirectory(3rdparty/luau)
+# add_subdirectory(3rdparty/luau) # will added by cffi-luau
 add_subdirectory(3rdparty/qtsingleapplication)
+
+set(CFFI_BUILD_TESTS OFF)
+set(CFFI_USE_SYSTEM_LIBFFI OFF)
+set(CFFI_LIBFFI_GIT_REPOSITORY "https://github.com/Wing-summer/ffi")
+add_subdirectory(3rdparty/cffi-luau)
+target_compile_definitions(libffi PRIVATE NO_JAVA_RAW_API)
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -237,17 +229,6 @@ set(DIALOG_SRC
     src/dialog/splashdialog.cpp
     src/dialog/splashdialog.h
     src/dialog/splashdialog.ui)
-
-set(STRUCT_LIB_SRC
-    src/structlib/cstructerrorlistener.cpp
-    src/structlib/cstructerrorlistener.h
-    src/structlib/cstructerrorstrategy.cpp
-    src/structlib/cstructerrorstrategy.h
-    src/structlib/cstructvisitorparser.cpp
-    src/structlib/cstructvisitorparser.h
-    src/structlib/ctypeparser.cpp
-    src/structlib/ctypeparser.h
-    src/structlib/structdefine.h)
 
 set(CONTROL_SRC
     src/control/idbtreeview.cpp
@@ -374,9 +355,6 @@ set(CLASS_SRC
     src/class/wingupdater.h
     src/class/workspacemanager.cpp
     src/class/workspacemanager.h)
-
-set(INTERNAL_PLG_SRC src/class/structparser.cpp src/class/structparser.h
-                     src/class/wingcstruct.cpp src/class/wingcstruct.h)
 
 set(LUAU_DBG_SRC
     src/debugger/luauutil.h
@@ -541,14 +519,12 @@ set(PROJECT_SOURCES
     ${CONTROL_SRC}
     ${LUAU_DBG_SRC}
     ${DIALOG_SRC}
-    ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}
     ${QCONSOLEWIDGET_SRC}
     ${QM_FILES}
     ${RIBBON_SRC}
     ${SCRIPT_ADDON_SRC}
     ${SETTING_SRC}
-    ${STRUCT_LIB_SRC}
     ${WIDGET_FRAME_SRC}
     main.cpp
     resources.qrc
@@ -604,6 +580,7 @@ target_link_libraries(
             Luau.Analysis
             Luau.CodeGen
             LuaBridge
+            cffi
             antlr4_static
             qtadvanceddocking-qt6
             QHexView

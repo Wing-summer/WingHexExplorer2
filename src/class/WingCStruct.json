@@ -1,9 +1,0 @@
-{
-    "Id" : "WingCStruct",
-    "SDK": 21,
-    "Version" : "0.2.0",
-    "Vendor" : "WingCloudStudio",
-    "Author" : "wingsummer",
-    "License" : "AGPL-v3.0",
-    "Url" : "https://github.com/Wing-summer/WingHexExplorer2"
-}

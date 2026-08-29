@@ -74,7 +74,7 @@ private:
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
     static bool configureEngine(lua_State *l);
-    static int consoleModeIdx(ConsoleMode mode);
+    constexpr static int consoleModeIdx(ConsoleMode mode);
 
 public:
     static ScriptMachine &instance();
@@ -135,6 +135,7 @@ public:
 private:
     static int __output(MessageType type, lua_State *L);
     static int __outputln(MessageType type, lua_State *L);
+    static int __outputsep(MessageType type, lua_State *L, QChar sep);
 
     static int print(lua_State *L);
     static int println(lua_State *L);
@@ -151,6 +152,8 @@ private:
     static int cowrap(lua_State *L);
     static int coresume(lua_State *L);
     static int forward(lua_State *L, int index);
+
+    static int injectLuauCffi(lua_State *L);
 
     QString input();
 

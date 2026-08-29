@@ -22,6 +22,7 @@
 #include "Luau/Compiler.h"
 #include "debugger/luauinspector.h"
 #include "debugger/luauutil.h"
+#include "lua.h"
 #include "lualib.h"
 
 #include "class/appmanager.h"
@@ -37,6 +38,11 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QScopeGuard>
+#include <qdir.h>
+
+extern "C" {
+int luaopen_cffi(lua_State *L);
+}
 
 LUAU_FASTFLAG(LuauAutoStack)
 
@@ -94,35 +100,41 @@ bool ScriptMachine::init() {
 
     // TODO: only REPL thread can be reused, other threads should be re-created
     // when needed
-    for (int i = 0; i < ConsoleModeCount; ++i) {
-        auto &l = _ctx[i];
-        auto s = lua_newthread(_main);
-        if (s == nullptr) {
-            lua_close(_main);
-            _main = nullptr;
-            return false;
-        }
+    auto interIdx = consoleModeIdx(ConsoleMode::Interactive);
+    auto &l = _ctx[interIdx];
+    auto s = lua_newthread(_main);
+    if (s == nullptr) {
+        lua_close(_main);
+        _main = nullptr;
+        return false;
+    }
 
-        auto id = lua_ref(_main, -1);
-        if (id == LUA_REFNIL) {
-            lua_close(_main);
-            _main = nullptr;
-            return false;
-        }
-        l.state = s;
-        l.refID = id;
+    auto id = lua_ref(_main, -1);
+    if (id == LUA_REFNIL) {
+        lua_close(_main);
+        _main = nullptr;
+        return false;
+    }
+    lua_pop(_main, 1);
+    l.state = s;
+    l.refID = id;
+
+    for (auto i = 0; i < ConsoleModeCount; i++) {
+        auto &l = _ctx[i];
         auto d = &_tdata[i];
         d->mode = ConsoleMode(i + 1);
         d->parent = &l;
         l.data = d;
-        lua_setthreaddata(s, d);
-        luaL_sandboxthread(s);
     }
+
+    auto d = &_tdata[interIdx];
+    lua_setthreaddata(s, d);
+    luaL_sandboxthread(s);
 
     // config callbacks
     auto &&cbs = lua_callbacks(_main);
     cbs->interrupt = ScriptMachine::onLuauInterrupt;
-    cbs->userthread = ScriptMachine::onLuauThreadCreated;
+    // cbs->userthread = ScriptMachine::onLuauThreadCreated;
     luaL_sandbox(_main);
 
     // init inspect options
@@ -170,8 +182,8 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 
     luabridge::enableExceptions(L);
 
-    auto &&ns = luabridge::getGlobalNamespace(L);
-    ns.addFunction("print", &ScriptMachine::print)
+    luabridge::getGlobalNamespace(L)
+        .addFunction("print", &ScriptMachine::print)
         .addFunction("println", &ScriptMachine::println)
         .addFunction("warnprint", &ScriptMachine::warnprint)
         .addFunction("warnprintln", &ScriptMachine::warnprintln)
@@ -180,9 +192,15 @@ bool ScriptMachine::configureEngine(lua_State *L) {
         .addFunction("errprint", &ScriptMachine::errprint)
         .addFunction("errprintln", &ScriptMachine::errprintln);
 
-    ns.beginNamespace("coroutine")
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("coroutine")
         .addFunction("wrap", &ScriptMachine::cowrap)
         .addFunction("resume", &ScriptMachine::coresume)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("cffi")
+        .addFunction("import", &ScriptMachine::injectLuauCffi)
         .endNamespace();
 
     // TODO
@@ -197,40 +215,29 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 }
 
 LuauThreadData *ScriptMachine::contextData(lua_State *l) {
-    return static_cast<LuauThreadData *>(lua_getthreaddata(l));
+    return l ? static_cast<LuauThreadData *>(lua_getthreaddata(l)) : nullptr;
 }
 
-int ScriptMachine::consoleModeIdx(ConsoleMode mode) { return mode - 1; }
+constexpr int ScriptMachine::consoleModeIdx(ConsoleMode mode) {
+    return mode - 1;
+}
 
 int ScriptMachine::__output(MessageType type, lua_State *L) {
-    int n = lua_gettop(L);
-
-    QString msg;
-    msg.reserve(256);
-    for (int i = 1; i <= n; i++) {
-        if (i > 1) {
-            msg.append(' ');
-        }
-        msg.append(LuauInspector::inspect(L, i, _printOptions));
-        lua_pop(L, 1);
-    }
-
-    MessageInfo info;
-    info.type = type;
-    info.mode = ConsoleMode(contextData(L)->mode);
-    info.message = msg;
-    ScriptMachine::instance().outputMessage(info);
-    return 0;
+    return __outputsep(type, L, ' ');
 }
 
 int ScriptMachine::__outputln(MessageType type, lua_State *L) {
+    return __outputsep(type, L, '\n');
+}
+
+int ScriptMachine::__outputsep(MessageType type, lua_State *L, QChar sep) {
     int n = lua_gettop(L);
 
     QString msg;
     msg.reserve(256);
     for (int i = 1; i <= n; i++) {
         if (i > 1) {
-            msg.append('\n');
+            msg.append(sep);
         }
         msg.append(LuauInspector::inspect(L, i, _printOptions));
     }
@@ -366,6 +373,13 @@ int ScriptMachine::forward(lua_State *L, int index) {
     return lua_gettop(L) - top;
 }
 
+int ScriptMachine::injectLuauCffi(lua_State *L) {
+    lua_pushcfunction(L, luaopen_cffi, "luaopen_cffi");
+    lua_call(L, 0, 1);       // leaves the cffi table on the stack
+    lua_setglobal(L, "ffi"); // now usable from Luau as `ffi`
+    return 0;
+}
+
 QString ScriptMachine::input() {
     // auto context = asGetActiveContext();
     // if (context) {
@@ -383,6 +397,10 @@ QString ScriptMachine::input() {
 void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
     Q_UNUSED(gc);
     if (L == nullptr) {
+        return;
+    }
+
+    if (gc >= 0) {
         return;
     }
 
@@ -487,6 +505,24 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
         return;
     }
 
+    auto T = lua_newthread(_main);
+    if (T == nullptr) {
+        onFinished(true);
+        return;
+    }
+    auto refID = lua_ref(_main, -1);
+    if (refID == LUA_REFNIL) {
+        lua_pop(_main, 1);
+        onFinished(true);
+        return;
+    }
+    lua_pop(_main, 1);
+
+    ctx->state = T;
+    ctx->refID = refID;
+    lua_setthreaddata(T, ctx->data);
+    luaL_sandboxthread(T);
+
     // TODO: limit source code size
     auto source = script.readAll();
 
@@ -503,17 +539,23 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
         }
     }
 
-    auto T = ctx->state;
     auto bytecode = Luau::compile(source.data(), opts);
     if (luau_load(T, chunkname.data(), bytecode.data(), bytecode.size(), 0) ==
         LUA_OK) {
         if (!isInDebug) {
-            Luau::CodeGen::compile(T, -1, {});
+            // auto r = Luau::CodeGen::compile(T, -1, {});
+            // if (r.hasErrors()) {
+            //     MessageInfo info;
+            //     info.type = MessageType::Error;
+            //     info.mode = mode;
+            //     info.section = fileName;
+            //     info.message = QStringLiteral("Native codegen failed: ");
+            //     outputMessage(info);
+            // }
         }
     } else {
         size_t len;
         const char *msg = lua_tolstring(T, -1, &len);
-
         MessageInfo info;
         info.type = MessageType::Error;
         info.mode = mode;
@@ -562,7 +604,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     QObject::connect(
         runner, &LuauScheduler::finished, runner,
         [this, runner, mode, fileName, handles, onFinished](int status) {
-            auto &&R = _ctx[consoleModeIdx(mode)];
+            auto &R = _ctx[consoleModeIdx(mode)];
             auto T = R.state;
 
             if (status != LUA_OK) {
@@ -585,18 +627,19 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
             info.type = MessageType::ExecInfo;
             outputMessage(info);
 
+            auto &dbg = R.data->debugger;
+            if (dbg) {
+                dbg->detach();
+            }
+
+            R.destory();
+
             // Before leaving, allow the engine to clean up
             // remaining objects by discarding the module and doing
             // a full garbage collection so that this can also be
             // debugged if desired
             auto &api = PluginSystem::instance();
             api.cleanScriptHandles(handles);
-
-            // auto isDbg =
-            //     mod->GetUserData(AsUserDataType::UserData_isDbg);
-            // if (isDbg) {
-            //     _debugger->reset();
-            // }
 
             onFinished(true);
         });
