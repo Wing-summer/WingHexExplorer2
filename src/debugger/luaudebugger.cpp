@@ -29,6 +29,21 @@ void LuauDebugger::attach(lua_State *L) {
 
 void LuauDebugger::detach() {}
 
+void LuauDebugger::onLuaFileLoaded(lua_State *L, const QString &path,
+                                   bool is_entry) {
+    auto f = files_.value(path);
+    if (f) {
+        qDebug("[onLuaFileLoaded] File already loaded, replace with new: %s",
+               qUtf8Printable(path));
+        f->addRef(LuaFileRef(L));
+    } else {
+        auto file = LuauFileContext::create(path);
+        file->addRef(LuaFileRef(L));
+        files_.insert(path, file);
+        qDebug("[onLuaFileLoaded] New file loaded: %s", qUtf8Printable(path));
+    }
+}
+
 bool LuauDebugger::isDebugBreak() {}
 
 void LuauDebugger::stepOver() {
@@ -43,6 +58,35 @@ void LuauDebugger::stepOver() {
 void LuauDebugger::stepIn() {}
 
 void LuauDebugger::stepOut() {}
+
+QVector<LuauStackFrame> LuauDebugger::updateStackFrames(lua_State *L) {
+    QVector<LuauStackFrame> frames;
+    lua_Debug ar;
+    int depth = 0;
+    lua_State *src = L;
+    while (L != nullptr) {
+        for (int level = 0; lua_getinfo(L, level, "sln", &ar); ++level) {
+            if (ar.what[0] == 'C') {
+                continue;
+            }
+            LuauStackFrame frame;
+            frame.name = ar.name ? QString::fromUtf8(ar.name)
+                                 : QStringLiteral("anonymous");
+            frame.source = QString::fromUtf8(ar.source);
+            frame.line = ar.currentline;
+            frame.id = frames.size();
+            frames.append(std::move(frame));
+            ++depth;
+        }
+        L = getParent(L);
+    }
+
+    return frames;
+}
+
+LuauFileContext LuauDebugger::findLoadedLuauFile(const QString &path) {
+    return files_.value(path);
+}
 
 int LuauDebugger::getStackDepth(lua_State *L) const {
     int depth = lua_stackdepth(L);

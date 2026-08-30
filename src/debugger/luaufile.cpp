@@ -75,6 +75,8 @@ void LuaFileRef::copyFrom(const LuaFileRef &other) {
     lua_pop(L_, 1);
 }
 
+LuauFile::LuauFile(const QString &path) { setPath(path); }
+
 void LuauFile::setPath(const QString &path) { path_ = path; }
 
 QString LuauFile::path() const { return path_; }

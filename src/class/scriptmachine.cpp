@@ -38,7 +38,6 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QScopeGuard>
-#include <qdir.h>
 
 extern "C" {
 int luaopen_cffi(lua_State *L);
@@ -183,6 +182,7 @@ bool ScriptMachine::configureEngine(lua_State *L) {
     luabridge::enableExceptions(L);
 
     luabridge::getGlobalNamespace(L)
+        .addFunction("require", &ScriptMachine::onLuauRequire)
         .addFunction("print", &ScriptMachine::print)
         .addFunction("println", &ScriptMachine::println)
         .addFunction("warnprint", &ScriptMachine::warnprint)
@@ -375,8 +375,8 @@ int ScriptMachine::forward(lua_State *L, int index) {
 
 int ScriptMachine::injectLuauCffi(lua_State *L) {
     lua_pushcfunction(L, luaopen_cffi, "luaopen_cffi");
-    lua_call(L, 0, 1);       // leaves the cffi table on the stack
-    lua_setglobal(L, "ffi"); // now usable from Luau as `ffi`
+    lua_call(L, 0, 1);        // leaves the cffi table on the stack
+    lua_setglobal(L, "cffi"); // now usable from Luau as `cffi`
     return 0;
 }
 
@@ -392,6 +392,90 @@ QString ScriptMachine::input() {
     //     }
     // }
     return {};
+}
+
+int ScriptMachine::onLuauRequire(lua_State *L) {
+    size_t len;
+    auto raw_module_path = luaL_checklstring(L, 1, &len);
+    auto module_path = QString::fromUtf8(raw_module_path, len);
+
+    // TODO
+
+    lua_Debug ar;
+    lua_getinfo(L, 1, "s", &ar);
+    std::string source_path = ar.source;
+    // if (source_path.empty())
+    //     return path;
+
+    auto normalized_path = LuauUtil::normalizeLuauRequirePath(module_path);
+    luaL_findtable(L, LUA_REGISTRYINDEX, "_MODULES", 1);
+
+    std::array suffixes{".luau", ".lua", "/init.luau", "/init.lua"};
+
+    std::string source_code;
+    QString resolved_path;
+    auto r_path = resolved_path.toUtf8();
+    for (const char *suffix : suffixes) {
+        // resolved_path = normalized_path + suffix;
+
+        lua_getfield(L, -1, r_path);
+        if (!lua_isnil(L, -1))
+            return finishLuauRequire(L);
+
+        lua_pop(L, 1);
+
+        // std::optional<std::string> source =
+        // file_utils::readFile(resolved_path); if (source) {
+        //     source_code = source.value();
+        //     break;
+        // }
+    }
+
+    if (source_code.empty()) {
+        luaL_errorL(L, "error requiring module");
+    }
+
+    lua_State *GL = lua_mainthread(L);
+    lua_State *ML = lua_newthread(GL);
+    lua_xmove(GL, L, 1);
+
+    std::string bytecode = Luau::compile(source_code, {});
+    if (luau_load(ML, r_path, bytecode.data(), bytecode.size(), 0) == 0) {
+        // NOTICE: Call debugger when file is loaded
+        auto *debugger =
+            reinterpret_cast<LuauDebugger *>(lua_getthreaddata(GL));
+        if (debugger) {
+            debugger->onLuaFileLoaded(ML, resolved_path, false);
+        }
+
+        int status = lua_resume(ML, L, 0);
+
+        if (status == 0) {
+            if (lua_gettop(ML) == 0) {
+                lua_pushstring(ML, "module must return a value");
+            } else if (!lua_istable(ML, -1) && !lua_isfunction(ML, -1)) {
+                lua_pushstring(ML, "module must return a table or function");
+            }
+        } else if (status == LUA_YIELD) {
+            lua_pushstring(ML, "module can not yield");
+        } else if (!lua_isstring(ML, -1)) {
+            lua_pushstring(ML, "unknown error while running module");
+        }
+    }
+
+    lua_xmove(ML, L, 1);
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -4, r_path);
+
+    // L stack: _MODULES ML result
+    return finishLuauRequire(L);
+}
+
+int ScriptMachine::finishLuauRequire(lua_State *L) {
+    if (lua_isstring(L, -1)) {
+        lua_error(L);
+    }
+    return 1;
 }
 
 void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {

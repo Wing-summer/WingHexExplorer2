@@ -74,6 +74,8 @@ Closure *getLuaFunction(lua_State *L, int index);
 
 Closure *getCFunction(lua_State *L, int index);
 
+QString normalizeLuauRequirePath(const QString &path);
+
 } // namespace LuauUtil
 
 #endif // LUAUUTIL_H

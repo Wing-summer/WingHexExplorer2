@@ -22,6 +22,7 @@
 
 #include "breakpoint.h"
 
+#include <QSharedPointer>
 #include <QString>
 
 // Reference to a loaded Lua file
@@ -43,7 +44,11 @@ struct LuaFileRef final {
 };
 
 class LuauFile {
+    Q_DISABLE_COPY(LuauFile)
 public:
+    LuauFile() = default;
+    LuauFile(const QString &path);
+
     void setPath(const QString &path);
     QString path() const;
 
@@ -68,6 +73,8 @@ private:
     std::unordered_map<int, BreakPoint> breakpoints_;
     std::vector<LuaFileRef> refs_;
 };
+
+using LuauFileContext = QSharedPointer<LuauFile>;
 
 template <class Predicate>
 void LuauFile::removeBreakPointsIf(Predicate pred) {

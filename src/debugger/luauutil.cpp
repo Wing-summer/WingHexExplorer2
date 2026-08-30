@@ -16,6 +16,9 @@
  */
 
 #include "luauutil.h"
+
+#include "utilities.h"
+
 #include "Luau/BytecodeBuilder.h"
 #include "Luau/Compiler.h"
 #include "luau/VM/src/lapi.h"
@@ -201,6 +204,42 @@ Closure *getLuaFunction(lua_State *L, int index) {
 Closure *getCFunction(lua_State *L, int index) {
     auto o = luaA_toobject(L, index);
     return iscfunction(o) ? clvalue(o) : nullptr;
+}
+
+QString normalizeLuauRequirePath(const QString &path) {
+    QString normalized_path = path;
+    if (path.startsWith('@')) {
+        normalized_path.removeFirst();
+        auto clean_path = QDir::cleanPath(normalized_path);
+        if (clean_path != normalized_path) {
+            return {};
+        }
+        QFileInfo info(normalized_path);
+        if (info.isAbsolute()) {
+            return {};
+        }
+        QDir dir(QApplication::applicationDirPath());
+        info.setFile(dir.absoluteFilePath(QStringLiteral("luau")),
+                     normalized_path);
+        return info.absoluteFilePath();
+    } else if (path.startsWith('$')) {
+        normalized_path.removeFirst();
+        auto clean_path = QDir::cleanPath(normalized_path);
+        if (clean_path != normalized_path) {
+            return {};
+        }
+        QFileInfo info(normalized_path);
+        if (info.isAbsolute()) {
+            return {};
+        }
+        QDir dir(Utilities::getAppDataPath());
+        info.setFile(dir.absoluteFilePath(QStringLiteral("luau")),
+                     normalized_path);
+        return info.absoluteFilePath();
+    } else {
+        QFileInfo info(path);
+        return info.absoluteFilePath();
+    }
 }
 
 } // namespace LuauUtil

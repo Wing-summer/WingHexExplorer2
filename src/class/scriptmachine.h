@@ -158,6 +158,8 @@ private:
     QString input();
 
 private:
+    static int onLuauRequire(lua_State *L);
+    static int finishLuauRequire(lua_State *L);
     static void onLuauInterrupt(lua_State *L, int gc);
     static void onLuauThreadCreated(lua_State *LP, lua_State *L);
 

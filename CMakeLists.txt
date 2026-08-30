@@ -45,7 +45,7 @@ option(WINGHEX_OPTIMIZE_FOR_NATIVE
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
- 
+
 include(src/WingPlugin.cmake)
 
 if(WINGHEX_BUILD_TEST_PLUGIN)
@@ -162,7 +162,9 @@ add_subdirectory(3rdparty/qtsingleapplication)
 
 set(CFFI_BUILD_TESTS OFF)
 set(CFFI_USE_SYSTEM_LIBFFI OFF)
-set(CFFI_LIBFFI_GIT_REPOSITORY "https://github.com/Wing-summer/ffi")
+set(CFFI_LIBFFI_GIT_REPOSITORY
+    "https://github.com/Wing-summer/ffi"
+    CACHE INTERNAL "Git URL of the CMake-buildable libffi fork to fetch" FORCE)
 add_subdirectory(3rdparty/cffi-luau)
 target_compile_definitions(libffi PRIVATE NO_JAVA_RAW_API)
 

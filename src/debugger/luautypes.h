@@ -22,9 +22,6 @@
 
 #include <QString>
 
-#include <type_traits>
-#include <utility>
-
 namespace LuauTypes {
 
 QString toString(lua_State *L, int index);

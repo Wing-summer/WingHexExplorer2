@@ -490,11 +490,6 @@ public:
         return QUrl::fromLocalFile(fileName).toString(QUrl::FullyEncoded);
     }
 
-    inline static QString getASPredefPath() {
-        QDir datap(Utilities::getAppDataPath());
-        return datap.absoluteFilePath(QStringLiteral("as.predefined"));
-    }
-
     inline static QString getDeviceFileName(const QString &ext,
                                             const QString &file) {
         return QStringLiteral("wdrv://") + ext + QStringLiteral("/") + file;
