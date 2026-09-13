@@ -76,6 +76,8 @@ Closure *getCFunction(lua_State *L, int index);
 
 QString normalizeLuauRequirePath(const QString &path);
 
+void lua_errorL(lua_State *L, const char *msg);
+
 } // namespace LuauUtil
 
 #endif // LUAUUTIL_H

@@ -21,10 +21,10 @@
 
 IDBWatchModel::IDBWatchModel(QObject *parent) : IDBTreeModel(parent) {}
 
-// void IDBWatchModel::attachDebugger(asDebugger *debugger) {
-//     _dbg = debugger;
-//     refresh();
-// }
+void IDBWatchModel::attachDebugger(LuauDebugger *debugger) {
+    _dbg = debugger;
+    refresh();
+}
 
 QStringList IDBWatchModel::expressionList() const {
     QStringList ret;
@@ -46,38 +46,38 @@ void IDBWatchModel::addWatchExpression(const QString &expression) {
     p->expanded = false;
 
     bool evaluated = false;
-    // if (_dbg) {
-    //     auto &cache = _dbg->cache;
-    //     if (cache) {
-    //         p->result = cache->ResolveExpression(p->expression, 0);
-    //         evaluated = true;
-    //     }
-    // }
+    if (_dbg) {
+        //     auto &cache = _dbg->cache;
+        //     if (cache) {
+        //         p->result = cache->ResolveExpression(p->expression, 0);
+        //         evaluated = true;
+        //     }
+    }
 
     // if (!evaluated) {
     //     p->result = asIDBExpected<asIDBVariable::WeakPtr>{};
     // }
 
-    // m_watchItems.append(std::move(p));
+    m_watchItems.append(std::move(p));
 
-    // // rebuild roots & reset model in one step
+    // rebuild roots & reset model in one step
     // auto newRoots = buildRootsFromWatchItems();
     // beginResetModel();
     // replaceRoots(newRoots);
     // endResetModel();
 }
 
-// void AsIDBWatchModel::removeWatchExpression(qsizetype index) {
-//     if (index < 0 || index >= m_watchItems.size())
-//         return;
+void IDBWatchModel::removeWatchExpression(qsizetype index) {
+    if (index < 0 || index >= m_watchItems.size())
+        return;
 
-//     m_watchItems.removeAt(index);
+    m_watchItems.removeAt(index);
 
-//     // auto newRoots = buildRootsFromWatchItems();
-//     // beginResetModel();
-//     // replaceRoots(newRoots);
-//     // endResetModel();
-// }
+    // auto newRoots = buildRootsFromWatchItems();
+    // beginResetModel();
+    // replaceRoots(newRoots);
+    // endResetModel();
+}
 
 void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
     if (indexes.isEmpty()) {
@@ -115,78 +115,79 @@ void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
     // endResetModel();
 }
 
-// bool AsIDBWatchModel::editWatchExpression(qsizetype index,
-//                                           const QString &newExpression) {
-//     if (index < 0 || index >= m_watchItems.size()) {
-//         return false;
-//     }
+bool IDBWatchModel::editWatchExpression(qsizetype index,
+                                        const QString &newExpression) {
+    if (index < 0 || index >= m_watchItems.size()) {
+        return false;
+    }
 
-//     auto ex = newExpression.toStdString();
-//     auto item = m_watchItems[index];
-//     item->expression = ex;
+    auto ex = newExpression.toStdString();
+    auto item = m_watchItems[index];
+    item->expression = ex;
 
-//     if (_dbg) {
-//         auto &cache = _dbg->cache;
-//         if (cache) {
-//             item->result = cache->ResolveExpression(ex, 0);
-//         } else {
-//             item->result =
-//                 asIDBExpected<asIDBVariable::WeakPtr>("error evaluated");
-//         }
-//     } else {
-//         item->result = asIDBExpected<asIDBVariable::WeakPtr>{};
-//     }
+    if (_dbg) {
+        // auto &cache = _dbg->cache;
+        // if (cache) {
+        //     item->result = cache->ResolveExpression(ex, 0);
+        // } else {
+        //     item->result =
+        //         asIDBExpected<IDBVariable::WeakPtr>("error evaluated");
+        // }
+    } else {
+        // item->result = asIDBExpected<IDBVariable::WeakPtr>{};
+    }
 
-//     // Replace roots in a single reset so view save/restore works
-//     auto newRoots = buildRootsFromWatchItems();
-//     beginResetModel();
-//     replaceRoots(newRoots);
-//     endResetModel();
+    // Replace roots in a single reset so view save/restore works
+    // auto newRoots = buildRootsFromWatchItems();
+    // beginResetModel();
+    // replaceRoots(newRoots);
+    // endResetModel();
 
-//     return true;
-// }
+    return true;
+}
 
 void IDBWatchModel::refresh() {
-    // if (_dbg) {
-    //     auto &cache = _dbg->cache;
-    //     if (cache) {
-    //         QVector<asIDBExpected<asIDBVariable::WeakPtr>> newResults;
-    //         newResults.reserve(m_watchItems.size());
-    //         for (const auto &itemPtr : std::as_const(m_watchItems)) {
-    //             newResults.append(
-    //                 cache->ResolveExpression(itemPtr->expression, 0));
-    //         }
+    if (_dbg) {
+        //     auto &cache = _dbg->cache;
+        //     if (cache) {
+        //         QVector<asIDBExpected<asIDBVariable::WeakPtr>> newResults;
+        //         newResults.reserve(m_watchItems.size());
+        //         for (const auto &itemPtr : std::as_const(m_watchItems)) {
+        //             newResults.append(
+        //                 cache->ResolveExpression(itemPtr->expression, 0));
+        //         }
 
-    //         beginResetModel();
+        //         beginResetModel();
 
-    //         for (int i = 0; i < m_watchItems.size(); ++i) {
-    //             m_watchItems[i]->result = std::move(newResults[i]);
-    //         }
+        //         for (int i = 0; i < m_watchItems.size(); ++i) {
+        //             m_watchItems[i]->result = std::move(newResults[i]);
+        //         }
 
-    //         auto newRoots = buildRootsFromWatchItems();
-    //         replaceRoots(newRoots);
+        //         auto newRoots = buildRootsFromWatchItems();
+        //         replaceRoots(newRoots);
 
-    //         endResetModel();
-    //     } else {
-    //         beginResetModel();
-    //         for (int i = 0; i < m_watchItems.size(); ++i) {
-    //             m_watchItems[i]->result =
-    //                 asIDBExpected<asIDBVariable::WeakPtr>("error evaluated");
-    //         }
-    //         auto newRoots = buildRootsFromWatchItems();
-    //         replaceRoots(newRoots);
-    //         endResetModel();
-    //     }
-    // } else {
-    //     beginResetModel();
-    //     for (int i = 0; i < m_watchItems.size(); ++i) {
-    //         m_watchItems[i]->result =
-    //         asIDBExpected<asIDBVariable::WeakPtr>{};
-    //     }
-    //     auto newRoots = buildRootsFromWatchItems();
-    //     replaceRoots(newRoots);
-    //     endResetModel();
-    // }
+        //         endResetModel();
+        //     } else {
+        //         beginResetModel();
+        //         for (int i = 0; i < m_watchItems.size(); ++i) {
+        //             m_watchItems[i]->result =
+        //                 asIDBExpected<asIDBVariable::WeakPtr>("error
+        //                 evaluated");
+        //         }
+        //         auto newRoots = buildRootsFromWatchItems();
+        //         replaceRoots(newRoots);
+        //         endResetModel();
+        //     }
+        // } else {
+        //     beginResetModel();
+        //     for (int i = 0; i < m_watchItems.size(); ++i) {
+        //         m_watchItems[i]->result =
+        //         asIDBExpected<asIDBVariable::WeakPtr>{};
+        //     }
+        //     auto newRoots = buildRootsFromWatchItems();
+        //     replaceRoots(newRoots);
+        //     endResetModel();
+    }
 }
 
 void IDBWatchModel::reloadExpressionList(const QStringList &expressions) {
@@ -242,7 +243,7 @@ void IDBWatchModel::clearAll() {
 }
 
 QString IDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
-    // QString idPart;
+    QString idPart;
     // if (item.isValid()) {
     //     auto wp = item.result.value();
     //     auto sp = wp.lock();
@@ -435,23 +436,23 @@ QModelIndex IDBWatchModel::parent(const QModelIndex &child) const {
         return {};
     }
 
-    // asIDBVariable *childVar = decodeVar(ip);
-    // if (childVar) {
-    //     for (int i = 0; i < m_watchItems.size(); ++i) {
-    //         const auto &item = *m_watchItems[i];
-    //         if (!item.isValid()) {
-    //             continue;
-    //         }
-    //         auto sp = item.result.value().lock();
-    //         if (!sp) {
-    //             continue;
-    //         }
-    //         if (sp.get() == childVar) {
-    //             return createIndex(
-    //                 i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
-    //         }
-    //     }
-    // }
+    auto *childVar = decodeVar(ip);
+    if (childVar) {
+        for (int i = 0; i < m_watchItems.size(); ++i) {
+            const auto &item = *m_watchItems[i];
+            // if (!item.isValid()) {
+            //     continue;
+            // }
+            // auto sp = item.result.value().lock();
+            // if (!sp) {
+            //     continue;
+            // }
+            // if (sp.get() == childVar) {
+            //     return createIndex(
+            //         i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
+            // }
+        }
+    }
 
     auto baseParent = IDBTreeModel::parent(child);
     if (!baseParent.isValid()) {
@@ -459,22 +460,22 @@ QModelIndex IDBWatchModel::parent(const QModelIndex &child) const {
     }
 
     void *bpip = baseParent.internalPointer();
-    // asIDBVariable *bpv = decodeVar(bpip);
-    // if (bpv) {
-    //     for (int i = 0; i < m_watchItems.size(); ++i) {
-    //         const auto &item = *m_watchItems[i];
-    //         if (!item.isValid()) {
-    //             continue;
-    //         }
-    //         auto sp = item.result.value().lock();
-    //         if (!sp) {
-    //             continue;
-    //         }
-    //         if (sp.get() == bpv) {
-    //             return createIndex(
-    //                 i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
-    //         }
-    //     }
-    // }
+    auto *bpv = decodeVar(bpip);
+    if (bpv) {
+        for (int i = 0; i < m_watchItems.size(); ++i) {
+            const auto &item = *m_watchItems[i];
+            // if (!item.isValid()) {
+            //     continue;
+            // }
+            // auto sp = item.result.value().lock();
+            // if (!sp) {
+            //     continue;
+            // }
+            // if (sp.get() == bpv) {
+            //     return createIndex(
+            //         i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
+            // }
+        }
+    }
     return baseParent;
 }

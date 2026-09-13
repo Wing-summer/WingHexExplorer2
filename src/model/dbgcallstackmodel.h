@@ -20,7 +20,7 @@
 
 #include <QAbstractTableModel>
 
-// #include "class/asdebugger.h"
+#include "luau/luaudebugger.h"
 
 class DbgCallStackModel : public QAbstractTableModel {
     Q_OBJECT
@@ -36,10 +36,10 @@ public:
                                 int role) const override;
 
 public slots:
-    // void attachDebugger(asDebugger *debugger);
+    void attachDebugger(LuauDebugger *debugger);
 
 private:
-    // asDebugger *_debugger = nullptr;
+    LuauDebugger *_debugger = nullptr;
 };
 
 #endif // DBGCALLSTACKMODEL_H

@@ -24,12 +24,12 @@ DbgCallStackModel::DbgCallStackModel(QObject *parent)
 
 int DbgCallStackModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    // if (_debugger) {
-    //     if (_debugger->cache) {
-    //         _debugger->cache->CacheCallstack();
-    //         return _debugger->cache->call_stack.size();
-    //     }
-    // }
+    if (_debugger) {
+        //     if (_debugger->cache) {
+        //         _debugger->cache->CacheCallstack();
+        //         return _debugger->cache->call_stack.size();
+        //     }
+    }
     return 0;
 }
 
@@ -91,16 +91,16 @@ QVariant DbgCallStackModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-// void DbgCallStackModel::attachDebugger(asDebugger *debugger) {
-//     if (_debugger != debugger) {
-//         if (_debugger) {
-//             _debugger->disconnect(this, nullptr);
-//         }
-//         _debugger = debugger;
-//         if (_debugger) {
-//             connect(_debugger, &asDebugger::onPullCallStack, this,
-//                     [this]() { Q_EMIT layoutChanged(); });
-//         }
-//         Q_EMIT layoutChanged();
-//     }
-// }
+void DbgCallStackModel::attachDebugger(LuauDebugger *debugger) {
+    if (_debugger != debugger) {
+        if (_debugger) {
+            // _debugger->disconnect(this, nullptr);
+        }
+        _debugger = debugger;
+        if (_debugger) {
+            // connect(_debugger, &LuauDebugger::onPullCallStack, this,
+            //         [this]() { Q_EMIT layoutChanged(); });
+        }
+        Q_EMIT layoutChanged();
+    }
+}

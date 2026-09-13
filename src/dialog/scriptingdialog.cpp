@@ -1323,81 +1323,69 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_ribbon->setCurrentIndex(3);
     m_consoleout->clear();
 
-    // auto dbg = ScriptMachine::instance().debugger();
+    auto dbg = ScriptMachine::instance().debugger();
     // m_callstack->attachDebugger(dbg);
     // m_watchModel->attachDebugger(dbg);
 
-    // this->updateRunDebugMode();
-    // ScriptMachine::instance().executeScript(
-    //     ScriptMachine::Scripting, fileName, true,
-    //     [this](const QHash<QString, AsPreprocesser::Result> &sdata) -> void {
-    //         _curDbgData = sdata;
-
-    //         auto dbg = ScriptMachine::instance().debugger();
-    //         for (const auto &&[file, data] : sdata.asKeyValueRange()) {
-    //             auto view = findEditorView(file);
-    //             if (view) {
-    //                 auto e = view->editor();
-    //                 auto totalblk = e->blockCount();
-    //                 // add breakpoints
-    //                 for (int i = 0; i < totalblk; ++i) {
-    //                     if (!e->symbolMark(i).isEmpty()) {
-    //                         dbg->addFileBreakPoint(file, i);
-    //                     }
-    //                 }
-    //                 view->setReadOnly(true);
-    //                 _reditors.append(view);
-    //             }
+    // auto view = findEditorView(file);
+    // if (view) {
+    //     auto e = view->editor();
+    //     auto totalblk = e->blockCount();
+    //     // add breakpoints
+    //     for (int i = 0; i < totalblk; ++i) {
+    //         if (!e->symbolMark(i).isEmpty()) {
+    //             dbg->addFileBreakPoint(file, i);
     //         }
+    //     }
+    //     view->setReadOnly(true);
+    //     _reditors.append(view);}
 
-    //         PluginSystem::instance().scriptPragmaBegin();
-    //     },
-    //     [this, fileName](bool isNotBusy) {
-    //         for (const auto &e : std::as_const(_reditors)) {
-    //             e->setReadOnly(false);
-    //         }
+    this->updateRunDebugMode();
+    ScriptMachine::instance().executeScript(
+        ScriptMachine::Scripting, fileName, true,
+        [this, fileName](bool isNotBusy) {
+            for (const auto &e : std::as_const(_reditors)) {
+                e->setReadOnly(false);
+            }
 
-    //         this->updateRunDebugMode();
-    //         m_callstack->attachDebugger(nullptr);
-    //         m_watchModel->attachDebugger(nullptr);
-    //         m_varshow->refreshWithNewRoots({});
-    //         m_gvarshow->refreshWithNewRoots({});
+            this->updateRunDebugMode();
+            m_callstack->attachDebugger(nullptr);
+            m_watchModel->attachDebugger(nullptr);
 
-    //         // clean up
-    //         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
-    //             // remove the last mark
-    //             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >=
-    //             0) {
-    //                 auto lastCur = findEditorView(_lastCurLine.first);
-    //                 auto e = lastCur->editor();
-    //                 auto symID = e->symbolMark(_lastCurLine.second);
+            // clean up
+            if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
+                // remove the last mark
+                if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
+                    auto lastCur = findEditorView(_lastCurLine.first);
+                    auto e = lastCur->editor();
+                    auto symID = e->symbolMark(_lastCurLine.second);
 
-    //                 const auto bpMark = QStringLiteral("bp");
-    //                 const auto curSym = QStringLiteral("cur");
-    //                 const auto hitCur = QStringLiteral("curbp");
+                    const auto bpMark = QStringLiteral("bp");
+                    const auto curSym = QStringLiteral("cur");
+                    const auto hitCur = QStringLiteral("curbp");
 
-    //                 if (symID == curSym) {
-    //                     e->removeSymbolMark(_lastCurLine.second);
-    //                 } else if (symID == hitCur) {
-    //                     e->addSymbolMark(_lastCurLine.second, bpMark);
-    //                 }
-    //             }
-    //             _lastCurLine.first.clear();
-    //             _lastCurLine.second = -1;
-    //         }
-    //         _reditors.clear();
-    //         _curDbgData.clear();
-    //         destoryFakeEditor();
+                    if (symID == curSym) {
+                        e->removeSymbolMark(_lastCurLine.second);
+                    } else if (symID == hitCur) {
+                        e->addSymbolMark(_lastCurLine.second, bpMark);
+                    }
+                }
+                _lastCurLine.first.clear();
+                _lastCurLine.second = -1;
+            }
+            _reditors.clear();
+            // _curDbgData.clear();
+            destoryFakeEditor();
 
-    //         if (isNotBusy) {
-    //             if (_needRestart) {
-    //                 _needRestart = false;
-    //                 startDebugScript(fileName);
-    //             }
-    //         } else {
-    //             reportBusyScriptRun();
-    //         }
-    //     });
+            if (isNotBusy) {
+                if (_needRestart) {
+                    _needRestart = false;
+                    startDebugScript(fileName);
+                }
+            } else {
+                reportBusyScriptRun();
+            }
+        });
 }
 
 void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
@@ -1483,12 +1471,12 @@ void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
     //         }
     //     }
     // } else {
-    //     auto symID = e->symbolMark(line);
-    //     if (symID.isEmpty()) {
-    //         e->addSymbolMark(line, QStringLiteral("bp"));
-    //     } else {
-    //         e->removeSymbolMark(line);
-    //     }
+    auto symID = e->symbolMark(line);
+    if (symID.isEmpty()) {
+        e->addSymbolMark(line, QStringLiteral("bp"));
+    } else {
+        e->removeSymbolMark(line);
+    }
     // }
 }
 
@@ -1603,12 +1591,12 @@ void ScriptingDialog::on_newfile() {
                                      tr("InvalidFileOrPermission"));
             return;
         }
-        addRecentFile(editor.get(), filename);
-        registerEditorView(editor.get());
-        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
+        auto eptr = editor.release();
+        addRecentFile(eptr, filename);
+        registerEditorView(eptr);
+        m_dock->addDockWidget(ads::CenterDockWidgetArea, eptr,
                               editorViewArea());
-        editor->setFocus();
-        editor.release();
+        eptr->setFocus();
     }
 }
 

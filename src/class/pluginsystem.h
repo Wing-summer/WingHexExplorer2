@@ -42,6 +42,8 @@ class MainWindow;
 class asCScriptEngine;
 class QPluginLoader;
 
+class lua_State;
+
 class PluginLoadGuard {
 public:
     PluginLoadGuard(const QFileInfo &path) {
@@ -203,11 +205,9 @@ public:
 
     void cleanUpEditorViewHandle(EditorView *view);
 
-    WingHex::PragmaResult processPragma(const QString &section,
-                                        const QString &plgId,
-                                        const QStringList &params);
-
     IWingDevice *ext2Device(const QString &ext);
+
+    void installAPI(lua_State *L);
 
     QStringList scriptMarcos() const;
 

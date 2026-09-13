@@ -20,7 +20,7 @@
 
 #include "luauscope.h"
 
-#include "debugger/luauinspector.h"
+#include "luau/luauinspector.h"
 
 #include <QSharedPointer>
 #include <QString>

@@ -35,6 +35,10 @@
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 
+#include "lualib.h"
+
+#include "LuaBridge/LuaBridge.h"
+
 #include <QDir>
 #include <QFileInfoList>
 #include <QJsonArray>
@@ -2887,37 +2891,6 @@ void PluginSystem::dispatchHexEditorViewPaintEvent(QPainter *painter,
     }
 }
 
-PragmaResult PluginSystem::processPragma(const QString &section,
-                                         const QString &plgId,
-                                         const QStringList &params) {
-    auto &es = _evplgs[WingHex::IWingPlugin::RegisteredEvent::ScriptPragma];
-    auto r =
-        std::find_if(es.constBegin(), es.constEnd(), [plgId](IWingPlugin *p) {
-            return plgId.compare(getPUID(p), Qt::CaseInsensitive) == 0;
-        });
-    if (r == es.constEnd()) {
-        PragmaResult res;
-        res.error.append(
-            QStringLiteral("Unknown pragma module '%1'").arg(plgId));
-        return res;
-    }
-    auto plg = *r;
-    if (!_pragmaedPlg.contains(plg)) {
-        plg->eventOnScriptPragmaInit();
-        _pragmaedPlg.append(plg);
-    }
-
-    auto ret = plg->eventOnScriptPragma(section, params);
-    if (ret) {
-        return ret.value();
-    } else {
-        PragmaResult res;
-        res.error.append(QStringLiteral("Unknown pragma command %1 with %2")
-                             .arg(params.join(' '), plgId));
-        return res;
-    }
-}
-
 IWingDevice *PluginSystem::ext2Device(const QString &ext) {
     static QHash<QString, IWingDevice *> caches;
     if (caches.contains(ext)) {
@@ -2933,6 +2906,17 @@ IWingDevice *PluginSystem::ext2Device(const QString &ext) {
     auto dev = *r;
     caches.insert(ext, dev);
     return dev;
+}
+
+void PluginSystem::installAPI(lua_State *L) {
+    if (L == nullptr) {
+        return;
+    }
+
+    // TODO: register all API functions to Lua
+    luabridge::getGlobalNamespace(L).beginNamespace("reader").endNamespace();
+
+    luabridge::getGlobalNamespace(L).beginNamespace("ctl").endNamespace();
 }
 
 PluginInfo PluginSystem::getPluginInfo(IWingPluginBase *plg) const {
@@ -3374,14 +3358,6 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::FileClosed)) {
         _evplgs[IWingPlugin::RegisteredEvent::FileClosed].append(plg);
-    }
-
-    if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptPragma)) {
-        _evplgs[IWingPlugin::RegisteredEvent::ScriptPragma].append(plg);
-    }
-
-    if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptPragmaInit)) {
-        _evplgs[IWingPlugin::RegisteredEvent::ScriptPragmaInit].append(plg);
     }
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::PluginFileOpened)) {

@@ -19,6 +19,8 @@
 
 #include "luauutil.h"
 
+#include <QFile>
+
 #include <unordered_set>
 
 LuaFileRef::LuaFileRef(lua_State *L) {
@@ -77,9 +79,21 @@ void LuaFileRef::copyFrom(const LuaFileRef &other) {
 
 LuauFile::LuauFile(const QString &path) { setPath(path); }
 
-void LuauFile::setPath(const QString &path) { path_ = path; }
+void LuauFile::setPath(const QString &path) {
+    if (path_ == path) {
+        return;
+    }
+    clearBreakPoints();
+    path_ = path;
+    QFile f(path);
+    if (f.open(QFile::ReadOnly | QFile::Text)) {
+        src_ = f.readAll();
+    }
+}
 
 QString LuauFile::path() const { return path_; }
+
+QByteArray LuauFile::source() const { return src_; }
 
 void LuauFile::setBreakPoints(
     const std::unordered_map<int, BreakPoint> &breakpoints) {
@@ -114,7 +128,7 @@ void LuauFile::removeRef(lua_State *L) {
 
 void LuauFile::enableBreakPoint(BreakPoint &bp, bool enable) {
     for (auto &ref : refs_) {
-        int target = bp.enable(ref.L_, ref.file_ref_, enable);
+        bp.enable(ref.L_, ref.file_ref_, enable);
     }
 }
 

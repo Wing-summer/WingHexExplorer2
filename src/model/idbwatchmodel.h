@@ -22,6 +22,8 @@
 // #include "class/asdebugger.h"
 #include <memory>
 
+#include "luau/luaudebugger.h"
+
 class IDBWatchModel : public IDBTreeModel {
     Q_OBJECT
 private:
@@ -43,11 +45,11 @@ public:
     QStringList expressionList() const;
 
 public slots:
-    // void attachDebugger(asDebugger *debugger);
+    void attachDebugger(LuauDebugger *debugger);
     void addWatchExpression(const QString &expression);
-    // void removeWatchExpression(qsizetype index);
+    void removeWatchExpression(qsizetype index);
     void removeWatchExpressions(const QModelIndexList &indexes);
-    // bool editWatchExpression(qsizetype index, const QString &newExpression);
+    bool editWatchExpression(qsizetype index, const QString &newExpression);
     void refresh();
 
     void reloadExpressionList(const QStringList &expressions);
@@ -76,7 +78,7 @@ private:
     // use shared_ptr so WatchItem* (shared_ptr.get()) remains stable across
     // QVector reallocs
     QVector<std::shared_ptr<WatchItem>> m_watchItems;
-    // asDebugger *_dbg = nullptr;
+    LuauDebugger *_dbg = nullptr;
 
     // helper: consistent user role id
     QString makeTopLevelUserRole(const WatchItem &item) const;

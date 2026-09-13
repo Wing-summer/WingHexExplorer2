@@ -17,7 +17,7 @@
 
 #include "luauvariableregistry.h"
 
-#include "debugger/luautypes.h"
+#include "luau/luautypes.h"
 #include "luauutil.h"
 
 void LuauVariableRegistry::clear() { variables_.clear(); }

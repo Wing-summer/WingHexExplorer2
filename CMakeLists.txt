@@ -358,25 +358,25 @@ set(CLASS_SRC
     src/class/workspacemanager.cpp
     src/class/workspacemanager.h)
 
-set(LUAU_DBG_SRC
-    src/debugger/luauutil.h
-    src/debugger/luauutil.cpp
-    src/debugger/luaufile.h
-    src/debugger/luaufile.cpp
-    src/debugger/breakpoint.h
-    src/debugger/breakpoint.cpp
-    src/debugger/luauinspector.h
-    src/debugger/luauinspector.cpp
-    src/debugger/luauscope.h
-    src/debugger/luauscope.cpp
-    src/debugger/luaudebugger.h
-    src/debugger/luaudebugger.cpp
-    src/debugger/luautypes.h
-    src/debugger/luautypes.cpp
-    src/debugger/luauvariable.h
-    src/debugger/luauvariable.cpp
-    src/debugger/luauvariableregistry.h
-    src/debugger/luauvariableregistry.cpp)
+set(LUAU_MOD_SRC
+    src/luau/luauutil.h
+    src/luau/luauutil.cpp
+    src/luau/luaufile.h
+    src/luau/luaufile.cpp
+    src/luau/breakpoint.h
+    src/luau/breakpoint.cpp
+    src/luau/luauinspector.h
+    src/luau/luauinspector.cpp
+    src/luau/luauscope.h
+    src/luau/luauscope.cpp
+    src/luau/luaudebugger.h
+    src/luau/luaudebugger.cpp
+    src/luau/luautypes.h
+    src/luau/luautypes.cpp
+    src/luau/luauvariable.h
+    src/luau/luauvariable.cpp
+    src/luau/luauvariableregistry.h
+    src/luau/luauvariableregistry.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -434,6 +434,7 @@ set(SETTING_SRC
     src/settings/settings.h)
 
 set(SCRIPT_ADDON_SRC
+    src/scriptaddon/luauhelper.h
     # src/scriptaddon/scriptenv.cpp
     # src/scriptaddon/scriptenv.h
     # src/scriptaddon/scriptjson.cpp
@@ -519,7 +520,7 @@ set(PROJECT_SOURCES
     ${ANTLR4_GRAMMAR}
     ${CLASS_SRC}
     ${CONTROL_SRC}
-    ${LUAU_DBG_SRC}
+    ${LUAU_MOD_SRC}
     ${DIALOG_SRC}
     ${MODEL_SRC}
     ${QCONSOLEWIDGET_SRC}

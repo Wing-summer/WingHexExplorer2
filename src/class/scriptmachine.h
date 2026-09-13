@@ -21,8 +21,8 @@
 #include "WingPlugin/iwingangel.h"
 
 #include "class/luauscheduler.h"
-#include "debugger/luaudebugger.h"
-#include "debugger/luauinspector.h"
+#include "luau/luaudebugger.h"
+#include "luau/luauinspector.h"
 
 #include <QObject>
 #include <QQueue>

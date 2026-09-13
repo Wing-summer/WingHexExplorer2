@@ -18,7 +18,7 @@
 #ifndef IDBTREEMODEL_H
 #define IDBTREEMODEL_H
 
-#include "debugger/luauvariable.h"
+#include "luau/luauvariable.h"
 
 #include <QAbstractItemModel>
 

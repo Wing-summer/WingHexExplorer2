@@ -17,7 +17,7 @@
 
 #include "luaudebugger.h"
 
-LuauDebugger::LuauDebugger() {}
+LuauDebugger::LuauDebugger() : QObject() {}
 
 void LuauDebugger::attach(lua_State *L) {
     if (L == nullptr) {
@@ -29,18 +29,14 @@ void LuauDebugger::attach(lua_State *L) {
 
 void LuauDebugger::detach() {}
 
-void LuauDebugger::onLuaFileLoaded(lua_State *L, const QString &path,
-                                   bool is_entry) {
+void LuauDebugger::onLuaFileLoaded(lua_State *L, const QString &path) {
     auto f = files_.value(path);
     if (f) {
-        qDebug("[onLuaFileLoaded] File already loaded, replace with new: %s",
-               qUtf8Printable(path));
         f->addRef(LuaFileRef(L));
     } else {
         auto file = LuauFileContext::create(path);
         file->addRef(LuaFileRef(L));
         files_.insert(path, file);
-        qDebug("[onLuaFileLoaded] New file loaded: %s", qUtf8Printable(path));
     }
 }
 

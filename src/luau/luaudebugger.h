@@ -22,9 +22,9 @@
 #include <QHash>
 #include <QStack>
 
-#include "debugger/breakpoint.h"
-#include "debugger/luaufile.h"
-#include "debugger/luauvariableregistry.h"
+#include "luau/breakpoint.h"
+#include "luau/luaufile.h"
+#include "luau/luauvariableregistry.h"
 
 #include "lua.h"
 
@@ -36,7 +36,8 @@ public:
     int line = 0;
 };
 
-class LuauDebugger {
+class LuauDebugger : public QObject {
+    Q_OBJECT
 public:
     enum class BreakReason { Step, BreakPoint, Entry, Pause };
 
@@ -51,7 +52,7 @@ public:
     // Called from **lua runtime** after lua file is loaded
     // Assume that the top closure from file is already on
     // the stack
-    void onLuaFileLoaded(lua_State *L, const QString &path, bool is_entry);
+    void onLuaFileLoaded(lua_State *L, const QString &path);
 
     // Called from **lua runtime** when debug break encountered
     void onDebugBreak(lua_State *L, lua_Debug *ar, BreakReason reason);

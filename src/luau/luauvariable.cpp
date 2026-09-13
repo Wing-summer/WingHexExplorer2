@@ -19,9 +19,9 @@
 
 #include <lualib.h>
 
-#include "debugger/luautypes.h"
-#include "debugger/luauutil.h"
-#include "debugger/luauvariableregistry.h"
+#include "luau/luautypes.h"
+#include "luau/luauutil.h"
+#include "luau/luauvariableregistry.h"
 
 LuauScope LuauVariable::getScope() const { return scope_; }
 

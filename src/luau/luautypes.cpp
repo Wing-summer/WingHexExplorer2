@@ -17,9 +17,9 @@
 
 #include "luautypes.h"
 
-#include "debugger/luauinspector.h"
-#include "debugger/luauutil.h"
 #include "lualib.h"
+#include "luau/luauinspector.h"
+#include "luau/luauutil.h"
 
 QString LuauTypes::toString(lua_State *L, int index) {
     LuauUtil::DisableDebugStep _(L);

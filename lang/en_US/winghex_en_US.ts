@@ -2598,104 +2598,104 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1378"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1382"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3178"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3272"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3162"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3256"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2871"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2875"/>
         <source>AppClosingCanceled:</source>
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2964"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2948"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3809"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3785"/>
         <source>SkipCertEnabledDangerContinue</source>
         <translation>Skipping certificate verification is dangerous. Are you sure you want to continue?</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3843"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3819"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3219"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3203"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3502"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3478"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3481"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3549"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3457"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3525"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3511"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3487"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3512"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3488"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3513"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3489"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3552"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3528"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3553"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3529"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3570"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3546"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3593"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3569"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3630"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3606"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3640"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3616"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3648"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3624"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3763"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3739"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
@@ -3213,7 +3213,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="410"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1518"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1506"/>
         <source>Reload</source>
         <translation>Reload</translation>
     </message>
@@ -3534,12 +3534,12 @@
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="948"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1240"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1525"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1602"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1639"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1668"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1694"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2120"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1513"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1590"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1627"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1656"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1682"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2108"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
@@ -3551,7 +3551,7 @@
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="996"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1260"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1967"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1955"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
@@ -3582,44 +3582,44 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1241"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1603"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1591"/>
         <source>InvalidFileOrPermission</source>
         <translation>Invalid file format or insufficient file access permissions</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1668"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1656"/>
         <source>FilePermission</source>
         <translation>Access denied due to file permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2120"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2108"/>
         <source>BusyRunScript</source>
         <translation>Script running busy</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1505"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1493"/>
         <source>Line %1, Col %2</source>
         <translation>Line %1, Col %2</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1507"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1495"/>
         <source> (Selected: %1)</source>
         <translation> (Selected: %1)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1519"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1507"/>
         <source>ReloadNeededYesOrNo</source>
         <translation>Should the target file be reloaded after modification?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1568"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1620"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1556"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1608"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1523"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1637"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1511"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1625"/>
         <source>ReloadSuccessfully</source>
         <translation>File reloaded successfully!</translation>
     </message>
@@ -3629,41 +3629,41 @@
         <translation>Restart Angel</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1526"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1639"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1514"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1627"/>
         <source>ReloadUnSuccessfully</source>
         <translation>File reload failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1666"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1692"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1654"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1680"/>
         <source>SaveSuccessfully</source>
         <translation>Saved successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1680"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1668"/>
         <source>ChooseSaveFile</source>
         <translation>Please select the file save location:</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1299"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1694"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1682"/>
         <source>SaveUnSuccessfully</source>
         <translation>Save failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1766"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1754"/>
         <source>FormatCodeFailed</source>
         <translation>Code formatting failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1820"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1808"/>
         <source>LayoutRestoreBreak</source>
         <translation>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1860"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1888"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1848"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1876"/>
         <source>CannotSave2RunScript</source>
         <translation>Unable to save, therefore unable to continue running the script.</translation>
     </message>

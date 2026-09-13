@@ -20,10 +20,10 @@
 #include "Luau/CodeGen.h"
 #include "Luau/Common.h"
 #include "Luau/Compiler.h"
-#include "debugger/luauinspector.h"
-#include "debugger/luauutil.h"
 #include "lua.h"
 #include "lualib.h"
+#include "luau/luauinspector.h"
+#include "luau/luauutil.h"
 
 #include "class/appmanager.h"
 #include "class/logger.h"
@@ -97,7 +97,7 @@ bool ScriptMachine::init() {
         return false;
     }
 
-    // TODO: only REPL thread can be reused, other threads should be re-created
+    // only REPL thread can be reused, other threads should be re-created
     // when needed
     auto interIdx = consoleModeIdx(ConsoleMode::Interactive);
     auto &l = _ctx[interIdx];
@@ -209,7 +209,7 @@ bool ScriptMachine::configureEngine(lua_State *L) {
     //                                     asMETHOD(ScriptMachine, input),
     //                                     asCALL_THISCALL_ASGLOBAL, this);
 
-    // PluginSystem::instance().angelApi()->installAPI(this);
+    PluginSystem::instance().installAPI(L);
 
     return true;
 }
@@ -403,16 +403,17 @@ int ScriptMachine::onLuauRequire(lua_State *L) {
 
     lua_Debug ar;
     lua_getinfo(L, 1, "s", &ar);
-    std::string source_path = ar.source;
-    // if (source_path.empty())
-    //     return path;
+    QString source_path = QString::fromUtf8(ar.source);
+    if (source_path.isEmpty()) {
+        LuauUtil::lua_errorL(L, "error requiring module");
+    }
 
     auto normalized_path = LuauUtil::normalizeLuauRequirePath(module_path);
     luaL_findtable(L, LUA_REGISTRYINDEX, "_MODULES", 1);
 
     std::array suffixes{".luau", ".lua", "/init.luau", "/init.lua"};
 
-    std::string source_code;
+    QByteArray source_code;
     QString resolved_path;
     auto r_path = resolved_path.toUtf8();
     for (const char *suffix : suffixes) {
@@ -424,28 +425,29 @@ int ScriptMachine::onLuauRequire(lua_State *L) {
 
         lua_pop(L, 1);
 
-        // std::optional<std::string> source =
-        // file_utils::readFile(resolved_path); if (source) {
-        //     source_code = source.value();
-        //     break;
-        // }
+        QFile src(resolved_path);
+        if (!src.open(QFile::ReadOnly | QFile::Text)) {
+            continue;
+        }
+        source_code = src.readAll();
+        break;
     }
 
-    if (source_code.empty()) {
-        luaL_errorL(L, "error requiring module");
+    if (source_code.isEmpty()) {
+        LuauUtil::lua_errorL(L, "error requiring module");
     }
 
     lua_State *GL = lua_mainthread(L);
     lua_State *ML = lua_newthread(GL);
     lua_xmove(GL, L, 1);
 
-    std::string bytecode = Luau::compile(source_code, {});
+    std::string bytecode = Luau::compile(source_code.data(), {});
     if (luau_load(ML, r_path, bytecode.data(), bytecode.size(), 0) == 0) {
         // NOTICE: Call debugger when file is loaded
         auto *debugger =
             reinterpret_cast<LuauDebugger *>(lua_getthreaddata(GL));
         if (debugger) {
-            debugger->onLuaFileLoaded(ML, resolved_path, false);
+            debugger->onLuaFileLoaded(ML, resolved_path);
         }
 
         int status = lua_resume(ML, L, 0);
@@ -485,13 +487,14 @@ void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
     }
 
     if (gc >= 0) {
+        // we should not interrupt the thread when gc is running, because it may
+        // cause crash
         return;
     }
 
     auto d = contextData(L);
     if (d == nullptr) {
-        lua_pushstring(L, "Thread context data not found");
-        lua_error(L);
+        LuauUtil::lua_errorL(L, "Thread context data not found");
         return;
     }
 
@@ -500,21 +503,18 @@ void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
 
     auto lastTime = d->lastInteruptTime;
     if (lastTime < d->startTime) {
-        lua_pushstring(L, INVALID_CONTEXT_ERROR);
-        lua_error(L);
+        LuauUtil::lua_errorL(L, INVALID_CONTEXT_ERROR);
         return;
     }
     auto nowTime = AppManager::instance()->currentMSecsSinceEpoch();
     if (nowTime < lastTime) {
-        lua_pushstring(L, INVALID_CONTEXT_ERROR);
-        lua_error(L);
+        LuauUtil::lua_errorL(L, INVALID_CONTEXT_ERROR);
         return;
     }
 
     if (d->timeOutTime) {
         if (nowTime - lastTime > d->timeOutTime) {
-            lua_pushstring(L, "Thread execution is timed-out");
-            lua_error(L);
+            LuauUtil::lua_errorL(L, "Thread execution is timed-out");
             return;
         }
     }
@@ -611,7 +611,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     auto source = script.readAll();
 
     // Compile the script
-    auto chunkname = ('@' + fileName).toUtf8();
+    auto chunkname = fileName.toUtf8();
     Luau::CompileOptions opts;
     if (mode == Scripting) {
         if (isInDebug) {
@@ -678,6 +678,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
 
     if (isInDebug) {
         _debugger->attach(T);
+        _debugger->onLuaFileLoaded(T, fileName);
     }
 
     // collect the handle info
