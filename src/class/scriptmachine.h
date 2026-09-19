@@ -153,8 +153,6 @@ private:
     static int coresume(lua_State *L);
     static int forward(lua_State *L, int index);
 
-    static int injectLuauCffi(lua_State *L);
-
     QString input();
 
 private:

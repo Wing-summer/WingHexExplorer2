@@ -179,6 +179,10 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 
     luaL_openlibs(L);
 
+    // register cffi module
+    luaopen_cffi(L);
+    lua_setglobal(L, "cffi");
+
     luabridge::enableExceptions(L);
 
     luabridge::getGlobalNamespace(L)
@@ -196,11 +200,6 @@ bool ScriptMachine::configureEngine(lua_State *L) {
         .beginNamespace("coroutine")
         .addFunction("wrap", &ScriptMachine::cowrap)
         .addFunction("resume", &ScriptMachine::coresume)
-        .endNamespace();
-
-    luabridge::getGlobalNamespace(L)
-        .beginNamespace("cffi")
-        .addFunction("import", &ScriptMachine::injectLuauCffi)
         .endNamespace();
 
     // TODO
@@ -371,13 +370,6 @@ int ScriptMachine::forward(lua_State *L, int index) {
         lua_pushvalue(L, i);
     lua_call(L, top, LUA_MULTRET);
     return lua_gettop(L) - top;
-}
-
-int ScriptMachine::injectLuauCffi(lua_State *L) {
-    lua_pushcfunction(L, luaopen_cffi, "luaopen_cffi");
-    lua_call(L, 0, 1);        // leaves the cffi table on the stack
-    lua_setglobal(L, "cffi"); // now usable from Luau as `cffi`
-    return 0;
 }
 
 QString ScriptMachine::input() {
@@ -840,11 +832,11 @@ void ScriptMachine::clip_setBinary(const CScriptArray &array) {
 QString ScriptMachine::clip_getText() { return qApp->clipboard()->text(); }
 
 CScriptArray *ScriptMachine::clip_getBinary() {
-    // QClipboard *c = qApp->clipboard();
+    QClipboard *c = qApp->clipboard();
 
-    // QByteArray data;
-    // auto d = c->mimeData();
-    // data = d->data(QStringLiteral("application/octet-stream"));
+    QByteArray data;
+    auto d = c->mimeData();
+    data = d->data(QStringLiteral("application/octet-stream"));
 
     // auto engine = ScriptMachine::instance().context();
     // auto len = data.size();

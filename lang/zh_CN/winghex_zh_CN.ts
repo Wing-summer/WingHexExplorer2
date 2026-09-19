@@ -3978,7 +3978,7 @@
 <context>
     <name>ads::CDockManager</name>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="549"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockManager.cpp" line="550"/>
         <source>Show View</source>
         <translation>显示视图</translation>
     </message>
