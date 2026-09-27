@@ -20,8 +20,6 @@
 
 #include "luauscope.h"
 
-#include "luau/luauinspector.h"
-
 #include <QSharedPointer>
 #include <QString>
 
@@ -35,6 +33,8 @@ public:
     bool isTable() const;
     bool isUserData() const;
     bool hasFields() const;
+    bool hasContent() const;
+
     QString getName() const;
     QString getValue() const;
     QString getType() const;
@@ -51,6 +51,7 @@ public:
 
 private:
     friend class LuauVariableRegistry;
+    friend class LuauDebugger;
     LuauVariable(LuauVariableRegistry *registry, lua_State *L,
                  const QString &name, int level);
     void addScope(LuauVariableRegistry *registry, lua_State *L);

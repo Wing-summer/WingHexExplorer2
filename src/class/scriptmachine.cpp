@@ -133,7 +133,7 @@ bool ScriptMachine::init() {
     // config callbacks
     auto &&cbs = lua_callbacks(_main);
     cbs->interrupt = ScriptMachine::onLuauInterrupt;
-    // cbs->userthread = ScriptMachine::onLuauThreadCreated;
+    cbs->userthread = ScriptMachine::onLuauThreadCreated;
     luaL_sandbox(_main);
 
     // init inspect options
@@ -265,6 +265,10 @@ QVector<lua_State *> ScriptMachine::getThreadAncestors(lua_State *L) const {
     }
     auto thd = contextData(L);
     if (thd) {
+        // The LuauDebugger tracks coroutine nesting (thread_stack_), so when a
+        // debugger is attached we let it build the chain: running coroutine
+        // first, then its resumer, up to the main thread.  This is what the
+        // variable registry walks to resolve locals/upvalues.
         auto dbg = thd->debugger;
         if (dbg) {
             return dbg->getThreadAncestors(L);
@@ -397,7 +401,7 @@ int ScriptMachine::onLuauRequire(lua_State *L) {
     lua_getinfo(L, 1, "s", &ar);
     QString source_path = QString::fromUtf8(ar.source);
     if (source_path.isEmpty()) {
-        LuauUtil::lua_errorL(L, "error requiring module");
+        LuauUtil::throwError(L, "error requiring module");
     }
 
     auto normalized_path = LuauUtil::normalizeLuauRequirePath(module_path);
@@ -426,7 +430,7 @@ int ScriptMachine::onLuauRequire(lua_State *L) {
     }
 
     if (source_code.isEmpty()) {
-        LuauUtil::lua_errorL(L, "error requiring module");
+        LuauUtil::throwError(L, "error requiring module");
     }
 
     lua_State *GL = lua_mainthread(L);
@@ -436,10 +440,10 @@ int ScriptMachine::onLuauRequire(lua_State *L) {
     std::string bytecode = Luau::compile(source_code.data(), {});
     if (luau_load(ML, r_path, bytecode.data(), bytecode.size(), 0) == 0) {
         // NOTICE: Call debugger when file is loaded
-        auto *debugger =
-            reinterpret_cast<LuauDebugger *>(lua_getthreaddata(GL));
+        auto *threadData = contextData(L);
+        auto *debugger = threadData ? threadData->debugger : nullptr;
         if (debugger) {
-            debugger->onLuaFileLoaded(ML, resolved_path);
+            debugger->onLuaFileLoaded(ML, resolved_path, source_code);
         }
 
         int status = lua_resume(ML, L, 0);
@@ -486,7 +490,7 @@ void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
 
     auto d = contextData(L);
     if (d == nullptr) {
-        LuauUtil::lua_errorL(L, "Thread context data not found");
+        LuauUtil::throwError(L, "Thread context data not found");
         return;
     }
 
@@ -495,18 +499,18 @@ void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
 
     auto lastTime = d->lastInteruptTime;
     if (lastTime < d->startTime) {
-        LuauUtil::lua_errorL(L, INVALID_CONTEXT_ERROR);
+        LuauUtil::throwError(L, INVALID_CONTEXT_ERROR);
         return;
     }
     auto nowTime = AppManager::instance()->currentMSecsSinceEpoch();
     if (nowTime < lastTime) {
-        LuauUtil::lua_errorL(L, INVALID_CONTEXT_ERROR);
+        LuauUtil::throwError(L, INVALID_CONTEXT_ERROR);
         return;
     }
 
     if (d->timeOutTime) {
         if (nowTime - lastTime > d->timeOutTime) {
-            LuauUtil::lua_errorL(L, "Thread execution is timed-out");
+            LuauUtil::throwError(L, "Thread execution is timed-out");
             return;
         }
     }
@@ -529,7 +533,7 @@ void ScriptMachine::onLuauThreadCreated(lua_State *LP, lua_State *L) {
         }
         luaL_sandboxthread(L);
     } else {
-        // destory
+        // destroy
         lua_setthreaddata(L, nullptr);
     }
 }
@@ -669,8 +673,9 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
         quint64(SettingManager::instance().scriptTimeout()) * 60000;
 
     if (isInDebug) {
+        d->debugger = _debugger;
         _debugger->attach(T);
-        _debugger->onLuaFileLoaded(T, fileName);
+        _debugger->onLuaFileLoaded(T, fileName, source);
     }
 
     // collect the handle info
@@ -724,10 +729,10 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
 }
 
 void ScriptMachine::abortDbgScript() {
-    // if (_debugger) {
+    if (_debugger) {
+        _debugger->terminate();
+    }
     abortScript(ConsoleMode::Scripting);
-    //     _debugger->Resume();
-    // }
 }
 
 void ScriptMachine::abortScript(ConsoleMode mode) {

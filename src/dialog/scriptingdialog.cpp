@@ -32,8 +32,10 @@
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
+#include "control/scripteditor.h"
 #include "control/toast.h"
 #include "dialog/mutisavedialog.h"
+#include "model/idbtreemodel.h"
 #include "model/idbwatchmodel.h"
 
 #include <QClipboard>
@@ -197,116 +199,121 @@ void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
 
     m_consoleout->init();
-    auto &machine = ScriptMachine::instance();
-    //     auto dbg = machine.debugger();
-    //     Q_ASSERT(dbg);
-    //     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
-    //             [this](const QString &file, int oldLineNbr, int newLineNbr) {
-    //                 auto editor = findEditorView(file);
-    //                 if (editor) {
-    //                     removeBreakPoint(editor, oldLineNbr);
-    //                     addBreakPoint(editor, newLineNbr);
-    //                 }
-    //             });
-    //     connect(dbg, &asDebugger::onPullVariables, this, [this]() {
-    //         auto dbg = ScriptMachine::instance().debugger();
-    //         auto &cache = dbg->cache;
-    //         cache->CacheGlobals();
-    //         m_gvarshow->refreshWithNewRoot(cache->globals);
-    //         auto &cs = cache->call_stack;
-    //         if (!cs.empty()) {
-    //             cache->CacheCallstack();
-    //             auto l = cs.at(0).scope.locals;
-    //             m_varshow->refreshWithNewRoot(l);
-    //         }
-    //         m_watchModel->refresh();
-    //     });
-    //     connect(
-    //         dbg, &asDebugger::onRunCurrentLine, this,
-    //         [this](const QString &file, int lineNr) {
-    //             ScriptEditor *e = nullptr;
-    // #ifdef Q_OS_WIN
-    //             if (file.compare(m_curEditor->fileName(),
-    //             Qt::CaseInsensitive)) {
-    // #else
-    //             if (file != m_curEditor->fileName()) {
-    // #endif
-    //                 e = findEditorView(file);
-    //                 if (e) {
-    //                     e->setFocus();
-    //                     e->raise();
-    //                 } else {
-    //                     if (_curDbgData.contains(file)) {
-    //                         auto cs = Utilities::getMd5(file);
-    //                         auto &data = _curDbgData[file];
-    //                         if (data.checksum != cs) {
-    //                             // the file has been modified outside
-    //                             e = createFakeEditor(file, data.source);
-    //                         }
-    //                     }
-    //                 }
+    auto dbg = ScriptMachine::instance().debugger();
+    Q_ASSERT(dbg);
+    connect(dbg, &LuauDebugger::onAdjustBreakPointLine, this,
+            [this](const QString &file, int oldLineNbr, int newLineNbr) {
+                auto editor = findEditorView(file);
+                if (editor) {
+                    removeBreakPoint(editor, oldLineNbr);
+                    addBreakPoint(editor, newLineNbr);
+                }
+            });
+    connect(dbg, &LuauDebugger::onPullVariables, this, [this]() {
+        auto dbg = ScriptMachine::instance().debugger();
+        if (!dbg->isDebugBreak() || dbg->stackFrames().isEmpty()) {
+            m_gvarshow->dataModel()->resetRoot();
+            m_varshow->dataModel()->resetRoot();
+            m_upvarshow->dataModel()->resetRoot();
+            return;
+        }
+        auto reg = dbg->variableRegistry();
+        m_gvarshow->dataModel()->setRoot(reg, dbg->globalScope());
+        m_varshow->dataModel()->setRoot(reg, dbg->localScope(0));
+        m_upvarshow->dataModel()->setRoot(reg, dbg->upvalueScope(0));
+        m_watchModel->refresh();
+    });
+    connect(
+        dbg, &LuauDebugger::onRunCurrentLine, this,
+        [this](const QString &file, int lineNr) {
+            ScriptEditor *e = nullptr;
+#ifdef Q_OS_WIN
+            if (file.compare(m_curEditor->fileName(), Qt::CaseInsensitive)) {
+#else
+            if (file != m_curEditor->fileName()) {
+#endif
+                e = findEditorView(file);
+                auto dbg = ScriptMachine::instance().debugger();
+                auto ctxfile = dbg->findLoadedLuauFile(file);
+                if (e) {
+                    e->setFocus();
+                    e->raise();
+                } else {
+                    if (ctxfile) {
+                        auto cs = e->editor()->toPlainText();
+                        const auto &data = ctxfile->source();
+                        if (data != cs) {
+                            // the file has been modified outside
+                            e = createFakeEditor(file, data);
+                        }
+                    } else {
+                        e = createFakeEditor(file, {});
+                    }
+                }
 
-    //                 if (e == nullptr) {
-    //                     e = openFile(file);
-    //                     if (e) {
-    //                         e->setReadOnly(true);
-    //                         _reditors.append(e);
-    //                         e->setFocus();
-    //                         e->raise();
+                if (e == nullptr) {
+                    e = openFile(file);
+                    if (e) {
+                        e->setReadOnly(true);
+                        _reditors.append(e);
+                        e->setFocus();
+                        e->raise();
 
-    //                         addRecentFile(e, file);
-    //                     } else {
-    //                         e = createFakeEditor(file,
-    //                         _curDbgData[file].source);
-    //                     }
-    //                 }
-    //             } else {
-    //                 e = m_curEditor;
-    //             }
+                        addRecentFile(e, file);
+                    } else {
+                        if (ctxfile) {
+                            e = createFakeEditor(file, ctxfile->source());
+                        } else {
+                            e = createFakeEditor(file, {});
+                        }
+                    }
+                }
+            } else {
+                e = m_curEditor;
+            }
 
-    //             const auto bpMark = QStringLiteral("bp");
-    //             const auto curSym = QStringLiteral("cur");
-    //             const auto hitCur = QStringLiteral("curbp");
+            const auto bpMark = QStringLiteral("bp");
+            const auto curSym = QStringLiteral("cur");
+            const auto hitCur = QStringLiteral("curbp");
 
-    //             // remove the last mark
-    //             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >=
-    //             0) {
-    //                 auto lastCur = findEditorView(_lastCurLine.first);
-    //                 if (lastCur) {
-    //                     auto e = lastCur->editor();
-    //                     auto symID = e->symbolMark(_lastCurLine.second);
+            // remove the last mark
+            if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
+                auto lastCur = findEditorView(_lastCurLine.first);
+                if (lastCur) {
+                    auto e = lastCur->editor();
+                    auto symID = e->symbolMark(_lastCurLine.second);
 
-    //                     if (symID == curSym) {
-    //                         e->removeSymbolMark(_lastCurLine.second);
-    //                     } else if (symID == hitCur) {
-    //                         e->addSymbolMark(_lastCurLine.second, bpMark);
-    //                     }
-    //                 }
-    //             }
+                    if (symID == curSym) {
+                        e->removeSymbolMark(_lastCurLine.second);
+                    } else if (symID == hitCur) {
+                        e->addSymbolMark(_lastCurLine.second, bpMark);
+                    }
+                }
+            }
 
-    //             auto editor = e->editor();
+            auto editor = e->editor();
 
-    //             // add the new mark
-    //             auto symID = editor->symbolMark(lineNr);
-    //             if (symID == bpMark) {
-    //                 editor->addSymbolMark(lineNr, hitCur);
-    //             } else {
-    //                 editor->addSymbolMark(lineNr, curSym);
-    //             }
+            // add the new mark
+            auto symID = editor->symbolMark(lineNr);
+            if (symID == bpMark) {
+                editor->addSymbolMark(lineNr, hitCur);
+            } else {
+                editor->addSymbolMark(lineNr, curSym);
+            }
 
-    //             editor->ensureLineVisible(lineNr);
+            editor->ensureLineVisible(lineNr);
 
-    //             _lastCurLine = {file, lineNr};
-    //             updateRunDebugMode();
+            _lastCurLine = {file, lineNr};
+            updateRunDebugMode();
 
-    //             if (_fakeEditor) {
-    //                 if (file != _fakeEditor->windowFilePath()) {
-    //                     destoryFakeEditor();
-    //                 }
-    //             }
-    //         });
-    //     connect(dbg, &asDebugger::onDebugActionExec, this,
-    //             [this]() { updateRunDebugMode(); });
+            if (_fakeEditor) {
+                if (file != _fakeEditor->windowFilePath()) {
+                    destoryFakeEditor();
+                }
+            }
+        });
+    connect(dbg, &LuauDebugger::onDebugActionExec, this,
+            [this]() { updateRunDebugMode(); });
     //     m_sym->setEngine(machine.engine());
 }
 
@@ -592,9 +599,9 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
 
         isRun = runner.isRunning(ScriptMachine::Scripting);
         isDbg = runner.isDebugMode();
-        // auto dbg = runner.debugger();
-
-        // isPaused = dbg->action == asIDBAction::Pause;
+        if (auto debugger = runner.debugger()) {
+            isPaused = debugger->isDebugBreak();
+        }
 
         if (isRun && isDbg && isPaused) {
             m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
@@ -651,11 +658,14 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
     auto vars = new QTabWidget(this);
     vars->setTabPosition(QTabWidget::South);
 
+    m_gvarshow = new IDBTreeView(this);
+    vars->addTab(m_gvarshow, tr("Global"));
+
     m_varshow = new IDBTreeView(this);
     vars->addTab(m_varshow, tr("Local"));
 
-    m_gvarshow = new IDBTreeView(this);
-    vars->addTab(m_gvarshow, tr("Global"));
+    m_upvarshow = new IDBTreeView(this);
+    vars->addTab(m_upvarshow, tr("UpValue"));
 
     auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
                               tr("Variables"), vars);
@@ -757,6 +767,18 @@ ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
     Utilities::applyTableViewProperty(callstack);
     m_callstack = new DbgCallStackModel(callstack);
     callstack->setModel(m_callstack);
+    connect(
+        callstack->selectionModel(), &QItemSelectionModel::currentChanged, this,
+        [this](const QModelIndex &current) {
+            auto debugger = ScriptMachine::instance().debugger();
+            if (!debugger || !debugger->isDebugBreak() || !current.isValid()) {
+                return;
+            }
+            auto row = current.row();
+            auto reg = debugger->variableRegistry();
+            m_varshow->dataModel()->setRoot(reg, debugger->localScope(row));
+            m_upvarshow->dataModel()->setRoot(reg, debugger->upvalueScope(row));
+        });
 
     auto dw = buildDockWidget(dock, QStringLiteral("StackTrace"),
                               tr("StackTrace"), callstack);
@@ -1029,12 +1051,13 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
         auto e = editor->editor();
         e->setContentModified(true);
-        // if (isVisible() && currentEditor() == editor &&
-        //     !_curDbgData.contains(editor->fileName())) {
-        //     reloadEditor(editor);
-        // } else {
-        //     editor->setReloadLater(true);
-        // }
+        auto dbg = ScriptMachine::instance().debugger();
+        auto ctxfile = dbg->findLoadedLuauFile(editor->fileName());
+        if (isVisible() && currentEditor() == editor && !ctxfile) {
+            reloadEditor(editor);
+        } else {
+            editor->setReloadLater(true);
+        }
     });
 
     auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
@@ -1121,9 +1144,10 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     _squinfoModel->setEditor(editor);
     updateCursorPosition();
 
-    // if (cur && !_curDbgData.contains(cur->fileName())) {
-    //     try2ReloadEditor(cur);
-    // }
+    auto dbg = ScriptMachine::instance().debugger();
+    if (cur && dbg->findLoadedLuauFile(cur->fileName())) {
+        try2ReloadEditor(cur);
+    }
 }
 
 void ScriptingDialog::updateWindowTitle() {
@@ -1169,8 +1193,9 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 
     isRun = runner.isRunning(ScriptMachine::Scripting);
     isDbg = runner.isDebugMode();
-    // auto dbg = runner.debugger();
-    // isPaused = dbg->action == asIDBAction::Pause;
+    if (auto debugger = runner.debugger()) {
+        isPaused = debugger->isDebugBreak();
+    }
 
     m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION]->setEnabled(!isRun);
     m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->setEnabled(!isRun);
@@ -1242,9 +1267,14 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
         return nullptr;
     }
 
-    // if (_curDbgData.contains(filename)) {
-    //     editor->setReadOnly(true);
-    // }
+    auto &m = ScriptMachine::instance();
+    auto dbg = m.debugger();
+    if (m.isDebugMode()) {
+        auto ctxfile = dbg->findLoadedLuauFile(filename);
+        if (ctxfile) {
+            editor->setReadOnly(true);
+        }
+    }
 
     registerEditorView(editor.get());
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor.get(),
@@ -1310,35 +1340,33 @@ bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
     return true;
 }
 
-// void ScriptingDialog::runDbgCommand(asIDBAction action) {
-//     updateRunDebugMode(true);
-//     auto &machine = ScriptMachine::instance();
-//     if (machine.isDebugMode()) {
-//         auto dbg = machine.debugger();
-//         dbg->SetAction(action);
-//     }
-// }
-
 void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_ribbon->setCurrentIndex(3);
     m_consoleout->clear();
 
     auto dbg = ScriptMachine::instance().debugger();
-    // m_callstack->attachDebugger(dbg);
-    // m_watchModel->attachDebugger(dbg);
-
-    // auto view = findEditorView(file);
-    // if (view) {
-    //     auto e = view->editor();
-    //     auto totalblk = e->blockCount();
-    //     // add breakpoints
-    //     for (int i = 0; i < totalblk; ++i) {
-    //         if (!e->symbolMark(i).isEmpty()) {
-    //             dbg->addFileBreakPoint(file, i);
-    //         }
-    //     }
-    //     view->setReadOnly(true);
-    //     _reditors.append(view);}
+    m_callstack->attachDebugger(dbg);
+    m_watchModel->attachDebugger(dbg);
+    if (auto editor = findEditorView(fileName)) {
+        auto e = editor->editor();
+        auto totalblk = e->blockCount();
+        std::unordered_map<int, BreakPoint> breakpoints;
+        auto document = editor->editor();
+        const auto breakpointMark = QStringLiteral("bp");
+        for (int line = 0; line < document->blockCount(); ++line) {
+            auto rline = line + 1;
+            const auto mark = document->symbolMark(rline);
+            if (mark == breakpointMark) {
+                breakpoints.emplace(line + 1, BreakPoint::create(rline));
+            }
+        }
+        if (auto debugger = ScriptMachine::instance().debugger()) {
+            debugger->setBreakPoints(editor->fileName(),
+                                     std::move(breakpoints));
+        }
+        editor->setReadOnly(true);
+        _reditors.append(editor);
+    }
 
     this->updateRunDebugMode();
     ScriptMachine::instance().executeScript(
@@ -1357,24 +1385,28 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
                 // remove the last mark
                 if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
                     auto lastCur = findEditorView(_lastCurLine.first);
-                    auto e = lastCur->editor();
-                    auto symID = e->symbolMark(_lastCurLine.second);
+                    if (!lastCur) {
+                        _lastCurLine.first.clear();
+                        _lastCurLine.second = -1;
+                    } else {
+                        auto e = lastCur->editor();
+                        auto symID = e->symbolMark(_lastCurLine.second);
 
-                    const auto bpMark = QStringLiteral("bp");
-                    const auto curSym = QStringLiteral("cur");
-                    const auto hitCur = QStringLiteral("curbp");
+                        const auto bpMark = QStringLiteral("bp");
+                        const auto curSym = QStringLiteral("cur");
+                        const auto hitCur = QStringLiteral("curbp");
 
-                    if (symID == curSym) {
-                        e->removeSymbolMark(_lastCurLine.second);
-                    } else if (symID == hitCur) {
-                        e->addSymbolMark(_lastCurLine.second, bpMark);
+                        if (symID == curSym) {
+                            e->removeSymbolMark(_lastCurLine.second);
+                        } else if (symID == hitCur) {
+                            e->addSymbolMark(_lastCurLine.second, bpMark);
+                        }
                     }
                 }
                 _lastCurLine.first.clear();
                 _lastCurLine.second = -1;
             }
             _reditors.clear();
-            // _curDbgData.clear();
             destoryFakeEditor();
 
             if (isNotBusy) {
@@ -1397,21 +1429,26 @@ void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
     const auto hitCur = QStringLiteral("curbp");
 
     auto &m = ScriptMachine::instance();
-    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-    //     auto dbg = m.debugger();
-    //     auto symID = e->symbolMark(line);
-    //     if (curSym == symID) {
-    //         e->addSymbolMark(line, hitCur);
-    //         dbg->addFileBreakPoint(editor->fileName(), line);
-    //     } else {
-    //         if (symID.isEmpty()) {
-    //             e->addSymbolMark(line, bpMark);
-    //             dbg->addFileBreakPoint(editor->fileName(), line);
-    //         }
-    //     }
-    // } else {
-    //     e->addSymbolMark(line, bpMark);
-    // }
+    auto dbg = m.debugger();
+    auto ctxfile = dbg->findLoadedLuauFile(editor->fileName());
+    if (m.isDebugMode() && ctxfile) {
+        auto symID = e->symbolMark(line);
+        if (curSym == symID) {
+            auto tline = ctxfile->addBreakPoint(line);
+            if (tline >= 0) {
+                e->addSymbolMark(tline, hitCur);
+            }
+        } else {
+            if (symID.isEmpty()) {
+                auto tline = ctxfile->addBreakPoint(line);
+                if (tline >= 0) {
+                    e->addSymbolMark(line, bpMark);
+                }
+            }
+        }
+    } else {
+        e->addSymbolMark(line, bpMark);
+    }
 }
 
 void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
@@ -1419,26 +1456,27 @@ void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
     auto e = editor->editor();
 
     auto &m = ScriptMachine::instance();
-    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-    //     auto dbg = m.debugger();
-    //     auto symID = e->symbolMark(line);
+    auto dbg = m.debugger();
+    auto ctxfile = dbg->findLoadedLuauFile(editor->fileName());
+    if (m.isDebugMode() && ctxfile) {
+        auto symID = e->symbolMark(line);
 
-    //     const auto bpMark = QStringLiteral("bp");
-    //     const auto curSym = QStringLiteral("cur");
-    //     const auto hitCur = QStringLiteral("curbp");
+        const auto bpMark = QStringLiteral("bp");
+        const auto curSym = QStringLiteral("cur");
+        const auto hitCur = QStringLiteral("curbp");
 
-    //     if (hitCur == symID) {
-    //         e->addSymbolMark(line, curSym);
-    //         dbg->removeFileBreakPoint(editor->fileName(), line);
-    //     } else {
-    //         if (bpMark == symID) {
-    //             e->removeSymbolMark(line);
-    //             dbg->removeFileBreakPoint(editor->fileName(), line);
-    //         }
-    //     }
-    // } else {
-    //     e->removeSymbolMark(line);
-    // }
+        if (hitCur == symID) {
+            ctxfile->removeBreakPoint(line);
+            e->addSymbolMark(line, curSym);
+        } else {
+            if (bpMark == symID) {
+                ctxfile->removeBreakPoint(line);
+                e->removeSymbolMark(line);
+            }
+        }
+    } else {
+        e->removeSymbolMark(line);
+    }
 }
 
 void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
@@ -1446,38 +1484,43 @@ void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
     auto e = editor->editor();
 
     auto &m = ScriptMachine::instance();
-    // if (m.isDebugMode() && _curDbgData.contains(editor->fileName())) {
-    //     auto dbg = m.debugger();
-    //     auto symID = e->symbolMark(line);
+    auto dbg = m.debugger();
+    auto ctxfile = dbg->findLoadedLuauFile(editor->fileName());
+    if (m.isDebugMode() && ctxfile) {
+        auto symID = e->symbolMark(line);
 
-    //     const auto bpMark = QStringLiteral("bp");
-    //     const auto curSym = QStringLiteral("cur");
-    //     const auto hitCur = QStringLiteral("curbp");
+        const auto bpMark = QStringLiteral("bp");
+        const auto curSym = QStringLiteral("cur");
+        const auto hitCur = QStringLiteral("curbp");
 
-    //     auto fileName = editor->fileName();
-    //     if (hitCur == symID) {
-    //         e->addSymbolMark(line, curSym);
-    //         dbg->removeFileBreakPoint(fileName, line);
-    //     } else if (curSym == symID) {
-    //         e->addSymbolMark(line, hitCur);
-    //         dbg->addFileBreakPoint(fileName, line);
-    //     } else {
-    //         if (bpMark == symID) {
-    //             e->removeSymbolMark(line);
-    //             dbg->removeFileBreakPoint(fileName, line);
-    //         } else {
-    //             e->addSymbolMark(line, bpMark);
-    //             dbg->addFileBreakPoint(fileName, line);
-    //         }
-    //     }
-    // } else {
-    auto symID = e->symbolMark(line);
-    if (symID.isEmpty()) {
-        e->addSymbolMark(line, QStringLiteral("bp"));
+        auto fileName = editor->fileName();
+        if (hitCur == symID) {
+            ctxfile->removeBreakPoint(line);
+            e->addSymbolMark(line, curSym);
+        } else if (curSym == symID) {
+            auto tline = ctxfile->addBreakPoint(line);
+            if (tline >= 0) {
+                e->addSymbolMark(tline, hitCur);
+            }
+        } else {
+            if (bpMark == symID) {
+                ctxfile->removeBreakPoint(line);
+                e->removeSymbolMark(line);
+            } else {
+                auto tline = ctxfile->addBreakPoint(line);
+                if (tline >= 0) {
+                    e->addSymbolMark(tline, bpMark);
+                }
+            }
+        }
     } else {
-        e->removeSymbolMark(line);
+        auto symID = e->symbolMark(line);
+        if (symID.isEmpty()) {
+            e->addSymbolMark(line, QStringLiteral("bp"));
+        } else {
+            e->removeSymbolMark(line);
+        }
     }
-    // }
 }
 
 void ScriptingDialog::updateCursorPosition() {
@@ -1557,18 +1600,19 @@ void ScriptingDialog::on_newfile() {
                                         QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
-        // if (_curDbgData.contains(filename)) {
-        //     auto ret = WingMessageBox::warning(
-        //         this, tr("New"), tr("NewFileWithDbgExists"),
-        //         QMessageBox::Yes | QMessageBox::No);
-        //     if (ret == QMessageBox::No) {
-        //         return;
-        //     }
-        //     if
-        //     (ScriptMachine::instance().isRunning(ScriptMachine::Scripting)) {
-        //         on_stopscript();
-        //     }
-        // }
+
+        auto dbg = ScriptMachine::instance().debugger();
+        if (dbg->findLoadedLuauFile(filename)) {
+            auto ret = WingMessageBox::warning(
+                this, tr("New"), tr("NewFileWithDbgExists"),
+                QMessageBox::Yes | QMessageBox::No);
+            if (ret == QMessageBox::No) {
+                return;
+            }
+            if (ScriptMachine::instance().isRunning(ScriptMachine::Scripting)) {
+                on_stopscript();
+            }
+        }
 
         auto e = findEditorView(filename);
         if (e) {
@@ -1888,11 +1932,16 @@ void ScriptingDialog::on_rundbgscript() {
     }
 }
 
-void ScriptingDialog::on_pausescript() { /*runDbgCommand(asIDBAction::Pause);*/
+void ScriptingDialog::on_pausescript() {
+    if (auto debugger = ScriptMachine::instance().debugger()) {
+        debugger->pause();
+    }
 }
 
 void ScriptingDialog::on_continuescript() {
-    // runDbgCommand(asIDBAction::Continue);
+    if (auto debugger = ScriptMachine::instance().debugger()) {
+        debugger->resume();
+    }
 }
 
 void ScriptingDialog::on_stopscript() {
@@ -1906,15 +1955,21 @@ void ScriptingDialog::on_restartscript() {
 }
 
 void ScriptingDialog::on_stepinscript() {
-    // runDbgCommand(asIDBAction::StepInto);
+    if (auto debugger = ScriptMachine::instance().debugger()) {
+        debugger->stepIn();
+    }
 }
 
 void ScriptingDialog::on_stepoutscript() {
-    // runDbgCommand(asIDBAction::StepOut);
+    if (auto debugger = ScriptMachine::instance().debugger()) {
+        debugger->stepOut();
+    }
 }
 
 void ScriptingDialog::on_stepoverscript() {
-    // runDbgCommand(asIDBAction::StepOver);
+    if (auto debugger = ScriptMachine::instance().debugger()) {
+        debugger->stepOver();
+    }
 }
 
 void ScriptingDialog::on_togglebreakpoint() {
@@ -1971,6 +2026,7 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     if (m_recentmanager->isDirty())
         set.setRecentScriptFiles(m_recentmanager->saveRecent());
     set.setLastUsedScriptPath(m_lastusedpath);
+    set.setWatchExpressions(m_watchModel->expressionList());
     saveDockLayout();
     FramelessMainWindow::closeEvent(event);
 }

@@ -17,10 +17,11 @@
 
 #include "luaufile.h"
 
+#include "Luau/RegisterX64.h"
 #include "luauutil.h"
 
-#include <QFile>
-
+#include <QVector>
+#include <qpair.h>
 #include <unordered_set>
 
 LuaFileRef::LuaFileRef(lua_State *L) {
@@ -54,11 +55,17 @@ bool LuaFileRef::operator==(const LuaFileRef &other) const {
 }
 
 void LuaFileRef::release() {
-    if (thread_ref_ != LUA_REFNIL)
-        lua_unref(L_, file_ref_);
-
-    if (file_ref_ != LUA_REFNIL)
+    if (L_ == nullptr) {
+        return;
+    }
+    if (thread_ref_ != LUA_REFNIL) {
         lua_unref(L_, thread_ref_);
+    }
+    if (file_ref_ != LUA_REFNIL) {
+        lua_unref(L_, file_ref_);
+    }
+    thread_ref_ = LUA_REFNIL;
+    file_ref_ = LUA_REFNIL;
 }
 
 void LuaFileRef::copyFrom(const LuaFileRef &other) {
@@ -85,15 +92,13 @@ void LuauFile::setPath(const QString &path) {
     }
     clearBreakPoints();
     path_ = path;
-    QFile f(path);
-    if (f.open(QFile::ReadOnly | QFile::Text)) {
-        src_ = f.readAll();
-    }
 }
 
 QString LuauFile::path() const { return path_; }
 
-QByteArray LuauFile::source() const { return src_; }
+QString LuauFile::source() const { return src_; }
+
+void LuauFile::setSource(const QString &source) { src_ = source; }
 
 void LuauFile::setBreakPoints(
     const std::unordered_map<int, BreakPoint> &breakpoints) {
@@ -107,15 +112,24 @@ void LuauFile::setBreakPoints(
     });
 }
 
-void LuauFile::addRef(LuaFileRef ref) {
+QVector<QPair<int, int>> LuauFile::addRef(LuaFileRef ref) {
+    QVector<QPair<int, int>> adjustedLines;
     if (std::find(refs_.begin(), refs_.end(), ref) != refs_.end()) {
-        return;
+        return adjustedLines;
     }
 
     for (auto &[_, bp] : breakpoints_) {
-        bp.enable(ref.L_, ref.file_ref_, true);
+        const auto originLine = bp.enable(ref.L_, ref.file_ref_, true);
+        if (originLine >= 0) {
+            if (originLine != bp.line()) {
+                adjustedLines.append(qMakePair(originLine, bp.line()));
+            }
+        } else {
+            adjustedLines.append(qMakePair(originLine, -1));
+        }
     }
     refs_.emplace_back(std::move(ref));
+    return adjustedLines;
 }
 
 void LuauFile::removeRef(lua_State *L) {
@@ -126,23 +140,49 @@ void LuauFile::removeRef(lua_State *L) {
     refs_.erase(it, refs_.end());
 }
 
-void LuauFile::enableBreakPoint(BreakPoint &bp, bool enable) {
+bool LuauFile::enableBreakPoint(BreakPoint &bp, bool enable) {
+    bool ok = true;
     for (auto &ref : refs_) {
-        bp.enable(ref.L_, ref.file_ref_, enable);
+        ok &= bp.enable(ref.L_, ref.file_ref_, enable) >= 0;
     }
+    return ok;
 }
 
-void LuauFile::addBreakPoint(int line) {
-    addBreakPoint(BreakPoint::create(line));
+int LuauFile::addBreakPoint(int line) {
+    return addBreakPoint(BreakPoint::create(line));
 }
 
-void LuauFile::addBreakPoint(const BreakPoint &bp) {
-    auto it = breakpoints_.find(bp.line());
+int LuauFile::addBreakPoint(const BreakPoint &bp) {
+    auto line = bp.line();
+    auto it = breakpoints_.find(line);
     if (it == breakpoints_.end()) {
-        auto inserted = breakpoints_.emplace(bp.line(), bp).first;
-        enableBreakPoint(inserted->second, true);
+        auto nbp = bp;
+        // invalid breakpoint
+        if (!enableBreakPoint(nbp, true)) {
+            enableBreakPoint(nbp, false);
+            return -1;
+        }
+        // if adjusted line is different from the original line,
+        // check if the new line already exists
+        auto nline = nbp.line();
+        if (nline != line) {
+            auto it = breakpoints_.find(nline);
+            if (it != breakpoints_.end()) {
+                return -1;
+            }
+        }
+        it = breakpoints_.emplace(nline, nbp).first;
     } else {
         it->second = bp;
+    }
+    return it->second.line();
+}
+
+void LuauFile::removeBreakPoint(int line) {
+    auto it = breakpoints_.find(line);
+    if (it != breakpoints_.end()) {
+        enableBreakPoint(it->second, false);
+        breakpoints_.erase(it);
     }
 }
 

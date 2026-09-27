@@ -19,27 +19,23 @@
 #define IDBWATCHMODEL_H
 
 #include "idbtreemodel.h"
-// #include "class/asdebugger.h"
-#include <memory>
-
 #include "luau/luaudebugger.h"
 
-class IDBWatchModel : public IDBTreeModel {
+#include <QStringList>
+#include <QVector>
+
+class IDBWatchModel final : public IDBTreeModel {
     Q_OBJECT
+
 private:
     struct WatchItem {
-        std::string expression;
-        // asIDBExpected<asIDBVariable::WeakPtr> result;
-        bool expanded = false;
-
-        // bool isValid() const {
-        //     return result.has_value() && !result.value().expired();
-        // }
-        // bool hasError() const { return !result.has_value(); }
+        QString expression;
+        LuauVariable::Ptr result;
     };
 
 public:
     explicit IDBWatchModel(QObject *parent = nullptr);
+    ~IDBWatchModel() override = default;
 
 public:
     QStringList expressionList() const;
@@ -67,24 +63,26 @@ public:
 
     bool hasChildren(const QModelIndex &parent) const override;
 
-    int rowCount(const QModelIndex &parent) const override;
+    int rowCount(const QModelIndex &parent = {}) const override;
 
     QModelIndex index(int row, int column,
-                      const QModelIndex &parent) const override;
+                      const QModelIndex &parent = {}) const override;
 
-    QModelIndex parent(const QModelIndex &child) const override;
+    QModelIndex parent(const QModelIndex &child = {}) const override;
 
 private:
-    // use shared_ptr so WatchItem* (shared_ptr.get()) remains stable across
-    // QVector reallocs
-    QVector<std::shared_ptr<WatchItem>> m_watchItems;
-    LuauDebugger *_dbg = nullptr;
+    void rebuildWatchRegistry();
+    void refreshTree();
+    QString makeTopLevelUserRole(int row) const;
 
-    // helper: consistent user role id
-    QString makeTopLevelUserRole(const WatchItem &item) const;
-
-    // helper: build roots vector from current m_watchItems
-    // QVector<asIDBVariable::Ptr> buildRootsFromWatchItems() const;
+private:
+    QVector<WatchItem> m_watchItems;
+    // The real registry owned by LuauDebugger.
+    // IDBWatchModel does not own this object.
+    LuauVariableRegistry *m_watchRegistry = nullptr;
+    // Synthetic root scope registered into m_watchRegistry.
+    LuauScope m_watchScope;
+    LuauDebugger *m_dbg = nullptr;
 };
 
 #endif // IDBWATCHMODEL_H

@@ -39,6 +39,7 @@ public slots:
     void attachDebugger(LuauDebugger *debugger);
 
 private:
+    QVector<LuauStackFrame> _frames;
     LuauDebugger *_debugger = nullptr;
 };
 

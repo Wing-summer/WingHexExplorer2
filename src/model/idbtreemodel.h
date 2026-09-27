@@ -50,6 +50,7 @@ public:
     explicit IDBTreeModel(QObject *parent = nullptr);
 
     void setRoot(LuauVariableRegistry *r, const LuauScope &scope);
+    void resetRoot();
     void updateScope(const LuauScope &scope);
     void refresh();
     void setPageSize(int s);

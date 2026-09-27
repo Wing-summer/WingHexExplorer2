@@ -16,86 +16,83 @@
  */
 
 #include "idbwatchmodel.h"
-#include <QString>
-#include <algorithm>
 
-IDBWatchModel::IDBWatchModel(QObject *parent) : IDBTreeModel(parent) {}
+#include <QModelIndexList>
+#include <QVariant>
+
+IDBWatchModel::IDBWatchModel(QObject *parent)
+    : IDBTreeModel(parent),
+      m_watchScope(LuauScope::createLocal(
+          nullptr,
+          QStringLiteral("__watch__") + QString::number(quintptr(this), 16))) {}
+
+QStringList IDBWatchModel::expressionList() const {
+    QStringList result;
+    result.reserve(m_watchItems.size());
+
+    for (const auto &item : m_watchItems) {
+        result.append(item.expression);
+    }
+
+    return result;
+}
 
 void IDBWatchModel::attachDebugger(LuauDebugger *debugger) {
-    _dbg = debugger;
+    if (m_dbg == debugger) {
+        refresh();
+        return;
+    }
+
+    if (m_dbg) {
+        disconnect(m_dbg, &LuauDebugger::onPullVariables, this,
+                   &IDBWatchModel::refresh);
+    }
+
+    m_dbg = debugger;
+    m_watchRegistry = nullptr;
+
+    if (m_dbg) {
+        connect(m_dbg, &LuauDebugger::onPullVariables, this,
+                &IDBWatchModel::refresh);
+    }
+
     refresh();
 }
 
-QStringList IDBWatchModel::expressionList() const {
-    QStringList ret;
-    for (const auto &item : m_watchItems) {
-        if (item) {
-            ret.append(QString::fromStdString(item->expression));
-        }
-    }
-    return ret;
-}
-
 void IDBWatchModel::addWatchExpression(const QString &expression) {
-    auto exp = expression.trimmed();
-    if (exp.isEmpty()) {
+    const QString expr = expression.trimmed();
+    if (expr.isEmpty()) {
         return;
     }
-    auto p = std::make_shared<WatchItem>();
-    p->expression = exp.toStdString();
-    p->expanded = false;
 
-    bool evaluated = false;
-    if (_dbg) {
-        //     auto &cache = _dbg->cache;
-        //     if (cache) {
-        //         p->result = cache->ResolveExpression(p->expression, 0);
-        //         evaluated = true;
-        //     }
-    }
+    WatchItem item;
+    item.expression = expr;
+    m_watchItems.append(std::move(item));
 
-    // if (!evaluated) {
-    //     p->result = asIDBExpected<asIDBVariable::WeakPtr>{};
-    // }
-
-    m_watchItems.append(std::move(p));
-
-    // rebuild roots & reset model in one step
-    // auto newRoots = buildRootsFromWatchItems();
-    // beginResetModel();
-    // replaceRoots(newRoots);
-    // endResetModel();
+    refresh();
 }
 
 void IDBWatchModel::removeWatchExpression(qsizetype index) {
-    if (index < 0 || index >= m_watchItems.size())
-        return;
-
-    m_watchItems.removeAt(index);
-
-    // auto newRoots = buildRootsFromWatchItems();
-    // beginResetModel();
-    // replaceRoots(newRoots);
-    // endResetModel();
-}
-
-void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
-    if (indexes.isEmpty()) {
+    if (index < 0 || index >= m_watchItems.size()) {
         return;
     }
 
+    m_watchItems.removeAt(index);
+    refresh();
+}
+
+void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
     std::set<int, std::greater<int>> rows;
-    for (const QModelIndex &idx : indexes) {
-        if (!idx.isValid())
+
+    for (const QModelIndex &index : indexes) {
+        if (!index.isValid() || index.parent().isValid() ||
+            IDBTreeModel::isProxyNode(index)) {
             continue;
-        QModelIndex top = idx;
-        while (top.parent().isValid())
-            top = top.parent();
-        if (!top.isValid())
-            continue;
-        int r = top.row();
-        if (r >= 0 && r < m_watchItems.size()) {
-            rows.insert(r);
+        }
+
+        const int row = index.row();
+        if (row >= 0 && row < m_watchItems.size()) {
+            rows.insert(row);
         }
     }
 
@@ -103,16 +100,11 @@ void IDBWatchModel::removeWatchExpressions(const QModelIndexList &indexes) {
         return;
     }
 
-    for (int r : rows) {
-        if (r >= 0 && r < m_watchItems.size()) {
-            m_watchItems.removeAt(r);
-        }
+    for (const int row : rows) {
+        m_watchItems.removeAt(row);
     }
 
-    // auto newRoots = buildRootsFromWatchItems();
-    // beginResetModel();
-    // replaceRoots(newRoots);
-    // endResetModel();
+    refresh();
 }
 
 bool IDBWatchModel::editWatchExpression(qsizetype index,
@@ -121,243 +113,162 @@ bool IDBWatchModel::editWatchExpression(qsizetype index,
         return false;
     }
 
-    auto ex = newExpression.toStdString();
-    auto item = m_watchItems[index];
-    item->expression = ex;
-
-    if (_dbg) {
-        // auto &cache = _dbg->cache;
-        // if (cache) {
-        //     item->result = cache->ResolveExpression(ex, 0);
-        // } else {
-        //     item->result =
-        //         asIDBExpected<IDBVariable::WeakPtr>("error evaluated");
-        // }
-    } else {
-        // item->result = asIDBExpected<IDBVariable::WeakPtr>{};
+    const QString expression = newExpression.trimmed();
+    if (expression.isEmpty()) {
+        return false;
     }
 
-    // Replace roots in a single reset so view save/restore works
-    // auto newRoots = buildRootsFromWatchItems();
-    // beginResetModel();
-    // replaceRoots(newRoots);
-    // endResetModel();
+    auto &item = m_watchItems[index];
+    if (item.expression == expression) {
+        return true;
+    }
 
+    item.expression = expression;
+    item.result.reset();
+
+    refresh();
     return true;
 }
 
 void IDBWatchModel::refresh() {
-    if (_dbg) {
-        //     auto &cache = _dbg->cache;
-        //     if (cache) {
-        //         QVector<asIDBExpected<asIDBVariable::WeakPtr>> newResults;
-        //         newResults.reserve(m_watchItems.size());
-        //         for (const auto &itemPtr : std::as_const(m_watchItems)) {
-        //             newResults.append(
-        //                 cache->ResolveExpression(itemPtr->expression, 0));
-        //         }
+    const bool canEvaluate = m_dbg && m_dbg->isDebugBreak();
 
-        //         beginResetModel();
-
-        //         for (int i = 0; i < m_watchItems.size(); ++i) {
-        //             m_watchItems[i]->result = std::move(newResults[i]);
-        //         }
-
-        //         auto newRoots = buildRootsFromWatchItems();
-        //         replaceRoots(newRoots);
-
-        //         endResetModel();
-        //     } else {
-        //         beginResetModel();
-        //         for (int i = 0; i < m_watchItems.size(); ++i) {
-        //             m_watchItems[i]->result =
-        //                 asIDBExpected<asIDBVariable::WeakPtr>("error
-        //                 evaluated");
-        //         }
-        //         auto newRoots = buildRootsFromWatchItems();
-        //         replaceRoots(newRoots);
-        //         endResetModel();
-        //     }
-        // } else {
-        //     beginResetModel();
-        //     for (int i = 0; i < m_watchItems.size(); ++i) {
-        //         m_watchItems[i]->result =
-        //         asIDBExpected<asIDBVariable::WeakPtr>{};
-        //     }
-        //     auto newRoots = buildRootsFromWatchItems();
-        //     replaceRoots(newRoots);
-        //     endResetModel();
+    if (canEvaluate) {
+        for (auto &item : m_watchItems) {
+            item.result = m_dbg->evaluateExpression(item.expression);
+        }
     }
+
+    refreshTree();
 }
 
 void IDBWatchModel::reloadExpressionList(const QStringList &expressions) {
-    for (const auto &expression : expressions) {
-        auto exp = expression.trimmed();
-        if (exp.isEmpty()) {
-            return;
-        }
-        auto p = std::make_shared<WatchItem>();
-        // p->expression = exp.toStdString();
-        // p->result = asIDBExpected<asIDBVariable::WeakPtr>{};
-        // p->expanded = false;
+    m_watchItems.clear();
+    m_watchItems.reserve(expressions.size());
 
-        m_watchItems.append(std::move(p));
+    for (const QString &expression : expressions) {
+        const auto expr = expression.trimmed();
+        if (expr.isEmpty()) {
+            continue;
+        }
+
+        WatchItem item;
+        item.expression = expr;
+        m_watchItems.append(std::move(item));
     }
 
-    // rebuild roots & reset model in one step
-    // auto newRoots = buildRootsFromWatchItems();
-    // beginResetModel();
-    // replaceRoots(newRoots);
-    // endResetModel();
+    refresh();
 }
 
 Qt::ItemFlags IDBWatchModel::flags(const QModelIndex &index) const {
-    Qt::ItemFlags flags = IDBTreeModel::flags(index);
-    if (!index.parent().isValid() && index.column() == 0) {
-        flags |= Qt::ItemIsEditable;
+    Qt::ItemFlags result = IDBTreeModel::flags(index);
+
+    if (index.isValid() && !index.parent().isValid() &&
+        !IDBTreeModel::isProxyNode(index) && index.column() == 0) {
+        result |= Qt::ItemIsEditable;
     }
-    return flags;
+
+    return result;
 }
 
 bool IDBWatchModel::setData(const QModelIndex &index, const QVariant &value,
                             int role) {
-    if (role != Qt::EditRole || !index.isValid() || index.column() != 0) {
-        return false;
+    if (role == Qt::EditRole && index.isValid() && !index.parent().isValid() &&
+        !IDBTreeModel::isProxyNode(index) && index.column() == 0) {
+        return editWatchExpression(index.row(), value.toString());
     }
-    if (index.parent().isValid()) {
-        return false;
-    }
-    auto newExpression = value.toString();
-    if (newExpression.isEmpty()) {
-        return false;
-    }
-    // return editWatchExpression(index.row(), newExpression);
-    return {};
+
+    return IDBTreeModel::setData(index, value, role);
 }
 
 void IDBWatchModel::clearAll() {
+    if (m_watchItems.isEmpty()) {
+        return;
+    }
+
     m_watchItems.clear();
-    beginResetModel();
-    // replaceRoots({});
-    endResetModel();
+    refresh();
 }
-
-QString IDBWatchModel::makeTopLevelUserRole(const WatchItem &item) const {
-    QString idPart;
-    // if (item.isValid()) {
-    //     auto wp = item.result.value();
-    //     auto sp = wp.lock();
-    //     if (sp) {
-    //         idPart = QString::fromStdString(sp->identifier.Combine());
-    //     } else {
-    //         idPart = QStringLiteral("EXPIRED");
-    //     }
-    // } else if (item.hasError()) {
-    //     idPart = QStringLiteral("!ERR");
-    // } else {
-    //     idPart = QStringLiteral("UNEVALUATED");
-    // }
-    // // include expression so we have stable names even if var id absent
-    // return QStringLiteral("watch_%1_%2")
-    //     .arg(QString::fromStdString(item.expression), idPart);
-    return {};
-}
-
-// QVector<asIDBVariable::Ptr> IDBWatchModel::buildRootsFromWatchItems() const
-// {
-//     QVector<asIDBVariable::Ptr> roots;
-//     roots.reserve(m_watchItems.size());
-//     for (const auto &p : m_watchItems) {
-//         if (p->isValid()) {
-//             auto sp = p->result.value().lock();
-//             if (sp) {
-//                 roots.append(sp);
-//             }
-//         }
-//     }
-//     return roots;
-// }
 
 QVariant IDBWatchModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid())
         return {};
 
-    // top-level watch row
-    if (!index.parent().isValid()) {
-        int row = index.row();
-        if (row < 0 || row >= m_watchItems.size()) {
-            return {};
-        }
-        const auto &item = *m_watchItems[row];
+    /*
+     * Children/proxy nodes are completely handled by IDBTreeModel.
+     */
+    if (index.parent().isValid() || IDBTreeModel::isProxyNode(index)) {
+        return IDBTreeModel::data(index, role);
+    }
 
-        if (role == Qt::EditRole) {
-            if (index.column() == 0) {
-                return QString::fromStdString(item.expression);
-            }
-        }
-
-        if (role == Qt::UserRole) {
-            return makeTopLevelUserRole(item);
-        }
-
-        if (role == Qt::DisplayRole) {
-            if (index.column() == 0) {
-                // Always show expression in column 0
-                return QString::fromStdString(item.expression);
-            } else {
-                // if (item.isValid()) {
-                //     auto sp = item.result.value().lock();
-                //     if (sp) {
-                //         if (!sp->evaluated) {
-                //             const_cast<asIDBVariable
-                //             *>(sp.get())->Evaluate();
-                //         }
-                //         return QString::fromStdString(sp->value);
-                //     }
-                //     return QStringLiteral("<expired>");
-                // } else if (item.hasError()) {
-                //     auto str = QString::fromStdString(
-                //         std::string(item.result.error()));
-                //     if (!str.isEmpty()) {
-                //         str.prepend('<').append('>');
-                //     }
-                //     return str;
-                // } else {
-                //     return QStringLiteral("<not evaluated>");
-                // }
-            }
-        }
-
+    const int row = index.row();
+    if (row < 0 || row >= m_watchItems.size()) {
         return {};
     }
 
-    // non top-level: delegate to base class (variables/proxy/paging)
+    const auto &item = m_watchItems.at(row);
+    if (role == Qt::DisplayRole) {
+        if (index.column() == 0) {
+            return item.expression;
+        }
+
+        // Don't show stale debugger values while the VM is running.
+        if (!m_dbg || !m_dbg->isDebugBreak()) {
+            return {};
+        }
+
+        if (!item.result) {
+            return QStringLiteral("<not evaluated>");
+        }
+    }
+
+    if (role == Qt::EditRole && index.column() == 0) {
+        return item.expression;
+    }
+
+    if (role == Qt::UserRole) {
+        return makeTopLevelUserRole(row);
+    }
+
+    // No real result means there is nothing that IDBTreeModel can display
+    if (!item.result) {
+        return {};
+    }
+
+    if (!m_dbg || !m_dbg->isDebugBreak()) {
+        return {};
+    }
+
+    /*
+     * For evaluated watches, use the original IDBTreeModel logic.
+     * The index carries item.result as internalPointer, therefore
+     * IDBTreeModel can resolve its real fields from debugger's registry.
+     */
     return IDBTreeModel::data(index, role);
 }
 
 bool IDBWatchModel::hasChildren(const QModelIndex &parent) const {
     if (!parent.isValid())
-        return !m_watchItems.empty();
+        return !m_watchItems.isEmpty();
 
-    if (!parent.parent().isValid()) {
-        int row = parent.row();
+    if (!parent.parent().isValid() && !IDBTreeModel::isProxyNode(parent)) {
+
+        const int row = parent.row();
+
         if (row < 0 || row >= m_watchItems.size())
             return false;
-        const auto &item = *m_watchItems[row];
-        // if (item.hasError()) {
-        //     return false;
-        // }
-        // if (item.isValid()) {
-        //     auto sp = item.result.value().lock();
-        //     if (!sp) {
-        //         return false;
-        //     }
-        //     if (sp->expandable) {
-        //         return true;
-        //     }
-        //     return !sp->namedProps.empty() || !sp->indexedProps.empty();
-        // }
-        return false;
+
+        const auto &item = m_watchItems.at(row);
+
+        if (!item.result)
+            return false;
+
+        /*
+         * The result is retained internally after leaving the debug
+         * break, but its child tree is no longer considered current.
+         */
+        if (!m_dbg || !m_dbg->isDebugBreak())
+            return false;
     }
 
     return IDBTreeModel::hasChildren(parent);
@@ -365,65 +276,76 @@ bool IDBWatchModel::hasChildren(const QModelIndex &parent) const {
 
 int IDBWatchModel::rowCount(const QModelIndex &parent) const {
     if (!parent.isValid())
-        return static_cast<int>(m_watchItems.size());
-    if (!parent.parent().isValid()) {
-        int row = parent.row();
-        if (row < 0 || row >= m_watchItems.size()) {
+        return m_watchItems.size();
+
+    /*
+     * Unevaluated top-level watch:
+     * no children.
+     */
+    if (!parent.parent().isValid() && !IDBTreeModel::isProxyNode(parent)) {
+
+        const int row = parent.row();
+
+        if (row < 0 || row >= m_watchItems.size())
             return 0;
-        }
-        const auto &item = *m_watchItems[row];
-        // if (item.hasError() || !item.isValid()) {
-        //     return 0;
-        // }
-        // auto sp = item.result.value().lock();
-        // if (!sp) {
-        //     return 0;
-        // }
-        // if (sp->expandable && !sp->expanded) {
-        //     const_cast<asIDBVariable *>(sp.get())->Expand();
-        // }
-        // auto totalNamed = static_cast<int>(sp->namedProps.size());
-        // auto totalIndexed = static_cast<int>(sp->indexedProps.size());
-        // auto show = std::min(totalIndexed, getPageSize());
-        // return totalNamed + show + (totalIndexed > show ? 1 : 0);
+
+        const auto &item = m_watchItems.at(row);
+
+        if (!item.result)
+            return 0;
+
+        /*
+         * When debugger is not stopped, don't expose stale children.
+         */
+        if (!m_dbg || !m_dbg->isDebugBreak())
+            return 0;
     }
+
     return IDBTreeModel::rowCount(parent);
 }
 
 QModelIndex IDBWatchModel::index(int row, int column,
                                  const QModelIndex &parent) const {
-    if (row < 0 || column < 0) {
-        return {};
-    }
-
     if (!parent.isValid()) {
-        if (row >= m_watchItems.size()) {
+        if (row < 0 || row >= m_watchItems.size())
             return {};
+
+        const auto &item = m_watchItems.at(row);
+
+        if (item.result) {
+            /*
+             * This MUST use the same internalPointer representation
+             * as IDBTreeModel.
+             */
+            return createIndex(row, column,
+                               IDBTreeModel::encodeVar(item.result.get()));
         }
-        return createIndex(row, column,
-                           const_cast<WatchItem *>(m_watchItems[row].get()));
+
+        /*
+         * Unevaluated watch item.
+         * There is no LuauVariable yet.
+         */
+        return createIndex(row, column, nullptr);
     }
 
-    void *pip = parent.internalPointer();
-    if (pip) {
-        for (int i = 0; i < m_watchItems.size(); ++i) {
-            if (m_watchItems[i].get() == pip) {
-                const auto &item = *m_watchItems[i];
-                // if (item.isValid()) {
-                //     auto sp = item.result.value().lock();
-                //     if (sp) {
-                //         auto fakeParent =
-                //             createIndex(0, 0, encodeVar(sp.get()));
-                //         return AsIDBTreeModel::index(row, column,
-                //         fakeParent);
-                //     }
-                // }
-                // sentinel but unevaluated / error => no children
-                return {};
-            }
-        }
+    /*
+     * An unevaluated top-level watch item cannot have children.
+     */
+    if (!parent.parent().isValid() && !IDBTreeModel::isProxyNode(parent)) {
+
+        const int row = parent.row();
+
+        if (row < 0 || row >= m_watchItems.size())
+            return {};
+
+        if (!m_watchItems.at(row).result)
+            return {};
     }
 
+    /*
+     * For all real children, let IDBTreeModel use its original
+     * variable/proxy machinery.
+     */
     return IDBTreeModel::index(row, column, parent);
 }
 
@@ -431,51 +353,94 @@ QModelIndex IDBWatchModel::parent(const QModelIndex &child) const {
     if (!child.isValid()) {
         return {};
     }
-    void *ip = child.internalPointer();
-    if (!ip) {
+
+    QModelIndex parentIndex = IDBTreeModel::parent(child);
+    if (!parentIndex.isValid()) {
         return {};
     }
 
-    auto *childVar = decodeVar(ip);
-    if (childVar) {
-        for (int i = 0; i < m_watchItems.size(); ++i) {
-            const auto &item = *m_watchItems[i];
-            // if (!item.isValid()) {
-            //     continue;
-            // }
-            // auto sp = item.result.value().lock();
-            // if (!sp) {
-            //     continue;
-            // }
-            // if (sp.get() == childVar) {
-            //     return createIndex(
-            //         i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
-            // }
+    /*
+     * If the returned parent already has a parent, it is a normal
+     * nested node/proxy. Keep the original IDBTreeModel index.
+     */
+    if (parentIndex.parent().isValid()) {
+        return parentIndex;
+    }
+
+    if (IDBTreeModel::isProxyNode(parentIndex)) {
+        return parentIndex;
+    }
+
+    /*
+     * The parent should be a real LuauVariable representing one of
+     * our evaluated watch expressions.
+     */
+    auto *raw = IDBTreeModel::decodeVar(parentIndex.internalPointer());
+
+    if (!raw) {
+        return parentIndex;
+    }
+
+    for (int row = 0; row < m_watchItems.size(); ++row) {
+        const auto &item = m_watchItems.at(row);
+
+        if (item.result && item.result.get() == raw) {
+
+            return createIndex(row, parentIndex.column(),
+                               IDBTreeModel::encodeVar(raw));
         }
     }
 
-    auto baseParent = IDBTreeModel::parent(child);
-    if (!baseParent.isValid()) {
-        return {};
+    return parentIndex;
+}
+
+void IDBWatchModel::rebuildWatchRegistry() {
+    if (!m_dbg) {
+        m_watchRegistry = nullptr;
+        return;
     }
 
-    void *bpip = baseParent.internalPointer();
-    auto *bpv = decodeVar(bpip);
-    if (bpv) {
-        for (int i = 0; i < m_watchItems.size(); ++i) {
-            const auto &item = *m_watchItems[i];
-            // if (!item.isValid()) {
-            //     continue;
-            // }
-            // auto sp = item.result.value().lock();
-            // if (!sp) {
-            //     continue;
-            // }
-            // if (sp.get() == bpv) {
-            //     return createIndex(
-            //         i, 0, const_cast<WatchItem *>(m_watchItems[i].get()));
-            // }
-        }
+    auto *registry = m_dbg->variableRegistry();
+    if (!registry) {
+        m_watchRegistry = nullptr;
+        return;
     }
-    return baseParent;
+
+    auto variables = LuauVariableList::create();
+    variables->reserve(m_watchItems.size());
+
+    /*
+     * Only evaluated variables are put into the real registry's
+     * synthetic watch scope.
+     *
+     * Unevaluated watch items still exist in m_watchItems and are
+     * represented by a top-level QModelIndex with nullptr internalPointer.
+     */
+    for (const auto &item : m_watchItems) {
+        if (item.result)
+            variables->append(item.result);
+    }
+
+    /*
+     * IMPORTANT:
+     *
+     * The watch scope belongs to the debugger's real registry.
+     * Therefore result variables and all of their child scopes are
+     * resolved from the same LuauVariableRegistry.
+     */
+    registry->registerOrUpdateVariables(m_watchScope, variables);
+
+    if (m_watchRegistry != registry) {
+        m_watchRegistry = registry;
+        IDBTreeModel::setRoot(m_watchRegistry, m_watchScope);
+    }
+}
+
+void IDBWatchModel::refreshTree() {
+    rebuildWatchRegistry();
+    IDBTreeModel::refresh();
+}
+
+QString IDBWatchModel::makeTopLevelUserRole(int row) const {
+    return QStringLiteral("watch_") + QString::number(row);
 }

@@ -42,10 +42,21 @@ void LuauScheduler::requestStop() { m_th->requestStop = true; }
 void LuauScheduler::step() {
     try {
         auto L = m_th->state;
+        if (m_th->requestStop) {
+            m_th->isRunning = false;
+            Q_EMIT finished(LUA_OK);
+            deleteLater();
+            return;
+        }
+
         int status = lua_resume(L, nullptr, 0);
         if (status == LUA_YIELD) {
             QTimer::singleShot(0, this, &LuauScheduler::step);
         } else {
+            if (m_th->requestStop) {
+                status = LUA_OK;
+            }
+
             if (status != LUA_OK) {
                 size_t len;
                 const char *str = lua_tolstring(L, -1, &len);
@@ -56,6 +67,7 @@ void LuauScheduler::step() {
                 }
                 lua_pop(L, 1);
             }
+
             m_th->isRunning = false;
             Q_EMIT finished(status);
             deleteLater();

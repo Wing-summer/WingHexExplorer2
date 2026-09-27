@@ -219,8 +219,6 @@ private:
 
     bool isCurrentDebugging() const;
 
-    // void runDbgCommand(asIDBAction action);
-
     void startDebugScript(const QString &fileName);
 
     void addBreakPoint(ScriptEditor *editor, int line);
@@ -337,6 +335,7 @@ private:
     ScriptingConsole *m_consoleout = nullptr;
     IDBTreeView *m_varshow = nullptr;
     IDBTreeView *m_gvarshow = nullptr;
+    IDBTreeView *m_upvarshow = nullptr;
     IDBWatchModel *m_watchModel = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
     ObjTreeWidget *m_sym = nullptr;

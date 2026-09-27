@@ -242,7 +242,7 @@ QString normalizeLuauRequirePath(const QString &path) {
     }
 }
 
-void lua_errorL(lua_State *L, const char *msg) {
+void throwError(lua_State *L, const char *msg) {
     lua_pushstring(L, msg);
     lua_error(L);
 }

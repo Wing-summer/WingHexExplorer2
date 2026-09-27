@@ -31,6 +31,79 @@ bool LuauVariable::isUserData() const { return type_ == LUA_TUSERDATA; }
 
 bool LuauVariable::hasFields() const { return isTable() || isUserData(); }
 
+bool LuauVariable::hasContent() const {
+    if (!hasFields()) {
+        return false;
+    }
+
+    auto *L = scope_.getLuaState();
+    if (L == nullptr) {
+        return false;
+    }
+
+    LuauUtil::StackGuard guard(L);
+
+    if (!scope_.pushRef()) {
+        return false;
+    }
+
+    const int value_idx = lua_absindex(L, -1);
+
+    if (luaL_getmetafield(L, value_idx, "__iter")) {
+        // stack:
+        //   value
+        //   __iter
+
+        lua_pushvalue(L, value_idx);
+
+        // __iter(value) -> next, state, initial
+        if (lua_pcall(L, 1, 3, 0) != LUA_OK) {
+            return false;
+        }
+
+        const int next_idx = lua_absindex(L, -3);
+        const int state_idx = lua_absindex(L, -2);
+        const int init_idx = lua_absindex(L, -1);
+
+        lua_pushvalue(L, next_idx);
+        lua_pushvalue(L, state_idx);
+        lua_pushvalue(L, init_idx);
+
+        if (lua_pcall(L, 2, 2, 0) != LUA_OK) {
+            return false;
+        }
+
+        // next(...) -> key, value
+        return !lua_isnil(L, -2);
+    }
+
+    if (luaL_getmetafield(L, value_idx, "__getters")) {
+        if (lua_istable(L, -1)) {
+            lua_pushnil(L);
+            return lua_next(L, -2) != 0;
+        }
+
+        lua_pop(L, 1);
+    }
+
+    // table
+    if (!scope_.isTable()) {
+        return false;
+    }
+
+    lua_pushnil(L);
+    if (lua_next(L, value_idx) != 0) {
+        return true;
+    }
+
+    // dectect metatable
+    if (lua_getmetatable(L, value_idx)) {
+        return true;
+    }
+
+    return false;
+}
+
 QString LuauVariable::getName() const { return name_; }
 
 QString LuauVariable::getValue() const { return value_; }

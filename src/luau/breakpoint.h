@@ -27,12 +27,10 @@ public:
     static BreakPoint create(int line);
 
     int line() const;
-    int targetLine() const;
     int enable(lua_State *L, int func_index, bool enable);
 
 private:
     int line_ = 0;
-    int target_line_ = -1;
 };
 
 struct BreakContext {

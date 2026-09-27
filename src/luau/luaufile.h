@@ -24,7 +24,6 @@
 
 #include <QSharedPointer>
 #include <QString>
-#include <qstringview.h>
 
 // Reference to a loaded Lua file
 struct LuaFileRef final {
@@ -53,14 +52,16 @@ public:
     void setPath(const QString &path);
     QString path() const;
 
-    QByteArray source() const;
+    QString source() const;
+    void setSource(const QString &source);
 
     void setBreakPoints(const std::unordered_map<int, BreakPoint> &breakpoints);
-    void addRef(LuaFileRef ref);
+    QVector<QPair<int, int>> addRef(LuaFileRef ref);
     void removeRef(lua_State *L);
 
-    void addBreakPoint(const BreakPoint &bp);
-    void addBreakPoint(int line);
+    int addBreakPoint(const BreakPoint &bp);
+    int addBreakPoint(int line);
+    void removeBreakPoint(int line);
     void clearBreakPoints();
 
     template <class Predicate>
@@ -69,11 +70,11 @@ public:
     BreakPoint *findBreakPoint(int line);
 
 private:
-    void enableBreakPoint(BreakPoint &bp, bool enable);
+    bool enableBreakPoint(BreakPoint &bp, bool enable);
 
 private:
     QString path_;
-    QByteArray src_;
+    QString src_;
     std::unordered_map<int, BreakPoint> breakpoints_;
     std::vector<LuaFileRef> refs_;
 };

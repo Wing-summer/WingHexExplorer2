@@ -23,14 +23,7 @@ DbgCallStackModel::DbgCallStackModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
 int DbgCallStackModel::rowCount(const QModelIndex &parent) const {
-    Q_UNUSED(parent);
-    if (_debugger) {
-        //     if (_debugger->cache) {
-        //         _debugger->cache->CacheCallstack();
-        //         return _debugger->cache->call_stack.size();
-        //     }
-    }
-    return 0;
+    return parent.isValid() ? 0 : _frames.size();
 }
 
 int DbgCallStackModel::columnCount(const QModelIndex &parent) const {
@@ -43,28 +36,20 @@ QVariant DbgCallStackModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        // auto &cache = _debugger->cache;
-        // if (!cache) {
-        //     return {};
-        // }
-
-        // auto &d = cache->call_stack.at(r);
-        // switch (index.column()) {
-        // case 0: // line
-        //     return d.row;
-        // case 1: // file
-        // {
-        //     auto section = d.section;
-        //     auto file = QString::fromUtf8(section.data(), section.length());
-        //     if (role == Qt::ToolTipRole) {
-        //         return file;
-        //     } else {
-        //         return QFileInfo(file).fileName();
-        //     }
-        // }
-        // case 2: // decl
-        //     return QString::fromStdString(d.declaration);
-        // }
+        if (r < 0 || r >= _frames.size()) {
+            return {};
+        }
+        const auto &frame = _frames.at(r);
+        switch (index.column()) {
+        case 0:
+            return frame.line;
+        case 1:
+            return role == Qt::ToolTipRole ? frame.source
+                                           : QFileInfo(frame.source).fileName();
+        case 2:
+            return frame.name;
+        }
+        return {};
     }
     case Qt::TextAlignmentRole:
         return int(Qt::AlignCenter);
@@ -94,13 +79,18 @@ QVariant DbgCallStackModel::headerData(int section, Qt::Orientation orientation,
 void DbgCallStackModel::attachDebugger(LuauDebugger *debugger) {
     if (_debugger != debugger) {
         if (_debugger) {
-            // _debugger->disconnect(this, nullptr);
+            _debugger->disconnect(this, nullptr);
         }
         _debugger = debugger;
         if (_debugger) {
-            // connect(_debugger, &LuauDebugger::onPullCallStack, this,
-            //         [this]() { Q_EMIT layoutChanged(); });
+            connect(_debugger, &LuauDebugger::onPullCallStack, this, [this]() {
+                beginResetModel();
+                _frames = _debugger->stackFrames();
+                endResetModel();
+            });
         }
-        Q_EMIT layoutChanged();
     }
+    beginResetModel();
+    _frames = _debugger ? _debugger->stackFrames() : QVector<LuauStackFrame>{};
+    endResetModel();
 }

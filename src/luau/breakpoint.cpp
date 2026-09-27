@@ -25,14 +25,16 @@ BreakPoint BreakPoint::create(int line) {
 
 int BreakPoint::line() const { return line_; }
 
-int BreakPoint::targetLine() const { return target_line_; }
-
 int BreakPoint::enable(lua_State *L, int func_index, bool enable) {
     lua_checkstack(L, 1);
     lua_getref(L, func_index);
     int result = lua_breakpoint(L, -1, line_, enable);
-    if (result != -1)
-        target_line_ = result;
+    auto old = line_;
+    if (result == -1) {
+        return -1;
+    } else {
+        line_ = result;
+    }
     lua_pop(L, 1);
-    return result;
+    return old;
 }

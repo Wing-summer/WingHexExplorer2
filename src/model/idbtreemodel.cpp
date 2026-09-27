@@ -44,6 +44,12 @@ void IDBTreeModel::setRoot(LuauVariableRegistry *r, const LuauScope &scope) {
     refresh();
 }
 
+void IDBTreeModel::resetRoot() {
+    root = nullptr;
+    rootScope = LuauScope();
+    refresh();
+}
+
 void IDBTreeModel::updateScope(const LuauScope &scope) {
     rootScope = scope;
     refresh();
@@ -51,9 +57,9 @@ void IDBTreeModel::updateScope(const LuauScope &scope) {
 
 void IDBTreeModel::refresh() {
     beginResetModel();
+    proxyMap.clear();
     auto L = rootScope.getLuaState();
     if (root && L) {
-        proxyMap.clear();
         root->update(ScriptMachine::instance().getThreadAncestors(L));
     }
     endResetModel();
@@ -159,7 +165,7 @@ bool IDBTreeModel::hasChildren(const QModelIndex &parent) const {
     }
 
     auto *variable = decodeVar(ip);
-    return variable && variable->hasFields();
+    return variable && variable->hasContent();
 }
 
 QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
