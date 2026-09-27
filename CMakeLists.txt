@@ -361,6 +361,8 @@ set(CLASS_SRC
 set(LUAU_MOD_SRC
     src/luau/luauutil.h
     src/luau/luauutil.cpp
+    src/luau/wingluaurequire.h
+    src/luau/wingluaurequire.cpp
     src/luau/luaufile.h
     src/luau/luaufile.cpp
     src/luau/breakpoint.h
@@ -582,6 +584,7 @@ target_link_libraries(
             Luau.Ast
             Luau.Analysis
             Luau.CodeGen
+            Luau.Require
             LuaBridge
             cffi
             antlr4_static

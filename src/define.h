@@ -19,6 +19,7 @@
 #define DEFINE_H
 
 #include <QtAssert>
+#include <qassert.h>
 #include <qtpreprocessorsupport.h>
 
 enum class CrashCode : int {
@@ -29,6 +30,9 @@ enum class CrashCode : int {
     OutofMemory
 };
 
-inline void ASSERT(bool b) { Q_ASSERT(b); }
+#define WING_ASSERT(b)                                                         \
+    {                                                                          \
+        Q_UNUSED(Q_ASSERT(b));                                                 \
+    }
 
 #endif // DEFINE_H

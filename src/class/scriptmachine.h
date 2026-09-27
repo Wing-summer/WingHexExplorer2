@@ -23,6 +23,7 @@
 #include "class/luauscheduler.h"
 #include "luau/luaudebugger.h"
 #include "luau/luauinspector.h"
+#include "luau/wingluaurequire.h"
 
 #include <QObject>
 #include <QQueue>
@@ -73,7 +74,7 @@ private:
     explicit ScriptMachine();
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
-    static bool configureEngine(lua_State *l);
+    bool configureEngine(lua_State *l);
     constexpr static int consoleModeIdx(ConsoleMode mode);
 
 public:
@@ -156,8 +157,6 @@ private:
     QString input();
 
 private:
-    static int onLuauRequire(lua_State *L);
-    static int finishLuauRequire(lua_State *L);
     static void onLuauInterrupt(lua_State *L, int gc);
     static void onLuauThreadCreated(lua_State *LP, lua_State *L);
 
@@ -171,8 +170,9 @@ private:
     mutable LuauThread _ctx[ConsoleModeCount]{};
     mutable LuauThreadData _tdata[ConsoleModeCount]{};
 
-    inline static InspectOptions _printOptions;
+    WingLuauRequire _luaReq;
 
+    inline static InspectOptions _printOptions;
     QVector<RegCallBacks> _regcalls;
 };
 

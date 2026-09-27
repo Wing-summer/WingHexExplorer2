@@ -20,20 +20,20 @@
 #include "Luau/CodeGen.h"
 #include "Luau/Common.h"
 #include "Luau/Compiler.h"
-#include "lua.h"
-#include "lualib.h"
-#include "luau/luauinspector.h"
-#include "luau/luauutil.h"
-
 #include "class/appmanager.h"
 #include "class/logger.h"
 #include "class/pluginsystem.h"
 #include "class/settingmanager.h"
 #include "define.h"
+#include "lua.h"
+#include "lualib.h"
+#include "luau/luauinspector.h"
+#include "luau/luauutil.h"
 
 #include "LuaBridge/LuaBridge.h"
 #include "luau/CodeGen/include/Luau/CodeGenOptions.h"
-#include "luau/Require/include/Luau/Require.h"
+#include "luau/wingluaurequire.h"
+#include "utilities.h"
 
 #include <QClipboard>
 #include <QMimeData>
@@ -43,7 +43,7 @@ extern "C" {
 int luaopen_cffi(lua_State *L);
 }
 
-LUAU_FASTFLAG(LuauAutoStack)
+LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
 
 namespace {
 
@@ -86,6 +86,8 @@ bool ScriptMachine::init() {
     }
 
     qRegisterMetaType<MessageInfo>();
+
+    FFlag::LuauCyclicRequireShortCircuit.value = true;
 
     _main = luaL_newstate();
     if (_main == nullptr) {
@@ -175,18 +177,43 @@ bool ScriptMachine::configureEngine(lua_State *L) {
         return false;
     }
 
+    WingLuauRequire::Options ropts;
+    auto lualib = QStringLiteral("luaulib");
+
+    QDir appDir(QApplication::applicationDirPath());
+    ropts.systemRoot = appDir.absoluteFilePath(lualib);
+    QDir usrDir(Utilities::getAppDataPath());
+    ropts.userRoot = usrDir.absoluteFilePath(lualib);
+    ropts.onLuauFileLoaded = [](lua_State *L, const QString &path,
+                                const QByteArray &source) {
+        auto data = contextData(L);
+        if (data == nullptr) {
+            return;
+        }
+        auto dbg = data->debugger;
+        if (dbg) {
+            dbg->onLuaFileLoaded(L, path, source);
+        }
+    };
+
+    if (!_luaReq.initRequire(L, ropts)) {
+        return false;
+    }
+
     luabridge::registerMainThread(L);
 
     luaL_openlibs(L);
 
     // register cffi module
     luaopen_cffi(L);
-    lua_setglobal(L, "cffi");
+    auto b = _luaReq.registerBuiltinValue("cffi");
+    WING_ASSERT(b);
+    _luaReq.installRequire();
+    _luaReq.installProxyRequire();
 
     luabridge::enableExceptions(L);
 
     luabridge::getGlobalNamespace(L)
-        .addFunction("require", &ScriptMachine::onLuauRequire)
         .addFunction("print", &ScriptMachine::print)
         .addFunction("println", &ScriptMachine::println)
         .addFunction("warnprint", &ScriptMachine::warnprint)
@@ -210,6 +237,9 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 
     PluginSystem::instance().installAPI(L);
 
+    if (Luau::CodeGen::isSupported()) {
+        Luau::CodeGen::create(L);
+    }
     return true;
 }
 
@@ -281,31 +311,6 @@ void ScriptMachine::setCustomEvals(
     const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals) {
     // _debugger->setCustomEvals(evals);
 }
-
-// void ScriptMachine::attachDebugBreak(asIScriptContext *ctx) {
-//     if (!ctx)
-//         ctx = asGetActiveContext();
-
-//     checkDebugger(ctx);
-
-//     if (_debugger)
-//         _debugger->DebugBreak(ctx);
-// }
-
-// void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
-//     if (_debugger == nullptr) {
-//         return;
-//     }
-//     // hook the context
-//     if (_debugger->HasWork()) {
-//         _debugger->HookContext(ctx, true);
-//     } else {
-//         _debugger->HookContext(ctx, false);
-//         ctx->SetLineCallback(asFUNCTION(ScriptMachine::lineCallback),
-//         nullptr,
-//                              asCALL_CDECL);
-//     }
-// }
 
 int ScriptMachine::print(lua_State *L) {
     return __output(MessageType::Print, L);
@@ -390,92 +395,6 @@ QString ScriptMachine::input() {
     return {};
 }
 
-int ScriptMachine::onLuauRequire(lua_State *L) {
-    size_t len;
-    auto raw_module_path = luaL_checklstring(L, 1, &len);
-    auto module_path = QString::fromUtf8(raw_module_path, len);
-
-    // TODO
-
-    lua_Debug ar;
-    lua_getinfo(L, 1, "s", &ar);
-    QString source_path = QString::fromUtf8(ar.source);
-    if (source_path.isEmpty()) {
-        LuauUtil::throwError(L, "error requiring module");
-    }
-
-    auto normalized_path = LuauUtil::normalizeLuauRequirePath(module_path);
-    luaL_findtable(L, LUA_REGISTRYINDEX, "_MODULES", 1);
-
-    std::array suffixes{".luau", ".lua", "/init.luau", "/init.lua"};
-
-    QByteArray source_code;
-    QString resolved_path;
-    auto r_path = resolved_path.toUtf8();
-    for (const char *suffix : suffixes) {
-        // resolved_path = normalized_path + suffix;
-
-        lua_getfield(L, -1, r_path);
-        if (!lua_isnil(L, -1))
-            return finishLuauRequire(L);
-
-        lua_pop(L, 1);
-
-        QFile src(resolved_path);
-        if (!src.open(QFile::ReadOnly | QFile::Text)) {
-            continue;
-        }
-        source_code = src.readAll();
-        break;
-    }
-
-    if (source_code.isEmpty()) {
-        LuauUtil::throwError(L, "error requiring module");
-    }
-
-    lua_State *GL = lua_mainthread(L);
-    lua_State *ML = lua_newthread(GL);
-    lua_xmove(GL, L, 1);
-
-    std::string bytecode = Luau::compile(source_code.data(), {});
-    if (luau_load(ML, r_path, bytecode.data(), bytecode.size(), 0) == 0) {
-        // NOTICE: Call debugger when file is loaded
-        auto *threadData = contextData(L);
-        auto *debugger = threadData ? threadData->debugger : nullptr;
-        if (debugger) {
-            debugger->onLuaFileLoaded(ML, resolved_path, source_code);
-        }
-
-        int status = lua_resume(ML, L, 0);
-
-        if (status == 0) {
-            if (lua_gettop(ML) == 0) {
-                lua_pushstring(ML, "module must return a value");
-            } else if (!lua_istable(ML, -1) && !lua_isfunction(ML, -1)) {
-                lua_pushstring(ML, "module must return a table or function");
-            }
-        } else if (status == LUA_YIELD) {
-            lua_pushstring(ML, "module can not yield");
-        } else if (!lua_isstring(ML, -1)) {
-            lua_pushstring(ML, "unknown error while running module");
-        }
-    }
-
-    lua_xmove(ML, L, 1);
-    lua_pushvalue(L, -1);
-    lua_setfield(L, -4, r_path);
-
-    // L stack: _MODULES ML result
-    return finishLuauRequire(L);
-}
-
-int ScriptMachine::finishLuauRequire(lua_State *L) {
-    if (lua_isstring(L, -1)) {
-        lua_error(L);
-    }
-    return 1;
-}
-
 void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
     Q_UNUSED(gc);
     if (L == nullptr) {
@@ -555,7 +474,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
         return;
     }
 
-    ASSERT(mode != Interactive);
+    WING_ASSERT(mode != Interactive);
     // script-running is not allowed in interactive mode
     if (mode == Interactive) {
         onFinished(true);
@@ -580,7 +499,22 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     }
 
     QFile script(fileName);
+    if (script.size() > DEFAULT_SCRIPT_FILE_SIZE_LIMIT) {
+        MessageInfo info;
+        info.type = MessageType::Error;
+        info.mode = mode;
+        info.message = QStringLiteral("Excessive script file size");
+        outputMessage(info);
+        onFinished(true);
+        return;
+    }
+
     if (!script.open(QFile::ReadOnly | QFile::Text)) {
+        MessageInfo info;
+        info.type = MessageType::Error;
+        info.mode = mode;
+        info.message = QStringLiteral("Permission denied");
+        outputMessage(info);
         onFinished(true);
         return;
     }
@@ -603,11 +537,11 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     lua_setthreaddata(T, ctx->data);
     luaL_sandboxthread(T);
 
-    // TODO: limit source code size
     auto source = script.readAll();
 
     // Compile the script
     auto chunkname = fileName.toUtf8();
+    chunkname.prepend('@');
     Luau::CompileOptions opts;
     if (mode == Scripting) {
         if (isInDebug) {
@@ -622,16 +556,10 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
     auto bytecode = Luau::compile(source.data(), opts);
     if (luau_load(T, chunkname.data(), bytecode.data(), bytecode.size(), 0) ==
         LUA_OK) {
-        if (!isInDebug) {
-            // auto r = Luau::CodeGen::compile(T, -1, {});
-            // if (r.hasErrors()) {
-            //     MessageInfo info;
-            //     info.type = MessageType::Error;
-            //     info.mode = mode;
-            //     info.section = fileName;
-            //     info.message = QStringLiteral("Native codegen failed: ");
-            //     outputMessage(info);
-            // }
+        if (!isInDebug && Luau::CodeGen::isSupported()) {
+            // try to use jit
+            Luau::CodeGen::CompilationOptions nativeOptions;
+            Luau::CodeGen::compile(T, -1, nativeOptions);
         }
     } else {
         size_t len;
@@ -715,6 +643,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
             }
 
             R.destory();
+            _luaReq.clearRequireCache();
 
             // Before leaving, allow the engine to clean up
             // remaining objects by discarding the module and doing
@@ -903,7 +832,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
 
     auto T = ctx->state;
     auto source = code.toUtf8();
-    auto bytecode = Luau::compile(source.data(), Luau::CompileOptions());
+    auto bytecode = Luau::compile(source.data());
 
     if (luau_load(T, "=stdin", bytecode.data(), bytecode.size(), 0) != LUA_OK) {
         size_t len;

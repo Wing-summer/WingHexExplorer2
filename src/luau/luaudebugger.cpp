@@ -276,7 +276,7 @@ QVector<LuauStackFrame> LuauDebugger::updateStackFrames(lua_State *L) {
             LuauStackFrame frame;
             frame.name = ar.name ? QString::fromUtf8(ar.name)
                                  : QStringLiteral("<anonymous>");
-            frame.source = QString::fromUtf8(ar.source);
+            frame.source = getDebugSource(ar);
             frame.line = ar.currentline;
             frame.id = frames.size();
             frames.append(std::move(frame));
@@ -366,7 +366,7 @@ BreakContext LuauDebugger::getBreakContext(lua_State *L) const {
     lua_Debug ar;
     lua_getinfo(L, 0, "sl", &ar);
     BreakContext ctx;
-    ctx.source_ = QString::fromUtf8(ar.source);
+    ctx.source_ = getDebugSource(ar);
     ctx.line_ = ar.currentline;
     ctx.depth_ = getStackDepth(L);
     ctx.L_ = L;
@@ -419,6 +419,18 @@ void LuauDebugger::waitForResume() {
     frameDepths_.clear();
 }
 
+QString LuauDebugger::getDebugSource(lua_Debug ar) {
+    auto src = ar.source;
+    if (src == nullptr) {
+        return QStringLiteral("<unknown>");
+    }
+    if (*src == '@') {
+        return QString::fromUtf8(src + 1);
+    } else {
+        return QString::fromUtf8(src);
+    }
+}
+
 bool LuauDebugger::hitBreakPoint(lua_State *L) const {
     return findBreakPoint(L) != nullptr;
 }
@@ -428,7 +440,7 @@ BreakPoint *LuauDebugger::findBreakPoint(lua_State *L) const {
     if (L == nullptr || !lua_getinfo(L, 0, "sl", &ar) || ar.source == nullptr) {
         return nullptr;
     }
-    auto file = files_.value(QString::fromUtf8(ar.source));
+    auto file = files_.value(getDebugSource(ar));
     return file ? file->findBreakPoint(ar.currentline) : nullptr;
 }
 

@@ -111,6 +111,8 @@ private:
     BreakPoint *findBreakPoint(lua_State *L) const;
     void waitForResume();
 
+    static QString getDebugSource(lua_Debug ar);
+
     int getStackDepth(lua_State *L) const;
 
     BreakContext getBreakContext(lua_State *L) const;
