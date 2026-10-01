@@ -17,6 +17,7 @@
 
 #include "wingluaurequire.h"
 
+#include "lua.h"
 #include "lualib.h"
 
 #include "Luau/Compiler.h"
@@ -49,7 +50,8 @@ void WingLuauRequire::installRequire() {
     // Keep the native Luau require as the first upvalue of the adapter.
     luarequire_pushrequire(L_, &WingLuauRequire::configInit, this);
     lua_pushlightuserdata(L_, this);
-    lua_pushcclosure(L_, &WingLuauRequire::cbRequireDispatch, "require", 2);
+    lua_pushboolean(L_, false);
+    lua_pushcclosure(L_, &WingLuauRequire::cbRequireDispatch, "require", 3);
     lua_setglobal(L_, "require");
 
     LUAU_ASSERT(lua_gettop(L_) == top);
@@ -59,8 +61,14 @@ void WingLuauRequire::installProxyRequire(const char *globalName) {
     if (!L_ || !globalName || !*globalName)
         return;
 
+    const int top = lua_gettop(L_);
     luarequire_pushproxyrequire(L_, &WingLuauRequire::configInit, this);
+    lua_pushlightuserdata(L_, this);
+    lua_pushboolean(L_, true);
+    lua_pushcclosure(L_, &WingLuauRequire::cbRequireDispatch, "proxyrequire",
+                     3);
     lua_setglobal(L_, globalName);
+    LUAU_ASSERT(lua_gettop(L_) == top);
 }
 
 bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
@@ -105,8 +113,8 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
 
     // Keep a private registry copy as well. Luau's registered-module table
     // is intentionally an internal implementation detail, while this table
-    // gives the adapter a stable way to serve the same builtin through the
-    // shorthand @<name> path in non-REPL code after conflict resolution.
+    // lets the host loader serve the builtin when @<name> resolves through
+    // the normal alias fallback without colliding with another package source.
     lua_getfield(L_, LUA_REGISTRYINDEX, builtinRegistryKey());
     if (lua_isnil(L_, -1)) {
         lua_pop(L_, 1);
@@ -153,46 +161,6 @@ void WingLuauRequire::clearRequireCacheEntry(const char *cacheKey) {
 
 const WingLuauRequire::Options &WingLuauRequire::options() const {
     return options_;
-}
-
-QString WingLuauRequire::builtinNameFromPath(const QString &path) {
-    QString value = QDir::fromNativeSeparators(path).trimmed();
-    if (!value.startsWith('@')) {
-        return {};
-    }
-    value.remove(0, 1);
-    if (value.startsWith(QLatin1String("b/"), Qt::CaseInsensitive)) {
-        value.remove(0, 2);
-    }
-    value = QDir::cleanPath(value);
-    while (value.startsWith(QLatin1String("./"))) {
-        value.remove(0, 2);
-    }
-    if (!isSafeModulePath(value)) {
-        return {};
-    }
-    return value;
-}
-
-QString WingLuauRequire::builtinPath(const QString &requested) const {
-    if (!requested.startsWith(QChar('@')) ||
-        requested.startsWith(QLatin1String("@b/"), Qt::CaseInsensitive) ||
-        requested.startsWith(QLatin1String("@s/"), Qt::CaseInsensitive) ||
-        requested.startsWith(QLatin1String("@u/"), Qt::CaseInsensitive)) {
-        return {};
-    }
-
-    const QString name = builtinNameFromPath(requested);
-    if (name.isEmpty()) {
-        return {};
-    }
-
-    const int slash = name.indexOf('/');
-    const QString alias = slash < 0 ? name : name.left(slash);
-    if (!builtinNamespaces_.contains(alias)) {
-        return {};
-    }
-    return QStringLiteral("@b/") + name;
 }
 
 QString WingLuauRequire::callerChunkname(lua_State *L) {
@@ -346,9 +314,7 @@ QString WingLuauRequire::normalizeBuiltinName(const QString &input) {
     if (!isSafeModulePath(normalized)) {
         return {};
     }
-#ifdef Q_OS_WIN
     normalized = normalized.toLower();
-#endif
     return normalized;
 }
 
@@ -414,43 +380,7 @@ WingLuauRequire::findAliasSources(const QString &alias) const {
     return result;
 }
 
-bool WingLuauRequire::isUniqueShorthandSource(const Node &node) const {
-    if (node.packageName.isEmpty()) {
-        return false;
-    }
-
-    const AliasSources sources = findAliasSources(node.packageName);
-    if (sources.ambiguous() || sources.count() != 1) {
-        return false;
-    }
-
-    if (node.kind == NodeKind::Builtin) {
-        return sources.builtin && !sources.hasUser() && !sources.hasSystem();
-    }
-
-    if (node.scope == Scope::User) {
-        return sources.hasUser() && !sources.builtin && !sources.hasSystem();
-    }
-
-    if (node.scope == Scope::System) {
-        return sources.hasSystem() && !sources.builtin && !sources.hasUser();
-    }
-
-    return false;
-}
-
 QString WingLuauRequire::sourcePrefixForNode(const Node &node) const {
-    // Hide the explicit source when the shorthand is globally unique.
-    //
-    //     @b/json -> @json
-    //     @u/foo  -> @foo
-    //     @s/foo  -> @foo
-    //
-    // If another source owns the same shorthand, keep the explicit prefix
-    // so that the generated chunkname remains unambiguous and reversible.
-    if (isUniqueShorthandSource(node))
-        return QStringLiteral("@");
-
     if (node.kind == NodeKind::Builtin)
         return QStringLiteral("@b/");
 
@@ -495,13 +425,6 @@ WingLuauRequire::Candidate WingLuauRequire::makeCandidateFromBase(
 
     if (component.isEmpty() || component == QLatin1String(".") ||
         component == QLatin1String("..") || component.contains('/'))
-        return result;
-
-    // A module directory exposes its children, but its reserved init file
-    // is not itself a child module. This matches the normal Luau filesystem
-    // convention and prevents require("./init") from bypassing the module.
-    if ((current_.kind == NodeKind::ModuleDirectory) &&
-        component == QLatin1String("init"))
         return result;
 
     const QString basePath = normalizeExistingPath(base);
@@ -586,6 +509,14 @@ WingLuauRequire::resolveChildFromSingleRoot(const QString &root, Scope scope,
 
 WingLuauRequire::Candidate
 WingLuauRequire::resolveChild(const QString &component) const {
+    // A module directory exposes its children, but its reserved init file
+    // is not itself a child module. Keep this rule on the actual navigation
+    // path, not in makeCandidateFromBase(), which also resolves package roots.
+    if (current_.kind == NodeKind::ModuleDirectory &&
+        component == QLatin1String("init")) {
+        return {};
+    }
+
     switch (current_.kind) {
     case NodeKind::ScopeRoot:
         if (current_.scope == Scope::System) {
@@ -603,10 +534,10 @@ WingLuauRequire::resolveChild(const QString &component) const {
         return {};
 
     case NodeKind::Builtin: {
-        const QString child =
-            current_.builtinPath.isEmpty()
-                ? component
-                : current_.builtinPath + QStringLiteral("/") + component;
+        const QString child = current_.builtinPath.isEmpty()
+                                  ? component.toLower()
+                                  : current_.builtinPath + QStringLiteral("/") +
+                                        component.toLower();
 
         // Builtins form a logical registry tree, not a filesystem root.
         // A registered module can also have registered descendants, so a
@@ -688,19 +619,11 @@ WingLuauRequire::findInstalledPackage(const QString &packageName) const {
 
 QString WingLuauRequire::chunknameForNode(const Node &node) const {
     if (node.kind == NodeKind::Builtin) {
-        // Prefer the convenient @<name> spelling whenever the builtin's
-        // first component is globally unambiguous. If a User/System package
-        // has the same name, retain @b/ so this chunkname remains reversible.
         const QString logical = node.builtinPath;
         if (logical.isEmpty()) {
             return {};
         }
-        // Only the first builtin component participates in source conflict
-        // resolution. For example, qt/core conflicts with a package named qt.
-        const QString packageName = logical.section(QChar('/'), 0, 0);
-        Node probe = node;
-        probe.packageName = packageName;
-        return sourcePrefixForNode(probe) + logical;
+        return sourcePrefixForNode(node) + logical;
     }
 
     if (node.scope == Scope::External) {
@@ -911,10 +834,16 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
 
     const QString key = QString::fromUtf8(chunkname);
 
-    // REPL is deliberately not a navigation context. Builtins registered
-    // through luarequire_registermodule() never reach reset().
+    // Treat the REPL as a script rooted at the process working directory.
+    // This enables the same filesystem and package requires as file scripts.
     if (key.startsWith('=')) {
-        return NAVIGATE_NOT_FOUND;
+        current_ = {};
+        current_.scope = Scope::External;
+        current_.kind = NodeKind::ExternalFile;
+        current_.physicalPath = normalizeExistingPath(
+            joinPath(QDir::currentPath(), QStringLiteral(".__wing_repl__")));
+        return current_.physicalPath.isEmpty() ? NAVIGATE_NOT_FOUND
+                                               : NAVIGATE_SUCCESS;
     }
 
     // Exact known chunk names take priority.
@@ -930,6 +859,16 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     if (known != knownChunks_.constEnd()) {
         current_ = known.value();
         return isModuleNode(current_) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
+    }
+
+    // ScriptMachine loads file scripts with an @-prefixed filesystem path
+    // (for example "@/home/user/project/main.luau"). These are not aliases:
+    // restore the source node so both relative paths and alias config lookup
+    // start from the requiring file's real directory.
+    const QString sourcePath = key.sliced(1);
+    if (QFileInfo(sourcePath).isAbsolute()) {
+        const QByteArray absolutePath = sourcePath.toUtf8();
+        return jumpToAbsolutePath(absolutePath.constData());
     }
 
     if (!key.startsWith('@')) {
@@ -952,7 +891,7 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
         if (parts.size() < 2)
             return NAVIGATE_NOT_FOUND;
 
-        const QString builtinPath = parts.sliced(1).join('/');
+        const QString builtinPath = parts.sliced(1).join('/').toLower();
 
         if (!builtinModules_.contains(builtinPath)) {
             return NAVIGATE_NOT_FOUND;
@@ -1010,7 +949,8 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     }
 
     // ------------------------------------------------------------
-    // Hidden-source shorthand:
+    // Hidden-source shorthand, retained for compatibility with previously
+    // generated chunknames:
     //
     //     @json
     //     @json/encoder
@@ -1036,7 +976,7 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     // uses the full logical builtin path. Unlike filesystem modules,
     // the complete builtin path must be registered.
     if (sources.builtin) {
-        const QString builtinPath = parts.join('/');
+        const QString builtinPath = parts.join('/').toLower();
         if (!builtinModules_.contains(builtinPath)) {
             return NAVIGATE_NOT_FOUND;
         }
@@ -1145,37 +1085,32 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
 int WingLuauRequire::cbRequireDispatch(lua_State *L) {
     auto *self = static_cast<WingLuauRequire *>(
         lua_tolightuserdata(L, lua_upvalueindex(2)));
+    const bool isProxyRequire = lua_toboolean(L, lua_upvalueindex(3));
 
     if (!self || !L) {
         luaL_error(L, "invalid WingLuauRequire context");
     }
 
-    lua_settop(L, 1);
+    lua_settop(L, isProxyRequire ? 2 : 1);
 
     const char *rawPath = luaL_checkstring(L, 1);
-    const QString requested = QString::fromUtf8(rawPath);
-
-    // Native Luau recognizes registered modules before it attempts to
-    // reset/navigate the requiring context. Builtins are registered under
-    // @b/<name>, so normalize an exact, unambiguous @<name> shorthand here.
-    // This is deliberately done for every caller; otherwise require("@json")
-    // from a normal script can fail before alias fallback is reached if the
-    // caller's chunkname is not itself navigable.
-    if (!requested.startsWith(QLatin1String("@b/"), Qt::CaseInsensitive)) {
-        const QString builtinPath = self->builtinPath(requested);
-
-        if (!builtinPath.isEmpty()) {
-            lua_pushstring(L, builtinPath.toUtf8().constData());
-            lua_replace(L, 1);
-        }
+    const QString requested =
+        QDir::fromNativeSeparators(QString::fromUtf8(rawPath));
+    const QString requirerChunkname =
+        isProxyRequire ? QString::fromUtf8(luaL_checkstring(L, 2))
+                       : callerChunkname(L);
+    const bool relativePath = requested.startsWith(QLatin1String("./")) ||
+                              requested.startsWith(QLatin1String("../"));
+    if (relativePath && requirerChunkname.startsWith('=')) {
+        luaL_error(L, "relative require paths are not supported from the REPL");
     }
 
-    // First upvalue is Luau's native require closure. Keeping the dispatch
-    // layer outside the native runtime means its cache/config/navigation
-    // behavior remains unchanged.
+    // Pass the path and proxy chunkname unchanged to Luau.Require. In
+    // particular, @package paths go through configured aliases and the host
+    // fallback; only @b/ paths use Luau's registered-module fast path.
     lua_pushvalue(L, lua_upvalueindex(1));
     lua_insert(L, 1);
-    lua_call(L, 1, 1);
+    lua_call(L, isProxyRequire ? 2 : 1, 1);
     return 1;
 }
 
@@ -1187,16 +1122,7 @@ bool WingLuauRequire::cbIsRequireAllowed(lua_State *, void *ctx,
     }
 
     const QString source = QString::fromUtf8(requirerChunkname);
-
-    // REPL (=stdin) is intentionally denied for filesystem/package modules.
-    // Builtin modules registered with luarequire_registermodule() are
-    // checked by Luau before resolveRequire(), so they remain usable from
-    // the REPL.
-    if (source.startsWith('=')) {
-        return false;
-    }
-
-    return source.startsWith('@');
+    return source.startsWith('@') || source.startsWith('=');
 }
 
 luarequire_NavigateResult
@@ -1241,7 +1167,16 @@ WingLuauRequire::cbToAliasOverride(lua_State *, void *ctx,
         return NAVIGATE_SUCCESS;
     }
 
-    // @b/* is handled by luarequire_registermodule(), not by navigation.
+    // Registered @b/<module> values are returned by Luau's fast path. If a
+    // builtin path is missing, navigate from the builtin namespace so Luau
+    // reports the missing child component instead of an invalid @b alias.
+    if (alias.compare(QLatin1String("b"), Qt::CaseInsensitive) == 0) {
+        self->current_ = {};
+        self->current_.scope = Scope::External;
+        self->current_.kind = NodeKind::Builtin;
+        return NAVIGATE_SUCCESS;
+    }
+
     return NAVIGATE_NOT_FOUND;
 }
 
@@ -1330,7 +1265,7 @@ luarequire_NavigateResult WingLuauRequire::cbToParent(lua_State *, void *ctx) {
 
     const QString parent = normalizeExistingPath(
         QFileInfo(self->current_.physicalPath).absolutePath());
-    if (parent.isEmpty()) {
+    if (parent.isEmpty() || parent == self->current_.physicalPath) {
         return NAVIGATE_NOT_FOUND;
     }
 
@@ -1359,7 +1294,16 @@ luarequire_NavigateResult WingLuauRequire::cbToChild(lua_State *, void *ctx,
         return NAVIGATE_NOT_FOUND;
     }
 
-    const Candidate candidate = self->resolveChild(QString::fromUtf8(name));
+    const QString component = QString::fromUtf8(name);
+    if (component.isEmpty() || component == QLatin1String(".")) {
+        return NAVIGATE_SUCCESS;
+    }
+
+    if (component == QLatin1String("..")) {
+        return WingLuauRequire::cbToParent(nullptr, ctx);
+    }
+
+    const Candidate candidate = self->resolveChild(component);
     if (candidate.result == Candidate::Result::Ambiguous) {
         return NAVIGATE_AMBIGUOUS;
     }
@@ -1568,15 +1512,16 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
             luaL_error(L, "excessive module file size");
         }
         if (file.open(QFile::ReadOnly | QFile::Text)) {
-
-            // TODO limit size
             const QByteArray source = file.readAll();
 
             auto *self = static_cast<WingLuauRequire *>(ctx);
             if (self) {
-                const auto &cb = self->options_.onLuauFileLoaded;
+                const auto &cb = self->options_.onLuauFileLoading;
                 if (cb) {
-                    cb(L, loadFile, source);
+                    auto r = cb(L, ML, loadFile, source);
+                    if (!r) {
+                        luaL_error(L, "failed to load module '%s'", loadname);
+                    }
                 }
             }
 

@@ -20,7 +20,6 @@
 
 #include <QByteArray>
 #include <QString>
-#include <limits.h>
 #include <lua.h>
 
 enum class InspectMode { Compact, Pretty };

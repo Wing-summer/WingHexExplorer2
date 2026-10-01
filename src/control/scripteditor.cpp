@@ -16,8 +16,11 @@
 */
 
 #include "scripteditor.h"
+
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "class/editorlspevent.h"
+#include "class/scriptsettings.h"
+#include "luau/luauformatter.h"
 #include "utilities.h"
 
 #include <QAction>
@@ -49,11 +52,11 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor = new CodeEdit(this);
     m_editor->setSyntax(m_editor->syntaxRepo().definitionForName("Luau"));
     connect(m_editor, &CodeEdit::textChanged, this, [this]() {
-        if (!_ok) {
-            _lastSent = false;
-            return;
-        }
-        sendDocChange();
+        // if (!_ok) {
+        //     _lastSent = false;
+        //     return;
+        // }
+        // sendDocChange();
         syncSemanticTokens();
     });
     m_editor->installEventFilter(this);
@@ -229,13 +232,7 @@ bool ScriptEditor::increaseVersion() {
     return false;
 }
 
-void ScriptEditor::onSendFullTextChangeCompleted() {
-    if (!_lastSent) {
-        sendDocChange();
-        _lastSent = true;
-    }
-    _ok = true;
-}
+void ScriptEditor::onSendFullTextChangeCompleted() {}
 
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
@@ -249,24 +246,6 @@ void ScriptEditor::processTitle() {
     } else {
         setWindowTitle(filename);
     }
-}
-
-void ScriptEditor::sendDocChange() {
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     auto url = lspFileNameURL();
-    //     auto txt = m_editor->toPlainText();
-    //     // test overflow
-    //     if (increaseVersion()) {
-    //         lsp.closeDocument(url);
-    //         lsp.openDocument(url, 0, txt);
-    //     } else {
-    //         lsp.changeDocument(url, getVersion(), txt);
-    //     }
-
-    //     _ok = false;
-    //     _timer->reset(300);
-    // }
 }
 
 void ScriptEditor::saveState(QXmlStreamWriter &Stream) const {
@@ -291,8 +270,6 @@ QVector<LSP::SemanticToken> ScriptEditor::parseSemanticTokens() {
     // }
     return {};
 }
-
-bool ScriptEditor::isContentLspUpdated() const { return _ok; }
 
 LspEditorInterace::CursorPos
 ScriptEditor::cursorPosition(const QTextCursor &cursor) const {
@@ -319,98 +296,31 @@ quint64 ScriptEditor::getVersion() const { return version; }
 CodeEdit *ScriptEditor::editor() const { return m_editor; }
 
 bool ScriptEditor::formatCode() {
-    // auto &lsp = AngelLsp::instance();
-    // if (!lsp.isActive()) {
-    //     return false;
-    // }
+    auto &s = ScriptSettings::instance();
 
-    // struct TextEdit {
-    //     LSP::Range range;
-    //     QString newText;
+    LuauFormat::FormatOptions options;
+    options.indentSize = s.fmtIndentSpace();
+    options.useTabs = s.fmtUseTabIndent();
+    options.preserveBlockNewlineGaps = s.fmtKeepNewLineGap();
+    options.quoteStyle = LuauFormat::QuoteStyle(s.fmtStrQuoteStyle());
 
-    //     bool isValid() const {
-    //         auto validLoc = [](const LSP::Location &p) {
-    //             return p.line >= 0 && p.character >= 0;
-    //         };
+    auto tc = m_editor->textCursor();
+    auto c = LuauFormat::formatWithCursor(m_editor->toPlainText(), tc.anchor(),
+                                          tc.position(), options);
+    if (!c) {
+        return false;
+    }
 
-    //         auto beforeOrEqual = [](const LSP::Location &a,
-    //                                 const LSP::Location &b) {
-    //             return a.line < b.line ||
-    //                    (a.line == b.line && a.character <= b.character);
-    //         };
+    tc.beginEditBlock();
+    tc.select(QTextCursor::Document);
+    tc.insertText(c->formatted);
+    tc.endEditBlock();
 
-    //         if (!validLoc(range.start) || !validLoc(range.end)) {
-    //             return false;
-    //         }
-    //         if (!beforeOrEqual(range.start, range.end)) {
-    //             return false;
-    //         }
-    //         if (range.start.line == range.end.line &&
-    //             range.start.character == range.end.character &&
-    //             newText.isEmpty()) {
-    //             return false;
-    //         }
-    //         return true;
-    //     }
-    // };
+    tc.clearSelection();
+    tc.setPosition(c->cursorAnchor);
+    tc.setPosition(c->cursorPosition, QTextCursor::KeepAnchor);
+    m_editor->setTextCursor(tc);
 
-    // auto r = lsp.requestFormat(lspFileNameURL());
-
-    // QVector<TextEdit> textEdits;
-    // const auto mods = r.toArray();
-    // for (const auto &&vj : mods) {
-    //     QJsonValue v = vj;
-    //     TextEdit edit;
-    //     edit.range = AngelLsp::readLSPDocRange(v.toObject());
-    //     edit.newText = v["newText"].toString();
-    //     if (edit.isValid()) {
-    //         textEdits.append(edit);
-    //     }
-    // }
-
-    // QTextDocument *document = m_editor->document();
-    // QTextCursor cursor(document);
-
-    // std::sort(textEdits.begin(), textEdits.end(),
-    //           [](const TextEdit &a, const TextEdit &b) {
-    //               if (a.range.start.line != b.range.start.line) {
-    //                   return a.range.start.line > b.range.start.line;
-    //               }
-    //               if (a.range.start.character != b.range.start.character) {
-    //                   return a.range.start.character >
-    //                   b.range.start.character;
-    //               }
-    //               if (a.range.end.line != b.range.end.line) {
-    //                   return a.range.end.line > b.range.end.line;
-    //               }
-    //               return a.range.end.character > b.range.end.character;
-    //           });
-
-    // cursor.beginEditBlock();
-    // for (const TextEdit &edit : textEdits) {
-    //     const auto &start = edit.range.start;
-    //     const auto &end = edit.range.end;
-
-    //     QTextBlock startBlock = document->findBlockByLineNumber(start.line);
-    //     QTextBlock endBlock = document->findBlockByLineNumber(end.line);
-    //     if (!startBlock.isValid() || !endBlock.isValid()) {
-    //         continue;
-    //     }
-
-    //     const qint64 startPos = startBlock.position() + start.character;
-    //     const qint64 endPos = endBlock.position() + end.character;
-
-    //     if (startPos < 0 || endPos < startPos) {
-    //         continue;
-    //     }
-
-    //     cursor.setPosition(startPos);
-    //     cursor.setPosition(endPos, QTextCursor::KeepAnchor);
-    //     cursor.insertText(edit.newText);
-    // }
-    // cursor.endEditBlock();
-
-    // syncUpdate();
     return true;
 }
 

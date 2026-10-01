@@ -25,7 +25,12 @@ class ScriptSettings : public QObject {
     Q_OBJECT
 
 public:
-    enum SETTING { EDITOR = 1, CONSOLE = 2, ALL = EDITOR | CONSOLE };
+    enum SETTING {
+        EDITOR = 1,
+        CONSOLE = 2,
+        FORMAT = 3,
+        ALL = EDITOR | CONSOLE | FORMAT
+    };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)
 
 public:
@@ -59,6 +64,12 @@ public:
     bool consoleAutoCloseChar() const;
     bool editorAutoIden() const;
 
+    int fmtIndentSpace() const;
+    int fmtStrQuoteStyle() const;
+    bool fmtUseTabIndent() const;
+    bool fmtKeepNewLineGap() const;
+    bool autofmt() const;
+
 public slots:
     void setEditorFontFamily(const QString &newEditorFontFamily);
     void setConsoleFontFamily(const QString &newConsoleFontFamily);
@@ -81,6 +92,12 @@ public slots:
     void setEditorAutoCloseChar(bool newEditorAutoCloseChar);
     void setConsoleAutoCloseChar(bool newConsoleAutoCloseChar);
     void setEditorAutoIden(bool newEditorAutoIden);
+
+    void setFmtIndentSpace(int newIndentSpace);
+    void setFmtStrQuoteStyle(int newStrQuoteStyle);
+    void setFmtUseTabIndent(bool newUseTabIndent);
+    void setFmtKeepNewLineGap(bool newKeepNewLineGap);
+    void setAutofmt(bool newAutofmt);
 
 private:
     explicit ScriptSettings();
@@ -121,6 +138,12 @@ private:
 
     bool m_editorAutoCloseChar = true;
     bool m_consoleAutoCloseChar = true;
+
+    int m_indentSpace = 4;
+    int m_quoteStyle = 0;
+    bool m_keepNewLineGap = false;
+    bool m_useTabIndent = false;
+    bool m_autofmt = true;
 
 private:
     Q_DISABLE_COPY_MOVE(ScriptSettings)

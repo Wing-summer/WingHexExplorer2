@@ -38,12 +38,8 @@ public:
     virtual const WingCodeEdit *editorPtr() const = 0;
 
     virtual QString lspFileNameURL() const = 0;
-    virtual bool isContentLspUpdated() const = 0;
     virtual CursorPos currentPosition() const = 0;
     virtual CursorPos cursorPosition(const QTextCursor &cursor) const = 0;
-
-    virtual void sendDocChange() = 0;
-    void syncUpdate();
 
     virtual void
     showFunctionTip(const QList<WingSignatureTooltip::Signature> &sigs) = 0;

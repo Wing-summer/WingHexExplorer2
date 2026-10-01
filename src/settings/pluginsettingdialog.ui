@@ -217,7 +217,7 @@
      <widget class="QWidget" name="tabCert">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
-        <normaloff>:/com.wingsummer.winghex/images/certfile.png</normaloff>:/com.wingsummer.winghex/images/certfile.png</iconset>
+        <normaloff>:/com.wingsummer.winghex/images/certfile.svg</normaloff>:/com.wingsummer.winghex/images/certfile.svg</iconset>
       </attribute>
       <attribute name="title">
        <string>Cert</string>

@@ -263,13 +263,7 @@ void ScriptingConsole::applyScriptSettings() {
     this->setAutoCloseChar(set.consoleAutoCloseChar());
 }
 
-void ScriptingConsole::onSendFullTextChangeCompleted() {
-    if (!_lastSent) {
-        sendDocChange();
-        _lastSent = true;
-    }
-    _ok = true;
-}
+void ScriptingConsole::onSendFullTextChangeCompleted() {}
 
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     hideHelpTooltip();
@@ -531,28 +525,6 @@ bool ScriptingConsole::increaseVersion() {
     return false;
 }
 
-void ScriptingConsole::sendDocChange() {
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    // auto url = lspURL();
-    // auto txt = currentCodes();
-    // txt.prepend(QStringLiteral("void f(){\n"))
-    //     .append(QStringLiteral("\n}"))
-    //     .prepend(ScriptMachine::instance().getGlobalDecls());
-
-    // test overflow
-    // if (increaseVersion()) {
-    //     lsp.closeDocument(url);
-    //     lsp.openDocument(url, 0, txt);
-    // } else {
-    //     lsp.changeDocument(url, getVersion(), txt);
-    // }
-
-    _ok = false;
-    _timer->reset(300);
-    // }
-}
-
 void ScriptingConsole::syncSemanticTokens() {
     // SemanticTokens are not supported with console
 }
@@ -577,8 +549,6 @@ void ScriptingConsole::setEditMode(ConsoleMode mode) {
     //     }
     // }
 }
-
-bool ScriptingConsole::isContentLspUpdated() const { return _ok; }
 
 LspEditorInterace::CursorPos
 ScriptingConsole::cursorPosition(const QTextCursor &cursor) const {

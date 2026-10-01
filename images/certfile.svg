@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+    <path fill="#d10511" fill-rule="evenodd" d="M 30 128 L 30 188 L 169 188 L 169 128 L 116 128 L 116 144 L 115 145 L 101 135 L 98 135 L 88 143 L 84 145 L 83 144 L 83 128 Z"/>
+    <path fill="#d71916" fill-rule="evenodd" d="M 169 74 L 164 79 L 162 79 L 158 83 L 157 83 L 158 84 L 160 83 L 161 84 L 163 84 L 169 78 Z M 160 83 L 161 82 L 162 83 L 161 84 Z M 161 82 L 162 81 L 163 82 L 162 83 Z M 162 81 L 163 80 L 164 81 L 163 82 Z M 163 80 L 164 79 L 165 80 L 164 81 Z M 164 79 L 165 78 L 166 79 L 165 80 Z M 30 11 L 30 71 L 77 71 L 78 69 L 84 63 L 89 60 L 95 59 L 96 58 L 103 58 L 104 59 L 110 60 L 115 63 L 121 69 L 122 71 L 144 71 L 124 51 L 124 11 Z"/>
+    <path fill="#d40f13" fill-rule="evenodd" d="M 123 72 L 124 73 L 124 75 L 126 79 L 126 89 L 125 90 L 125 93 L 122 99 L 116 105 L 116 127 L 169 127 L 169 85 L 168 84 L 169 83 L 169 79 L 163 85 L 161 85 L 160 84 L 159 85 L 158 85 L 151 78 L 150 78 L 146 74 L 145 72 Z M 30 72 L 30 127 L 83 127 L 83 105 L 77 99 L 74 93 L 74 90 L 73 89 L 73 79 L 74 78 L 74 76 L 76 72 Z"/>
+    <path fill="#fcbcbe" fill-rule="evenodd" d="M 94 60 L 93 61 L 91 61 L 85 64 L 79 70 L 76 76 L 76 78 L 75 79 L 75 90 L 76 91 L 77 96 L 79 98 L 79 99 L 85 105 L 85 143 L 88 140 L 89 140 L 92 137 L 96 135 L 99 132 L 100 132 L 103 135 L 107 137 L 114 143 L 114 105 L 120 99 L 120 98 L 122 96 L 122 94 L 124 90 L 124 79 L 123 78 L 123 76 L 120 70 L 114 64 L 108 61 L 106 61 L 105 60 Z"/>
+    <path fill="#fb888b" fill-rule="evenodd" d="M 126 8 L 126 51 L 168 51 L 138 21 L 138 20 Z"/>
+    <path fill="#c71b1e" fill-rule="evenodd" d="M 126 52 L 154 80 L 155 80 L 157 82 L 158 82 L 162 78 L 164 78 L 169 73 L 169 52 Z"/>
+    <path fill="#a10e19" fill-rule="evenodd" d="M 30 190 L 30 192 L 169 192 L 169 190 Z"/>
+    <path fill="#ea7776" fill-rule="evenodd" d="M 30 7 L 30 9 L 124 9 L 125 10 L 125 7 Z"/>
+    <path fill="#e24b49" fill-rule="evenodd" d="M 124 10 L 125 11 L 125 11 L 124 10 Z"/>
+</svg>

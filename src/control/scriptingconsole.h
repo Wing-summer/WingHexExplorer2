@@ -51,13 +51,11 @@ public:
 public:
     virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;
-    virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;
     virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
-    virtual void sendDocChange() override;
 
     virtual void syncSemanticTokens() override;
 
@@ -114,8 +112,6 @@ private:
     quint64 version = 1;
 
     ResettableTimer *_timer;
-    bool _ok = true;
-    bool _lastSent = true;
 
     bool _isTerminal = true;
     bool _isWaitingRead = false;

@@ -18,150 +18,98 @@
 #include "lspsettingdialog.h"
 #include "ui_lspsettingdialog.h"
 
-#include "class/scriptmachine.h"
+#include "class/scriptsettings.h"
 #include "class/settingmanager.h"
-#include "class/wingfiledialog.h"
-#include "class/wingmessagebox.h"
-#include "control/toast.h"
-#include "predefgen.h"
+#include "luau/luauformatter.h"
 #include "utilities.h"
 
 LspSettingDialog::LspSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::LspSettingDialog) {
     ui->setupUi(this);
 
-    // auto e = QMetaEnum::fromType<AngelLsp::TraceMode>();
-    // auto total = e.keyCount();
-    // for (int i = 0; i < total; ++i) {
-    //     ui->cbTrace->addItem(QString::fromLatin1(e.key(i)));
-    // }
-    ui->cbTrace->setCurrentIndex(0);
+    ui->cbQuoteStyle->addItem(tr("Preserve"),
+                              int(LuauFormat::QuoteStyle::Preserve));
+    ui->cbQuoteStyle->addItem(tr("PreferDouble"),
+                              int(LuauFormat::QuoteStyle::PreferDouble));
+    ui->cbQuoteStyle->addItem(tr("PreferSingle"),
+                              int(LuauFormat::QuoteStyle::PreferSingle));
+    ui->cbQuoteStyle->addItem(tr("ForceDouble"),
+                              int(LuauFormat::QuoteStyle::ForceDouble));
+    ui->cbQuoteStyle->addItem(tr("ForceSingle"),
+                              int(LuauFormat::QuoteStyle::ForceSingle));
+
+    ui->cbQuoteStyle->setCurrentIndex(0);
 
     reload();
 
-    Utilities::addSpecialMark(ui->cbEnabled);
+    auto &set = SettingManager::instance();
+    if (set.scriptEnabled()) {
+        auto s = &ScriptSettings::instance();
 
-    if (SettingManager::instance().scriptEnabled()) {
-        //         connect(ui->cbEnabled,
-        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-        //                 &QCheckBox::checkStateChanged,
-        // #else
-        //                 &QCheckBox::stateChanged,
-        // #endif
-        //                 this, [this](Qt::CheckState state) {
-        //                     auto &lsp = AngelLsp::instance();
-        //                     lsp.setEnabled(state != Qt::Unchecked);
-        //                     Q_EMIT optionNeedRestartChanged();
-        //                 });
+        connect(ui->sbIndent, &QSpinBox::valueChanged, s,
+                &ScriptSettings::setFmtIndentSpace);
+        connect(ui->cbQuoteStyle, &QComboBox::currentIndexChanged, s,
+                [this](int index) {
+                    auto qs = ui->cbQuoteStyle->itemData(index).toInt();
+                    ScriptSettings::instance().setFmtStrQuoteStyle(qs);
+                });
+        connect(ui->cbUseTabStop,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                &QCheckBox::checkStateChanged,
+#else
+                    &QCheckBox::stateChanged,
+#endif
+                s, [](Qt::CheckState state) {
+                    ScriptSettings::instance().setFmtUseTabIndent(
+                        state != Qt::Unchecked);
+                });
 
-        //         connect(ui->sbIndent, &QSpinBox::valueChanged, this, [](int
-        //         value) {
-        //             auto &lsp = AngelLsp::instance();
-        //             lsp.setIndentSpace(value);
-        //         });
+        connect(ui->cbKeepNewLineGap,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                &QCheckBox::checkStateChanged,
+#else
+                &QCheckBox::stateChanged,
+#endif
+                s, [](Qt::CheckState state) {
+                    ScriptSettings::instance().setFmtKeepNewLineGap(
+                        state != Qt::Unchecked);
+                });
 
-        //         connect(ui->cbUseTabStop,
-        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-        //                 &QCheckBox::checkStateChanged,
-        // #else
-        //             &QCheckBox::stateChanged,
-        // #endif
-        //                 this, [](Qt::CheckState state) {
-        //                     auto &lsp = AngelLsp::instance();
-        //                     lsp.setUseTabIndent(state != Qt::Unchecked);
-        //                 });
-
-        //         connect(ui->cbAutoFmt,
-        // #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-        //                 &QCheckBox::checkStateChanged,
-        // #else
-        //                 &QCheckBox::stateChanged,
-        // #endif
-        //                 this, [](Qt::CheckState state) {
-        //                     auto &lsp = AngelLsp::instance();
-        //                     lsp.setAutofmt(state != Qt::Unchecked);
-        //                 });
-
-        //         connect(ui->cbTrace,
-        //                 QOverload<int>::of(&QComboBox::currentIndexChanged),
-        //                 this,
-        //                 [](int index) {
-        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::off) ==
-        //                     0);
-        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::messages)
-        //                     == 1);
-        //                     Q_STATIC_ASSERT(int(AngelLsp::TraceMode::verbose)
-        //                     == 2); auto &lsp = AngelLsp::instance();
-        //                     lsp.setTraceMode(AngelLsp::TraceMode(index));
-        //                 });
-
-        connect(ui->btnExportPredef, &QPushButton::clicked, this, [parent]() {
-            auto path = WingFileDialog::getExistingDirectory(
-                parent, tr("ExportPredef"), qApp->applicationDirPath());
-            if (path.isEmpty()) {
-                return;
-            }
-
-            QDir dir(path);
-            auto file = dir.absoluteFilePath(QStringLiteral("as.predefined"));
-            if (QFile::exists(file)) {
-                auto r = WingMessageBox::warning(
-                    parent, tr("FileExists"), tr("Sure2Replace"),
-                    QMessageBox::Yes | QMessageBox::No);
-                if (r == QMessageBox::No) {
-                    return;
-                }
-            }
-            // generateScriptPredefined(ScriptMachine::instance().engine(),
-            // file);
-            Toast::toast(parent, NAMEICONRES("angellsp"),
-                         tr("ExportSuccessfully"));
-        });
-        // connect(ui->btnRestartlsp, &QPushButton::clicked, this,
-        //         [parent]() { AngelLsp::instance().restartWithGUI(parent); });
-
-        // auto &lsp = AngelLsp::instance();
-        // connect(&lsp, &AngelLsp::serverStarted, this,
-        //         &LspSettingDialog::reload);
-        // connect(&lsp, &AngelLsp::serverExited, this,
-        // &LspSettingDialog::reload);
+        connect(ui->cbAutoFmt,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                &QCheckBox::checkStateChanged,
+#else
+                        &QCheckBox::stateChanged,
+#endif
+                s, [](Qt::CheckState state) {
+                    ScriptSettings::instance().setAutofmt(state !=
+                                                          Qt::Unchecked);
+                });
     }
 }
 
 LspSettingDialog::~LspSettingDialog() { delete ui; }
 
 QIcon LspSettingDialog::categoryIcon() const {
-    return ICONRES(QStringLiteral("angellsp"));
+    return ICONRES(QStringLiteral("luau"));
 }
 
-QString LspSettingDialog::name() const { return tr("AngelLSP"); }
+QString LspSettingDialog::name() const { return QStringLiteral("Luau"); }
 
-QString LspSettingDialog::id() const { return QStringLiteral("AngelLSP"); }
+QString LspSettingDialog::id() const { return QStringLiteral("Luau"); }
 
 void LspSettingDialog::restore() {
-    // auto &lsp = AngelLsp::instance();
-    // lsp.resetSettings();
+    ScriptSettings::instance().reset(ScriptSettings::FORMAT);
 }
 
 void LspSettingDialog::reload() {
     if (SettingManager::instance().scriptEnabled()) {
-        // auto &lsp = AngelLsp::instance();
-        // if (lsp.isActive()) {
-        //     ui->gbDebug->setEnabled(true);
-        //     ui->gbFormat->setEnabled(true);
-
-        //     ui->cbEnabled->setChecked(lsp.enabled());
-        //     ui->cbUseTabStop->setChecked(lsp.useTabIndent());
-        //     ui->sbIndent->setValue(lsp.indentSpace());
-        //     ui->cbAutoFmt->setChecked(lsp.autofmt());
-
-        //     ui->cbTrace->setCurrentIndex(int(lsp.traceMode()));
-        //     ui->gbOther->setEnabled(true);
-        // } else {
-        //     ui->gbDebug->setEnabled(false);
-        //     ui->gbFormat->setEnabled(false);
-        //     ui->gbOther->setEnabled(false);
-        // }
+        auto &s = ScriptSettings::instance();
+        ui->sbIndent->setValue(s.fmtIndentSpace());
+        ui->cbQuoteStyle->setCurrentIndex(s.fmtStrQuoteStyle());
+        ui->cbUseTabStop->setChecked(s.fmtUseTabIndent());
+        ui->cbKeepNewLineGap->setChecked(s.fmtKeepNewLineGap());
+        ui->cbAutoFmt->setChecked(s.autofmt());
     } else {
         setEnabled(false);
     }

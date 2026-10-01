@@ -51,8 +51,15 @@
 
 #define PROEXT ".wingpro"
 
+// TODO: icons should be migrated to svg files
 Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
-    return ":/com.wingsummer.winghex/images/" + name + ".png";
+    QString baseName =
+        QStringLiteral(":/com.wingsummer.winghex/images/") + name;
+    QString svgFile = baseName + QStringLiteral(".svg");
+    if (QFile::exists(svgFile)) {
+        return svgFile;
+    }
+    return baseName + QStringLiteral(".png");
 }
 
 Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {

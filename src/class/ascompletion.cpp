@@ -173,8 +173,6 @@ bool AsCompletion::processTrigger(const QString &trigger,
         }
     }
 
-    editor->syncUpdate();
-
     // auto ret = lsp.requestCompletion(url, line, character, trigger);
     // auto nodes = parseCompletion(ret);
 
@@ -232,9 +230,6 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         auto tc = editor->currentPosition();
         auto line = tc.blockNumber;
         auto character = tc.positionInBlock;
-
-        // textChanged will emit later so send now
-        editor->syncUpdate();
 
         auto url = editor->lspFileNameURL();
         // auto r = lsp.requestSignatureHelp(url, line, character);

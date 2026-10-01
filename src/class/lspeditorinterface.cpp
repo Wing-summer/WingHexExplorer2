@@ -17,26 +17,9 @@
 
 #include "lspeditorinterface.h"
 
-#include "appmanager.h"
 #include "editorlspevent.h"
 
 LspEditorInterace::LspEditorInterace() {}
-
-void LspEditorInterace::syncUpdate() {
-    sendDocChange();
-    auto app = AppManager::instance();
-    auto curTime = app->currentMSecsSinceEpoch();
-    while (isContentLspUpdated()) {
-        // wait for a moment
-        // timeout for 100ms
-        auto nowTime = app->currentMSecsSinceEpoch();
-        if (nowTime - curTime > 100) {
-            sendDocChange();
-            curTime = nowTime;
-        }
-        app->processEvents();
-    }
-}
 
 void LspEditorInterace::applySemanticTokens() {
     auto editor = editorPtr();

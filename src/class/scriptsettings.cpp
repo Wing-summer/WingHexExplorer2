@@ -59,6 +59,12 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_SHOW_WHITESPACE,
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_AUTO_CLOSE_CHAR,
                           ("console.auto_close_char"))
 
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_QUOTE_STYLE, ("lsp.quoteStyle"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_KEEPNEWLINE_GAP, ("lsp.newLineGap"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_INDENT_SPACE, ("lsp.indentspace"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_USE_TAB_INDENT, ("lsp.useTabIndent"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_AUTO_FMT, ("lsp.autoFmt"))
+
 ScriptSettings &ScriptSettings::instance() {
     static ScriptSettings ins;
     return ins;
@@ -118,6 +124,17 @@ void ScriptSettings::load() {
 
     READ_CONFIG_BOOL(m_editorAutoCloseChar, CODEEDIT_AUTO_CLOSE_CHAR, true);
     READ_CONFIG_BOOL(m_consoleAutoCloseChar, CONSOLE_AUTO_CLOSE_CHAR, true);
+
+    READ_CONFIG_INT_POSITIVE(m_indentSpace, LSP_INDENT_SPACE, 4);
+    m_indentSpace = qBound(1, m_indentSpace, 16);
+
+    // NOTE: see LuauFormat::QuoteStyle range
+    READ_CONFIG_INT(m_quoteStyle, LSP_QUOTE_STYLE, 0);
+    m_quoteStyle = qBound(0, m_quoteStyle, 4);
+
+    READ_CONFIG_BOOL(m_keepNewLineGap, LSP_KEEPNEWLINE_GAP, false);
+    READ_CONFIG_BOOL(m_useTabIndent, LSP_USE_TAB_INDENT, false);
+    READ_CONFIG_BOOL(m_autofmt, LSP_AUTO_FMT, true);
 }
 
 void ScriptSettings::reset(SETTINGS cat) {
@@ -153,6 +170,14 @@ void ScriptSettings::__reset(SETTINGS cat) {
         WRITE_CONFIG(CONSOLE_SHOW_WHITESPACE, false);
         WRITE_CONFIG(CONSOLE_AUTO_CLOSE_CHAR, true);
     }
+
+    if (cat.testFlag(SETTING::FORMAT)) {
+        WRITE_CONFIG(LSP_INDENT_SPACE, 4);
+        WRITE_CONFIG(LSP_QUOTE_STYLE, 0)
+        WRITE_CONFIG(LSP_KEEPNEWLINE_GAP, false);
+        WRITE_CONFIG(LSP_USE_TAB_INDENT, false);
+        WRITE_CONFIG(LSP_AUTO_FMT, true);
+    }
 }
 
 ScriptSettings::ScriptSettings() : QObject() {
@@ -162,12 +187,62 @@ ScriptSettings::ScriptSettings() : QObject() {
 
 bool ScriptSettings::editorAutoIden() const { return m_editorAutoIden; }
 
+int ScriptSettings::fmtIndentSpace() const { return m_indentSpace; }
+
+int ScriptSettings::fmtStrQuoteStyle() const { return m_quoteStyle; }
+
+bool ScriptSettings::fmtUseTabIndent() const { return m_useTabIndent; }
+
+bool ScriptSettings::fmtKeepNewLineGap() const { return m_keepNewLineGap; }
+
+bool ScriptSettings::autofmt() const { return m_autofmt; }
+
 void ScriptSettings::setEditorAutoIden(bool newEditorAutoIden) {
     if (m_editorAutoIden != newEditorAutoIden) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_AUTO_IDEN, newEditorAutoIden);
         m_editorAutoIden = newEditorAutoIden;
         Q_EMIT editorSettingsUpdate();
+    }
+}
+
+void ScriptSettings::setFmtIndentSpace(int newIndentSpace) {
+    if (m_indentSpace != newIndentSpace) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_INDENT_SPACE, newIndentSpace);
+        m_indentSpace = newIndentSpace;
+    }
+}
+
+void ScriptSettings::setFmtStrQuoteStyle(int newStrQuoteStyle) {
+    if (m_quoteStyle != newStrQuoteStyle) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_QUOTE_STYLE, newStrQuoteStyle);
+        m_quoteStyle = newStrQuoteStyle;
+    }
+}
+
+void ScriptSettings::setFmtUseTabIndent(bool newUseTabIndent) {
+    if (m_useTabIndent != newUseTabIndent) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_USE_TAB_INDENT, newUseTabIndent);
+        m_useTabIndent = newUseTabIndent;
+    }
+}
+
+void ScriptSettings::setFmtKeepNewLineGap(bool newKeepNewLineGap) {
+    if (m_keepNewLineGap != newKeepNewLineGap) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_KEEPNEWLINE_GAP, newKeepNewLineGap);
+        m_keepNewLineGap = newKeepNewLineGap;
+    }
+}
+
+void ScriptSettings::setAutofmt(bool newAutofmt) {
+    if (m_autofmt != newAutofmt) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_AUTO_FMT, newAutofmt);
+        m_autofmt = newAutofmt;
     }
 }
 

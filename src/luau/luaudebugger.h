@@ -97,6 +97,7 @@ public:
     LuauScope localScope(int frameId) const;
     LuauScope upvalueScope(int frameId) const;
     LuauScope globalScope() const;
+    LuauStackFrame stackFrame(int frameId) const;
 
     LuauFileContext findLoadedLuauFile(const QString &path);
 

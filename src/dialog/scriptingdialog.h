@@ -243,6 +243,8 @@ public:
     bool try2CloseScriptViews(const QList<ScriptEditor *> views);
 
 private slots:
+    void goRunFileLine(const QString &file, int lineNr);
+
     void on_newfile();
     void on_openfile();
     void on_reload();

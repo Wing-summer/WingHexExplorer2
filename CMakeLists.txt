@@ -361,6 +361,8 @@ set(CLASS_SRC
 set(LUAU_MOD_SRC
     src/luau/luauutil.h
     src/luau/luauutil.cpp
+    src/luau/luauformatter.h
+    src/luau/luauformatter.cpp
     src/luau/wingluaurequire.h
     src/luau/wingluaurequire.cpp
     src/luau/luaufile.h

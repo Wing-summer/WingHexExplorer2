@@ -352,6 +352,13 @@ LuauScope LuauDebugger::globalScope() const {
     return LuauVariableRegistry::getGlobalScope(breakVm_);
 }
 
+LuauStackFrame LuauDebugger::stackFrame(int frameId) const {
+    if (frameId < 0 || frameId >= stackFrames_.size()) {
+        return {};
+    }
+    return stackFrames_.at(frameId);
+}
+
 int LuauDebugger::getStackDepth(lua_State *L) const {
     int depth = lua_stackdepth(L);
     auto *parent = getParent(L);

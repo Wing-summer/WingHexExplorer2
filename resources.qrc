@@ -1,18 +1,15 @@
 <RCC>
     <qresource prefix="/com.wingsummer.winghex">
-        <file>images/angellsp.png</file>
-        <file>images/angelrestart.png</file>
         <file>images/author.jpg</file>
         <file>images/author.png</file>
         <file>images/bookmark.png</file>
         <file>images/bookmarkcls.png</file>
         <file>images/bookmarkdel.png</file>
         <file>images/canover.png</file>
-        <file>images/cert.png</file>
-        <file>images/certfile.png</file>
+        <file>images/cert.svg</file>
+        <file>images/certfile.svg</file>
         <file>images/clearhis.png</file>
         <file>images/clone.png</file>
-        <file>images/closefile.png</file>
         <file>images/codefmt.png</file>
         <file>images/console.png</file>
         <file>images/convpro.png</file>
@@ -56,6 +53,7 @@
         <file>images/lock.png</file>
         <file>images/lockon.png</file>
         <file>images/log.png</file>
+        <file>images/luau.svg</file>
         <file>images/mAddr.png</file>
         <file>images/mColInfo.png</file>
         <file>images/mLineInfo.png</file>

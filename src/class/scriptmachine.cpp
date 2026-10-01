@@ -184,16 +184,22 @@ bool ScriptMachine::configureEngine(lua_State *L) {
     ropts.systemRoot = appDir.absoluteFilePath(lualib);
     QDir usrDir(Utilities::getAppDataPath());
     ropts.userRoot = usrDir.absoluteFilePath(lualib);
-    ropts.onLuauFileLoaded = [](lua_State *L, const QString &path,
-                                const QByteArray &source) {
+    ropts.onLuauFileLoading = [](lua_State *L, lua_State *ML,
+                                 const QString &path,
+                                 const QByteArray &source) -> bool {
         auto data = contextData(L);
         if (data == nullptr) {
-            return;
+            return false;
         }
+
+        // set the thread data for the new thread
+        lua_setthreaddata(ML, data);
+
         auto dbg = data->debugger;
         if (dbg) {
             dbg->onLuaFileLoaded(L, path, source);
         }
+        return true;
     };
 
     if (!_luaReq.initRequire(L, ropts)) {
@@ -265,10 +271,8 @@ int ScriptMachine::__outputsep(MessageType type, lua_State *L, QChar sep) {
     QString msg;
     msg.reserve(256);
     for (int i = 1; i <= n; i++) {
-        if (i > 1) {
-            msg.append(sep);
-        }
         msg.append(LuauInspector::inspect(L, i, _printOptions));
+        msg.append(sep);
     }
 
     MessageInfo info;

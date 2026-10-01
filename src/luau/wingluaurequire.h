@@ -19,24 +19,20 @@
 #define WING_LUAU_REQUIRE_H
 
 // Design:
-//   @b/<module>              -> builtin module registered through
-//                              luarequire_registermodule()
-//   @s/<package>/...         -> explicit system package
-//   @u/<package>/...         -> explicit user package
-//   @<package>/...           -> normal package/builtin shorthand
+//   @<package>/...           -> normal Luau alias lookup, followed by host
+//                              package fallback when no configured alias exists
+//   @b/<module>              -> canonical explicit builtin spelling
+//   @s/<package>/...         -> explicit system package and generated chunkname
+//   @u/<package>/...         -> explicit user package and generated chunkname
 //
-// The normal shorthand is intentionally resolved in to_alias_fallback(), so
-// project/package .luaurc or .config.luau aliases keep precedence over
-// installed package names. If the same shorthand exists as a builtin, user
-// package, and/or system package, the shorthand is considered ambiguous and the
-// caller must use @b, @u, or @s explicitly. @s and @u are reserved host aliases
-// and are handled by to_alias_override(). @b is intentionally NOT a navigation
-// root: builtin modules are registered directly in Luau's Require registry.
+// Package aliases are resolved from .luaurc/.config.luau before
+// to_alias_fallback() checks builtin, user, and system package sources. If more
+// than one source provides the package, lookup is ambiguous. Unprefixed paths
+// are left to Luau.Require to reject; @s and @u select a package store, while
+// @b selects a registered builtin directly.
 //
-// REPL (=stdin) is intentionally not a filesystem/package navigation context.
-// Because Luau's Require runtime checks registered modules before
-// resolveRequire(), a REPL can still use registered @b/* builtins while every
-// non-registered module is rejected by is_require_allowed().
+// REPL input (=stdin) may use builtins and ordinary package lookup, but
+// relative filesystem requires such as ./module or ../module are not allowed.
 //
 // The module loader itself follows the official Luau CLI structure:
 // create an isolated thread, optionally sandbox it, compile the source,
@@ -85,9 +81,9 @@ public:
         qsizetype maxConfigBytes = DEFAULT_SCRIPT_FILE_SIZE_LIMIT;
 
         // called within cbLoad
-        std::function<void(lua_State *L, const QString &path,
+        std::function<bool(lua_State *L, lua_State *ML, const QString &path,
                            const QByteArray &source)>
-            onLuauFileLoaded;
+            onLuauFileLoading;
 
         inline Options() {}
     };
@@ -106,9 +102,7 @@ public:
     //
     // A small adapter closure is installed in front of Luau's native require.
     // The native require implementation remains responsible for navigation,
-    // configuration parsing, cache handling, and module execution. The adapter
-    // only provides one host-specific convenience: when the caller is the REPL,
-    // @json is rewritten to the explicitly registered @b/json builtin.
+    // configuration parsing, cache handling, and module execution.
     void installRequire();
 
     // Optional proxyrequire(path, chunkname) support.
@@ -117,17 +111,13 @@ public:
     // Register an already-created Lua value as a builtin module.
     // The final canonical path is always under @b/.
     //
-    // REPL code may use the shorter @<name> spelling; the require adapter
-    // rewrites that spelling to @b/<name> before entering native require().
-    //
     // Example:
     //   lua_newtable(L);
     //   ... fill table ...
     //   requireSystem.registerBuiltinValue("json", -1);
     //
-    // After this, require("@b/json") returns that value directly.
-    // Outside the REPL, require("@json") can resolve to the same builtin only
-    // when there is no project alias or package with the same shorthand name.
+    // require("@b/json") selects this builtin directly. require("@json") uses
+    // normal alias/package lookup and may be ambiguous with another source.
     bool registerBuiltinValue(const QString &moduleName, int valueIndex = -1);
 
     // Clears the entire native require cache.
@@ -170,17 +160,17 @@ private:
         // nodes and synthetic roots. There is exactly one root per scope.
         QString rootPath;
 
-        // Installed-package logical name, for example "core" in @core/math.
+        // Installed-package logical name, for example "core" in core/math.
         // Empty for external modules.
         QString packageName;
 
-        // Logical builtin module path without the @b/ prefix. For example
+        // Logical builtin module path without the @b/ prefix, for example
         // "json" for @json or "qt/core" for @qt/core.
         QString builtinPath;
 
         // True when the node was entered through the explicit @s or @u host
-        // alias. Normal package shorthand deliberately keeps this false so
-        // its chunkname stays @<package>/... regardless of the physical store.
+        // alias. Normal package fallback keeps this false; chunknames still
+        // retain the actual source prefix to remain reversible.
         bool explicitSource = false;
     };
 
@@ -244,20 +234,15 @@ private:
     // can restore a module exactly even for externally supplied aliases.
     QHash<QString, Node> knownChunks_;
 
-    // Builtins are registered with Luau under @b/<name> so REPL lookups can use
-    // Luau's native registered-module fast path. The sets below mirror the
-    // registration names locally so non-REPL shorthand @<name> can be resolved
-    // intelligently without depending on Luau's private registry table.
+    // Builtins are registered with Luau under @b/<name>. These sets mirror the
+    // registration names locally so shorthand and ordinary package lookups can
+    // detect builtin namespaces without relying on Luau internals.
     QSet<QString> builtinModules_;
     QSet<QString> builtinNamespaces_;
 
     inline constexpr static const char *builtinRegistryKey() {
         return "_WING_LUAU_REQUIRE_BUILTINS";
     }
-
-    static QString builtinNameFromPath(const QString &path);
-
-    QString builtinPath(const QString &requested) const;
 
     static QString callerChunkname(lua_State *L);
 
@@ -289,8 +274,6 @@ private:
     bool isModuleNode(const Node &node) const;
 
     AliasSources findAliasSources(const QString &alias) const;
-
-    bool isUniqueShorthandSource(const Node &node) const;
 
     QString sourcePrefixForNode(const Node &node) const;
 
