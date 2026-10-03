@@ -2,7 +2,6 @@
 
 The following components are all third-party components used by the software. The **FORK** mark indicates that they have been deeply modified by the software author. If there is an arrow and open source license, all modified files comply with the open source license pointed by the arrow. If there is no mark, the original agreement is followed. Unless otherwise specified, **APGL-3.0** is only applied to the non-submodule (git-submodule) part of the official source repository.
 
-* [antlr4](https://github.com/antlr/antlr4) (BSD-3-Clause)
 * [BreezeStyle](https://github.com/Alexhuszagh/BreezeStyleSheets) (MIT, **FORK**)
 * [cpptrace](https://github.com/jeremy-rifkin/cpptrace) (MIT)
 * [CRaC](https://github.com/pstolarz/CRaC) (BSD-2-Clause)

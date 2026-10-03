@@ -13,9 +13,6 @@
 [submodule "WingPlugin"]
 	path = WingPlugin
 	url = git@github.com:Wing-summer/WingHexExplorer2-SDK.git
-[submodule "3rdparty/antlr4-cpp"]
-	path = 3rdparty/antlr4-cpp
-	url = git@github.com:Wing-summer/antlr4-cpp.git
 [submodule "3rdparty/CRaC"]
 	path = 3rdparty/CRaC
 	url = git@github.com:Wing-summer/CRaC.git

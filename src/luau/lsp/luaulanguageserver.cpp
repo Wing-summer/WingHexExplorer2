@@ -2830,7 +2830,7 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
             continue;
         }
 
-        const auto closing = ']' + match.captured(1) + ']';
+        const QString closing = ']' + match.captured(1) + ']';
         auto body = commentText.sliced(match.capturedLength());
         const auto closingPosition = body.lastIndexOf(closing);
         if (closingPosition != std::string::npos) {
@@ -2850,7 +2850,7 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
         }
 
         int indentation = -1;
-        for (const auto &line : lines) {
+        for (const auto &line : std::as_const(lines)) {
             if (line.isEmpty()) {
                 continue;
             }

@@ -18,364 +18,535 @@
 #include "gotowidget.h"
 #include "ui_gotowidget.h"
 
-#include "grammar/NumCal/NumCalBaseVisitor.h"
-#include "grammar/NumCal/NumCalLexer.h"
-#include "grammar/NumCal/NumCalParser.h"
-
 #include <QShortcut>
 
-class Calculator : public NumCalBaseVisitor {
+Q_STATIC_ASSERT_X(
+    QT_VERSION >= QT_VERSION_CHECK(6, 4, 0),
+    "If you want to support Qt version lower than 6.4.0, You should "
+    "implement '0b' prefix integer converstion on your own!");
+
+class Calculator {
 public:
-    void eval(const QString &exp) {
-        if (exp.isEmpty()) {
-            lastPos = GotoWidget::SEEKPOS::Invaild;
-            lastAddr = 0;
+    using Value = quint64;
+
+    void eval(const QString &expression) {
+        reset();
+
+        if (expression.isEmpty()) {
             return;
         }
 
-        antlr4::ANTLRInputStream input(exp.toStdString());
-
-        NumCalLexer lexer(&input);
-        antlr4::CommonTokenStream tokens(&lexer);
-
-        NumCalParser parser(&tokens);
-        parser.removeErrorListeners();
-        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-
-        try {
-            visit(parser.entryExpression());
-        } catch (...) {
+        Parser parser(expression);
+        Value value = 0;
+        GotoWidget::SEEKPOS seekPos = GotoWidget::SEEKPOS::Start;
+        if (!parser.parse(value, seekPos)) {
+            return;
         }
+        lastPos = seekPos;
+        lastAddr = value;
     }
 
 public:
-    virtual std::any
-    visitEntryExpression(NumCalParser::EntryExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            lastPos = GotoWidget::SEEKPOS::Invaild;
-            lastAddr = 0;
-            return defaultResult();
-        }
-
-        if (ctx->prefixGoto() == nullptr) {
-            lastPos = GotoWidget::SEEKPOS::Start;
-        } else {
-            auto prefix = ctx->prefixGoto();
-            if (prefix->Plus()) {
-                lastPos = GotoWidget::SEEKPOS::RelativeAdd;
-            } else if (prefix->Minus()) {
-                lastPos = GotoWidget::SEEKPOS::RelativeMin;
-            } else if (prefix->LessThan()) {
-                lastPos = GotoWidget::SEEKPOS::End;
-            } else {
-                lastPos = GotoWidget::SEEKPOS::Invaild;
-                lastAddr = 0;
-                return defaultResult();
-            }
-        }
-
-        if (ctx->IntegerConstant()) {
-            auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (r) {
-                lastAddr = r.value();
-            } else {
-                lastPos = GotoWidget::SEEKPOS::Invaild;
-                lastAddr = 0;
-            }
-        } else {
-            auto r = visitAssignmentExpression(ctx->assignmentExpression());
-            if (r.has_value()) {
-                auto addr = std::any_cast<qint64>(r);
-                if (addr < 0) {
-                    lastPos = GotoWidget::SEEKPOS::Invaild;
-                    lastAddr = 0;
-                }
-                lastAddr = addr;
-            } else {
-                lastPos = GotoWidget::SEEKPOS::Invaild;
-                lastAddr = 0;
-            }
-        }
-
-        return defaultResult();
-    }
-
-public:
-    qint64 lastAddr = 0;
+    Value lastAddr = 0;
     GotoWidget::SEEKPOS lastPos = GotoWidget::SEEKPOS::Invaild;
 
-public:
-    std::any
-    visitCastExpression(NumCalParser::CastExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
+private:
+    static constexpr int MaxShift = 64;
 
-        if (ctx->IntegerConstant()) {
-            auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (r) {
-                return r.value();
-            }
-        } else if (ctx->unaryExpression()) {
-            return visitUnaryExpression(ctx->unaryExpression());
-        }
-
-        return defaultResult();
-    }
-
-    std::any
-    visitUnaryExpression(NumCalParser::UnaryExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        auto op = ctx->unaryOperator();
-        auto r = visitCastExpression(ctx->castExpression());
-        if (r.has_value()) {
-            auto v = std::any_cast<qint64>(r);
-            if (op->Minus()) {
-                return -v;
-            } else if (op->Plus()) {
-                return +v;
-            } else if (op->Tilde()) {
-                return ~v;
-            } else {
-                return defaultResult();
-            }
-        }
-
-        return visitChildren(ctx);
-    }
-
-    std::any visitInclusiveOrExpression(
-        NumCalParser::InclusiveOrExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        qint64 ret = 0;
-        for (const auto &v : ctx->exclusiveOrExpression()) {
-            auto r = visitExclusiveOrExpression(v);
-            if (r.has_value()) {
-                auto rr = std::any_cast<qint64>(r);
-                ret |= rr;
-            } else {
-                // error
-                return defaultResult();
-            }
-        }
-        return ret;
-    }
-
-    std::any visitAssignmentExpression(
-        NumCalParser::AssignmentExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        if (ctx->IntegerConstant()) {
-            auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (r) {
-                return r.value();
-            }
-        } else if (ctx->inclusiveOrExpression()) {
-            return visitInclusiveOrExpression(ctx->inclusiveOrExpression());
-        }
-
-        return defaultResult();
-    }
-
-    std::any visitExclusiveOrExpression(
-        NumCalParser::ExclusiveOrExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        qint64 v = 0;
-        for (const auto &ex : ctx->andExpression()) {
-            auto r = visitAndExpression(ex);
-            if (r.has_value()) {
-                auto rv = std::any_cast<qint64>(r);
-                v ^= rv;
-            } else {
-                return defaultResult();
-            }
-        }
-
-        return v;
-    }
-
-    std::any
-    visitAndExpression(NumCalParser::AndExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        quint64 v = std::numeric_limits<quint64>::max();
-        for (const auto &ex : ctx->shiftExpression()) {
-            auto r = visitShiftExpression(ex);
-            if (r.has_value()) {
-                auto rv = std::any_cast<qint64>(r);
-                v &= quint64(rv);
-            } else {
-                return defaultResult();
-            }
-        }
-        return qint64(v);
-    }
-
-    std::any
-    visitShiftExpression(NumCalParser::ShiftExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        auto data = ctx->additiveExpression();
-        auto total = data.size();
-
-        qint64 ret = 0;
-        auto retv = visitAdditiveExpression(data.front());
-        if (retv.has_value()) {
-            ret = std::any_cast<qint64>(retv);
-        } else {
-            return defaultResult();
-        }
-
-        for (size_t i = 1; i < total; ++i) {
-            auto op = ctx->children[2 * i - 1]->getText();
-            auto r = visitAdditiveExpression(data.at(i));
-            if (op == "<<") {
-                if (r.has_value()) {
-                    auto rv = std::any_cast<qint64>(r);
-                    ret <<= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else if (op == ">>") {
-                if (r.has_value()) {
-                    auto rv = std::any_cast<qint64>(r);
-                    ret >>= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else {
-                return defaultResult();
-            }
-        }
-
-        return ret;
-    }
-
-    std::any visitAdditiveExpression(
-        NumCalParser::AdditiveExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        auto data = ctx->multiplicativeExpression();
-        auto total = data.size();
-
-        qint64 ret = 0;
-        auto retv = visitMultiplicativeExpression(data.front());
-        if (retv.has_value()) {
-            ret = std::any_cast<qint64>(retv);
-        } else {
-            return defaultResult();
-        }
-
-        for (size_t i = 1; i < total; i++) {
-            auto r = visitMultiplicativeExpression(data.at(i));
-            auto op = ctx->children[2 * i - 1]->getText();
-            if (r.has_value()) {
-                auto rv = std::any_cast<qint64>(r);
-                if (op == "+") {
-                    ret += rv;
-                } else if (op == "-") {
-                    ret -= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else {
-                return defaultResult();
-            }
-        }
-
-        return ret;
-    }
-
-    std::any visitMultiplicativeExpression(
-        NumCalParser::MultiplicativeExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        auto data = ctx->castExpression();
-        auto total = data.size();
-
-        qint64 ret = 0;
-        auto retv = visitCastExpression(data.front());
-        if (retv.has_value()) {
-            ret = std::any_cast<qint64>(retv);
-        } else {
-            return defaultResult();
-        }
-
-        for (size_t i = 1; i < total; i++) {
-            auto r = visitCastExpression(data.at(i));
-            auto op = ctx->children[2 * i - 1]->getText();
-            if (r.has_value()) {
-                auto rv = std::any_cast<qint64>(r);
-                if (op == "*") {
-                    ret *= rv;
-                } else if (op == "/") {
-                    ret /= rv;
-                } else if (op == "%") {
-                    ret %= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else {
-                return defaultResult();
-            }
-        }
-
-        return ret;
-    }
-
-    std::any visitPrimaryExpression(
-        NumCalParser::PrimaryExpressionContext *ctx) override {
-        if (ctx == nullptr) {
-            return defaultResult();
-        }
-
-        if (ctx->IntegerConstant()) {
-            auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (r) {
-                return r.value();
-            }
-        } else if (ctx->assignmentExpression()) {
-            return visitAssignmentExpression(ctx->assignmentExpression());
-        }
-
-        return defaultResult();
+    void reset() {
+        lastAddr = 0;
+        lastPos = GotoWidget::SEEKPOS::Invaild;
     }
 
 private:
-    std::optional<qint64> parseIntegerConstant(const std::string &text) {
-        Q_STATIC_ASSERT_X(
-            QT_VERSION >= QT_VERSION_CHECK(6, 4, 0),
-            "If you want to support Qt version lower than 6.4.0, You should "
-            "implement '0b' prefix integer converstion on your own!");
+    class Parser {
+    public:
+        explicit Parser(QStringView text) : text_(text) {}
 
-        bool b;
-        auto ct = QString::fromStdString(text);
-        auto num = ct.toLongLong(&b, 0);
-        if (b) {
-            return num;
-        } else {
-            return std::nullopt;
+        bool parse(Value &result, GotoWidget::SEEKPOS &seekPos) {
+            skipSpaces();
+            if (atEnd()) {
+                return false;
+            }
+
+            /*
+             * entryExpression:
+             *
+             *   prefixGoto? IntegerConstant EOF
+             *
+             *   (prefixGoto Colon)?
+             *       assignmentExpression EOF
+             *
+             *   prefixGoto '[' assignmentExpression ']'
+             *
+             *   prefixGoto '(' assignmentExpression ')'
+             */
+            const auto prefix = parsePrefix();
+            if (prefix != Prefix::None) {
+                seekPos = toSeekPos(prefix);
+                skipSpaces();
+
+                /*
+                 * +123 / -123 / <123
+                 */
+                if (isNumberStart()) {
+                    if (!parseNumber(result)) {
+                        return false;
+                    }
+                    skipSpaces();
+                    return atEnd();
+                }
+
+                /*
+                 * +:expr / -:expr / <:expr
+                 */
+                if (consume(':')) {
+                    if (!parseAssignmentExpression(result)) {
+                        return false;
+                    }
+                    skipSpaces();
+                    return atEnd();
+                }
+
+                /*
+                 * +[expr] / -[expr] / <[expr]
+                 */
+                if (consume('[')) {
+                    if (!parseAssignmentExpression(result)) {
+                        return false;
+                    }
+                    skipSpaces();
+                    if (!consume(']')) {
+                        return false;
+                    }
+                    skipSpaces();
+                    return atEnd();
+                }
+
+                /*
+                 * +(expr) / -(expr) / <(expr)
+                 */
+                if (consume('(')) {
+                    if (!parseAssignmentExpression(result)) {
+                        return false;
+                    }
+                    skipSpaces();
+                    if (!consume(')')) {
+                        return false;
+                    }
+                    skipSpaces();
+                    return atEnd();
+                }
+                return false;
+            }
+
+            /*
+             *   assignmentExpression EOF
+             */
+            seekPos = GotoWidget::SEEKPOS::Start;
+            if (!parseAssignmentExpression(result)) {
+                return false;
+            }
+            skipSpaces();
+            return atEnd();
         }
-    }
+
+    private:
+        enum class Prefix : quint8 {
+            None,
+            Add,
+            Sub,
+            End,
+        };
+
+        QStringView text_;
+        qsizetype pos_ = 0;
+
+    private:
+        bool atEnd() const noexcept { return pos_ >= text_.size(); }
+
+        QChar current() const noexcept {
+            return atEnd() ? QChar() : text_[pos_];
+        }
+
+        QChar peek(qsizetype offset) const noexcept {
+            const qsizetype index = pos_ + offset;
+            return index < text_.size() ? text_[index] : QChar();
+        }
+
+        void skipSpaces() noexcept {
+            while (!atEnd() && current().isSpace()) {
+                ++pos_;
+            }
+        }
+
+        bool consume(QChar ch) noexcept {
+            if (!atEnd() && current() == ch) {
+                ++pos_;
+                return true;
+            }
+            return false;
+        }
+
+        bool consumeOperator(QStringView op) noexcept {
+            if (pos_ + op.size() > text_.size()) {
+                return false;
+            }
+
+            if (text_.sliced(pos_, op.size()) == op) {
+                pos_ += op.size();
+                return true;
+            }
+            return false;
+        }
+
+        Prefix parsePrefix() noexcept {
+            if (atEnd()) {
+                return Prefix::None;
+            }
+            switch (current().unicode()) {
+            case '+':
+                ++pos_;
+                return Prefix::Add;
+            case '-':
+                ++pos_;
+                return Prefix::Sub;
+            case '<':
+                ++pos_;
+                return Prefix::End;
+            default:
+                return Prefix::None;
+            }
+        }
+
+        static GotoWidget::SEEKPOS toSeekPos(Prefix prefix) {
+            switch (prefix) {
+            case Prefix::Add:
+                return GotoWidget::SEEKPOS::RelativeAdd;
+            case Prefix::Sub:
+                return GotoWidget::SEEKPOS::RelativeMin;
+            case Prefix::End:
+                return GotoWidget::SEEKPOS::End;
+            case Prefix::None:
+                return GotoWidget::SEEKPOS::Start;
+            }
+            return GotoWidget::SEEKPOS::Invaild;
+        }
+
+    private:
+        /*
+         * assignmentExpression
+         *     : inclusiveOrExpression
+         */
+        bool parseAssignmentExpression(Value &result) {
+            return parseInclusiveOrExpression(result);
+        }
+
+        /*
+         * inclusiveOrExpression
+         *     : exclusiveOrExpression
+         *       ('|' exclusiveOrExpression)*
+         */
+        bool parseInclusiveOrExpression(Value &result) {
+            if (!parseExclusiveOrExpression(result))
+                return false;
+
+            while (true) {
+                skipSpaces();
+                if (!consume('|')) {
+                    break;
+                }
+                Value rhs = 0;
+                if (!parseExclusiveOrExpression(rhs)) {
+                    return false;
+                }
+                result |= rhs;
+            }
+            return true;
+        }
+
+        /*
+         * exclusiveOrExpression
+         *     : andExpression
+         *       ('^' andExpression)*
+         */
+        bool parseExclusiveOrExpression(Value &result) {
+            if (!parseAndExpression(result)) {
+                return false;
+            }
+            while (true) {
+                skipSpaces();
+                if (!consume('^')) {
+                    break;
+                }
+                Value rhs = 0;
+                if (!parseAndExpression(rhs)) {
+                    return false;
+                }
+                result ^= rhs;
+            }
+            return true;
+        }
+
+        /*
+         * andExpression
+         *     : shiftExpression
+         *       ('&' shiftExpression)*
+         */
+        bool parseAndExpression(Value &result) {
+            if (!parseShiftExpression(result)) {
+                return false;
+            }
+            while (true) {
+                skipSpaces();
+                if (!consume('&')) {
+                    break;
+                }
+                Value rhs = 0;
+                if (!parseShiftExpression(rhs)) {
+                    return false;
+                }
+                result &= rhs;
+            }
+
+            return true;
+        }
+
+        /*
+         * shiftExpression
+         *     : additiveExpression
+         *       (('<<' | '>>') additiveExpression)*
+         */
+        bool parseShiftExpression(Value &result) {
+            if (!parseAdditiveExpression(result)) {
+                return false;
+            }
+            while (true) {
+                skipSpaces();
+                if (consumeOperator(QStringLiteral("<<"))) {
+                    Value rhs = 0;
+                    if (!parseAdditiveExpression(rhs)) {
+                        return false;
+                    }
+                    if (rhs >= MaxShift) {
+                        return false;
+                    }
+                    result <<= rhs;
+                    continue;
+                }
+
+                if (consumeOperator(u">>")) {
+                    Value rhs = 0;
+                    if (!parseAdditiveExpression(rhs)) {
+                        return false;
+                    }
+                    if (rhs >= MaxShift) {
+                        return false;
+                    }
+                    result >>= rhs;
+                    continue;
+                }
+
+                break;
+            }
+
+            return true;
+        }
+
+        /*
+         * additiveExpression
+         *     : multiplicativeExpression
+         *       (('+' | '-')
+         *        multiplicativeExpression)*
+         */
+        bool parseAdditiveExpression(Value &result) {
+            if (!parseMultiplicativeExpression(result)) {
+                return false;
+            }
+            while (true) {
+                skipSpaces();
+                if (consume('+')) {
+                    Value rhs = 0;
+                    if (!parseMultiplicativeExpression(rhs)) {
+                        return false;
+                    }
+                    Value value = 0;
+                    if (qAddOverflow(result, rhs, &value)) {
+                        return false;
+                    }
+                    result = value;
+                    continue;
+                }
+
+                if (consume('-')) {
+                    Value rhs = 0;
+                    if (!parseMultiplicativeExpression(rhs)) {
+                        return false;
+                    }
+                    Value value = 0;
+                    if (qSubOverflow(result, rhs, &value)) {
+                        return false;
+                    }
+                    result = value;
+                    continue;
+                }
+
+                break;
+            }
+
+            return true;
+        }
+
+        /*
+         * multiplicativeExpression
+         *     : unaryExpression
+         *       (('*' | '/' | '%') unaryExpression)*
+         */
+        bool parseMultiplicativeExpression(Value &result) {
+            if (!parseUnaryExpression(result)) {
+                return false;
+            }
+            while (true) {
+                skipSpaces();
+                if (consume('*')) {
+                    Value rhs = 0;
+                    if (!parseUnaryExpression(rhs)) {
+                        return false;
+                    }
+                    Value value = 0;
+                    if (qMulOverflow(result, rhs, &value)) {
+                        return false;
+                    }
+                    result = value;
+                    continue;
+                }
+                if (consume('/')) {
+                    Value rhs = 0;
+                    if (!parseUnaryExpression(rhs)) {
+                        return false;
+                    }
+                    if (rhs == 0) {
+                        return false;
+                    }
+                    result /= rhs;
+                    continue;
+                }
+
+                if (consume('%')) {
+                    Value rhs = 0;
+                    if (!parseUnaryExpression(rhs)) {
+                        return false;
+                    }
+                    if (rhs == 0) {
+                        return false;
+                    }
+                    result %= rhs;
+                    continue;
+                }
+
+                break;
+            }
+
+            return true;
+        }
+
+        /*
+         * unaryExpression
+         *
+         *     ~ unaryExpression
+         *     primaryExpression
+         */
+        bool parseUnaryExpression(Value &result) {
+            skipSpaces();
+            if (consume('~')) {
+                if (!parseUnaryExpression(result)) {
+                    return false;
+                }
+                result = ~result;
+                return true;
+            }
+            return parsePrimaryExpression(result);
+        }
+
+        /*
+         * primaryExpression
+         *
+         *     IntegerConstant
+         *     '(' assignmentExpression ')'
+         */
+        bool parsePrimaryExpression(Value &result) {
+            skipSpaces();
+            if (consume('(')) {
+                if (!parseAssignmentExpression(result)) {
+                    return false;
+                }
+                skipSpaces();
+                if (!consume(')')) {
+                    return false;
+                }
+                return true;
+            }
+
+            return parseNumber(result);
+        }
+
+        /*
+         * IntegerConstant
+         */
+        bool parseNumber(Value &result) {
+            skipSpaces();
+            if (!isNumberStart()) {
+                return false;
+            }
+            const qsizetype begin = pos_;
+            while (!atEnd()) {
+                const QChar ch = current();
+                if (ch.isSpace() || ch == '(' || ch == ')' || ch == '[' ||
+                    ch == ']' || ch == ':' || isOperatorCharacter(ch)) {
+                    break;
+                }
+                ++pos_;
+            }
+            if (begin == pos_) {
+                return false;
+            }
+            const auto token = text_.sliced(begin, pos_ - begin);
+            bool ok = false;
+            const Value value = token.toULongLong(&ok, 0);
+            if (!ok) {
+                return false;
+            }
+            result = value;
+            return true;
+        }
+
+        bool isNumberStart() const noexcept {
+            if (atEnd()) {
+                return false;
+            }
+            const QChar ch = current();
+            return ch.isDigit();
+        }
+
+        static bool isOperatorCharacter(QChar ch) noexcept {
+            switch (ch.unicode()) {
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '%':
+            case '&':
+            case '|':
+            case '^':
+            case '<':
+            case '>':
+            case '~':
+                return true;
+            default:
+                return false;
+            }
+        }
+    };
 };
 
 GotoWidget::GotoWidget(QWidget *parent)
@@ -436,81 +607,60 @@ qsizetype GotoWidget::convert2Pos(const QString &value, SEEKPOS &ps,
     Calculator cal;
     cal.eval(value);
 
-    // you should ensure return value is origin position if invalid
+    const auto origin = isline ? m_rowBeforeJump : m_oldFileOffsetBeforeJump;
+    if (cal.lastPos == SEEKPOS::Invaild) {
+        ps = SEEKPOS::Invaild;
+        return origin;
+    }
 
-    qsizetype res = cal.lastAddr;
-    ps = cal.lastPos;
+    const auto offset = cal.lastAddr;
+    const auto maximum =
+        isline ? quint64(m_maxFilelines) : quint64(m_maxFileBytes);
+    const auto base =
+        isline ? quint64(m_rowBeforeJump) : quint64(m_oldFileOffsetBeforeJump);
+
+    quint64 result = 0;
     switch (cal.lastPos) {
-    case SEEKPOS::Invaild:
-        res = isline ? qsizetype(m_rowBeforeJump)
-                     : qsizetype(m_oldFileOffsetBeforeJump);
-        break;
-    case SEEKPOS::Start:
-        if (res < 0 || quint64(res) > (isline ? quint64(m_maxFilelines)
-                                              : m_maxFileBytes)) {
+    case SEEKPOS::Start: {
+        if (offset > maximum) {
             ps = SEEKPOS::Invaild;
-            res = isline ? qsizetype(m_rowBeforeJump)
-                         : qsizetype(m_oldFileOffsetBeforeJump);
+            return origin;
         }
-        break;
-    case SEEKPOS::End:
-        if (isline) {
-            if (m_maxFilelines - res < 0) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res = m_maxFilelines - res;
-            }
-        } else {
-            if (qlonglong(m_maxFileBytes) - res < 0) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res = qlonglong(m_maxFileBytes) - res;
-            }
-        }
-        break;
-    case SEEKPOS::RelativeAdd:
-        if (isline) {
-            if (res + m_rowBeforeJump > m_maxFilelines) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res += m_rowBeforeJump;
-            }
-        } else {
-            if (res + m_oldFileOffsetBeforeJump > m_maxFileBytes) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res += m_oldFileOffsetBeforeJump;
-            }
-        }
-        break;
-    case SEEKPOS::RelativeMin:
-        if (isline) {
-            if (res - m_rowBeforeJump < 0) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res -= m_rowBeforeJump;
-            }
-        } else {
-            if (qlonglong(m_oldFileOffsetBeforeJump) - res < 0) {
-                ps = SEEKPOS::Invaild;
-                res = isline ? qsizetype(m_rowBeforeJump)
-                             : qsizetype(m_oldFileOffsetBeforeJump);
-            } else {
-                res = qlonglong(m_oldFileOffsetBeforeJump) - res;
-            }
-        }
+        result = offset;
         break;
     }
 
-    return res;
+    case SEEKPOS::End: {
+        if (offset > maximum) {
+            ps = SEEKPOS::Invaild;
+            return origin;
+        }
+        result = maximum - offset;
+        break;
+    }
+
+    case SEEKPOS::RelativeAdd: {
+        if (base > maximum || offset > maximum - base) {
+            ps = SEEKPOS::Invaild;
+            return origin;
+        }
+        result = base + offset;
+        break;
+    }
+
+    case SEEKPOS::RelativeMin: {
+        if (offset > base) {
+            ps = SEEKPOS::Invaild;
+            return origin;
+        }
+        result = base - offset;
+        break;
+    }
+
+    case SEEKPOS::Invaild:
+        ps = SEEKPOS::Invaild;
+        return origin;
+    }
+    ps = cal.lastPos;
+    return qsizetype(result);
 }

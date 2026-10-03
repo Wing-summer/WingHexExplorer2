@@ -119,26 +119,6 @@ target_compile_definitions(
 
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 
-set(DISABLE_WARNINGS ON)
-set(ANTLR4_INSTALL OFF)
-set(ANTLR_BUILD_CPP_TESTS OFF)
-set(ANTLR_BUILD_SHARED OFF)
-set(ANTLR_BUILD_STATIC ON)
-set(WITH_STATIC_CRT OFF)
-add_subdirectory(3rdparty/antlr4-cpp)
-
-set(NUMCAL_GRAMMAR
-    src/grammar/NumCal/NumCalBaseVisitor.cpp
-    src/grammar/NumCal/NumCalBaseVisitor.h
-    src/grammar/NumCal/NumCalLexer.cpp
-    src/grammar/NumCal/NumCalLexer.h
-    src/grammar/NumCal/NumCalParser.cpp
-    src/grammar/NumCal/NumCalParser.h
-    src/grammar/NumCal/NumCalVisitor.cpp
-    src/grammar/NumCal/NumCalVisitor.h)
-
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR})
-
 # these settings commted out because cffi-luau will add luau subdirectory automatically
 # set(LUAU_BUILD_CLI OFF)
 # set(LUAU_BUILD_TESTS OFF)
@@ -522,7 +502,6 @@ endforeach()
 add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
 
 set(PROJECT_SOURCES
-    ${ANTLR4_GRAMMAR}
     ${CLASS_SRC}
     ${CONTROL_SRC}
     ${LUAU_MOD_SRC}
@@ -590,7 +569,6 @@ target_link_libraries(
             Luau.Require
             LuaBridge
             cffi
-            antlr4_static
             qtadvanceddocking-qt6
             QHexView
             WingCodeEdit

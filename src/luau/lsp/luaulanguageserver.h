@@ -197,6 +197,7 @@ private:
     /// Get all moonwave-style documentation comments
     /// Performs transformations so that the comments are normalised to lines
     /// inside of it (i.e., trimming whitespace, removing comment start/end)
+    void extracted(QStringList &lines, int &indentation);
     QStringList getComments(const Luau::ModuleName &moduleName,
                             const Luau::Location &node);
 

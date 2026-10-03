@@ -382,9 +382,9 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
 }
 
 void EditorView::triggerGoto() {
-    m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
+    m_goto->activeInput(m_hex->currentRow(), m_hex->currentColumn(),
                         m_hex->currentOffset(), m_hex->documentBytes(),
-                        int(m_hex->documentLines()));
+                        m_hex->documentLines());
 }
 
 ErrFile EditorView::newFile(size_t index) {
