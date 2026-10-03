@@ -137,17 +137,7 @@ set(NUMCAL_GRAMMAR
     src/grammar/NumCal/NumCalVisitor.cpp
     src/grammar/NumCal/NumCalVisitor.h)
 
-set(SNIPPET_GRAMMAR
-    src/grammar/Snippet/SnippetBaseVisitor.cpp
-    src/grammar/Snippet/SnippetBaseVisitor.h
-    src/grammar/Snippet/SnippetLexer.cpp
-    src/grammar/Snippet/SnippetLexer.h
-    src/grammar/Snippet/SnippetParser.cpp
-    src/grammar/Snippet/SnippetParser.h
-    src/grammar/Snippet/SnippetVisitor.cpp
-    src/grammar/Snippet/SnippetVisitor.h)
-
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${SNIPPET_GRAMMAR})
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR})
 
 # these settings commted out because cffi-luau will add luau subdirectory automatically
 # set(LUAU_BUILD_CLI OFF)
@@ -276,10 +266,8 @@ set(CONTROL_SRC
 set(CLASS_SRC
     src/class/appmanager.cpp
     src/class/appmanager.h
-    src/class/ascompletion.cpp
-    src/class/ascompletion.h
-    src/class/asconsolecompletion.cpp
-    src/class/asconsolecompletion.h
+    src/class/luaucompletion.cpp
+    src/class/luaucompletion.h
     src/class/changedstringlist.cpp
     src/class/changedstringlist.h
     src/class/codeinfotip.cpp
@@ -312,7 +300,6 @@ set(CLASS_SRC
     src/class/layoutmanager.h
     src/class/logger.cpp
     src/class/logger.h
-    src/class/lsp.h
     src/class/lspeditorinterface.cpp
     src/class/lspeditorinterface.h
     src/class/mutisavebuttondelegate.cpp
@@ -358,6 +345,19 @@ set(CLASS_SRC
     src/class/workspacemanager.cpp
     src/class/workspacemanager.h)
 
+set(LUAU_LS
+    src/luau/lsp/attachcommentsvisitor.cpp
+    src/luau/lsp/attachcommentsvisitor.h
+    src/luau/lsp/findnodetype.cpp
+    src/luau/lsp/findnodetype.h
+    src/luau/lsp/luaulanguageserver.cpp
+    src/luau/lsp/luaulanguageserver.h
+    src/luau/lsp/semantictokensvisitor.cpp
+    src/luau/lsp/semantictokensvisitor.h
+    src/luau/lsp/lsp.h
+    src/luau/lsp/typehelpers.cpp
+    src/luau/lsp/typehelpers.h)
+
 set(LUAU_MOD_SRC
     src/luau/luauutil.h
     src/luau/luauutil.cpp
@@ -365,6 +365,7 @@ set(LUAU_MOD_SRC
     src/luau/luauformatter.cpp
     src/luau/wingluaurequire.h
     src/luau/wingluaurequire.cpp
+    ${LUAU_LS}
     src/luau/luaufile.h
     src/luau/luaufile.cpp
     src/luau/breakpoint.h

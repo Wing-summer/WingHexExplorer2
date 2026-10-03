@@ -65,11 +65,11 @@ ObjTreeWidget::ObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
 QTreeWidgetItem *ObjTreeWidget::createObjNode(const CodeInfoTip &node,
                                               QTreeWidgetItem *parent) {
     Q_ASSERT(parent);
-    QStringList contents{node.name, node.comment()};
+    QStringList contents{node.label, node.documentation()};
     auto c = new QTreeWidgetItem(contents);
     c->setToolTip(0, contents.at(0));
     c->setToolTip(1, contents.at(1));
-    c->setIcon(0, CodeInfoTip::getDisplayIcon(node.type));
+    c->setIcon(0, CodeInfoTip::getDisplayIcon(node.kind));
     parent->addChild(c);
     return c;
 }

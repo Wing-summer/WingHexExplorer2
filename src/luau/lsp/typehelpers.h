@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -15,25 +15,26 @@
 ** =============================================================================
 */
 
-#ifndef ASCONSOLECOMPLETION_H
-#define ASCONSOLECOMPLETION_H
+#ifndef LUAU_LSP_TYPEHELPERS_H
+#define LUAU_LSP_TYPEHELPERS_H
 
-#include "ascompletion.h"
+#include "Luau/Type.h"
 
-class ScriptingConsole;
+#include <qobject.h>
+#include <vector>
 
-class AsConsoleCompletion : public AsCompletion {
-    Q_OBJECT
-public:
-    explicit AsConsoleCompletion(ScriptingConsole *p);
-    virtual ~AsConsoleCompletion() = default;
-
-protected:
-    virtual QList<CodeInfoTip> parseMarcos() override;
-    virtual LspEditorInterace *getEditor() const override;
-
-private:
-    LspEditorInterace *_console;
+struct PropLookup {
+    Luau::TypeId baseTableTy;
+    Luau::Property property;
 };
 
-#endif // ASCONSOLECOMPLETION_H
+namespace LuauLsp {
+
+std::vector<PropLookup> lookupProp(const Luau::TypeId &parentType,
+                                   const Luau::Name &name);
+
+bool isMetamethod(const QString &name);
+
+} // namespace LuauLsp
+
+#endif // LUAU_LSP_TYPEHELPERS_H

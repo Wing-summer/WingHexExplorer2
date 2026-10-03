@@ -350,20 +350,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Input);
 
-                // TODO LSP
-                // then start the server
-                // if (lsp.start()) {
-                //     auto ret = lsp.initializeSync();
-                //     if (!ret.isNull()) {
-                //         lsp.initialized();
-                //         connect(&lsp, &AngelLsp::serverExited, this, [this]()
-                //         {
-                //             Toast::toast(
-                //                 this,
-                //                 NAMEICONRES(QStringLiteral("angellsp")),
-                //                 tr("AngelLspExited"));
-                //         });
-
                 m_scriptConsole->enableLSP();
             }
 
@@ -4566,12 +4552,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     if (!try2CloseHexViews(views)) {
         event->ignore();
     }
-
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     lsp.blockSignals(true);
-    //     lsp.shutdownAndExit();
-    // }
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());

@@ -27,13 +27,14 @@
 #include "define.h"
 #include "lua.h"
 #include "lualib.h"
+#include "luau/CodeGen/include/Luau/CodeGenOptions.h"
+#include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauinspector.h"
 #include "luau/luauutil.h"
-
-#include "LuaBridge/LuaBridge.h"
-#include "luau/CodeGen/include/Luau/CodeGenOptions.h"
 #include "luau/wingluaurequire.h"
 #include "utilities.h"
+
+#include "LuaBridge/LuaBridge.h"
 
 #include <QClipboard>
 #include <QMimeData>
@@ -149,6 +150,16 @@ bool ScriptMachine::init() {
     _debugger->pushThreadStack(_main);
 
     _regcalls.resize(ConsoleModeCount, {});
+
+    // setup language server
+    auto &lsp = LuauLanguageServer::instance();
+    LuauLanguageServer::InitializationOptions opts;
+    opts.defaultMode = Luau::Mode::Nonstrict;
+    const auto &ropts = _luaReq.options();
+    opts.readCfgRoots = {ropts.userRoot, ropts.systemRoot};
+    // TODO opts.definitionsFiles;
+    lsp.initialize(opts);
+
     _inited = true;
     return true;
 }

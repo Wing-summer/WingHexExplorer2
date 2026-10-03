@@ -17,9 +17,10 @@
 
 #include "editorlspevent.h"
 
-// #include "angellsp.h"
+#include "luau/lsp/luaulanguageserver.h"
 
 #include <QJsonArray>
+#include <QTextDocument>
 #include <QToolTip>
 
 bool EditorLspEvent::processEvent(QEvent *event, LspEditorInterace *editor) {
@@ -28,77 +29,89 @@ bool EditorLspEvent::processEvent(QEvent *event, LspEditorInterace *editor) {
         auto e = static_cast<QKeyEvent *>(event);
         if (e->modifiers() == Qt::NoModifier) {
             auto key = e->key();
-            if (key == Qt::Key_Comma) {
-                // auto &lsp = AngelLsp::instance();
-                // if (!lsp.isActive()) {
-                //     return false;
-                // }
-
-                // auto url = editor->lspFileNameURL();
-                // auto tc = editor->currentPosition();
-                // auto line = tc.blockNumber;
-                // auto character = tc.positionInBlock;
-
-                // editor->sendDocChange();
-                // while (editor->isContentLspUpdated()) {
-                //     // wait for a moment
-                // }
-
-                // auto r = lsp.requestSignatureHelp(url, line, character);
-                // auto sigs = r["signatures"].toArray();
-                // QList<WingSignatureTooltip::Signature> ss;
-                // for (const auto &&sig : std::as_const(sigs)) {
-                //     QJsonValue js = sig;
-                //     WingSignatureTooltip::Signature s;
-                //     s.label = js["label"].toString();
-                //     s.doc = js["documentation"].toString();
-                //     ss.append(s);
-                // }
-                // editor->showFunctionTip(ss);
+            if (key == Qt::Key_Comma || key == Qt::Key_ParenLeft) {
+                showSignatureHelp(editor);
             } else if (key == Qt::Key_Semicolon) {
                 editor->clearFunctionTip();
             }
         }
     } else if (type == QEvent::ToolTip) {
-        // auto &lsp = AngelLsp::instance();
-        // if (!lsp.isActive()) {
-        //     return false;
-        // }
+        auto uri = editor->lspFileNameURL();
+        if (uri.isEmpty()) {
+            return false;
+        }
 
-        // auto helpEvent = static_cast<QHelpEvent *>(event);
-        // auto eptr = editor->editorPtr();
-        // auto point = helpEvent->pos();
-        // point.setX(point.x() - eptr->lineMarginWidth());
-        // auto cursor = eptr->cursorForPosition(point);
-        // auto pos = editor->cursorPosition(cursor);
+        auto helpEvent = static_cast<QHelpEvent *>(event);
+        auto point = helpEvent->pos();
+        auto eptr = editor->editorPtr();
+        point.setX(point.x() - eptr->lineMarginWidth());
+        auto cursor = eptr->cursorForPosition(point);
+        auto pos = editor->cursorPosition(cursor);
 
-        // auto url = editor->lspFileNameURL();
-        // auto line = pos.blockNumber;
-        // auto character = pos.positionInBlock;
+        auto line = pos.blockNumber;
+        auto character = pos.positionInBlock;
+        if (pos.blockNumber < 0 || pos.positionInBlock < 0) {
+            return false;
+        }
 
-        // auto r = lsp.requestHover(url, line, character);
-        // if (!r.isNull()) {
-        //     auto c = r["contents"];
-        //     if (!c.isNull()) {
-        //         auto v = c["value"].toString();
-        //         if (v.isEmpty()) {
-        //             QToolTip::hideText();
-        //         } else {
-        //             QString text;
-        //             if (c["kind"].toString() == QLatin1String("markdown")) {
-        //                 QTextDocument doc;
-        //                 doc.setMarkdown(v);
-        //                 text = doc.toHtml();
-        //             } else {
-        //                 text = v;
-        //             }
-        //             QToolTip::showText(helpEvent->globalPos(), text);
-        //         }
-        //     }
-        // }
+        lsp::HoverParams params{
+            uri, {uint(pos.blockNumber), uint(pos.positionInBlock)}};
+        auto hover = LuauLanguageServer::instance().hover(params, nullptr);
+        if (!hover || hover->contents.value.isEmpty()) {
+            QToolTip::hideText();
+            return false;
+        }
+
+        const auto value = hover->contents.value;
+        if (hover->contents.kind == lsp::MarkupKind::Markdown) {
+            QTextDocument markdown;
+            markdown.setMarkdown(value);
+            QToolTip::showText(helpEvent->globalPos(), markdown.toHtml());
+        } else {
+            QToolTip::showText(helpEvent->globalPos(), value);
+        }
         return true;
     }
     return false;
+}
+
+bool EditorLspEvent::showSignatureHelp(LspEditorInterace *editor) {
+    if (!editor) {
+        return false;
+    }
+    const auto documentUrl = editor->lspFileNameURL();
+    if (documentUrl.isEmpty()) {
+        return false;
+    }
+
+    const auto position = editor->currentPosition();
+    if (position.blockNumber < 0 || position.positionInBlock < 0) {
+        return false;
+    }
+
+    editor->syncDocChange();
+
+    lsp::SignatureHelpParams params{
+        documentUrl,
+        {uint(position.blockNumber), uint(position.positionInBlock)}};
+    const auto signatureHelp =
+        LuauLanguageServer::instance().signatureHelp(params, nullptr);
+    if (!signatureHelp) {
+        return false;
+    }
+
+    QList<WingSignatureTooltip::Signature> signatures;
+    for (const auto &signature : signatureHelp->signatures) {
+        WingSignatureTooltip::Signature item;
+        item.label = signature.label;
+        item.doc = signature.documentation.value;
+        signatures.append(std::move(item));
+    }
+    if (signatures.isEmpty()) {
+        return false;
+    }
+    editor->showFunctionTip(signatures);
+    return true;
 }
 
 int EditorLspEvent::absolutePositionForLineCharacter(const QTextDocument *doc,
@@ -124,7 +137,7 @@ int EditorLspEvent::absolutePositionForLineCharacter(const QTextDocument *doc,
 
 QList<QTextEdit::ExtraSelection>
 EditorLspEvent::semanticTokensToExtraSelections(
-    QTextDocument *doc, const QVector<LSP::SemanticToken> &tokens,
+    QTextDocument *doc, const QVector<lsp::SemanticToken> &tokens,
     const std::function<QTextCharFormat(const QString &, const QStringList &)>
         &formatForToken) {
     Q_ASSERT(formatForToken);

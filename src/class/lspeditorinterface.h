@@ -18,12 +18,13 @@
 #ifndef LSPEDITORINTERFACE_H
 #define LSPEDITORINTERFACE_H
 
-#include <QString>
 #include <QTextCursor>
+#include <QUrl>
 
 #include "WingCodeEdit/wingcodeedit.h"
 #include "WingCodeEdit/wingsignaturetooltip.h"
-#include "class/lsp.h"
+
+#include "luau/lsp/lsp.h"
 
 class LspEditorInterace {
 public:
@@ -37,7 +38,7 @@ public:
 
     virtual const WingCodeEdit *editorPtr() const = 0;
 
-    virtual QString lspFileNameURL() const = 0;
+    virtual lsp::DocumentUri lspFileNameURL() const = 0;
     virtual CursorPos currentPosition() const = 0;
     virtual CursorPos cursorPosition(const QTextCursor &cursor) const = 0;
 
@@ -45,11 +46,12 @@ public:
     showFunctionTip(const QList<WingSignatureTooltip::Signature> &sigs) = 0;
     virtual void clearFunctionTip() = 0;
 
+    virtual void syncDocChange() = 0;
     virtual void syncSemanticTokens() = 0;
 
 protected:
     void applySemanticTokens();
-    virtual QVector<LSP::SemanticToken> parseSemanticTokens() = 0;
+    virtual QVector<lsp::SemanticToken> parseSemanticTokens() = 0;
 };
 
 #endif // LSPEDITORINTERFACE_H

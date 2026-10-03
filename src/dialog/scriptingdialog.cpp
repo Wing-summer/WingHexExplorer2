@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -22,7 +22,6 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "WingCodeEdit/wingsymbolcenter.h"
 #include "aboutsoftwaredialog.h"
-// #include "class/angellsp.h"
 #include "class/languagemanager.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
@@ -36,6 +35,7 @@
 #include "control/scripteditor.h"
 #include "control/toast.h"
 #include "dialog/mutisavedialog.h"
+#include "luau/lsp/luaulanguageserver.h"
 #include "model/idbtreemodel.h"
 #include "model/idbwatchmodel.h"
 
@@ -127,66 +127,44 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     ScriptMachine::instance().registerCallBack(ScriptMachine::Scripting,
                                                callbacks);
 
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
-    //         // only happened when restarting
-    //         for (const auto &view : ScriptEditor::instances()) {
-    //             view->onReconnectLsp();
-    //             view->setCompleterEnabled(true);
-    //         }
-    //     });
-    //     connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-    //         for (const auto &view : ScriptEditor::instances()) {
-    //             view->setCompleterEnabled(false);
-    //         }
-    //     });
-    //     connect(
-    //         &lsp, &AngelLsp::diagnosticsPublished, this,
-    //         [this](const QString &url,
-    //                const QList<LSP::Diagnostics> &diagnostics) {
-    //             if (url.startsWith(QStringLiteral("dev"))) {
-    //                 // a device not a file
-    //                 return;
-    //             }
-    //             QUrl path(url);
-    //             if (path.isValid()) {
-    //                 auto fileName = path.toLocalFile();
-    //                 auto view = findEditorView(fileName);
-    //                 if (view) {
-    //                     auto editor = view->editor();
-    //                     editor->clearSquiggle();
-    //                     auto lsps = [](LSP::DiagnosticSeverity s)
-    //                         -> WingCodeEdit::SeverityLevel {
-    //                         switch (s) {
-    //                         case LSP::DiagnosticSeverity::None:
-    //                             return
-    //                             WingCodeEdit::SeverityLevel::Information;
-    //                         case LSP::DiagnosticSeverity::Error:
-    //                             return WingCodeEdit::SeverityLevel::Error;
-    //                         case LSP::DiagnosticSeverity::Warning:
-    //                             return WingCodeEdit::SeverityLevel::Warning;
-    //                         case LSP::DiagnosticSeverity::Information:
-    //                             return
-    //                             WingCodeEdit::SeverityLevel::Information;
-    //                         case LSP::DiagnosticSeverity::Hint:
-    //                             return WingCodeEdit::SeverityLevel::Hint;
-    //                         }
-    //                         return WingCodeEdit::SeverityLevel::Information;
-    //                     };
-    //                     for (const auto &d : diagnostics) {
-    //                         editor->addSquiggle(
-    //                             lsps(d.severity),
-    //                             {d.range.start.line + 1,
-    //                              d.range.start.character},
-    //                             {d.range.end.line + 1,
-    //                             d.range.end.character}, d.message);
-    //                     }
-    //                     editor->highlightAllSquiggle();
-    //                 }
-    //             }
-    //         });
-    // }
+    auto lsp = &LuauLanguageServer::instance();
+    connect(lsp, &LuauLanguageServer::onPublishDiagnostic, this,
+            [this](const lsp::DocumentUri &uri,
+                   const QVector<lsp::Diagnostic> &diagnostics) {
+                if (!uri.isLocalFile()) {
+                    return;
+                }
+                auto editor = findEditorView(uri.toLocalFile());
+                if (!editor) {
+                    return;
+                }
+
+                auto e = editor->editor();
+                e->clearSquiggle();
+                auto severity = [](lsp::DiagnosticSeverity value) {
+                    switch (value) {
+                    case lsp::DiagnosticSeverity::Error:
+                        return WingCodeEdit::SeverityLevel::Error;
+                    case lsp::DiagnosticSeverity::Warning:
+                        return WingCodeEdit::SeverityLevel::Warning;
+                    case lsp::DiagnosticSeverity::Information:
+                        return WingCodeEdit::SeverityLevel::Information;
+                    case lsp::DiagnosticSeverity::Hint:
+                        return WingCodeEdit::SeverityLevel::Hint;
+                    }
+                    return WingCodeEdit::SeverityLevel::Information;
+                };
+
+                for (const auto &diagnostic : diagnostics) {
+                    e->addSquiggle(severity(diagnostic.severity),
+                                   {diagnostic.range.start.line + 1,
+                                    diagnostic.range.start.character},
+                                   {diagnostic.range.end.line + 1,
+                                    diagnostic.range.end.character},
+                                   diagnostic.message);
+                }
+                e->highlightAllSquiggle();
+            });
 
     this->setUpdatesEnabled(true);
     this->setAttribute(Qt::WA_DeleteOnClose);
@@ -964,6 +942,17 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(editor);
         toggleBreakPoint(editor, lineIndex);
     });
+
+    connect(editor, &ScriptEditor::navigateToLocation, this,
+            [this](const QString &path, int line, int character) {
+                auto target = findEditorView(path);
+                if (!target) {
+                    target = openFile(path);
+                }
+                if (target) {
+                    editorGotoPos(target, line + 1, character);
+                }
+            });
 
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
         auto e = editor->editor();

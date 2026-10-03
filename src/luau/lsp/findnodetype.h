@@ -15,27 +15,36 @@
 ** =============================================================================
 */
 
-#ifndef EDITORLSPEVENT_H
-#define EDITORLSPEVENT_H
+#ifndef FINDNODETYPE_H
+#define FINDNODETYPE_H
 
-#include <QEvent>
-#include <QPlainTextEdit>
+#include "Luau/Ast.h"
 
-#include "lspeditorinterface.h"
+struct FindNodeType : public Luau::AstVisitor {
+    Luau::Position pos;
+    Luau::Position documentEnd;
+    Luau::AstNode *best = nullptr;
+    bool closed = false;
 
-class EditorLspEvent {
 public:
-    static bool processEvent(QEvent *event, LspEditorInterace *editor);
-    static bool showSignatureHelp(LspEditorInterace *editor);
+    explicit FindNodeType(Luau::Position pos, Luau::Position documentEnd,
+                          bool closed);
 
-    static int absolutePositionForLineCharacter(const QTextDocument *doc,
-                                                int line, int character);
+public:
+    bool isCloserMatch(Luau::Location &newLocation) const;
 
-    static QList<QTextEdit::ExtraSelection> semanticTokensToExtraSelections(
-        QTextDocument *doc, const QVector<lsp::SemanticToken> &tokens,
-        const std::function<QTextCharFormat(const QString &tokenType,
-                                            const QStringList &modifiers)>
-            &formatForToken);
+public:
+    virtual bool visit(Luau::AstNode *node) override;
+
+    virtual bool visit(class Luau::AstType *node) override;
+
+    virtual bool visit(class Luau::AstTypePack *node) override;
+
+    virtual bool visit(Luau::AstGenericType *node) override;
+
+    virtual bool visit(Luau::AstGenericTypePack *node) override;
+
+    virtual bool visit(Luau::AstStatBlock *block) override;
 };
 
-#endif // EDITORLSPEVENT_H
+#endif // FINDNODETYPE_H

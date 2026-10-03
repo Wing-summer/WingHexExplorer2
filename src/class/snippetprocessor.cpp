@@ -1,15 +1,14 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
 ** Software Foundation, version 3.
 **
 ** This program is distributed in the hope that it will be useful, but WITHOUT
-** std::any WARRANTY; without even the implied warranty of MERCHANTABILITY or
-** FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+** FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+** for more details.
 **
 ** You should have received a copy of the GNU Affero General Public License
 ** along with this program. If not, see <https://www.gnu.org/licenses/>.
@@ -18,220 +17,237 @@
 
 #include "snippetprocessor.h"
 
-#include "grammar/Snippet/SnippetBaseVisitor.h"
-#include "grammar/Snippet/SnippetLexer.h"
-
+#include <QHash>
+#include <QMap>
 #include <QRegularExpression>
 
-class SnippetExpansionVisitor : public SnippetBaseVisitor {
-public:
-    SnippetExpansionVisitor(const SnippetProcessor::Resolver &resolver);
+#include <algorithm>
 
-    virtual std::any visitSnippet(SnippetParser::SnippetContext *ctx) override;
-    virtual std::any visitText(SnippetParser::TextContext *ctx) override;
-    virtual std::any
-    visitWhiteSpace(SnippetParser::WhiteSpaceContext *ctx) override;
-    virtual std::any
-    visitEscapedChar(SnippetParser::EscapedCharContext *ctx) override;
-    virtual std::any
-    visitVariable(SnippetParser::VariableContext *ctx) override;
-    virtual std::any
-    visitBracedVariable(SnippetParser::BracedVariableContext *ctx) override;
-    virtual std::any visitVariableWithDefault(
-        SnippetParser::VariableWithDefaultContext *ctx) override;
-    virtual std::any
-    visitPlaceholder(SnippetParser::PlaceholderContext *ctx) override;
-    virtual std::any visitTabstop(SnippetParser::TabstopContext *ctx) override;
-    virtual std::any
-    visitBracedTabstop(SnippetParser::BracedTabstopContext *ctx) override;
-    virtual std::any visitTabstopWithDefault(
-        SnippetParser::TabstopWithDefaultContext *ctx) override;
-    virtual std::any visitChoice(SnippetParser::ChoiceContext *ctx) override;
-
-    QString getResult() const { return result_; }
-    qsizetype getCursorOffset() const { return cursorOffset_; }
-
-private:
-    QString result_;
-    qsizetype cursorOffset_;
-    QHash<QString, QString> defaultValues_;
-    SnippetProcessor::Resolver resolver_;
-
-    QString processEscapedChar(const QString &escaped);
-    QString extractDefaultValue(const QString &content);
-    QString extractChoiceFirstOption(const QString &choiceContent);
+namespace {
+struct Tabstop {
+    qsizetype position = -1;
+    qsizetype length = 0;
 };
 
-SnippetExpansionVisitor::SnippetExpansionVisitor(
-    const SnippetProcessor::Resolver &resolver)
-    : cursorOffset_(-1), resolver_(resolver) {
-    Q_ASSERT(resolver);
-}
+class Parser {
+public:
+    Parser(const QString &source, const SnippetProcessor::Resolver &resolver)
+        : source_(source), resolver_(resolver) {}
 
-std::any
-SnippetExpansionVisitor::visitSnippet(SnippetParser::SnippetContext *ctx) {
-    auto ret = visitChildren(ctx);
-    if (cursorOffset_ < 0) {
-        cursorOffset_ = result_.size();
-    }
-    return ret;
-}
-
-std::any SnippetExpansionVisitor::visitText(SnippetParser::TextContext *ctx) {
-    result_.append(QString::fromStdString(ctx->TEXT_CONTENT()->getText()));
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitWhiteSpace(
-    SnippetParser::WhiteSpaceContext *ctx) {
-    result_.append(QString::fromStdString(ctx->WS()->getText()));
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitEscapedChar(
-    SnippetParser::EscapedCharContext *ctx) {
-    auto escaped = QString::fromStdString(ctx->ESCAPED_CHAR()->getText());
-    result_.append(processEscapedChar(escaped));
-    return visitChildren(ctx);
-}
-
-std::any
-SnippetExpansionVisitor::visitVariable(SnippetParser::VariableContext *ctx) {
-    const std::string varText = ctx->VARIABLE()->getText();
-    QString var = QString::fromUtf8(varText.data() + 1, varText.length() - 1);
-    result_.append(resolver_(var));
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitBracedVariable(
-    SnippetParser::BracedVariableContext *ctx) {
-    const std::string varText = ctx->VARIABLE_BRACED()->getText();
-    QString var = QString::fromUtf8(varText.data() + 2, varText.length() - 3);
-    result_.append(resolver_(var));
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitVariableWithDefault(
-    SnippetParser::VariableWithDefaultContext *ctx) {
-    const std::string varText = ctx->VARIABLE_WITH_DEFAULT()->getText();
-
-    size_t colonPos = varText.find(':');
-    if (colonPos != std::string::npos) {
-        auto varName = varText.substr(2, colonPos - 2);
-        auto defaultValue = QString::fromUtf8(varText.data() + colonPos + 1,
-                                              varText.length() - colonPos - 2);
-        result_.append(defaultValue);
-        auto id = QString::fromUtf8(varText.data() + 2, colonPos - 2);
-        defaultValues_.insert(id, defaultValue);
-    }
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitPlaceholder(
-    SnippetParser::PlaceholderContext *ctx) {
-    if (cursorOffset_ < 0) {
-        cursorOffset_ = result_.length();
-    }
-    return visitChildren(ctx);
-}
-
-std::any
-SnippetExpansionVisitor::visitTabstop(SnippetParser::TabstopContext *ctx) {
-    auto tabstopText = ctx->TABSTOP()->getText();
-    auto name =
-        QString::fromUtf8(tabstopText.data() + 1, tabstopText.length() - 1);
-    result_.append(defaultValues_.value(name));
-    return visitChildren(ctx);
-}
-std::any SnippetExpansionVisitor::visitBracedTabstop(
-    SnippetParser::BracedTabstopContext *ctx) {
-    auto tabstopText = ctx->TABSTOP_BRACED()->getText();
-    auto name =
-        QString::fromUtf8(tabstopText.data() + 2, tabstopText.length() - 3);
-    result_.append(defaultValues_.value(name));
-    return visitChildren(ctx);
-}
-
-std::any SnippetExpansionVisitor::visitTabstopWithDefault(
-    SnippetParser::TabstopWithDefaultContext *ctx) {
-    std::string tabstopText = ctx->TABSTOP_WITH_DEFAULT()->getText();
-    size_t colonPos = tabstopText.find(':');
-    if (colonPos != std::string::npos) {
-        auto defaultValue =
-            QString::fromUtf8(tabstopText.data() + colonPos + 1,
-                              tabstopText.length() - colonPos - 2);
-        result_.append(defaultValue);
-
-        auto id = QString::fromUtf8(tabstopText.data() + 2, colonPos - 2);
-        defaultValues_.insert(id, defaultValue);
-    }
-    return visitChildren(ctx);
-}
-
-std::any
-SnippetExpansionVisitor::visitChoice(SnippetParser::ChoiceContext *ctx) {
-    auto choice = QString::fromStdString(ctx->CHOICE()->getText());
-    result_.append(extractChoiceFirstOption(choice));
-    return visitChildren(ctx);
-}
-
-QString SnippetExpansionVisitor::processEscapedChar(const QString &escaped) {
-    if (escaped.length() < 2) {
-        return escaped;
+    SnippetResult parse() {
+        const auto text = expand(0, source_.size());
+        qsizetype cursor = text.size();
+        qsizetype selectionLength = 0;
+        if (!tabstops_.isEmpty()) {
+            const auto first = tabstops_.constBegin();
+            cursor = first.value().position;
+            selectionLength = first.value().length;
+        } else if (finalCursor_ >= 0) {
+            cursor = finalCursor_;
+        }
+        return SnippetResult{text, cursor, selectionLength};
     }
 
-    auto escapedChar = escaped[1].unicode();
-    switch (escapedChar) {
-    case '$':
-        return QStringLiteral("$");
-    case '{':
-        return QStringLiteral("{");
-    case '}':
-        return QStringLiteral("}");
-    case '[':
-        return QStringLiteral("[");
-    case ']':
-        return QStringLiteral("]");
-    case '\\':
-        return QStringLiteral("\\");
-    default:
-        return QString(escapedChar);
-    }
-}
+private:
+    const QString &source_;
+    const SnippetProcessor::Resolver &resolver_;
+    QHash<QString, QString> defaults_;
+    QMap<int, Tabstop> tabstops_;
+    qsizetype finalCursor_ = -1;
 
-QString SnippetExpansionVisitor::extractDefaultValue(const QString &content) {
-    auto colonPos = content.indexOf(':');
-    if (colonPos < 0) {
-        return {};
+    static bool isIdentifier(QChar ch) {
+        return ch.isLetterOrNumber() || ch == QLatin1Char('_');
     }
 
-    auto endPos = content.lastIndexOf('}');
-    if (endPos < 0) {
-        return content.sliced(colonPos + 1);
+    qsizetype matchingBrace(qsizetype open, qsizetype end) const {
+        int depth = 1;
+        bool escaped = false;
+        for (qsizetype i = open + 1; i < end; ++i) {
+            const auto ch = source_.at(i);
+            if (escaped) {
+                escaped = false;
+            } else if (ch == QLatin1Char('\\')) {
+                escaped = true;
+            } else if (ch == QLatin1Char('{')) {
+                ++depth;
+            } else if (ch == QLatin1Char('}') && --depth == 0) {
+                return i;
+            }
+        }
+        return -1;
     }
 
-    return content.sliced(colonPos + 1, endPos - colonPos - 1);
-}
-
-QString SnippetExpansionVisitor::extractChoiceFirstOption(
-    const QString &choiceContent) {
-    auto firstPipe = choiceContent.indexOf('|');
-    auto lastPipe = choiceContent.lastIndexOf('|');
-
-    if (firstPipe < 0 || lastPipe < 0 || firstPipe >= lastPipe) {
-        return {};
+    QString unescape(QString value) const {
+        static const QRegularExpression escaped(
+            QStringLiteral(R"(\\([$\\{}|,]))"));
+        return value.replace(escaped, QStringLiteral("\\1"));
     }
 
-    auto optionsStr =
-        choiceContent.sliced(firstPipe + 1, lastPipe - firstPipe - 1);
-
-    auto commaPos = optionsStr.indexOf(',');
-    if (commaPos < 0) {
-        return optionsStr.first(commaPos);
+    QString firstChoice(const QString &choices) const {
+        bool escaped = false;
+        for (qsizetype i = 0; i < choices.size(); ++i) {
+            if (escaped) {
+                escaped = false;
+            } else if (choices.at(i) == QLatin1Char('\\')) {
+                escaped = true;
+            } else if (choices.at(i) == QLatin1Char(',')) {
+                return choices.first(i);
+            }
+        }
+        return choices;
     }
 
-    return optionsStr;
-}
+    QString expand(qsizetype begin, qsizetype end) {
+        QString output;
+        for (qsizetype i = begin; i < end;) {
+            const auto ch = source_.at(i);
+            if (ch == QLatin1Char('\\') && i + 1 < end) {
+                const auto escaped = source_.at(i + 1);
+                if (QStringLiteral("$\\{}|,").contains(escaped)) {
+                    output.append(escaped);
+                    ++currentOutputOffset_;
+                    i += 2;
+                    continue;
+                }
+                output.append(ch);
+                ++currentOutputOffset_;
+                ++i;
+                continue;
+            }
+            if (ch != QLatin1Char('$') || i + 1 >= end) {
+                output.append(ch);
+                ++currentOutputOffset_;
+                ++i;
+                continue;
+            }
+
+            if (source_.at(i + 1).isDigit()) {
+                qsizetype next = i + 1;
+                while (next < end && source_.at(next).isDigit()) {
+                    ++next;
+                }
+                const auto index = source_.mid(i + 1, next - i - 1).toInt();
+                appendTabstop(output, QString::number(index), {});
+                i = next;
+                continue;
+            }
+            if (source_.at(i + 1) == QLatin1Char('{')) {
+                const auto close = matchingBrace(i + 1, end);
+                if (close >= 0) {
+                    output.append(expandBraced(i + 2, close));
+                    i = close + 1;
+                    continue;
+                }
+            } else if (isIdentifier(source_.at(i + 1))) {
+                qsizetype next = i + 2;
+                while (next < end && isIdentifier(source_.at(next))) {
+                    ++next;
+                }
+                const auto value = resolver_(source_.mid(i + 1, next - i - 1));
+                output.append(value);
+                currentOutputOffset_ += value.size();
+                i = next;
+                continue;
+            }
+            output.append(ch);
+            ++currentOutputOffset_;
+            ++i;
+        }
+        return output;
+    }
+
+    QString expandBraced(qsizetype begin, qsizetype end) {
+        const auto content = source_.mid(begin, end - begin);
+        const auto colon = content.indexOf(QLatin1Char(':'));
+        const auto comma = content.indexOf(QLatin1Char(','));
+        const auto pipe = content.indexOf(QLatin1Char('|'));
+        const auto separator = std::min({colon < 0 ? content.size() : colon,
+                                         comma < 0 ? content.size() : comma,
+                                         pipe < 0 ? content.size() : pipe});
+        const auto key = content.first(separator);
+        bool numeric = !key.isEmpty();
+        for (const auto ch : key)
+            numeric = numeric && ch.isDigit();
+
+        if (numeric) {
+            const auto index = key.toInt();
+            if (pipe >= 0 && content.endsWith(QLatin1Char('|'))) {
+                const auto options =
+                    content.mid(pipe + 1, content.size() - pipe - 2);
+                const auto value = unescape(firstChoice(options));
+                appendTabstopValue(key, value);
+                recordTabstop(index, currentOutputOffset_, value.size());
+                currentOutputOffset_ += value.size();
+                return value;
+            }
+            if (colon >= 0) {
+                const auto start = currentOutputOffset_;
+                if (defaults_.contains(key)) {
+                    const auto value = defaults_.value(key);
+                    recordTabstop(index, start, value.size());
+                    currentOutputOffset_ += value.size();
+                    return value;
+                }
+                const auto value = expand(begin + colon + 1, end);
+                appendTabstopValue(key, value);
+                recordTabstop(index, start, value.size());
+                return value;
+            }
+            const auto value = defaults_.value(key);
+            appendTabstopValue(key, value);
+            recordTabstop(index, currentOutputOffset_, value.size());
+            currentOutputOffset_ += value.size();
+            return value;
+        }
+
+        if (!key.isEmpty()) {
+            auto value = resolver_(key);
+            const bool usedDefault = value.isEmpty() && colon >= 0;
+            if (usedDefault) {
+                value = expand(begin + colon + 1, end);
+            }
+            if (!usedDefault) {
+                currentOutputOffset_ += value.size();
+            }
+            return value;
+        }
+        currentOutputOffset_ += 3 + content.size();
+        return QStringLiteral("${") + content + QLatin1Char('}');
+    }
+
+    void appendTabstop(QString &output, const QString &key,
+                       const QString &value) {
+        const auto index = key.toInt();
+        const auto start = currentOutputOffset_;
+        auto text = value;
+        if (text.isEmpty()) {
+            text = defaults_.value(key);
+        }
+        output.append(text);
+        appendTabstopValue(key, text);
+        recordTabstop(index, start, text.size());
+        currentOutputOffset_ += text.size();
+    }
+
+    void appendTabstopValue(const QString &key, const QString &value) {
+        if (!defaults_.contains(key) && !value.isEmpty()) {
+            defaults_.insert(key, value);
+        }
+    }
+
+    void recordTabstop(int index, qsizetype position, qsizetype length) {
+        if (index == 0) {
+            if (finalCursor_ < 0) {
+                finalCursor_ = position;
+            }
+        } else if (index > 0 && !tabstops_.contains(index)) {
+            tabstops_.insert(index, {position, length});
+        }
+    }
+
+    qsizetype currentOutputOffset_ = 0;
+};
+} // namespace
 
 SnippetProcessor::SnippetProcessor(const Resolver &resolver)
     : _resolver(resolver) {
@@ -239,19 +255,6 @@ SnippetProcessor::SnippetProcessor(const Resolver &resolver)
 }
 
 SnippetResult SnippetProcessor::process(const QString &snippet) {
-    antlr4::ANTLRInputStream input(snippet.toStdString());
-    SnippetLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-
-    SnippetParser parser(&tokens);
-    parser.removeErrorListeners();
-    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-
-    SnippetExpansionVisitor visitor(_resolver);
-    try {
-        visitor.visit(parser.snippet());
-        return SnippetResult(visitor.getResult(), visitor.getCursorOffset());
-    } catch (const std::exception &e) {
-        return SnippetResult(snippet, snippet.length());
-    }
+    Parser parser(snippet, _resolver);
+    return parser.parse();
 }

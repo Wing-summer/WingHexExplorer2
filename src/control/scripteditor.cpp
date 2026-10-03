@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -19,7 +19,9 @@
 
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "class/editorlspevent.h"
+#include "class/luaucompletion.h"
 #include "class/scriptsettings.h"
+#include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauformatter.h"
 #include "utilities.h"
 
@@ -35,9 +37,6 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
-// #include "class/angellsp.h"
-// #include "class/ascompletion.h"
-
 constexpr auto SCRIPT_LIMIT = 1024 * 1024;
 
 ScriptEditor::ScriptEditor(QWidget *parent)
@@ -52,21 +51,53 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor = new CodeEdit(this);
     m_editor->setSyntax(m_editor->syntaxRepo().definitionForName("Luau"));
     connect(m_editor, &CodeEdit::textChanged, this, [this]() {
-        // if (!_ok) {
-        //     _lastSent = false;
-        //     return;
-        // }
-        // sendDocChange();
+        syncDocChange();
         syncSemanticTokens();
     });
     m_editor->installEventFilter(this);
 
-    // auto cm = new AsCompletion(m_editor);
-    // cm->setParent(m_editor);
-    // cm->setEnabled(AngelLsp::instance().isActive());
+    auto completer = new LuauCompletion(this, m_editor);
+    completer->setParent(m_editor);
+    completer->setEnabled(true);
 
     connect(m_editor, &CodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);
+    connect(
+        m_editor, &CodeEdit::navigationRequested, this,
+        [this](bool typeDefinition) {
+            auto fileName = this->fileName();
+            if (fileName.isEmpty()) {
+                return;
+            }
+
+            const auto position = currentPosition();
+            if (position.blockNumber < 0 || position.positionInBlock < 0) {
+                return;
+            }
+
+            const lsp::Position lspPosition{uint(position.blockNumber),
+                                            uint(position.positionInBlock)};
+            auto &lsp = LuauLanguageServer::instance();
+            const auto uri = lspFileNameURL();
+            if (typeDefinition) {
+                auto location =
+                    lsp.gotoTypeDefinition({uri, lspPosition}, nullptr);
+                if (location) {
+                    Q_EMIT navigateToLocation(location->uri.toLocalFile(),
+                                              location->range.start.line,
+                                              location->range.start.character);
+                }
+            } else {
+                const auto locations =
+                    lsp.gotoDefinition({uri, lspPosition}, nullptr);
+                if (!locations.empty()) {
+                    const auto &location = locations.front();
+                    Q_EMIT navigateToLocation(location.uri.toLocalFile(),
+                                              location.range.start.line,
+                                              location.range.start.character);
+                }
+            }
+        });
     connect(m_editor, &CodeEdit::contentModified, this,
             [this]() { processTitle(); });
 
@@ -75,24 +106,18 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 
     this->setWidget(m_editor);
 
-    _timer = new ResettableTimer(this);
-    connect(_timer, &ResettableTimer::timeoutTriggered, this,
-            &ScriptEditor::onSendFullTextChangeCompleted);
-
     _tokentimer = new ResettableTimer(this);
-    connect(_timer, &ResettableTimer::timeoutTriggered, this,
+    connect(_tokentimer, &ResettableTimer::timeoutTriggered, this,
             &ScriptEditor::syncSemanticTokens);
 
     m_instances.append(this);
 }
 
 ScriptEditor::~ScriptEditor() {
-    auto fileName = this->fileName();
-    if (!fileName.isEmpty()) {
-        // auto &lsp = AngelLsp::instance();
-        // if (lsp.isActive()) {
-        //     lsp.closeDocument(Utilities::getUrlString(fileName));
-        // }
+    auto url = this->fileName();
+    if (!url.isEmpty()) {
+        auto &lsp = LuauLanguageServer::instance();
+        lsp.onCloseDocument(url);
     }
     m_instances.removeOne(this);
 }
@@ -101,19 +126,20 @@ QString ScriptEditor::fileName() const { return m_editor->windowFilePath(); }
 
 const WingCodeEdit *ScriptEditor::editorPtr() const { return m_editor; }
 
-QString ScriptEditor::lspFileNameURL() const {
-    return Utilities::getUrlString(fileName());
+lsp::DocumentUri ScriptEditor::lspFileNameURL() const {
+    return QUrl::fromLocalFile(fileName());
 }
 
 bool ScriptEditor::openFile(const QString &filename) {
     auto oldFileName = this->fileName();
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive() && !Utilities::isTextFile(QFileInfo(filename))) {
-    //     if (!oldFileName.isEmpty()) {
-    //         lsp.openDocument(lspFileNameURL(), 0, m_editor->toPlainText());
-    //     }
-    //     return false;
-    // }
+    auto &lsp = LuauLanguageServer::instance();
+    if (!Utilities::isTextFile(QFileInfo(filename))) {
+        if (!oldFileName.isEmpty()) {
+            lsp.onOpenDocument(QUrl::fromLocalFile(oldFileName),
+                               m_editor->document());
+        }
+        return false;
+    }
 
     QFile f(filename);
     if (f.size() > SCRIPT_LIMIT) {
@@ -136,7 +162,7 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
 
     m_editor->setWindowFilePath(filename);
-    // lsp.openDocument(lspFileNameURL(), 0, txt);
+    lsp.onOpenDocument(QUrl::fromLocalFile(filename), m_editor->document());
     _watcher.addPath(filename);
     m_editor->document()->setModified(false);
     processTitle();
@@ -145,14 +171,10 @@ bool ScriptEditor::openFile(const QString &filename) {
 }
 
 bool ScriptEditor::save(const QString &path) {
-    // auto &lsp = AngelLsp::instance();
-
+    auto &lsp = LuauLanguageServer::instance();
     auto oldFileName = fileName();
     if (!oldFileName.isEmpty()) {
         _watcher.removePath(oldFileName);
-        // if (lsp.isActive()) {
-        //     lsp.closeDocument(lspFileNameURL());
-        // }
     }
     QScopeGuard guard([this, path]() {
         if (path.isEmpty()) {
@@ -174,9 +196,13 @@ bool ScriptEditor::save(const QString &path) {
             if (data.size() > SCRIPT_LIMIT) {
                 return false;
             }
-            f.write(data);
+            if (f.write(data) != data.size()) {
+                return false;
+            }
             doc->setModified(false);
         }
+
+        lsp.onSaveDocument(QUrl::fromLocalFile(oldFileName));
         return true;
     }
 
@@ -188,20 +214,27 @@ bool ScriptEditor::save(const QString &path) {
     if (data.size() > SCRIPT_LIMIT) {
         return false;
     }
-    f.write(data);
+    if (f.write(data) != data.size()) {
+        return false;
+    }
 
     m_editor->setWindowFilePath(path);
+    auto newUrl = QUrl::fromLocalFile(path);
+    if (oldFileName != path) {
+        _watcher.removePath(oldFileName);
+        lsp.onCloseDocument(QUrl::fromLocalFile(oldFileName));
+        lsp.onOpenDocument(newUrl, m_editor->document());
+    }
+    lsp.onSaveDocument(newUrl);
     processTitle();
     m_editor->document()->setModified(false);
     return true;
 }
 
 bool ScriptEditor::reload() {
-    // auto &lsp = AngelLsp::instance();
+    auto &lsp = LuauLanguageServer::instance();
     auto fileName = this->fileName();
-    // if (lsp.isActive()) {
-    //     lsp.closeDocument(Utilities::getUrlString(fileName));
-    // }
+    lsp.onCloseDocument(QUrl::fromLocalFile(fileName));
     return openFile(fileName);
 }
 
@@ -210,29 +243,6 @@ void ScriptEditor::find() { m_editor->showSearchReplaceBar(true, false); }
 void ScriptEditor::replace() { m_editor->showSearchReplaceBar(true, true); }
 
 void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
-
-void ScriptEditor::onReconnectLsp() {
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     lsp.openDocument(lspFileNameURL(), 0, m_editor->toPlainText());
-    // }
-    // version = 1;
-}
-
-void ScriptEditor::setCompleterEnabled(bool b) {
-    // m_editor->completer()->setEnabled(b);
-}
-
-bool ScriptEditor::increaseVersion() {
-    version++;
-    if (version == 0) { // test overflow
-        version = 1;
-        return true;
-    }
-    return false;
-}
-
-void ScriptEditor::onSendFullTextChangeCompleted() {}
 
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
@@ -248,27 +258,74 @@ void ScriptEditor::processTitle() {
     }
 }
 
+void ScriptEditor::syncDocChange() {
+    LuauLanguageServer::instance().onUpdateDocument(lspFileNameURL(),
+                                                    m_editor->document());
+}
+
 void ScriptEditor::saveState(QXmlStreamWriter &Stream) const {
     Q_UNUSED(Stream);
     // do nothing
 }
 
 void ScriptEditor::syncSemanticTokens() {
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     applySemanticTokens();
-    //     _tokentimer->reset(500);
-    // }
+    applySemanticTokens();
+    _tokentimer->reset(500);
 }
 
-QVector<LSP::SemanticToken> ScriptEditor::parseSemanticTokens() {
-    // auto &lsp = AngelLsp::instance();
-    // if (lsp.isActive()) {
-    //     auto url = lspFileNameURL();
-    //     auto reply = lsp.requestSemanticTokensFull(url);
-    //     return lsp.parseSemanticTokens(url, reply);
-    // }
-    return {};
+QVector<lsp::SemanticToken> ScriptEditor::parseSemanticTokens() {
+    const auto serverTokens = LuauLanguageServer::instance().semanticTokens(
+        lsp::SemanticTokensParams{lspFileNameURL()}, nullptr);
+    QVector<lsp::SemanticToken> tokens;
+    tokens.reserve(serverTokens.size());
+
+    auto typeName = [](lsp::SemanticTokenTypes type) -> QString {
+        switch (type) {
+        case lsp::SemanticTokenTypes::Namespace:
+            return QStringLiteral("namespace");
+        case lsp::SemanticTokenTypes::Type:
+            return QStringLiteral("type");
+        case lsp::SemanticTokenTypes::Class:
+            return QStringLiteral("class");
+        case lsp::SemanticTokenTypes::Enum:
+            return QStringLiteral("enum");
+        case lsp::SemanticTokenTypes::EnumMember:
+            return QStringLiteral("enumMember");
+        case lsp::SemanticTokenTypes::Variable:
+            return QStringLiteral("variable");
+        case lsp::SemanticTokenTypes::Property:
+            return QStringLiteral("property");
+        case lsp::SemanticTokenTypes::Function:
+            return QStringLiteral("function");
+        case lsp::SemanticTokenTypes::Method:
+            return QStringLiteral("method");
+        case lsp::SemanticTokenTypes::Parameter:
+            return QStringLiteral("parameter");
+        case lsp::SemanticTokenTypes::Event:
+            return QStringLiteral("event");
+        }
+        return QStringLiteral("variable");
+    };
+
+    for (const auto &token : serverTokens) {
+        if (token.start.line != token.end.line ||
+            token.end.column <= token.start.column)
+            continue;
+
+        QStringList modifiers;
+        if ((token.tokenModifiers &
+             lsp::SemanticTokenModifiers::DefaultLibrary) !=
+            lsp::SemanticTokenModifiers::None)
+            modifiers.append(QStringLiteral("defaultLibrary"));
+        if ((token.tokenModifiers & lsp::SemanticTokenModifiers::Readonly) !=
+            lsp::SemanticTokenModifiers::None)
+            modifiers.append(QStringLiteral("readonly"));
+
+        tokens.append({int(token.start.line), int(token.start.column),
+                       int(token.end.column - token.start.column),
+                       typeName(token.tokenType), modifiers});
+    }
+    return tokens;
 }
 
 LspEditorInterace::CursorPos
@@ -290,8 +347,6 @@ void ScriptEditor::showFunctionTip(
 }
 
 void ScriptEditor::clearFunctionTip() { m_editor->hideHelpTooltip(); }
-
-quint64 ScriptEditor::getVersion() const { return version; }
 
 CodeEdit *ScriptEditor::editor() const { return m_editor; }
 
@@ -332,6 +387,9 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     if (watched == m_editor) {
         if (EditorLspEvent::processEvent(event, this)) {
             return true;
+        }
+        if (event->type() == QEvent::FocusOut) {
+            m_editor->hideHelpTooltip();
         }
     }
     return ads::CDockWidget::eventFilter(watched, event);

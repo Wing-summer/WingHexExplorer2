@@ -92,6 +92,22 @@ public:
     ~WingLuauRequire() = default;
 
 public:
+    struct FileModuleResolution {
+        enum class Kind {
+            NotFound,
+            File,
+            ModuleDirectory,
+            NamespaceDirectory,
+            Ambiguous,
+        };
+
+        Kind kind = Kind::NotFound;
+        QString path;
+    };
+
+    static FileModuleResolution resolveFileModule(const QString &basePath,
+                                                  const QString &requestedPath);
+
     bool initRequire(lua_State *L, Options options);
 
     // Installs the native Luau require() into the global environment.
@@ -277,8 +293,8 @@ private:
 
     QString sourcePrefixForNode(const Node &node) const;
 
-    InitStatus directoryInitStatus(const QString &directory,
-                                   QString *loadPath = nullptr) const;
+    static InitStatus directoryInitStatus(const QString &directory,
+                                          QString *loadPath = nullptr);
 
     Candidate makeCandidateFromBase(const QString &base, Scope scope,
                                     const QString &rootPath,

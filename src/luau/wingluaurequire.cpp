@@ -267,6 +267,62 @@ bool WingLuauRequire::isFileModuleCandidate(const QFileInfo &info) {
     return info.exists() && info.isFile();
 }
 
+WingLuauRequire::FileModuleResolution
+WingLuauRequire::resolveFileModule(const QString &basePath,
+                                   const QString &requestedPath) {
+    if (basePath.isEmpty() || requestedPath.isEmpty()) {
+        return {};
+    }
+
+    const auto targetPath = joinPath(basePath, requestedPath);
+    const QFileInfo targetInfo(targetPath);
+    if (!targetInfo.suffix().isEmpty()) {
+        if (isFileModuleCandidate(targetInfo))
+            return {FileModuleResolution::Kind::File,
+                    normalizeExistingPath(targetPath)};
+        if (targetInfo.exists() && targetInfo.isDir()) {
+            QString initPath;
+            const auto initStatus = directoryInitStatus(targetPath, &initPath);
+            if (initStatus == InitStatus::Ambiguous)
+                return {FileModuleResolution::Kind::Ambiguous, {}};
+            if (initStatus == InitStatus::Present)
+                return {FileModuleResolution::Kind::ModuleDirectory, initPath};
+            return {FileModuleResolution::Kind::NamespaceDirectory,
+                    normalizeExistingPath(targetPath)};
+        }
+        return {};
+    }
+
+    const auto luauPath = targetPath + QStringLiteral(".luau");
+    const auto luaPath = targetPath + QStringLiteral(".lua");
+    const bool hasLuauFile = isFileModuleCandidate(QFileInfo(luauPath));
+    const bool hasLuaFile = isFileModuleCandidate(QFileInfo(luaPath));
+    const bool hasDirectory = targetInfo.exists() && targetInfo.isDir();
+    if (int(hasLuauFile) + int(hasLuaFile) + int(hasDirectory) > 1) {
+        return {FileModuleResolution::Kind::Ambiguous, {}};
+    }
+
+    if (hasLuauFile || hasLuaFile) {
+        return {FileModuleResolution::Kind::File,
+                normalizeExistingPath(hasLuauFile ? luauPath : luaPath)};
+    }
+    if (!hasDirectory) {
+        return {};
+    }
+
+    QString initPath;
+    const auto initStatus = directoryInitStatus(targetPath, &initPath);
+    if (initStatus == InitStatus::Ambiguous) {
+        return {FileModuleResolution::Kind::Ambiguous, {}};
+    }
+    if (initStatus == InitStatus::Present) {
+        return {FileModuleResolution::Kind::ModuleDirectory, initPath};
+    }
+
+    return {FileModuleResolution::Kind::NamespaceDirectory,
+            normalizeExistingPath(targetPath)};
+}
+
 bool WingLuauRequire::isSafeModulePath(const QString &input) {
     if (input.isEmpty()) {
         return false;
@@ -395,7 +451,7 @@ QString WingLuauRequire::sourcePrefixForNode(const Node &node) const {
 
 WingLuauRequire::InitStatus
 WingLuauRequire::directoryInitStatus(const QString &directory,
-                                     QString *loadPath) const {
+                                     QString *loadPath) {
     const QString luau = joinPath(directory, QStringLiteral("init.luau"));
     const QFileInfo luauInfo(luau);
 
@@ -431,26 +487,14 @@ WingLuauRequire::Candidate WingLuauRequire::makeCandidateFromBase(
     if (basePath.isEmpty())
         return result;
 
-    const QString fileLuauPath =
-        joinPath(basePath, component + QStringLiteral(".luau"));
-    const QFileInfo fileLuau(fileLuauPath);
-
-    const QString fileLuaPath =
-        joinPath(basePath, component + QStringLiteral(".lua"));
-    const QFileInfo fileLua(fileLuaPath);
-
-    const QString directoryPath = joinPath(basePath, component);
-    const QFileInfo directoryInfo(directoryPath);
-
-    const bool hasLuauFile = isFileModuleCandidate(fileLuau);
-    const bool hasLuaFile = isFileModuleCandidate(fileLua);
-    const bool hasFile = hasLuauFile || hasLuaFile;
-    const bool hasDirectory = directoryInfo.exists() && directoryInfo.isDir();
-
-    // file.luau + file.lua is ambiguous; file + directory is also
-    // ambiguous.
-    if ((hasLuauFile && hasLuaFile) || (hasFile && hasDirectory)) {
+    const auto resolution = resolveFileModule(basePath, component);
+    using ResolutionKind = FileModuleResolution::Kind;
+    if (resolution.kind == ResolutionKind::Ambiguous) {
         result.result = Candidate::Result::Ambiguous;
+        return result;
+    }
+
+    if (resolution.kind == ResolutionKind::NotFound) {
         return result;
     }
 
@@ -460,34 +504,27 @@ WingLuauRequire::Candidate WingLuauRequire::makeCandidateFromBase(
     node.packageName = packageName;
     node.explicitSource = explicitSource;
 
-    if (hasLuauFile || hasLuaFile) {
+    if (resolution.kind == ResolutionKind::File) {
         result.result = Candidate::Result::Success;
         node.kind = (scope == Scope::External) ? NodeKind::ExternalFile
                                                : NodeKind::ModuleFile;
-        node.physicalPath =
-            normalizeExistingPath(hasLuauFile ? fileLuauPath : fileLuaPath);
+        node.physicalPath = resolution.path;
         result.node = node;
         return result;
     }
 
-    if (hasDirectory) {
-        QString loadPath;
-        const InitStatus initStatus =
-            directoryInitStatus(directoryPath, &loadPath);
-
-        if (initStatus == InitStatus::Ambiguous) {
-            result.result = Candidate::Result::Ambiguous;
-            return result;
-        }
-
+    if (resolution.kind == ResolutionKind::ModuleDirectory ||
+        resolution.kind == ResolutionKind::NamespaceDirectory) {
         result.result = Candidate::Result::Success;
         node.kind =
-            initStatus == InitStatus::Present
+            resolution.kind == ResolutionKind::ModuleDirectory
                 ? ((scope == Scope::External) ? NodeKind::ExternalDirectory
                                               : NodeKind::ModuleDirectory)
                 : ((scope == Scope::External) ? NodeKind::ExternalDirectory
                                               : NodeKind::Directory);
-        node.physicalPath = normalizeExistingPath(directoryPath);
+        node.physicalPath = resolution.kind == ResolutionKind::ModuleDirectory
+                                ? QFileInfo(resolution.path).absolutePath()
+                                : resolution.path;
         result.node = node;
         return result;
     }

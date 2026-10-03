@@ -34,13 +34,13 @@ QVariant CodeCompletionModel::data(const QModelIndex &index, int role) const {
     case Qt::SelfDataRole:
         return QVariant::fromValue(info);
     case Qt::UserRole:
-        return info.name;
+        return info.label;
     case Qt::DisplayRole:
-        return info.name;
+        return info.label;
     case Qt::ToolTipRole:
-        return info.comment();
+        return info.documentation();
     case Qt::DecorationRole:
-        return CodeInfoTip::getDisplayIcon(info.type);
+        return CodeInfoTip::getDisplayIcon(info.kind);
     }
 
     return {};

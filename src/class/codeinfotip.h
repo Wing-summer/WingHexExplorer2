@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -18,39 +18,49 @@
 #ifndef CODEINFOTIP_H
 #define CODEINFOTIP_H
 
-#include "lsp.h"
+#include "luau/lsp/lsp.h"
 
 #include <QIcon>
-#include <QJsonValue>
-#include <QMap>
-#include <QObject>
-#include <QString>
+#include <QPlainTextEdit>
 
 class CodeInfoTip {
 public:
-    static QIcon getDisplayIcon(LSP::CompletionItemKind type);
+    using SnippetResolver = std::function<QString(const QString &name)>;
 
 public:
-    QString name;
-    LSP::CompletionItemKind type = LSP::CompletionItemKind::Missing;
+    static QIcon getDisplayIcon(lsp::CompletionItemKind kind);
 
-    QJsonValue value;
+    explicit CodeInfoTip(const lsp::CompletionItem &item);
+    explicit CodeInfoTip() = default;
+
+public:
+    // UI / model data.
+    QString label;
+    lsp::CompletionItemKind kind = lsp::CompletionItemKind::Missing;
+    QString detail;
+
     QList<CodeInfoTip> children;
 
 public:
-    QString comment() const;
-    QString completion() const;
+    QString documentation() const;
+    QString insertionTextOrLabel() const;
+    bool usesSnippet() const;
 
-    void setComment(const QString &comment);
-    bool isSnippet() const;
+    void applyEdit(QPlainTextEdit *editor, const QString &completionPrefix,
+                   bool hasCodeLineContext) const;
 
 private:
-    mutable QString _comment;
-    mutable QString _completion;
-    mutable bool _isSnippet = false;
+    static QString processSnippt(const QString &name, QPlainTextEdit *editor,
+                                 bool hasCodeLineContext);
 
-public:
-    void resolve() const;
+private:
+    QString documentationText;
+    QString insertionText;
+
+    lsp::InsertTextFormat insertionFormat = lsp::InsertTextFormat::PlainText;
+
+    std::optional<lsp::Range> textEditRange;
+    std::vector<lsp::TextEdit> additionalTextEdits;
 };
 
 Q_DECLARE_METATYPE(CodeInfoTip);

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -26,8 +26,6 @@
 
 #include <QFileSystemWatcher>
 
-class asIScriptEngine;
-
 class ScriptEditor final : public ads::CDockWidget,
                            public LspEditorInterace,
                            public EditorInfo {
@@ -41,8 +39,6 @@ public:
 
     bool formatCode();
     bool isModified() const;
-
-    quint64 getVersion() const;
 
     QString fileName() const;
 
@@ -58,23 +54,25 @@ public:
 
 public:
     virtual const WingCodeEdit *editorPtr() const override;
-    virtual QString lspFileNameURL() const override;
+    virtual lsp::DocumentUri lspFileNameURL() const override;
     virtual CursorPos currentPosition() const override;
     virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
+    virtual void syncDocChange() override;
 
     virtual void saveState(QXmlStreamWriter &Stream) const override;
 
     virtual void syncSemanticTokens() override;
 
 protected:
-    virtual QVector<LSP::SemanticToken> parseSemanticTokens() override;
+    virtual QVector<lsp::SemanticToken> parseSemanticTokens() override;
 
 signals:
     void onToggleMark(int line);
     void need2Reload();
+    void navigateToLocation(const QString &path, int line, int character);
 
 public slots:
     void setReadOnly(bool b);
@@ -87,16 +85,8 @@ public slots:
     void replace();
     void gotoLine();
 
-    void onReconnectLsp();
-    void setCompleterEnabled(bool b);
-
-private slots:
-    void onSendFullTextChangeCompleted();
-
 private:
     void processTitle();
-
-    bool increaseVersion();
 
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
@@ -105,9 +95,6 @@ private:
     inline static QList<ScriptEditor *> m_instances;
 
     CodeEdit *m_editor = nullptr;
-    quint64 version = 1;
-
-    ResettableTimer *_timer;
     ResettableTimer *_tokentimer;
     bool _reloadLater = false;
 

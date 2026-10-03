@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2029 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -18,13 +18,12 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
-// #include "class/asconsolecompletion.h"
 #include "class/lspeditorinterface.h"
-#include "class/resettabletimer.h"
 #include "class/scriptmachine.h"
 #include "scriptingconsolebase.h"
 
 #include <QMutex>
+#include <QTextDocument>
 
 class ScriptingConsole : public ScriptingConsoleBase, public LspEditorInterace {
     Q_OBJECT
@@ -38,7 +37,6 @@ public:
 
 public:
     void enableLSP();
-    quint64 getVersion() const;
 
 public:
     QString getInput();
@@ -50,20 +48,21 @@ public:
 
 public:
     virtual const WingCodeEdit *editorPtr() const override;
-    virtual QString lspFileNameURL() const override;
+    virtual lsp::DocumentUri lspFileNameURL() const override;
     virtual CursorPos currentPosition() const override;
     virtual CursorPos cursorPosition(const QTextCursor &cursor) const override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
+    virtual void syncDocChange() override;
 
     virtual void syncSemanticTokens() override;
 
 protected:
-    virtual QVector<LSP::SemanticToken> parseSemanticTokens() override;
+    virtual QVector<lsp::SemanticToken> parseSemanticTokens() override;
 
 private:
-    static QString lspURL();
+    static lsp::DocumentUri lspURL();
 
     void setEditMode(ConsoleMode mode);
 
@@ -82,7 +81,6 @@ public slots:
 
 private slots:
     void applyScriptSettings();
-    void onSendFullTextChangeCompleted();
 
 signals:
     void consoleScriptRunFinished();
@@ -105,13 +103,8 @@ protected slots:
     virtual void paste() override;
 
 private:
-    bool increaseVersion();
-
-private:
-    QString _codes;
-    quint64 version = 1;
-
-    ResettableTimer *_timer;
+    QStringList _codes;
+    QTextDocument _lspDocument;
 
     bool _isTerminal = true;
     bool _isWaitingRead = false;
