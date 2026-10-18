@@ -39,18 +39,21 @@ qint64 QConsoleIODevice::bytesAvailable() const {
 
 bool QConsoleIODevice::waitForReadyRead(int msecs) {
     if (!widget_->device()->isOpen() ||
-        widget_->mode() != QConsoleWidget::Input)
+        widget_->mode() != QConsoleWidget::Input) {
         return false;
+    }
 
-    if (bytesAvailable())
+    if (bytesAvailable()) {
         return true;
+    }
 
     QEventLoop loop;
 
     connect(this, SIGNAL(readyRead()), &loop, SLOT(quit()));
     connect(this, SIGNAL(aboutToClose()), &loop, SLOT(quit()));
-    if (msecs > 0)
+    if (msecs > 0) {
         QTimer::singleShot(msecs, &loop, SLOT(quit()));
+    }
 
     readyReadEmmited_ = false;
     loop.exec();
@@ -83,8 +86,9 @@ void QConsoleIODevice::consoleWidgetInput(const QString &in) {
     QByteArray ba = in.toLatin1();
     int sz = ba.size();
     if (bytesAvailable()) {
-        if (readpos_)
+        if (readpos_) {
             readbuff_ = readbuff_.mid(readpos_);
+        }
         readbuff_.append(ba);
     } else {
         readbuff_ = ba;

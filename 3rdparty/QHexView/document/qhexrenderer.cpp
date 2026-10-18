@@ -94,8 +94,9 @@ void QHexRenderer::setAddressVisible(bool b) {
 }
 
 void QHexRenderer::switchDoc(QHexDocument *doc) {
-    if (doc)
+    if (doc) {
         m_document = doc;
+    }
 }
 
 /*===================================*/
@@ -133,15 +134,18 @@ void QHexRenderer::renderFrame(QPainter *painter) {
 
     auto h = this->headerLineCount() * this->lineHeight();
 
-    if (m_headerVisible)
+    if (m_headerVisible) {
         painter->drawLine(0, h, endx, h);
-    if (m_addressVisible)
+    }
+    if (m_addressVisible) {
         painter->drawLine(hexx, rect.top(), hexx, rect.bottom());
+    }
 
     painter->drawLine(asciix, rect.top(), asciix, rect.bottom());
 
-    if (m_asciiVisible)
+    if (m_asciiVisible) {
         painter->drawLine(endx, rect.top(), endx, rect.bottom());
+    }
 }
 
 void QHexRenderer::renderAdditonalFrame(QPainter *painter, bool top,
@@ -190,8 +194,9 @@ void QHexRenderer::enableCursor(bool b) { m_cursorenabled = b; }
 
 void QHexRenderer::selectArea(const QPoint &pt) {
     auto area = this->hitTestArea(pt);
-    if (!this->editableArea(area))
+    if (!this->editableArea(area)) {
         return;
+    }
 
     m_selectedarea = area;
 }
@@ -207,8 +212,9 @@ void QHexRenderer::toggleArea() {
 bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
                            qsizetype firstline, qsizetype lastline) const {
     auto area = this->hitTestArea(pt);
-    if (!this->editableArea(area))
+    if (!this->editableArea(area)) {
         return false;
+    }
 
     const auto lineWidth = this->hexLineWidth();
     auto line = std::min(firstline + qsizetype(pt.y() / this->lineHeight()) -
@@ -250,24 +256,28 @@ bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
 }
 
 QHexRenderer::Areas QHexRenderer::hitTestArea(const QPoint &pt) const {
-    if (pt.y() < headerLineCount() * lineHeight())
+    if (pt.y() < headerLineCount() * lineHeight()) {
         return Areas::HeaderArea;
+    }
 
     return hitTestColArea(pt);
 }
 
 QHexRenderer::Areas QHexRenderer::hitTestColArea(const QPoint &pt) const {
     if ((pt.x() >= this->borderSize()) &&
-        (pt.x() <= (this->getHexColumnX() - this->borderSize())))
+        (pt.x() <= (this->getHexColumnX() - this->borderSize()))) {
         return Areas::AddressArea;
+    }
 
     if ((pt.x() > (this->getHexColumnX() + this->borderSize())) &&
-        (pt.x() < (this->getAsciiColumnX() - this->borderSize())))
+        (pt.x() < (this->getAsciiColumnX() - this->borderSize()))) {
         return Areas::HexArea;
+    }
 
     if ((pt.x() > (this->getAsciiColumnX() + this->borderSize())) &&
-        (pt.x() < (this->getEndColumnX() - this->borderSize())))
+        (pt.x() < (this->getEndColumnX() - this->borderSize()))) {
         return Areas::AsciiArea;
+    }
 
     return Areas::ExtraArea;
 }
@@ -305,14 +315,16 @@ QRectF QHexRenderer::getLineRect(qsizetype line, qsizetype firstline) const {
 int QHexRenderer::headerLineCount() const { return m_headerVisible ? 1 : 0; }
 
 qreal QHexRenderer::borderSize() const {
-    if (m_document)
+    if (m_document) {
         return this->getNCellsWidth(m_document->areaIndent());
+    }
     return this->getNCellsWidth(DEFAULT_AREA_IDENTATION);
 }
 
 int QHexRenderer::hexLineWidth() const {
-    if (m_document)
+    if (m_document) {
         return m_document->hexLineWidth();
+    }
     return DEFAULT_HEX_LINE_LENGTH;
 }
 
@@ -331,10 +343,11 @@ qsizetype QHexRenderer::rendererLength() const {
 int QHexRenderer::getAddressWidth() const {
     auto base = m_document->baseAddress();
     quint64 maxAddr = base + quint64(this->rendererLength());
-    if (base <= 0xFFFFFFFF && maxAddr <= 0xFFFFFFFF)
+    if (base <= 0xFFFFFFFF && maxAddr <= 0xFFFFFFFF) {
         return 8;
-    else
+    } else {
         return 16;
+    }
     return QString::number(maxAddr, 16).length();
 }
 
@@ -366,8 +379,9 @@ qreal QHexRenderer::getNCellsWidth(int n) const { return n * getCellWidth(); }
 
 void QHexRenderer::unprintableChars(QByteArray &ascii) const {
     for (char &ch : ascii) {
-        if (std::isprint(static_cast<unsigned char>(ch)))
+        if (std::isprint(static_cast<unsigned char>(ch))) {
             continue;
+        }
 
         ch = HEX_UNPRINTABLE_CHAR;
     }
@@ -1302,17 +1316,19 @@ void QHexRenderer::drawHeader(QPainter *painter) {
     painter->save();
     painter->setPen(m_headerColor);
 
-    if (m_addressVisible)
+    if (m_addressVisible) {
         painter->drawText(addressrect, Qt::AlignHCenter | Qt::AlignVCenter,
                           QStringLiteral("Offset"));
+    }
 
     // align left for maximum consistency with drawHex() which prints from the
     // left. so hex and positions are aligned vertically
     painter->drawText(hexrect, Qt::AlignLeft | Qt::AlignVCenter, hexheader);
 
-    if (m_asciiVisible)
+    if (m_asciiVisible) {
         painter->drawText(asciirect, Qt::AlignHCenter | Qt::AlignVCenter,
                           stringEncodingName());
+    }
     painter->restore();
 }
 

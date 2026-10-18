@@ -227,8 +227,9 @@ void Toast::timerEvent(QTimerEvent *e) {
         int fadeSteps = (FADE_MS + TIMER_INTERVAL - 1) / TIMER_INTERVAL;
         fadeSteps = qMax(1, fadeSteps);
         m_nFadeStep = (100 + fadeSteps - 1) / fadeSteps;
-        if (m_nFadeStep < 1)
+        if (m_nFadeStep < 1) {
             m_nFadeStep = 1;
+        }
         m_nStatus = 0x03;
         return;
     }
@@ -236,8 +237,9 @@ void Toast::timerEvent(QTimerEvent *e) {
     if (m_nStatus == 0x03) {
         if (m_nCurrentWindowOpacity > 0) {
             m_nCurrentWindowOpacity -= m_nFadeStep;
-            if (m_nCurrentWindowOpacity < 0)
+            if (m_nCurrentWindowOpacity < 0) {
                 m_nCurrentWindowOpacity = 0;
+            }
             _oe->setOpacity(qMax(0.0, m_nCurrentWindowOpacity / 100.0));
             update();
             return;

@@ -308,8 +308,6 @@ set(CLASS_SRC
     src/class/skinmanager.h
     src/class/snippetprocessor.cpp
     src/class/snippetprocessor.h
-    src/class/wingangel.cpp
-    src/class/wingangel.h
     src/class/wingconsolehighligher.cpp
     src/class/wingconsolehighligher.h
     src/class/wingfiledialog.cpp
@@ -339,6 +337,8 @@ set(LUAU_LS
     src/luau/lsp/typehelpers.h)
 
 set(LUAU_MOD_SRC
+    src/luau/scriptbindingengine.h
+    src/luau/scriptbindingengine.cpp
     src/luau/luauutil.h
     src/luau/luauutil.cpp
     src/luau/luauformatter.h
@@ -517,7 +517,6 @@ set(PROJECT_SOURCES
     resources.qrc
     src/dbghelper.h
     src/define.h
-    src/predefgen.h
     src/utilities.h
     theme/breeze.qrc)
 

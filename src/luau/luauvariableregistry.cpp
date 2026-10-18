@@ -23,8 +23,9 @@
 void LuauVariableRegistry::clear() { variables_.clear(); }
 
 void LuauVariableRegistry::update(const QVector<lua_State *> &vm_chain) {
-    if (vm_chain.isEmpty())
+    if (vm_chain.isEmpty()) {
         return;
+    }
 
     auto *scope_state = vm_chain.first();
     LuauUtil::DisableDebugStep _(scope_state);

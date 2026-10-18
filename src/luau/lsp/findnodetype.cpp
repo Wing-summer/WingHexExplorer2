@@ -61,10 +61,12 @@ bool FindNodeType::visit(Luau::AstStatBlock *block) {
     visit(static_cast<Luau::AstNode *>(block));
 
     for (Luau::AstStat *stat : block->body) {
-        if (stat->location.end < pos)
+        if (stat->location.end < pos) {
             continue;
-        if (stat->location.begin > pos)
+        }
+        if (stat->location.begin > pos) {
             break;
+        }
 
         stat->visit(this);
     }

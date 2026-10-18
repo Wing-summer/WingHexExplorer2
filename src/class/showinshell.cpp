@@ -59,14 +59,17 @@ bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
         QAxObject *win = windows->querySubObject("Item(QVariant)", {i});
         auto program = win->dynamicCall("FullName()").toString();
         QFileInfo programFI(program);
-        if (programFI.baseName().toLower() != "explorer")
+        if (programFI.baseName().toLower() != "explorer") {
             continue;
+        }
         auto url = win->dynamicCall("LocationURL()").toUrl();
-        if (!url.isLocalFile())
+        if (!url.isLocalFile()) {
             continue;
+        }
         auto path = url.path().mid(1).toLower();
-        if (path != matchPath)
+        if (path != matchPath) {
             continue;
+        }
 
         QAxObject *doc = win->querySubObject("Document()");
         QAxObject *folder = doc->querySubObject("Folder()");
@@ -77,8 +80,9 @@ bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
         for (int j = 0; j < count; j++) {
             QAxObject *entry = folderItems->querySubObject("Item(QVariant)", j);
             auto name = entry->dynamicCall("Name()").toString().toLower();
-            if (name == matchName)
+            if (name == matchName) {
                 ourEntry = entry;
+            }
         }
         if (ourEntry) {
             doc->dynamicCall("SelectItem(QVariant, int)", ourEntry->asVariant(),
@@ -139,8 +143,9 @@ bool ShowInShell::showInGraphicalShell(QWidget *parent, const QString &pathIn,
     const QFileInfo fileInfo(pathIn);
     // Mac, Windows support folder or file.
     if constexpr (HostOsInfo::isWindowsHost()) {
-        if (showInWindowsShell(pathIn, deselect))
+        if (showInWindowsShell(pathIn, deselect)) {
             return true;
+        }
         const auto explorer =
             QStandardPaths::findExecutable(QLatin1String("explorer.exe"));
         if (explorer.isEmpty()) {
@@ -155,8 +160,9 @@ bool ShowInShell::showInGraphicalShell(QWidget *parent, const QString &pathIn,
             return false;
         }
         QStringList param;
-        if (!fileInfo.isDir())
+        if (!fileInfo.isDir()) {
             param += QLatin1String("/select,");
+        }
         param += QDir::toNativeSeparators(fileInfo.canonicalFilePath());
         return QProcess::startDetached(explorer, param);
     } else if constexpr (HostOsInfo::isMacHost()) {

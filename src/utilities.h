@@ -141,8 +141,9 @@ class Cache {
     }
 
     inline void moveToFront(Node *n) const noexcept {
-        if (chain.next == n)
+        if (chain.next == n) {
             return;
+        }
         unlinkChain(n);
         n->prev = const_cast<Chain *>(&chain);
         n->next = chain.next;
@@ -222,12 +223,14 @@ public:
     }
 
     inline T object(const Key &key) const {
-        if (isEmpty())
+        if (isEmpty()) {
             return T{};
+        }
 
         Node *n = d.findNode(key);
-        if (!n)
+        if (!n) {
             return T{};
+        }
 
         moveToFront(n);
         return n->value;
@@ -238,12 +241,14 @@ public:
     }
 
     inline bool remove(const Key &key) {
-        if (isEmpty())
+        if (isEmpty()) {
             return false;
+        }
 
         Node *n = d.findNode(key);
-        if (!n)
+        if (!n) {
             return false;
+        }
 
         unlink(n);
         return true;
@@ -277,7 +282,7 @@ public:
     inline static QStringConverter::Encoding
     encodingForName(const QString &encoding) {
         auto en = QStringConverter::encodingForName(encoding.toUtf8());
-        return en.value_or(QStringConverter::Encoding ::Latin1);
+        return en.value_or(QStringConverter::Encoding::Latin1);
     }
 
     inline static QStringList getEncodings() {
@@ -363,8 +368,9 @@ public:
     }
 
     inline static void moveToCenter(QWidget *window) {
-        if (window == nullptr)
+        if (window == nullptr) {
             return;
+        }
         auto screen = qApp->primaryScreen()->availableSize();
         window->move((screen.width() - window->width()) / 2,
                      (screen.height() - window->height()) / 2);
@@ -439,9 +445,8 @@ public:
     }
 
     inline static QByteArray
-    encodingString(const QString &str,
-                   const QStringConverter::Encoding &enc =
-                       QStringConverter::Encoding ::Latin1) {
+    encodingString(const QString &str, const QStringConverter::Encoding &enc =
+                                           QStringConverter::Encoding::Latin1) {
         QStringEncoder e(enc);
         return e.encode(str);
     }
@@ -449,7 +454,7 @@ public:
     inline static QString
     decodingString(const QByteArray &buffer,
                    const QStringConverter::Encoding &enc =
-                       QStringConverter::Encoding ::Latin1) {
+                       QStringConverter::Encoding::Latin1) {
         QStringDecoder dec(enc);
         return dec.decode(buffer);
     }
@@ -557,33 +562,39 @@ public:
         *advance = 0;
         if (digits.at(0) == QLatin1Char('x')) {
             // We only support exactly 2 hex bytes with \x format
-            if (digits.size() < 3)
+            if (digits.size() < 3) {
                 return QString();
+            }
             QByteArray number = digits.mid(1, 2).toLatin1();
             char *end;
             ulong ch = strtoul(number.constData(), &end, 16);
-            if (*end != '\0')
+            if (*end != '\0') {
                 return QString();
+            }
             *advance = 2;
             return QString(QChar::fromLatin1(static_cast<char>(ch)));
         } else if (digits.at(0) == QLatin1Char('u')) {
-            if (digits.size() < 5)
+            if (digits.size() < 5) {
                 return QString();
+            }
             QByteArray number = digits.mid(1, 4).toLatin1();
             char *end;
             ulong ch = strtoul(number.constData(), &end, 16);
-            if (*end != '\0')
+            if (*end != '\0') {
                 return QString();
+            }
             *advance = 4;
             return QString(QChar(static_cast<ushort>(ch)));
         } else if (digits.at(0) == QLatin1Char('U')) {
-            if (digits.size() < 9)
+            if (digits.size() < 9) {
                 return QString();
+            }
             QByteArray number = digits.mid(1, 8).toLatin1();
             char *end;
             ulong ch = strtoul(number.constData(), &end, 16);
-            if (*end != '\0')
+            if (*end != '\0') {
                 return QString();
+            }
 
             *advance = 8;
             if (ch > 0xFFFFU) {
@@ -608,8 +619,9 @@ public:
         int start = 0;
         for (;;) {
             int pos = text.indexOf(QLatin1Char('\\'), start);
-            if (pos < 0 || pos + 1 >= text.size())
+            if (pos < 0 || pos + 1 >= text.size()) {
                 break;
+            }
 
             result.append(text.sliced(start, pos - start));
             QChar next = text.at(pos + 1);

@@ -40,24 +40,28 @@ constexpr qint64 InternalSigSize = MagicSize + ExpectedSigSize;
 
 EVP_PKEY *loadPkeyFromCertificate(const QSslCertificate &cert) {
     const QByteArray pem = cert.toPem();
-    if (pem.isEmpty())
+    if (pem.isEmpty()) {
         return nullptr;
+    }
 
     BIO *bio = BIO_new_mem_buf(pem.constData(), static_cast<int>(pem.size()));
-    if (!bio)
+    if (!bio) {
         return nullptr;
+    }
 
     X509 *x509 = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
     BIO_free(bio);
 
-    if (!x509)
+    if (!x509) {
         return nullptr;
+    }
 
     EVP_PKEY *pkey = X509_get_pubkey(x509);
     X509_free(x509);
 
-    if (!pkey)
+    if (!pkey) {
         return nullptr;
+    }
 
     if (EVP_PKEY_id(pkey) != EVP_PKEY_ED25519) {
         EVP_PKEY_free(pkey);
@@ -187,8 +191,9 @@ bool WingPluginCert::verify(const QByteArray &file, const QByteArray &sig,
 
     bool ok = false;
     do {
-        if (EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) != 1)
+        if (EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) != 1) {
             break;
+        }
 
         ok = (EVP_DigestVerify(
                   ctx, reinterpret_cast<const unsigned char *>(sig.constData()),

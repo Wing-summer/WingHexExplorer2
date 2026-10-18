@@ -205,8 +205,9 @@ void SearchReplaceWidget::replaceCurrent() {
     Q_ASSERT(m_editor);
 
     const QString searchText = m_searchText->text();
-    if (searchText.isEmpty())
+    if (searchText.isEmpty()) {
         return;
+    }
 
     if (m_replaceCursor.isNull() || m_replaceCursor != m_editor->textCursor()) {
         m_replaceCursor = searchNext(false);
@@ -214,15 +215,17 @@ void SearchReplaceWidget::replaceCurrent() {
     }
 
     QString replaceText = m_replaceText->text();
-    if (m_escapes->isChecked())
+    if (m_escapes->isChecked()) {
         replaceText = Utilities::translateStringEscapes(replaceText);
+    }
 
     m_replaceCursor.beginEditBlock();
     m_replaceCursor.removeSelectedText();
-    if (m_regex->isChecked())
+    if (m_regex->isChecked()) {
         m_replaceCursor.insertText(regexReplace(replaceText, m_regexMatch));
-    else
+    } else {
         m_replaceCursor.insertText(replaceText);
+    }
     m_replaceCursor.endEditBlock();
 
     m_replaceCursor = searchNext(false);
@@ -233,14 +236,16 @@ void SearchReplaceWidget::performReplaceAll(ReplaceAllMode mode) {
     Q_ASSERT(m_editor);
 
     const QString searchText = m_searchText->text();
-    if (searchText.isEmpty())
+    if (searchText.isEmpty()) {
         return;
+    }
 
     auto searchCursor = m_editor->textCursor();
-    if (mode == InSelection)
+    if (mode == InSelection) {
         searchCursor.setPosition(m_editor->textCursor().selectionStart());
-    else
+    } else {
         searchCursor.movePosition(QTextCursor::Start);
+    }
     searchCursor = m_editor->textSearch(searchCursor, m_searchParams, true,
                                         false, &m_regexMatch);
     if (searchCursor.isNull()) {
@@ -257,22 +262,25 @@ void SearchReplaceWidget::performReplaceAll(ReplaceAllMode mode) {
     }
 
     QString replaceText = m_replaceText->text();
-    if (m_escapes->isChecked())
+    if (m_escapes->isChecked()) {
         replaceText = Utilities::translateStringEscapes(replaceText);
+    }
 
     searchCursor.beginEditBlock();
     auto replaceCursor = searchCursor;
     int replacements = 0;
     while (!replaceCursor.isNull()) {
         if (mode == InSelection && replaceCursor.selectionEnd() >
-                                       m_editor->textCursor().selectionEnd())
+                                       m_editor->textCursor().selectionEnd()) {
             break;
+        }
 
         replaceCursor.removeSelectedText();
-        if (m_regex->isChecked())
+        if (m_regex->isChecked()) {
             replaceCursor.insertText(regexReplace(replaceText, m_regexMatch));
-        else
+        } else {
             replaceCursor.insertText(replaceText);
+        }
         replaceCursor = m_editor->textSearch(replaceCursor, m_searchParams,
                                              false, false, &m_regexMatch);
         ++replacements;
@@ -292,8 +300,9 @@ QTextCursor SearchReplaceWidget::searchNext(bool reverse) {
     }
     Q_ASSERT(m_editor);
 
-    if (m_searchParams.searchText.isEmpty())
+    if (m_searchParams.searchText.isEmpty()) {
         return QTextCursor();
+    }
 
     auto searchCursor = m_editor->textSearch(
         m_editor->textCursor(), m_searchParams, false, reverse, &m_regexMatch);
@@ -305,11 +314,12 @@ QTextCursor SearchReplaceWidget::searchNext(bool reverse) {
                                             reverse, &m_regexMatch);
     }
 
-    if (searchCursor.isNull())
+    if (searchCursor.isNull()) {
         WingMessageBox::information(this, QString(),
                                     tr("The specified text was not found"));
-    else
+    } else {
         m_editor->setTextCursor(searchCursor);
+    }
     return searchCursor;
 }
 
@@ -329,8 +339,9 @@ SearchReplaceWidget::regexReplace(const QString &text,
     int start = 0;
     for (;;) {
         int pos = text.indexOf(QLatin1Char('\\'), start);
-        if (pos < 0 || pos + 1 >= text.size())
+        if (pos < 0 || pos + 1 >= text.size()) {
             break;
+        }
 
         result.append(text.sliced(start, pos - start));
         QChar next = text.at(pos + 1);

@@ -191,8 +191,9 @@ void IDBWatchModel::clearAll() {
 }
 
 QVariant IDBWatchModel::data(const QModelIndex &index, int role) const {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return {};
+    }
 
     /*
      * Children/proxy nodes are completely handled by IDBTreeModel.
@@ -248,35 +249,40 @@ QVariant IDBWatchModel::data(const QModelIndex &index, int role) const {
 }
 
 bool IDBWatchModel::hasChildren(const QModelIndex &parent) const {
-    if (!parent.isValid())
+    if (!parent.isValid()) {
         return !m_watchItems.isEmpty();
+    }
 
     if (!parent.parent().isValid() && !IDBTreeModel::isProxyNode(parent)) {
 
         const int row = parent.row();
 
-        if (row < 0 || row >= m_watchItems.size())
+        if (row < 0 || row >= m_watchItems.size()) {
             return false;
+        }
 
         const auto &item = m_watchItems.at(row);
 
-        if (!item.result)
+        if (!item.result) {
             return false;
+        }
 
         /*
          * The result is retained internally after leaving the debug
          * break, but its child tree is no longer considered current.
          */
-        if (!m_dbg || !m_dbg->isDebugBreak())
+        if (!m_dbg || !m_dbg->isDebugBreak()) {
             return false;
+        }
     }
 
     return IDBTreeModel::hasChildren(parent);
 }
 
 int IDBWatchModel::rowCount(const QModelIndex &parent) const {
-    if (!parent.isValid())
+    if (!parent.isValid()) {
         return m_watchItems.size();
+    }
 
     /*
      * Unevaluated top-level watch:
@@ -286,19 +292,22 @@ int IDBWatchModel::rowCount(const QModelIndex &parent) const {
 
         const int row = parent.row();
 
-        if (row < 0 || row >= m_watchItems.size())
+        if (row < 0 || row >= m_watchItems.size()) {
             return 0;
+        }
 
         const auto &item = m_watchItems.at(row);
 
-        if (!item.result)
+        if (!item.result) {
             return 0;
+        }
 
         /*
          * When debugger is not stopped, don't expose stale children.
          */
-        if (!m_dbg || !m_dbg->isDebugBreak())
+        if (!m_dbg || !m_dbg->isDebugBreak()) {
             return 0;
+        }
     }
 
     return IDBTreeModel::rowCount(parent);
@@ -307,8 +316,9 @@ int IDBWatchModel::rowCount(const QModelIndex &parent) const {
 QModelIndex IDBWatchModel::index(int row, int column,
                                  const QModelIndex &parent) const {
     if (!parent.isValid()) {
-        if (row < 0 || row >= m_watchItems.size())
+        if (row < 0 || row >= m_watchItems.size()) {
             return {};
+        }
 
         const auto &item = m_watchItems.at(row);
 
@@ -335,11 +345,13 @@ QModelIndex IDBWatchModel::index(int row, int column,
 
         const int row = parent.row();
 
-        if (row < 0 || row >= m_watchItems.size())
+        if (row < 0 || row >= m_watchItems.size()) {
             return {};
+        }
 
-        if (!m_watchItems.at(row).result)
+        if (!m_watchItems.at(row).result) {
             return {};
+        }
     }
 
     /*
@@ -417,8 +429,9 @@ void IDBWatchModel::rebuildWatchRegistry() {
      * represented by a top-level QModelIndex with nullptr internalPointer.
      */
     for (const auto &item : m_watchItems) {
-        if (item.result)
+        if (item.result) {
             variables->append(item.result);
+        }
     }
 
     /*

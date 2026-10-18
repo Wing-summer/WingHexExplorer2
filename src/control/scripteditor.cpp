@@ -309,17 +309,20 @@ QVector<lsp::SemanticToken> ScriptEditor::parseSemanticTokens() {
 
     for (const auto &token : serverTokens) {
         if (token.start.line != token.end.line ||
-            token.end.column <= token.start.column)
+            token.end.column <= token.start.column) {
             continue;
+        }
 
         QStringList modifiers;
         if ((token.tokenModifiers &
              lsp::SemanticTokenModifiers::DefaultLibrary) !=
-            lsp::SemanticTokenModifiers::None)
+            lsp::SemanticTokenModifiers::None) {
             modifiers.append(QStringLiteral("defaultLibrary"));
+        }
         if ((token.tokenModifiers & lsp::SemanticTokenModifiers::Readonly) !=
-            lsp::SemanticTokenModifiers::None)
+            lsp::SemanticTokenModifiers::None) {
             modifiers.append(QStringLiteral("readonly"));
+        }
 
         tokens.append({int(token.start.line), int(token.start.column),
                        int(token.end.column - token.start.column),

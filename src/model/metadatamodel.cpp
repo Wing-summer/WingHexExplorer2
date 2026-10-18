@@ -87,12 +87,14 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         const auto &d = _doc->metadata()->at(r);
         switch (index.column()) {
         case 2:
-            if (d.foreground.isValid())
+            if (d.foreground.isValid()) {
                 return d.foreground;
+            }
             break;
         case 3:
-            if (d.background.isValid())
+            if (d.background.isValid()) {
                 return d.background;
+            }
             break;
         default:
             break;

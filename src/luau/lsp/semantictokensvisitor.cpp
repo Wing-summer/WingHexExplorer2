@@ -102,12 +102,14 @@ bool SemanticTokensVisitor::visit(Luau::AstTypeUnion *unionType) {
     // parts:
     //  T? -> T | nil
     //  U | V? -> U | V | nil
-    for (const auto &ty : unionType->types)
-        if (auto ref = ty->as<Luau::AstTypeReference>())
+    for (const auto &ty : unionType->types) {
+        if (auto ref = ty->as<Luau::AstTypeReference>()) {
             if (!ref->prefix && !ref->hasParameterList && ref->name == "nil" &&
                 ref->location.end.column == ref->location.begin.column + 1) {
                 syntheticTypes.emplace(ref);
             }
+        }
+    }
     return true;
 }
 
@@ -246,8 +248,9 @@ bool SemanticTokensVisitor::visit(Luau::AstExprLocal *local) {
         type = inferTokenType(*ty, defaultType);
     }
 
-    if (type == lsp::SemanticTokenTypes::Variable)
+    if (type == lsp::SemanticTokenTypes::Variable) {
         return true;
+    }
 
     tokens.emplace_back(SemanticToken{local->location.begin,
                                       local->location.end, type,
@@ -288,8 +291,9 @@ bool SemanticTokensVisitor::visit(Luau::AstExprGlobal *global) {
         }
 
         auto type = inferTokenType(*ty, lsp::SemanticTokenTypes::Variable);
-        if (type == lsp::SemanticTokenTypes::Variable)
+        if (type == lsp::SemanticTokenTypes::Variable) {
             return true;
+        }
 
         tokens.emplace_back(SemanticToken{global->location.begin,
                                           global->location.end, type,
@@ -301,16 +305,18 @@ bool SemanticTokensVisitor::visit(Luau::AstExprGlobal *global) {
 
 bool SemanticTokensVisitor::visit(Luau::AstExprIndexName *index) {
     auto parentTy = module->astTypes.find(index->expr);
-    if (!parentTy)
+    if (!parentTy) {
         return true;
+    }
 
     auto parentIsBuiltin = false;
     auto parentIsEnum = false;
     if (auto global = index->expr->as<Luau::AstExprGlobal>()) {
         parentIsBuiltin =
             builtinGlobals.find(global->name) != builtinGlobals.end();
-        if (parentIsBuiltin && global->name == "Enum")
+        if (parentIsBuiltin && global->name == "Enum") {
             parentIsEnum = true;
+        }
     }
 
     auto ty = Luau::follow(*parentTy);
@@ -320,10 +326,11 @@ bool SemanticTokensVisitor::visit(Luau::AstExprIndexName *index) {
         auto prop = propInformation[0].property;
 
         auto defaultType = lsp::SemanticTokenTypes::Property;
-        if (parentIsEnum)
+        if (parentIsEnum) {
             defaultType = lsp::SemanticTokenTypes::Enum;
-        else if (Luau::hasTag(prop.tags, "EnumItem"))
+        } else if (Luau::hasTag(prop.tags, "EnumItem")) {
             defaultType = lsp::SemanticTokenTypes::EnumMember;
+        }
 
         auto type = inferTokenType(*prop.readTy, defaultType);
         auto modifiers = lsp::SemanticTokenModifiers::None;

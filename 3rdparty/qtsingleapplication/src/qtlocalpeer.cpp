@@ -73,11 +73,13 @@ QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
 QtLocalPeer::~QtLocalPeer() { server->close(); }
 
 bool QtLocalPeer::isClient() {
-    if (lockFile.isLocked())
+    if (lockFile.isLocked()) {
         return false;
+    }
 
-    if (!lockFile.lock(QtLP_Private::QtLockedFile::WriteLock, false))
+    if (!lockFile.lock(QtLP_Private::QtLockedFile::WriteLock, false)) {
         return true;
+    }
 
     bool res = server->listen(socketName);
 #if defined(Q_OS_UNIX) && (QT_VERSION >= QT_VERSION_CHECK(4, 5, 0))
@@ -88,17 +90,19 @@ bool QtLocalPeer::isClient() {
         res = server->listen(socketName);
     }
 #endif
-    if (!res)
+    if (!res) {
         qWarning("QtSingleCoreApplication: listen on local socket failed, %s",
                  qPrintable(server->errorString()));
+    }
     QObject::connect(server, SIGNAL(newConnection()),
                      SLOT(receiveConnection()));
     return false;
 }
 
 bool QtLocalPeer::sendMessage(const QByteArray &uMsg, int timeout) {
-    if (!isClient())
+    if (!isClient()) {
         return false;
+    }
 
     QLocalSocket socket;
     bool connOk = false;
@@ -106,8 +110,9 @@ bool QtLocalPeer::sendMessage(const QByteArray &uMsg, int timeout) {
         // Try twice, in case the other instance is just starting up
         socket.connectToServer(socketName);
         connOk = socket.waitForConnected(timeout / 2);
-        if (connOk || i)
+        if (connOk || i) {
             break;
+        }
         int ms = 250;
 #if defined(Q_OS_WIN)
         Sleep(DWORD(ms));
@@ -116,24 +121,27 @@ bool QtLocalPeer::sendMessage(const QByteArray &uMsg, int timeout) {
         nanosleep(&ts, NULL);
 #endif
     }
-    if (!connOk)
+    if (!connOk) {
         return false;
+    }
 
     QDataStream ds(&socket);
     ds.writeBytes(uMsg.constData(), uMsg.size());
     bool res = socket.waitForBytesWritten(timeout);
     if (res) {
         res &= socket.waitForReadyRead(timeout); // wait for ack
-        if (res)
+        if (res) {
             res &= (socket.read(qstrlen(ack)) == ack);
+        }
     }
     return res;
 }
 
 void QtLocalPeer::receiveConnection() {
     QLocalSocket *socket = server->nextPendingConnection();
-    if (!socket)
+    if (!socket) {
         return;
+    }
 
     while (true) {
         if (socket->state() == QLocalSocket::UnconnectedState) {
@@ -141,8 +149,9 @@ void QtLocalPeer::receiveConnection() {
             delete socket;
             return;
         }
-        if (socket->bytesAvailable() >= qint64(sizeof(quint32)))
+        if (socket->bytesAvailable() >= qint64(sizeof(quint32))) {
             break;
+        }
         socket->waitForReadyRead();
     }
 

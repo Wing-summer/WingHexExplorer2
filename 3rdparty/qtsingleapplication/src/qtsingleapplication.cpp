@@ -180,12 +180,13 @@ QString QtSingleApplication::id() const { return peer->applicationId(); }
 void QtSingleApplication::setActivationWindow(QWidget *aw,
                                               bool activateOnMessage) {
     actWin = aw;
-    if (activateOnMessage)
+    if (activateOnMessage) {
         connect(peer, &QtLocalPeer::messageReceived, this,
                 &QtSingleApplication::activateWindow);
-    else
+    } else {
         disconnect(peer, &QtLocalPeer::messageReceived, this,
                    &QtSingleApplication::activateWindow);
+    }
 }
 
 /*!
@@ -261,8 +262,9 @@ QString QtSingleApplication::getUsername() const {
     wchar_t username[UNLEN + 1];
     // Specifies size of the buffer on input
     DWORD usernameLength = UNLEN + 1;
-    if (GetUserNameW(username, &usernameLength))
+    if (GetUserNameW(username, &usernameLength)) {
         return QString::fromWCharArray(username);
+    }
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
     return QString::fromLocal8Bit(qgetenv("USERNAME"));
 #else
@@ -273,8 +275,9 @@ QString QtSingleApplication::getUsername() const {
     QString username;
     uid_t uid = geteuid();
     struct passwd *pw = getpwuid(uid);
-    if (pw)
+    if (pw) {
         username = QString::fromLocal8Bit(pw->pw_name);
+    }
     if (username.isEmpty()) {
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
         username = QString::fromLocal8Bit(qgetenv("USER"));

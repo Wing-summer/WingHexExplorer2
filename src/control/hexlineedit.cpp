@@ -37,8 +37,9 @@ HexLineEdit::HexLineEdit(QWidget *parent)
 }
 
 void HexLineEdit::setMode(Mode m) {
-    if (m_mode == m)
+    if (m_mode == m) {
         return;
+    }
 
     if (m_mode == HexMode) {
         saveUndoRecord(UndoRecord::ModeChange, m_raw,
@@ -84,8 +85,9 @@ bool HexLineEdit::isValid() const {
 qsizetype HexLineEdit::undoLimit() const { return m_undoLimit; }
 
 void HexLineEdit::undo() {
-    if (m_undoIndex < 0 || m_isUndoing || m_isRedoing)
+    if (m_undoIndex < 0 || m_isUndoing || m_isRedoing) {
         return;
+    }
 
     m_isUndoing = true;
 
@@ -213,8 +215,9 @@ void HexLineEdit::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void HexLineEdit::copySelectedHex() {
-    if (!hasSelectedText())
+    if (!hasSelectedText()) {
         return;
+    }
 
     auto selStart = selectionStart();
     auto selEnd = selStart + selectionLength();
@@ -226,8 +229,9 @@ void HexLineEdit::copySelectedHex() {
 }
 
 void HexLineEdit::cutSelectedHex() {
-    if (!hasSelectedText())
+    if (!hasSelectedText()) {
         return;
+    }
 
     auto selStart = selectionStart();
     auto selEnd = selStart + selectionLength();
@@ -500,8 +504,9 @@ void HexLineEdit::saveUndoRecord(UndoRecord::OperationType type, int position,
 }
 
 void HexLineEdit::saveUndoRecord(const UndoRecord &newRecord) {
-    if (m_isUndoing || m_isRedoing)
+    if (m_isUndoing || m_isRedoing) {
         return;
+    }
 
     if (m_mergeEnabled && m_undoIndex >= 0 &&
         m_undoIndex < m_undoStack.size()) {
@@ -532,19 +537,22 @@ void HexLineEdit::saveUndoRecord(const UndoRecord &newRecord) {
 }
 
 bool HexLineEdit::isHexOrWildcard(QChar c) {
-    if (c == QChar('?'))
+    if (c == QChar('?')) {
         return true;
+    }
     ushort u = c.unicode();
     if ((u >= '0' && u <= '9') || (u >= 'A' && u <= 'F') ||
-        (u >= 'a' && u <= 'f'))
+        (u >= 'a' && u <= 'f')) {
         return true;
+    }
     return false;
 }
 
 quint8 HexLineEdit::hexCharToValue(QChar c) {
     ushort u = c.toUpper().unicode();
-    if (u >= '0' && u <= '9')
+    if (u >= '0' && u <= '9') {
         return quint8(u - '0');
+    }
     return quint8(10 + (u - 'A'));
 }
 
@@ -640,27 +648,31 @@ bool HexLineEdit::hasSelection() const {
 }
 
 void HexLineEdit::replaceSelectionWithRaw(const QString &newRawChunk) {
-    if (!hasSelection())
+    if (!hasSelection()) {
         return;
+    }
     auto selStart = selectionStart();
     auto selLen = selectionLength();
     auto selEnd = selStart + selLen;
     auto lstart = logicalPosFromDisplayPos(selStart);
     auto lend = logicalPosFromDisplayPos(selEnd);
     removeLogicalRange(lstart, lend - lstart);
-    if (!newRawChunk.isEmpty())
+    if (!newRawChunk.isEmpty()) {
         insertAtLogicalPos(newRawChunk, lstart);
+    }
     refreshDisplayAndSetCursor(lstart + newRawChunk.size());
 }
 
 void HexLineEdit::handlePasteText(const QString &txt) {
-    if (txt.isEmpty())
+    if (txt.isEmpty()) {
         return;
+    }
 
     int oldCursor = logicalPosFromDisplayPos(cursorPosition());
     QString filtered = filteredRaw(txt);
-    if (filtered.isEmpty())
+    if (filtered.isEmpty()) {
         return;
+    }
 
     if (hasSelection()) {
         auto selStart = selectionStart();

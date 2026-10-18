@@ -23,7 +23,6 @@
 #include "WingCodeEdit/wingsymbolcenter.h"
 #include "aboutsoftwaredialog.h"
 #include "class/languagemanager.h"
-#include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
 #include "class/scriptmachine.h"
 #include "class/scriptmanager.h"
@@ -1524,8 +1523,9 @@ void ScriptingDialog::updateCursorPosition() {
             std::abs(cursor.selectionEnd() - cursor.selectionStart());
         QString positionText =
             tr("Line %1, Col %2").arg(cursor.blockNumber() + 1).arg(column + 1);
-        if (selectedChars)
+        if (selectedChars) {
             positionText += tr(" (Selected: %1)").arg(selectedChars);
+        }
         m_status->showMessage(positionText);
     } else {
         m_status->showMessage({});
@@ -1700,8 +1700,9 @@ void ScriptingDialog::on_saveas() {
     auto filename = WingFileDialog::getSaveFileName(
         this, tr("ChooseSaveFile"), m_lastusedpath,
         QStringLiteral("Luau (*.luau *.lua)"));
-    if (filename.isEmpty())
+    if (filename.isEmpty()) {
         return;
+    }
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     auto res = editor->save(filename);
@@ -1883,7 +1884,6 @@ void ScriptingDialog::on_runscript() {
         }
 
         m_consoleout->clear();
-        PluginSystem::instance().scriptPragmaBegin();
         editor->setReadOnly(true);
         updateRunDebugMode();
         ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
@@ -2012,8 +2012,9 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
 
     _savedLayout = m_dock->saveState();
     auto &set = SettingManager::instance();
-    if (m_recentmanager->isDirty())
+    if (m_recentmanager->isDirty()) {
         set.setRecentScriptFiles(m_recentmanager->saveRecent());
+    }
     set.setLastUsedScriptPath(m_lastusedpath);
     set.setWatchExpressions(m_watchModel->expressionList());
     saveDockLayout();
@@ -2065,7 +2066,7 @@ ScriptEditor *ScriptingDialog::createFakeEditor(const QString &fileName,
         _fakeEditor = new ScriptEditor(this);
         _fakeEditor->setReadOnly(true);
         _fakeEditor->setFeature(
-            ads::CDockWidget::DockWidgetFeature ::DockWidgetClosable, false);
+            ads::CDockWidget::DockWidgetFeature::DockWidgetClosable, false);
         _fakeEditor->editor()->disconnect(); // disconnect all
 
         auto tab = _fakeEditor->tabWidget();

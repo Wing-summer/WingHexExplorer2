@@ -66,7 +66,8 @@ public:
 
     // IWingPluginCoreBase interface
 public:
-    virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
+    virtual void
+    onRegisterScriptObj(WingScriptBind::ScopeBuilder scope) override;
 
     virtual void
     onPaintHexEditorView(QPainter *painter, QWidget *w,
@@ -78,34 +79,6 @@ public:
     prepareCallEditorContext(WingHex::HexEditorContext *context) override;
     virtual void
     finishCallEditorContext(WingHex::HexEditorContext *context) override;
-
-private:
-    QVariant test_a(const QVariantList &params);
-    QVariant test_b(const QVariantList &params);
-    QVariant test_c(const QVariantList &params);
-    QVariant test_d(const QVariantList &params);
-
-    QVariant test_e(const QVariantList &params);
-    QVariant test_f(const QVariantList &params);
-    QVariant test_g(const QVariantList &params);
-    QVariant test_h(const QVariantList &params);
-
-    WingHex::UNSAFE_RET colorTable(const QList<void *> &params);
-
-    WingHex::UNSAFE_RET colorTableNew(const QList<void *> &params);
-
-    QVariant createTestShareMem(const QVariantList &params);
-    QVariant destoryTestShareMem(const QVariantList &params);
-    QVariant printLogTestSharedMemData(const QVariantList &params);
-
-    QVariant setPluginMetaTestEnabled(const QVariantList &params);
-    QVariant pluginMetaTestEnabled(const QVariantList &params);
-
-    QVariant testCrash(const QVariantList &params);
-
-    static void testGenericAdd(WingHex::asIWingGeneric *param);
-
-    static void testRaiseScriptException(WingHex::asIWingGeneric *);
 
 private:
     void test_a();

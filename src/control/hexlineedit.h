@@ -68,11 +68,13 @@ public:
               timestamp(QDateTime::currentMSecsSinceEpoch()) {}
 
         inline bool canMergeWith(const UndoRecord &other) const {
-            if (type != other.type)
+            if (type != other.type) {
                 return false;
+            }
 
-            if (qAbs(timestamp - other.timestamp) > 1000)
+            if (qAbs(timestamp - other.timestamp) > 1000) {
                 return false;
+            }
 
             if (type == Insert) {
                 return (!hasSelection && !other.hasSelection &&
@@ -124,10 +126,11 @@ public:
 
         inline UndoRecord reverse() const {
             OperationType reverseType = type;
-            if (type == Insert)
+            if (type == Insert) {
                 reverseType = Delete;
-            else if (type == Delete)
+            } else if (type == Delete) {
                 reverseType = Insert;
+            }
 
             return UndoRecord(reverseType, position, insertedText, removedText,
                               cursorAfter, cursorBefore, hasSelection,

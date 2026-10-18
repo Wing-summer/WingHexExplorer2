@@ -73,8 +73,9 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
 
     // append the newline char and
     // send signal / update iodevice
-    if (iodevice_->isOpen())
+    if (iodevice_->isOpen()) {
         iodevice_->consoleWidgetInput(code);
+    }
 
     if (mod == Qt::ControlModifier) {
         _codes.append(code);
@@ -432,8 +433,9 @@ QList<QTextBlock> ScriptingConsole::visibleTextBlocks() const {
         auto blockRect =
             blockBoundingGeometry(block).translated(contentOffset()).toRect();
 
-        if (blockRect.top() > bottom)
+        if (blockRect.top() > bottom) {
             break;
+        }
 
         if (blockRect.intersects(rect)) {
             blocks.append(block);

@@ -138,16 +138,17 @@ std::optional<int> eval(lua_State *L, const QString &code, int env) {
 
     auto bytecode = bcb.getBytecode();
     int result = luau_load(L, c.c_str(), bytecode.data(), bytecode.size(), 0);
-    if (result != 0)
+    if (result != 0) {
         return std::nullopt;
+    }
 
     lua_pushvalue(L, env_idx);
     lua_setfenv(L, -2);
 
     int call_result = lua_pcall(L, 0, LUA_MULTRET, 0);
-    if (call_result == LUA_OK)
+    if (call_result == LUA_OK) {
         return lua_gettop(L) - top;
-    else {
+    } else {
         qCritical("Error running code: %s", lua_tostring(L, -1));
         return std::nullopt;
     }

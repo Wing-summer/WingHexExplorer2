@@ -153,7 +153,7 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
 }
 
 QStringConverter::Encoding FindResultModel::encoding() const {
-    return m_data ? m_data->encoding : QStringConverter::Encoding ::Latin1;
+    return m_data ? m_data->encoding : QStringConverter::Encoding::Latin1;
 }
 
 void FindResultModel::setEncoding(

@@ -81,7 +81,8 @@ private:
 
 } // namespace
 
-bool ScriptMachine::init() {
+bool ScriptMachine::init(
+    WingScriptBind::ScriptBindingEngine::ObjectCodec codec) {
     if (isInited()) {
         return true;
     }
@@ -94,9 +95,17 @@ bool ScriptMachine::init() {
     if (_main == nullptr) {
         return false;
     }
-    if (!configureEngine(_main)) {
-        lua_close(_main);
-        _main = nullptr;
+    auto cleanup = qScopeGuard([this] { destoryMachine(); });
+    try {
+        if (!configureEngine(_main, std::move(codec))) {
+            return false;
+        }
+    } catch (const std::exception &error) {
+        Logger::critical(QString::fromUtf8(error.what()));
+        return false;
+    } catch (...) {
+        Logger::critical(
+            QStringLiteral("Script binding initialization failed"));
         return false;
     }
 
@@ -106,15 +115,11 @@ bool ScriptMachine::init() {
     auto &l = _ctx[interIdx];
     auto s = lua_newthread(_main);
     if (s == nullptr) {
-        lua_close(_main);
-        _main = nullptr;
         return false;
     }
 
     auto id = lua_ref(_main, -1);
     if (id == LUA_REFNIL) {
-        lua_close(_main);
-        _main = nullptr;
         return false;
     }
     lua_pop(_main, 1);
@@ -137,7 +142,6 @@ bool ScriptMachine::init() {
     auto &&cbs = lua_callbacks(_main);
     cbs->interrupt = ScriptMachine::onLuauInterrupt;
     cbs->userthread = ScriptMachine::onLuauThreadCreated;
-    luaL_sandbox(_main);
 
     // init inspect options
     _printOptions.setMode(InspectMode::Pretty);
@@ -151,6 +155,26 @@ bool ScriptMachine::init() {
 
     _regcalls.resize(ConsoleModeCount, {});
 
+    _inited = true;
+    cleanup.dismiss();
+    return true;
+}
+
+void ScriptMachine::finishScriptRegistration() {
+    if (!_inited || !_bindings) {
+        throw WingScriptBind::ScriptException(
+            WingScriptBind::Exception::InvalidScope);
+    }
+    if (QThread::currentThread() != qApp->thread()) {
+        throw WingScriptBind::ScriptException(
+            WingScriptBind::Exception::WrongThread);
+    }
+    if (_scriptRegistrationFinished) {
+        return;
+    }
+
+    luaL_sandbox(_main);
+
     // setup language server
     auto &lsp = LuauLanguageServer::instance();
     LuauLanguageServer::InitializationOptions opts;
@@ -160,11 +184,18 @@ bool ScriptMachine::init() {
     // TODO opts.definitionsFiles;
     lsp.initialize(opts);
 
-    _inited = true;
-    return true;
+    _scriptRegistrationFinished = true;
 }
 
 bool ScriptMachine::isInited() const { return _inited; }
+
+bool ScriptMachine::scriptRegistrationFinished() const noexcept {
+    return _scriptRegistrationFinished;
+}
+
+WingScriptBind::IScriptEngine *ScriptMachine::scriptEngine() const noexcept {
+    return _bindings.get();
+}
 
 bool ScriptMachine::isRunning(ConsoleMode mode) const {
     Q_ASSERT(mode > Console_Begin && mode < Console_End);
@@ -183,7 +214,8 @@ bool ScriptMachine::checkEngineConfigError() const {
     return false;
 }
 
-bool ScriptMachine::configureEngine(lua_State *L) {
+bool ScriptMachine::configureEngine(
+    lua_State *L, WingScriptBind::ScriptBindingEngine::ObjectCodec codec) {
     if (L == nullptr) {
         return false;
     }
@@ -254,6 +286,9 @@ bool ScriptMachine::configureEngine(lua_State *L) {
 
     PluginSystem::instance().installAPI(L);
 
+    _bindings = std::make_unique<WingScriptBind::ScriptBindingEngine>(
+        L, std::move(codec));
+
     if (Luau::CodeGen::isSupported()) {
         Luau::CodeGen::create(L);
     }
@@ -295,12 +330,17 @@ int ScriptMachine::__outputsep(MessageType type, lua_State *L, QChar sep) {
 }
 
 void ScriptMachine::destoryMachine() {
+    _inited = false;
+    _scriptRegistrationFinished = false;
     delete _debugger;
     _debugger = nullptr;
     for (auto &c : _ctx) {
         c.destory();
     }
-    lua_close(_main);
+    _bindings.reset();
+    if (_main) {
+        lua_close(_main);
+    }
     _main = nullptr;
 }
 
@@ -320,11 +360,6 @@ QVector<lua_State *> ScriptMachine::getThreadAncestors(lua_State *L) const {
         }
     }
     return {L, _main};
-}
-
-void ScriptMachine::setCustomEvals(
-    const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals) {
-    // _debugger->setCustomEvals(evals);
 }
 
 int ScriptMachine::print(lua_State *L) {
@@ -363,8 +398,9 @@ int ScriptMachine::cowrap(lua_State *L) {
     int top = lua_gettop(L);
     lua_checkstack(L, 1 + top);
     lua_pushvalue(L, lua_upvalueindex(1));
-    for (int i = 1; i <= top; ++i)
+    for (int i = 1; i <= top; ++i) {
         lua_pushvalue(L, i);
+    }
     lua_call(L, top, 1);
 
     if (auto *cl = LuauUtil::getCFunction(L, -1)) {
@@ -390,8 +426,9 @@ int ScriptMachine::forward(lua_State *L, int index) {
     int top = lua_gettop(L);
     lua_checkstack(L, 1 + top);
     lua_pushvalue(L, index);
-    for (int i = 1; i <= top; ++i)
+    for (int i = 1; i <= top; ++i) {
         lua_pushvalue(L, i);
+    }
     lua_call(L, top, LUA_MULTRET);
     return lua_gettop(L) - top;
 }
@@ -483,7 +520,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
                                   bool isInDebug,
                                   const std::function<void(bool)> &onFinished) {
     Q_ASSERT(onFinished);
-    if (_main == nullptr) {
+    if (_main == nullptr || !_scriptRegistrationFinished) {
         Logger::warning(QStringLiteral("The script engine is not initialized"));
         onFinished(true);
         return;
@@ -830,7 +867,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         RETURN_DEFAULT;
     }
 
-    if (_main == nullptr) {
+    if (_main == nullptr || !_scriptRegistrationFinished) {
         Logger::warning(QStringLiteral("The script engine is not initialized"));
         RETURN_DEFAULT;
     }

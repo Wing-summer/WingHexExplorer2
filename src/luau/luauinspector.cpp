@@ -59,15 +59,18 @@ int typeOrder(int type) {
 }
 
 bool isIdentifier(const char *s, size_t len) {
-    if (!s || len == 0)
+    if (!s || len == 0) {
         return false;
+    }
     // first char must be underscore or letter
-    if (!(std::isalpha(s[0]) || s[0] == '_'))
+    if (!(std::isalpha(s[0]) || s[0] == '_')) {
         return false;
+    }
     for (size_t i = 1; i < len; ++i) {
         char c = s[i];
-        if (!(std::isalnum(c) || c == '_'))
+        if (!(std::isalnum(c) || c == '_')) {
             return false;
+        }
     }
     // Lua keywords are not identifiers
     static const char *keywords[] = {
@@ -142,10 +145,11 @@ QByteArray smartQuote(const QByteArray &escaped) {
     } else {
         QByteArray result(1, '"');
         for (char c : escaped) {
-            if (c == '"')
+            if (c == '"') {
                 result += QByteArrayLiteral(R"(\")");
-            else
+            } else {
                 result += c;
+            }
         }
         result += QByteArrayLiteral(R"(")");
         return result;
@@ -165,8 +169,9 @@ bool compareLuaKeys(lua_State *L, int idxA, int idxB) {
             const char *sa = lua_tolstring(L, idxA, &la);
             const char *sb = lua_tolstring(L, idxB, &lb);
             int cmp = std::strncmp(sa, sb, std::min(la, lb));
-            if (cmp != 0)
+            if (cmp != 0) {
                 return cmp < 0;
+            }
             return la < lb;
         }
     }
@@ -179,15 +184,18 @@ bool compareLuaKeys(lua_State *L, int idxA, int idxB) {
 }
 
 bool sequenceKey(lua_State *L, int idx, lua_Integer &value) {
-    if (lua_type(L, idx) != LUA_TNUMBER)
+    if (lua_type(L, idx) != LUA_TNUMBER) {
         return false;
+    }
 
     auto n = lua_tonumber(L, idx);
-    if (!std::isfinite(n) || std::floor(n) != n || n < 1)
+    if (!std::isfinite(n) || std::floor(n) != n || n < 1) {
         return false;
+    }
 
-    if (n > lua_Number(std::numeric_limits<int>::max()))
+    if (n > lua_Number(std::numeric_limits<int>::max())) {
         return false;
+    }
 
     value = lua_Integer(n);
     return lua_Number(value) == n;
@@ -198,8 +206,9 @@ bool sequenceKey(lua_State *L, int idx, lua_Integer &value) {
 // ============================================================================
 void countCyclesRec(lua_State *L, int absIdx, int depth,
                     std::unordered_map<const void *, int> &cycles) {
-    if (lua_type(L, absIdx) != LUA_TTABLE)
+    if (lua_type(L, absIdx) != LUA_TTABLE) {
         return;
+    }
 
     const void *ptr = lua_topointer(L, absIdx);
 
@@ -211,8 +220,9 @@ void countCyclesRec(lua_State *L, int absIdx, int depth,
 
     cycles[ptr] = 1;
 
-    if (depth <= 0)
+    if (depth <= 0) {
         return;
+    }
 
     const int baseTop = lua_gettop(L);
 
@@ -243,8 +253,9 @@ public:
           pretty(opts.getMode() == InspectMode::Pretty) {}
 
     void putValue(int absIdx, bool quoteString) {
-        if (truncated)
+        if (truncated) {
             return;
+        }
 
         if (items++ >= options.maxItems) {
             buf += QByteArrayLiteral("...");
@@ -393,8 +404,9 @@ private:
     int getId(int type, const void *ptr) {
         auto &typeIds = idsByType[type];
         auto it = typeIds.find(ptr);
-        if (it != typeIds.end())
+        if (it != typeIds.end()) {
             return it->second;
+        }
         int id = ++nextIdByType[type];
         typeIds[ptr] = id;
         return id;

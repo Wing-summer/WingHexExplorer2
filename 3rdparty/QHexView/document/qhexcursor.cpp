@@ -87,8 +87,9 @@ int QHexCursor::currentColumn() const { return m_selection.column; }
 int QHexCursor::currentNibble() const { return m_selection.nibbleindex; }
 
 bool QHexCursor::isLineSelected(qsizetype line) const {
-    if (!this->hasSelection())
+    if (!this->hasSelection()) {
         return false;
+    }
 
     if (isLineSelected(previewSelection(), line)) {
         return true;
@@ -104,8 +105,9 @@ bool QHexCursor::isLineSelected(qsizetype line) const {
 }
 
 bool QHexCursor::isSelected(const QHexPosition &pos) const {
-    if (!this->hasSelection())
+    if (!this->hasSelection()) {
         return false;
+    }
 
     if (previewSelection().contains(pos)) {
         return true;
@@ -232,10 +234,11 @@ void QHexCursor::setLineWidth(quint8 width) {
 }
 
 void QHexCursor::switchInsertionMode() {
-    if (m_insertionmode == QHexCursor::OverwriteMode)
+    if (m_insertionmode == QHexCursor::OverwriteMode) {
         m_insertionmode = QHexCursor::InsertMode;
-    else
+    } else {
         m_insertionmode = QHexCursor::OverwriteMode;
+    }
 
     Q_EMIT insertionModeChanged();
 }
@@ -248,8 +251,9 @@ bool QHexCursor::isLineSelected(const QHexSelection &sel,
                                 qsizetype line) const {
     Q_ASSERT(sel.isNormalized());
 
-    if ((line >= sel.begin.line) && (line <= sel.end.line))
+    if ((line >= sel.begin.line) && (line <= sel.end.line)) {
         return true;
+    }
 
     return false;
 }

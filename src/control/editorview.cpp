@@ -1109,8 +1109,9 @@ void EditorView::applyFunctionTables(WingEditorViewWidget *view) {
 QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
     Q_ASSERT(device);
 
-    if (!device->isOpen() || !device->isReadable())
+    if (!device->isOpen() || !device->isReadable()) {
         return {};
+    }
 
     auto savedPos = device->pos();
     auto fileSize = device->size();

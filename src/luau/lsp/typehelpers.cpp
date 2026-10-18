@@ -22,8 +22,9 @@ namespace {
 std::vector<PropLookup>
 lookupProp(const Luau::TypeId &parentType, const Luau::Name &name,
            Luau::DenseHashSet<Luau::TypeId> &seenTypes) {
-    if (seenTypes.contains(parentType))
+    if (seenTypes.contains(parentType)) {
         return {};
+    }
     seenTypes.insert(parentType);
 
     if (auto externType = Luau::get<Luau::ExternType>(parentType)) {
@@ -52,16 +53,18 @@ lookupProp(const Luau::TypeId &parentType, const Luau::Name &name,
                 auto followed = Luau::follow(*index->second.readTy);
                 if ((Luau::get<Luau::TableType>(followed) ||
                      Luau::get<Luau::MetatableType>(followed)) &&
-                    followed != parentType)
+                    followed != parentType) {
                     return lookupProp(followed, name, seenTypes);
+                }
             }
         }
     } else if (auto intersection =
                    Luau::get<Luau::IntersectionType>(parentType)) {
         for (auto type : intersection->parts) {
             auto properties = lookupProp(Luau::follow(type), name, seenTypes);
-            if (!properties.empty())
+            if (!properties.empty()) {
                 return properties;
+            }
         }
     } else if (auto unionType = Luau::get<Luau::UnionType>(parentType)) {
         std::vector<PropLookup> properties;

@@ -48,8 +48,9 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
 
     m_searchWidget = new SearchReplaceWidget(this);
     connect(this, &CodeEdit::textChanged, this, [this] {
-        if (m_searchWidget->isVisible())
+        if (m_searchWidget->isVisible()) {
             showSearchReplaceBar(false, false);
+        }
     });
 
     m_gotoWidget = new GotoLineWidget(this);
@@ -79,8 +80,9 @@ void CodeEdit::showSearchReplaceBar(bool show, bool replace) {
     m_searchWidget->setEnabled(show);
     if (show) {
         const QTextCursor cursor = textCursor();
-        if (cursor.hasSelection())
+        if (cursor.hasSelection()) {
             m_searchWidget->setSearchText(cursor.selectedText());
+        }
         m_searchWidget->setReplaceMode(replace);
         m_searchWidget->activate();
         m_searchWidget->resize(m_searchWidget->sizeHint());
@@ -221,8 +223,9 @@ SearchReplaceWidget *CodeEdit::searchWidget() const { return m_searchWidget; }
 void CodeEdit::setContentModified(bool b) { Q_EMIT contentModified(b); }
 
 void CodeEdit::resizeEvent(QResizeEvent *event) {
-    if (event)
+    if (event) {
         WingCodeEdit::resizeEvent(event);
+    }
 
     // Move the search widget to the upper-right corner
     auto margins = this->contentsMargins();

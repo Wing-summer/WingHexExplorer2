@@ -89,8 +89,9 @@ qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
     for (qint64 pos = from; (pos < _size) && (result < 0); pos += BUFFER_SIZE) {
         buffer = __data(pos, BUFFER_SIZE + ba.size() - 1);
         auto findPos = buffer.indexOf(ba);
-        if (findPos >= 0)
+        if (findPos >= 0) {
             result = pos + findPos;
+        }
     }
     return result;
 }
@@ -101,12 +102,14 @@ qint64 Chunks::lastIndexOf(const QByteArray &ba, qint64 from) const {
     QReadLocker locker(&_mutex);
     for (qint64 pos = from; (pos > 0) && (result < 0); pos -= BUFFER_SIZE) {
         qint64 sPos = pos - BUFFER_SIZE - ba.size() + 1;
-        if (sPos < 0)
+        if (sPos < 0) {
             sPos = 0;
+        }
         buffer = __data(sPos, pos - sPos);
         auto findPos = buffer.lastIndexOf(ba);
-        if (findPos >= 0)
+        if (findPos >= 0) {
             result = sPos + findPos;
+        }
     }
     return result;
 }
@@ -124,8 +127,9 @@ bool Chunks::overwrite(qint64 pos, char b) {
 bool Chunks::removeAt(qint64 pos) { return remove(pos, 1); }
 
 bool Chunks::insert(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos > _size))
+    if ((pos < 0) || (pos > _size)) {
         return false;
+    }
 
     if (ba.isEmpty()) {
         return true;
@@ -146,8 +150,9 @@ bool Chunks::insert(qint64 pos, const QByteArray &ba) {
 
     qint64 posInBa = pos - _chunks[chunkIdx].absPos;
     _chunks[chunkIdx].data.insert(posInBa, ba);
-    for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+    for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
         _chunks[idx].absPos += length;
+    }
     _size += length;
     return true;
 }
@@ -212,8 +217,9 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
 }
 
 bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos >= _size))
+    if ((pos < 0) || (pos >= _size)) {
         return false;
+    }
 
     qsizetype chunkIdx = getChunkIndex(pos);
     if (chunkIdx < 0) {
@@ -241,8 +247,9 @@ bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
 }
 
 bool Chunks::__remove(qint64 pos, qint64 length) {
-    if ((pos < 0) || (pos >= _size))
+    if ((pos < 0) || (pos >= _size)) {
         return false;
+    }
 
     qsizetype chunkIdx = getChunkIndex(pos);
     if (chunkIdx < 0) {
@@ -257,14 +264,16 @@ bool Chunks::__remove(qint64 pos, qint64 length) {
 
     if (dist <= 0) {
         chunk.data.remove(posInBa, length);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
             _chunks[idx].absPos += length;
+        }
         _size -= length;
     } else {
         auto len = clen - posInBa;
         chunk.data.remove(posInBa, len);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++)
+        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
             _chunks[idx].absPos -= len;
+        }
         _size -= len;
 
         if (!__remove(pos + clen, dist)) {
@@ -283,13 +292,15 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
     QByteArray buffer;
 
     // Do some checks and some arrangements
-    if (pos >= _size)
+    if (pos >= _size) {
         return buffer;
+    }
 
-    if (maxSize < 0)
+    if (maxSize < 0) {
         maxSize = _size;
-    else if ((pos + maxSize) > _size)
+    } else if ((pos + maxSize) > _size) {
         maxSize = _size - pos;
+    }
 
     if (!_ioDevice || !_ioDevice->isReadable()) {
         return {};
@@ -306,17 +317,18 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
             // data in between was deleted or inserted.
 
             chunk = _chunks[chunkIdx];
-            if (chunk.absPos > pos)
+            if (chunk.absPos > pos) {
                 chunksLoopOngoing = false;
-            else {
+            } else {
                 chunkIdx += 1;
                 qint64 count;
                 qint64 chunkOfs = pos - chunk.absPos;
                 if (maxSize > (chunk.data.size() - chunkOfs)) {
                     count = chunk.data.size() - chunkOfs;
                     ioDelta += CHUNK_SIZE - chunk.data.size();
-                } else
+                } else {
                     count = maxSize;
+                }
                 if (count > 0) {
                     buffer += chunk.data.sliced(chunkOfs, count);
                     maxSize -= count;
@@ -331,10 +343,11 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
 
             qint64 byteCount;
             QByteArray readBuffer;
-            if ((chunk.absPos - pos) > maxSize)
+            if ((chunk.absPos - pos) > maxSize) {
                 byteCount = maxSize;
-            else
+            } else {
                 byteCount = chunk.absPos - pos;
+            }
 
             maxSize -= byteCount;
             if (!_ioDevice->seek(pos + ioDelta)) {

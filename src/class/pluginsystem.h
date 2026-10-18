@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -193,7 +193,7 @@ public:
     void loadAllPlugins();
     void unloadAllPlugins();
 
-    void doneRegisterScriptObj();
+    bool doneRegisterScriptObj();
 
     void destory();
 
@@ -208,8 +208,6 @@ public:
     IWingDevice *ext2Device(const QString &ext);
 
     void installAPI(lua_State *L);
-
-    QStringList scriptMarcos() const;
 
 public:
     void dispatchSelectionChangedEvent(const QByteArrayList &selections,
@@ -240,7 +238,6 @@ public:
     QSet<int> scriptHandles() const;
     void cleanScriptHandles(const QSet<int> &handles);
 
-    void scriptPragmaBegin();
     qsizetype pluginAPICount() const;
 
 public:
@@ -320,9 +317,6 @@ private:
                     const std::optional<QDir> &setdir);
 
 private:
-    void registerPluginDetectMarco(const QString &id);
-
-private:
     void registerRibbonTools(const QList<WingRibbonToolBoxInfo> &tools);
     void registeredSettingPages(IWingPlugin *p);
     void registerPluginDockWidgets(IWingPluginBase *p);
@@ -360,6 +354,7 @@ public slots:
 
     WingHex::AppTheme currentAppTheme(const QObject *sender);
     QDialog *createDialog(const QObject *sender, QWidget *content);
+    QMainWindow *createMainWindow(const QObject *sender, QWidget *content);
 
 public slots:
     void msgAboutQt(const QObject *sender, QWidget *parent,
@@ -712,9 +707,6 @@ private:
     QHash<EditorView *, ViewBind> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
-
-    QStringList _scriptMarcos;
-    QList<IWingPlugin *> _pragmaedPlg;
 
     QString preLoadedPlg;
     bool _handleDirty = false;

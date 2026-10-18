@@ -28,7 +28,7 @@ public:
     enum SETTING {
         EDITOR = 1,
         CONSOLE = 2,
-        FORMAT = 3,
+        FORMAT = 4,
         ALL = EDITOR | CONSOLE | FORMAT
     };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)

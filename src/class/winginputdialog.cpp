@@ -42,8 +42,9 @@ QString WingInputDialog::getText(QWidget *parent, const QString &title,
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->textValue();
     } else {
@@ -70,8 +71,9 @@ QString WingInputDialog::getMultiLineText(
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->textValue();
     } else {
@@ -101,8 +103,9 @@ QString WingInputDialog::getItem(QWidget *parent, const QString &title,
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->textValue();
     } else {
@@ -129,8 +132,9 @@ int WingInputDialog::getInt(QWidget *parent, const QString &title,
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->intValue();
     } else {
@@ -159,8 +163,9 @@ double WingInputDialog::getDouble(QWidget *parent, const QString &title,
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->doubleValue();
     } else {
@@ -198,8 +203,9 @@ QString WingInputDialog::getText(QWidget *parent, const QString &title,
 
     const int ret = d.exec();
 
-    if (ok)
+    if (ok) {
         *ok = !!ret;
+    }
     if (ret) {
         return dialog->textValue();
     } else {

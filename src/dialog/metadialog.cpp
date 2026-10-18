@@ -114,24 +114,27 @@ void MetaDialog::on_accept() {
 void MetaDialog::on_reject() { done(0); }
 
 QString MetaDialog::comment() {
-    if (ccomment->isChecked())
+    if (ccomment->isChecked()) {
         return m_comment->text();
-    else
+    } else {
         return QString();
+    }
 }
 
 QColor MetaDialog::foreGroundColor() {
-    if (cforeground->isChecked())
+    if (cforeground->isChecked()) {
         return _foreground;
-    else
+    } else {
         return QColor();
+    }
 }
 
 QColor MetaDialog::backGroundColor() {
-    if (cbackground->isChecked())
+    if (cbackground->isChecked()) {
         return _background;
-    else
+    } else {
         return QColor();
+    }
 }
 
 void MetaDialog::setComment(QString comment) {

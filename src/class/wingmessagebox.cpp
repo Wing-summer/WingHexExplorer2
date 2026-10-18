@@ -69,8 +69,9 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
     msgbox->setInformativeText(translatedTextAboutQtText);
 
     QPixmap pm(":/qt-project.org/qmessagebox/images/qtlogo-64.png");
-    if (!pm.isNull())
+    if (!pm.isNull()) {
         msgbox->setIconPixmap(pm);
+    }
 
     msgbox->setWindowFlag(Qt::Widget);
 

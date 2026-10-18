@@ -112,23 +112,28 @@ QWidget *WindowBar::holder() const {
 void WindowBar::setIconButton(QAbstractButton *btn) {
     Q_D(WindowBar);
     auto org = takeIconButton();
-    if (org)
+    if (org) {
         org->deleteLater();
-    if (!btn)
+    }
+    if (!btn) {
         return;
+    }
     d->setWidgetAt(WindowBarPrivate::IconButton, btn);
-    if (d->autoIcon && d->w)
+    if (d->autoIcon && d->w) {
         btn->setIcon(d->w->windowIcon());
+    }
     btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 }
 
 void WindowBar::setMinButton(QAbstractButton *btn) {
     Q_D(WindowBar);
     auto org = takeMinButton();
-    if (org)
+    if (org) {
         org->deleteLater();
-    if (!btn)
+    }
+    if (!btn) {
         return;
+    }
     d->setWidgetAt(WindowBarPrivate::MinimumButton, btn);
     connect(btn, &QAbstractButton::clicked, this,
             &WindowBar::minimizeRequested);
@@ -137,10 +142,12 @@ void WindowBar::setMinButton(QAbstractButton *btn) {
 void WindowBar::setMaxButton(QAbstractButton *btn) {
     Q_D(WindowBar);
     auto org = takeMaxButton();
-    if (org)
+    if (org) {
         org->deleteLater();
-    if (!btn)
+    }
+    if (!btn) {
         return;
+    }
     d->setWidgetAt(WindowBarPrivate::MaximumButton, btn);
     connect(btn, &QAbstractButton::clicked, this,
             &WindowBar::maximizeRequested);
@@ -149,10 +156,12 @@ void WindowBar::setMaxButton(QAbstractButton *btn) {
 void WindowBar::setCloseButton(QAbstractButton *btn) {
     Q_D(WindowBar);
     auto org = takeCloseButton();
-    if (org)
+    if (org) {
         org->deleteLater();
-    if (!btn)
+    }
+    if (!btn) {
         return;
+    }
     d->setWidgetAt(WindowBarPrivate::CloseButton, btn);
     connect(btn, &QAbstractButton::clicked, this, &WindowBar::closeRequested);
 }

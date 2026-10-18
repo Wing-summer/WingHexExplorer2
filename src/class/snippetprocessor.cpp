@@ -166,8 +166,9 @@ private:
                                          pipe < 0 ? content.size() : pipe});
         const auto key = content.first(separator);
         bool numeric = !key.isEmpty();
-        for (const auto ch : key)
+        for (const auto ch : key) {
             numeric = numeric && ch.isDigit();
+        }
 
         if (numeric) {
             const auto index = key.toInt();

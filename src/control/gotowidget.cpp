@@ -248,8 +248,9 @@ private:
          *       ('|' exclusiveOrExpression)*
          */
         bool parseInclusiveOrExpression(Value &result) {
-            if (!parseExclusiveOrExpression(result))
+            if (!parseExclusiveOrExpression(result)) {
                 return false;
+            }
 
             while (true) {
                 skipSpaces();

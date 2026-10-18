@@ -371,8 +371,9 @@ static bool canSuggestType(Luau::TypeId ty) {
         Luau::get<Luau::GenericType>(ty) || Luau::get<Luau::FreeType>(ty)) {
         return false;
     }
-    if (Luau::get<Luau::MetatableType>(ty))
+    if (Luau::get<Luau::MetatableType>(ty)) {
         return false;
+    }
     if (const Luau::TableType *ttv = Luau::get<Luau::TableType>(ty)) {
         if (ttv->name) {
             return true;
@@ -875,8 +876,9 @@ entryKind(const QString &label, const Luau::AutocompleteEntry &entry) {
     case Luau::AutocompleteEntryKind::GeneratedFunction:
         return lsp::CompletionItemKind::Function;
     case Luau::AutocompleteEntryKind::RequirePath: {
-        if (label == ".." || label == ".")
+        if (label == ".." || label == ".") {
             return lsp::CompletionItemKind::Folder;
+        }
         return lsp::CompletionItemKind::File;
     }
     case Luau::AutocompleteEntryKind::HotComment:
@@ -910,14 +912,14 @@ static const char *sortText(const Luau::Frontend &frontend, const QString &name,
         }
     }
 
-    if (entry.wrongIndexType)
+    if (entry.wrongIndexType) {
         return SortText::WrongIndexType;
-    else if (entry.kind == Luau::AutocompleteEntryKind::Property &&
-             LuauLsp::isMetamethod(name))
+    } else if (entry.kind == Luau::AutocompleteEntryKind::Property &&
+               LuauLsp::isMetamethod(name)) {
         return SortText::MetatableIndex;
-    else if (entry.kind == Luau::AutocompleteEntryKind::Property)
+    } else if (entry.kind == Luau::AutocompleteEntryKind::Property) {
         return SortText::TableProperties;
-    else if (entry.kind == Luau::AutocompleteEntryKind::Keyword) {
+    } else if (entry.kind == Luau::AutocompleteEntryKind::Keyword) {
         // These keywords are contextual and only show up when relevant -
         // they should be prioritised over other suggestions
         if (name == QLatin1String("else") || name == QLatin1String("elseif") ||
@@ -925,10 +927,12 @@ static const char *sortText(const Luau::Frontend &frontend, const QString &name,
             return SortText::PrioritisedSuggestion;
         }
         return SortText::Keywords;
-    } else if (entry.typeCorrect == Luau::TypeCorrectKind::Correct)
+    } else if (entry.typeCorrect == Luau::TypeCorrectKind::Correct) {
         return SortText::CorrectTypeKind;
-    else if (entry.typeCorrect == Luau::TypeCorrectKind::CorrectFunctionResult)
+    } else if (entry.typeCorrect ==
+               Luau::TypeCorrectKind::CorrectFunctionResult) {
         return SortText::CorrectFunctionResult;
+    }
 
     return SortText::Default;
 }
@@ -1033,8 +1037,9 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
         // Get parse information for this script
         frontend.parse(moduleName);
         const auto sourceModule = frontend.getSourceModule(moduleName);
-        if (!sourceModule)
+        if (!sourceModule) {
             return {};
+        }
 
         const auto sourceText = textDocument->toPlainText().toUtf8();
         const std::string newSrc(sourceText.constData(),
@@ -1061,8 +1066,9 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
         if (fragmentStatusResult.status ==
             Luau::FragmentAutocompleteStatus::Success) {
             // Result is nullopt if there are no suggestions (i.e. comments)
-            if (!fragmentStatusResult.result)
+            if (!fragmentStatusResult.result) {
                 return {};
+            }
 
             result = fragmentStatusResult.result->acResults;
             fragmentWasSuccessful = true;
@@ -1103,9 +1109,10 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
                 ? fragmentStatusResult.result->incrementalModule
                 : getModule(moduleName, forAutocomplete);
         if (auto documentationString = getDocumentationForAutocompleteEntry(
-                name, entry, result.ancestry, localModule, position))
+                name, entry, result.ancestry, localModule, position)) {
             item.documentation = {lsp::MarkupKind::Markdown,
                                   documentationString.value()};
+        }
 
         item.deprecated = deprecated(entry, item.documentation);
 
@@ -1118,9 +1125,10 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
                 if (auto ftv = Luau::get<Luau::FunctionType>(
                         Luau::follow(*entry.type))) {
                     Luau::ScopePtr scope;
-                    if (localModule)
+                    if (localModule) {
                         scope =
                             Luau::findScopeAtPosition(*localModule, position);
+                    }
                     item.insertText = buildGeneratedFunctionSnippet(
                         ftv, scope,
                         // anonymousAutofilledFunction.addTypeAnnotations
@@ -1377,13 +1385,15 @@ static std::optional<Luau::TypeId> findCallMetamethod(Luau::TypeId type) {
     type = Luau::follow(type);
 
     std::optional<Luau::TypeId> metatable;
-    if (const auto mtType = Luau::get<Luau::MetatableType>(type))
+    if (const auto mtType = Luau::get<Luau::MetatableType>(type)) {
         metatable = mtType->metatable;
-    else if (const auto classType = Luau::get<Luau::ExternType>(type))
+    } else if (const auto classType = Luau::get<Luau::ExternType>(type)) {
         metatable = classType->metatable;
+    }
 
-    if (!metatable)
+    if (!metatable) {
         return std::nullopt;
+    }
 
     auto unwrapped = Luau::follow(*metatable);
     if (auto prop = LuauLsp::lookupProp(unwrapped, "__call");
@@ -1414,22 +1424,26 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
     }
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    if (!sourceModule)
+    if (!sourceModule) {
         return std::nullopt;
+    }
 
     auto module = getModule(moduleName, /* forAutocomplete: */ true);
     auto ancestry = Luau::findAstAncestryOfPosition(*sourceModule, position);
     auto scope = Luau::findScopeAtPosition(*module, position);
 
-    if (ancestry.size() == 0 || !scope)
+    if (ancestry.size() == 0 || !scope) {
         return std::nullopt;
+    }
 
     auto *candidate = ancestry.back()->as<Luau::AstExprCall>();
-    if (!candidate && ancestry.size() >= 2)
+    if (!candidate && ancestry.size() >= 2) {
         candidate = ancestry.at(ancestry.size() - 2)->as<Luau::AstExprCall>();
+    }
 
-    if (!candidate)
+    if (!candidate) {
         return std::nullopt;
+    }
 
     // FIXME: should not be necessary if the `ty` has the doc symbol
     // attached to it
@@ -1442,24 +1456,29 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
     // Use the position to determine which parameter is active
     for (auto param : candidate->args) {
         if (param->location.containsClosed(position) ||
-            param->location.begin > position)
+            param->location.begin > position) {
             break;
+        }
         activeParameter++;
     }
     auto it = module->astTypes.find(candidate->func);
-    if (!it)
+    if (!it) {
         return std::nullopt;
+    }
     auto followedId = Luau::follow(*it);
 
     // Construct a type pack from the current list of arguments for overload
     // matching
     Luau::TypeArena typeArena;
     std::vector<Luau::TypeId> argumentTys;
-    if (candidate->self)
+    if (candidate->self) {
         argumentTys.push_back(followedId);
-    for (auto &&arg : candidate->args)
-        if (auto ty = module->astTypes.find(arg))
+    }
+    for (auto &&arg : candidate->args) {
+        if (auto ty = module->astTypes.find(arg)) {
             argumentTys.push_back(Luau::follow(*ty));
+        }
+    }
     Luau::TypePackId subTp =
         typeArena.addTypePack(argumentTys, frontend.builtinTypes->anyTypePack);
 
@@ -1483,9 +1502,10 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
             // resolved to something
             // FIXME: can be removed once we use docSymbol from `ty`
             if (auto idx = baseDocumentationSymbol->find("/overload/");
-                idx != std::string::npos)
+                idx != std::string::npos) {
                 baseDocumentationSymbol =
                     baseDocumentationSymbol->substr(0, idx);
+            }
             baseDocumentationSymbol =
                 *baseDocumentationSymbol + "/overload/" + toString(ty);
         }
@@ -1494,12 +1514,13 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
             baseDocumentationSymbol &&
             (docs = printDocumentation(this->documentation,
                                        *baseDocumentationSymbol)) &&
-            docs)
+            docs) {
             documentation.value = *docs;
-        else if (ftv->definition && ftv->definition->definitionModuleName)
+        } else if (ftv->definition && ftv->definition->definitionModuleName) {
             documentation.value = printMoonwaveDocumentation(
                 getComments(ftv->definition->definitionModuleName.value(),
                             ftv->definition->definitionLocation));
+        }
 
         // Create each parameter label
         std::vector<lsp::ParameterInformation> parameters{};
@@ -1521,18 +1542,21 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         for (; it != Luau::end(ftv->argTypes); it++, idx++) {
             // If the function has self, and the caller has called as a
             // method (i.e., :), then omit the self parameter
-            if (idx == 0 && candidate->self)
+            if (idx == 0 && candidate->self) {
                 continue;
+            }
 
             // Show parameter documentation
             lsp::MarkupContent parameterDocumentation{lsp::MarkupKind::Markdown,
                                                       ""};
-            if (baseDocumentationSymbol)
-                if (auto docs =
-                        printDocumentation(this->documentation,
-                                           *baseDocumentationSymbol +
-                                               "/param/" + std::to_string(idx)))
+            if (baseDocumentationSymbol) {
+                if (auto docs = printDocumentation(this->documentation,
+                                                   *baseDocumentationSymbol +
+                                                       "/param/" +
+                                                       std::to_string(idx))) {
                     parameterDocumentation.value = *docs;
+                }
+            }
 
             // Compute the label
             // We attempt to search for the position in the string for this
@@ -1552,8 +1576,9 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                 auto length = labelString.size();
                 previousParamPos = position + length;
                 paramLabel = std::vector{position, position + length};
-            } else
+            } else {
                 paramLabel = labelString;
+            }
 
             parameters.push_back(
                 lsp::ParameterInformation{paramLabel, parameterDocumentation});
@@ -1566,12 +1591,14 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                 // Show parameter documentation
                 lsp::MarkupContent parameterDocumentation{
                     lsp::MarkupKind::Markdown, ""};
-                if (baseDocumentationSymbol)
+                if (baseDocumentationSymbol) {
                     if (auto docs = printDocumentation(
                             this->documentation, *baseDocumentationSymbol +
                                                      "/param/" +
-                                                     std::to_string(idx)))
+                                                     std::to_string(idx))) {
                         parameterDocumentation.value = *docs;
+                    }
+                }
 
                 // Compute the label
                 // We attempt to search for the position in the string for
@@ -1604,8 +1631,9 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         // it as the active signature
         if (!activeSignature &&
             checkOverloadMatch(subTp, ftv->argTypes, Luau::NotNull{&*scope},
-                               &typeArena, frontend.builtinTypes))
+                               &typeArena, frontend.builtinTypes)) {
             activeSignature = signatures.size();
+        }
 
         signatures.push_back(lsp::SignatureInformation{
             label, documentation, parameters,
@@ -1614,21 +1642,28 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
     };
 
     // Handle single function
-    if (auto ftv = Luau::get<Luau::FunctionType>(followedId))
+    if (auto ftv = Luau::get<Luau::FunctionType>(followedId)) {
         addSignature(followedId, ftv);
+    }
 
     // Handle overloaded function
-    if (auto intersect = Luau::get<Luau::IntersectionType>(followedId))
-        for (Luau::TypeId part : intersect->parts)
+    if (auto intersect = Luau::get<Luau::IntersectionType>(followedId)) {
+        for (Luau::TypeId part : intersect->parts) {
             if (auto candidateFunctionType =
-                    Luau::get<Luau::FunctionType>(part))
+                    Luau::get<Luau::FunctionType>(part)) {
                 addSignature(part, candidateFunctionType,
                              /* isOverloaded = */ true);
+            }
+        }
+    }
 
     // Handle __call metamethod
-    if (const auto metamethod = findCallMetamethod(followedId))
-        if (auto ftv = Luau::get<Luau::FunctionType>(Luau::follow(*metamethod)))
+    if (const auto metamethod = findCallMetamethod(followedId)) {
+        if (auto ftv =
+                Luau::get<Luau::FunctionType>(Luau::follow(*metamethod))) {
             addSignature(*metamethod, ftv);
+        }
+    }
 
     lsp::SignatureHelp help = lsp::SignatureHelp{
         signatures, activeSignature.value_or(0), activeParameter};
@@ -1669,17 +1704,20 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
     auto sourceModule = frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName,
                             /* forAutocomplete: */ !showTableKinds);
-    if (!sourceModule)
+    if (!sourceModule) {
         return std::nullopt;
+    }
 
-    if (Luau::isWithinComment(*sourceModule, position))
+    if (Luau::isWithinComment(*sourceModule, position)) {
         return std::nullopt;
+    }
 
     auto exprOrLocal = Luau::findExprOrLocalAtPosition(*sourceModule, position);
     auto node = findNodeOrTypeAtPosition(*sourceModule, position);
     auto scope = Luau::findScopeAtPosition(*module, position);
-    if (!node || !scope)
+    if (!node || !scope) {
         return std::nullopt;
+    }
 
     std::optional<std::pair<std::string, Luau::TypeFun>> typeAliasInformation =
         std::nullopt;
@@ -1699,15 +1737,17 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
             typeName = ref->name.value;
             typeFun = scope->lookupType(ref->name.value);
         }
-        if (!typeFun)
+        if (!typeFun) {
             return std::nullopt;
+        }
         typeAliasInformation = std::make_pair(typeName, *typeFun);
         type = typeFun->type;
     } else if (auto alias = node->as<Luau::AstStatTypeAlias>()) {
         auto typeName = alias->name.value;
         auto typeFun = scope->lookupType(typeName);
-        if (!typeFun)
+        if (!typeFun) {
             return std::nullopt;
+        }
         typeAliasInformation = std::make_pair(typeName, *typeFun);
         type = typeFun->type;
     } else if (auto typeTable = node->as<Luau::AstTypeTable>()) {
@@ -1719,14 +1759,16 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
                 if (prop.location.containsClosed(position)) {
                     auto parentType = Luau::follow(*tableTy);
                     if (auto definitionModuleName =
-                            Luau::getDefinitionModuleName(parentType))
+                            Luau::getDefinitionModuleName(parentType)) {
                         documentationLocation = {definitionModuleName.value(),
                                                  prop.location};
+                    }
                     auto resolvedProperty =
                         LuauLsp::lookupProp(parentType, prop.name.value);
                     if (resolvedProperty.size() == 1 &&
-                        resolvedProperty[0].property.readTy)
+                        resolvedProperty[0].property.readTy) {
                         type = resolvedProperty[0].property.readTy;
+                    }
                     break;
                 }
             }
@@ -1769,18 +1811,20 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
                         LuauLsp::lookupProp(parentType, indexName);
                     !propInformation.empty()) {
                     auto [baseTy, prop] = propInformation[0];
-                    if (propInformation.size() == 1 && prop.readTy)
+                    if (propInformation.size() == 1 && prop.readTy) {
                         type = prop.readTy;
+                    }
                     if (auto definitionModuleName =
                             Luau::getDefinitionModuleName(baseTy)) {
-                        if (prop.location)
+                        if (prop.location) {
                             documentationLocation = {
                                 definitionModuleName.value(),
                                 prop.location.value()};
-                        else if (prop.typeLocation)
+                        } else if (prop.typeLocation) {
                             documentationLocation = {
                                 definitionModuleName.value(),
                                 prop.typeLocation.value()};
+                        }
                     }
                 }
             }
@@ -1804,12 +1848,14 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
         }
     }
 
-    if (!type)
+    if (!type) {
         return std::nullopt;
+    }
     type = Luau::follow(*type);
 
-    if (!documentationSymbol)
+    if (!documentationSymbol) {
         documentationSymbol = type.value()->documentationSymbol;
+    }
 
     Luau::ToStringOptions opts;
     opts.exhaustive = true;
@@ -1828,10 +1874,11 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
                                   " = " + typeString);
     } else if (auto ftv = Luau::get<Luau::FunctionType>(*type)) {
         NameOrExpr name = "";
-        if (auto localName = exprOrLocal.getName())
+        if (auto localName = exprOrLocal.getName()) {
             name = localName->value;
-        else if (auto expr = exprOrLocal.getExpr())
+        } else if (auto expr = exprOrLocal.getExpr()) {
             name = expr;
+        }
 
         ToStringNamedFunctionOpts funcOpts;
         funcOpts.hideTableKind = !showTableKinds;
@@ -1840,10 +1887,11 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
             "luau", toStringNamedFunction(module, ftv, name, scope, funcOpts));
     } else if (exprOrLocal.getLocal() || node->as<Luau::AstExprLocal>()) {
         auto builder = QStringLiteral("local ");
-        if (auto name = exprOrLocal.getName())
+        if (auto name = exprOrLocal.getName()) {
             builder += name->value;
-        else
+        } else {
             builder += Luau::getIdentifier(node->asExpr()).value;
+        }
         builder += ": " + typeString;
         typeString = codeBlock("luau", builder);
     } else if (auto global = node->as<Luau::AstExprGlobal>()) {
@@ -1954,8 +2002,9 @@ static std::optional<Luau::Location> getLocation(Luau::TypeId type) {
     type = follow(type);
 
     if (auto ftv = Luau::get<Luau::FunctionType>(type)) {
-        if (ftv->definition)
+        if (ftv->definition) {
             return ftv->definition->originalNameLocation;
+        }
     } else if (auto ttv = Luau::get<Luau::TableType>(type)) {
         return ttv->definitionLocation;
     } else if (auto mtv = Luau::get<Luau::MetatableType>(type)) {
@@ -1973,8 +2022,9 @@ findLocationForSymbol(const Luau::ModulePtr &module,
                       const Luau::Symbol &symbol) {
     auto scope = Luau::findScopeAtPosition(*module, position);
     auto ty = scope->lookup(symbol);
-    if (!ty)
+    if (!ty) {
         return std::nullopt;
+    }
     ty = Luau::follow(*ty);
     return LocationInformation{Luau::getDefinitionModuleName(*ty),
                                getLocation(*ty), *ty};
@@ -1984,16 +2034,18 @@ static std::vector<LocationInformation>
 findLocationsForIndex(const Luau::ModulePtr &module, const Luau::AstExpr *base,
                       const Luau::Name &name) {
     auto baseTy = module->astTypes.find(base);
-    if (!baseTy)
+    if (!baseTy) {
         return {};
+    }
     auto baseTyFollowed = Luau::follow(*baseTy);
 
     std::vector<LocationInformation> results;
     for (const auto &[realBaseTy, prop] :
          LuauLsp::lookupProp(baseTyFollowed, name)) {
         auto location = prop.location ? prop.location : prop.typeLocation;
-        if (!prop.readTy)
+        if (!prop.readTy) {
             continue;
+        }
 
         // Deduplicate by location to avoid returning multiple identical results
         // (e.g., when a union has multiple instantiations of the same generic
@@ -2003,10 +2055,11 @@ findLocationsForIndex(const Luau::ModulePtr &module, const Luau::AstExpr *base,
                         [&](const LocationInformation &existing) {
                             return existing.location == location;
                         });
-        if (!isDuplicate)
+        if (!isDuplicate) {
             results.push_back(
                 LocationInformation{Luau::getDefinitionModuleName(realBaseTy),
                                     location, *prop.readTy});
+        }
     }
 
     return results;
@@ -2016,19 +2069,22 @@ static std::vector<LocationInformation>
 findLocationsForExpr(const Luau::ModulePtr &module, const Luau::AstExpr *expr,
                      const Luau::Position &position) {
     if (auto local = expr->as<Luau::AstExprLocal>()) {
-        if (auto loc = findLocationForSymbol(module, position, local->local))
+        if (auto loc = findLocationForSymbol(module, position, local->local)) {
             return {*loc};
+        }
     } else if (auto global = expr->as<Luau::AstExprGlobal>()) {
-        if (auto loc = findLocationForSymbol(module, position, global->name))
+        if (auto loc = findLocationForSymbol(module, position, global->name)) {
             return {*loc};
-    } else if (auto indexname = expr->as<Luau::AstExprIndexName>())
+        }
+    } else if (auto indexname = expr->as<Luau::AstExprIndexName>()) {
         return findLocationsForIndex(module, indexname->expr,
                                      indexname->index.value);
-    else if (auto indexexpr = expr->as<Luau::AstExprIndexExpr>()) {
-        if (auto string = indexexpr->index->as<Luau::AstExprConstantString>())
+    } else if (auto indexexpr = expr->as<Luau::AstExprIndexExpr>()) {
+        if (auto string = indexexpr->index->as<Luau::AstExprConstantString>()) {
             return findLocationsForIndex(
                 module, indexexpr->expr,
                 std::string(string->value.data, string->value.size));
+        }
     }
 
     return {};
@@ -2039,16 +2095,19 @@ static std::optional<Luau::AstExpr *>
 matchRequire(const Luau::AstExprCall &call) {
     const char *require = "require";
 
-    if (call.args.size != 1)
+    if (call.args.size != 1) {
         return std::nullopt;
+    }
 
     const Luau::AstExprGlobal *funcAsGlobal =
         call.func->as<Luau::AstExprGlobal>();
-    if (!funcAsGlobal || funcAsGlobal->name != require)
+    if (!funcAsGlobal || funcAsGlobal->name != require) {
         return std::nullopt;
+    }
 
-    if (call.args.size != 1)
+    if (call.args.size != 1) {
         return std::nullopt;
+    }
 
     return call.args.data[0];
 }
@@ -2074,8 +2133,9 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
 
     auto sourceModule = frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName, /* forAutocomplete: */ true);
-    if (!sourceModule || !module)
+    if (!sourceModule || !module) {
         return result;
+    }
 
     auto binding =
         Luau::findBindingAtPosition(*module, *sourceModule, position);
@@ -2083,8 +2143,9 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
         // If it points to a global definition (i.e. at pos 0,0), return
         // nothing
         if (binding->location.begin == Luau::Position{0, 0} &&
-            binding->location.end == Luau::Position{0, 0})
+            binding->location.end == Luau::Position{0, 0}) {
             return result;
+        }
 
         // Follow through the binding reference if it is a function type
         // This is particularly useful for `local X = require(...)` where
@@ -2112,8 +2173,9 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
     }
 
     auto node = findNodeOrTypeAtPosition(*sourceModule, position);
-    if (!node)
+    if (!node) {
         return result;
+    }
 
     if (auto expr = node->asExpr()) {
         for (const auto &[definitionModuleName, location, _] :
@@ -2143,34 +2205,39 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
         std::optional<Luau::Location> location = std::nullopt;
 
         auto scope = Luau::findScopeAtPosition(*module, position);
-        if (!scope)
+        if (!scope) {
             return result;
+        }
 
         if (reference->prefix) {
             if (auto importedName = lookupImportedModule(
                     *scope, reference->prefix.value().value)) {
                 auto importedModule =
                     getModule(*importedName, /* forAutocomplete: */ true);
-                if (!importedModule)
+                if (!importedModule) {
                     return result;
+                }
 
                 const auto it = importedModule->exportedTypeBindings.find(
                     reference->name.value);
                 if (it == importedModule->exportedTypeBindings.end() ||
-                    !it->second.definitionLocation)
+                    !it->second.definitionLocation) {
                     return result;
+                }
 
                 referenceTextDocument =
                     getOrCreateTextDocumentFromModuleName(*importedName);
                 location = *it->second.definitionLocation;
-            } else
+            } else {
                 return result;
+            }
         } else {
             location = lookupTypeLocation(*scope, reference->name.value);
         }
 
-        if (!referenceTextDocument || !location)
+        if (!referenceTextDocument || !location) {
             return result;
+        }
 
         result.emplace_back(
             lsp::Location{referenceTextDocument.uri,
@@ -2200,8 +2267,9 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
     // There are at most two candidate locations, so linear duplicate removal
     // is sufficient here.
     auto end = result.end();
-    for (auto it = result.begin(); it != end; ++it)
+    for (auto it = result.begin(); it != end; ++it) {
         end = std::remove(it + 1, end, *it);
+    }
 
     result.erase(end, result.end());
 
@@ -2231,12 +2299,14 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
 
     auto sourceModule = frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName, /* forAutocomplete: */ true);
-    if (!sourceModule || !module)
+    if (!sourceModule || !module) {
         return std::nullopt;
+    }
 
     auto node = findNodeOrTypeAtPosition(*sourceModule, position);
-    if (!node)
+    if (!node) {
         return std::nullopt;
+    }
 
     const auto uri = params.textDocument;
     auto findTypeLocation =
@@ -2247,34 +2317,39 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
             std::optional<Luau::Location> location = std::nullopt;
 
             auto scope = Luau::findScopeAtPosition(*module, position);
-            if (!scope)
+            if (!scope) {
                 return std::nullopt;
+            }
 
             if (reference->prefix) {
                 if (auto importedName = lookupImportedModule(
                         *scope, reference->prefix.value().value)) {
                     auto importedModule =
                         getModule(*importedName, /* forAutocomplete: */ true);
-                    if (!importedModule)
+                    if (!importedModule) {
                         return std::nullopt;
+                    }
 
                     const auto it = importedModule->exportedTypeBindings.find(
                         reference->name.value);
                     if (it == importedModule->exportedTypeBindings.end() ||
-                        !it->second.definitionLocation)
+                        !it->second.definitionLocation) {
                         return std::nullopt;
+                    }
 
                     referenceTextDocument =
                         getOrCreateTextDocumentFromModuleName(*importedName);
                     location = *it->second.definitionLocation;
-                } else
+                } else {
                     return std::nullopt;
+                }
             } else {
                 location = lookupTypeLocation(*scope, reference->name.value);
             }
 
-            if (!referenceTextDocument || !location)
+            if (!referenceTextDocument || !location) {
                 return std::nullopt;
+            }
 
             return lsp::Location{referenceTextDocument.uri,
                                  lsp::Range{convertPosition(location->begin),
@@ -2297,11 +2372,12 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
             if (definitionModuleName && location) {
                 auto document = getOrCreateTextDocumentFromModuleName(
                     *definitionModuleName);
-                if (document)
+                if (document) {
                     return lsp::Location{
                         document.uri,
                         lsp::Range{convertPosition(location->begin),
                                    convertPosition(location->end)}};
+                }
             }
         }
     }
@@ -2319,10 +2395,8 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
     for (auto it = options.definitionsFiles.cbegin();
          it != options.definitionsFiles.cend(); ++it) {
         const auto packageName = it.key().toUtf8();
-        definitionsFiles.insert_or_assign(
-            std::string(packageName.constData(),
-                        static_cast<std::size_t>(packageName.size())),
-            it.value());
+        definitionsFiles.insert_or_assign(packageName.toStdString(),
+                                          it.value());
     }
 
     if (!appliedFirstTimeConfiguration) {
@@ -2352,13 +2426,15 @@ LuauLanguageServer::getOrCreateTextDocumentFromModuleName(
     }
 
     if (auto definition = definitionsFileState.find(name);
-        definition != definitionsFileState.end())
+        definition != definitionsFileState.end()) {
         return DocumentHandle(getUri(name),
                               definition->second.textDocument.get());
+    }
 
     auto source = readSource(name);
-    if (!source)
+    if (!source) {
         return {};
+    }
 
     auto document = std::make_unique<QTextDocument>();
     document->setPlainText(QString::fromUtf8(
@@ -2562,9 +2638,10 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
         allowUnmanagedFiles
             ? getOrCreateTextDocumentFromModuleName(moduleName)
             : DocumentHandle(params.textDocument, getTextDocument(moduleName));
-    if (!textDocument)
+    if (!textDocument) {
         return report; // Bail early with empty report - file was likely
                        // closed
+    }
 
     // Check the module
     // In the new solver, we end up calling `checkStrict` (retain type
@@ -2583,12 +2660,14 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
     // If there was an error retrieving the source module
     // Bail early with an empty report - it is likely that the file was
     // closed
-    if (!frontend.getSourceModule(moduleName))
+    if (!frontend.getSourceModule(moduleName)) {
         return report;
+    }
 
     // If the file is a definitions file, then don't display any diagnostics
-    if (isDefinitionFile(moduleName))
+    if (isDefinitionFile(moduleName)) {
         return report;
+    }
 
     // Report Type Errors
     // Note that type errors can extend to related modules in the require
@@ -2599,8 +2678,9 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
             report.items.emplace_back(diagnostic);
         } else {
             auto uri = getUri(error.moduleName);
-            if (isIgnoredFile(error.moduleName))
+            if (isIgnoredFile(error.moduleName)) {
                 continue;
+            }
             auto diagnostic = createTypeErrorDiagnostic(error, this);
             auto &currentDiagnostics = relatedDiagnostics[uri];
             currentDiagnostics.emplace_back(diagnostic);
@@ -2626,8 +2706,9 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
                                             // instead
         report.items.emplace_back(diagnostic);
     }
-    for (auto &error : cr.lintResult.warnings)
+    for (auto &error : cr.lintResult.warnings) {
         report.items.emplace_back(createLintDiagnostic(error));
+    }
 
     return report;
 }
@@ -2659,9 +2740,10 @@ LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
     // do a manual check and dirty marking to fix this
     auto module = getModule(moduleName, forAutocomplete);
     if (module && module->internalTypes->types
-                      .empty()) // If we didn't retain type graphs, then the
-                                // internalTypes arena is empty
+                      .empty()) { // If we didn't retain type graphs, then the
+                                  // internalTypes arena is empty
         frontend.markDirty(moduleName);
+    }
 
     Luau::FrontendOptions options{/* retainFullTypeGraphs: */ true,
                                   forAutocomplete,
@@ -2681,26 +2763,33 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAutocompleteEntry(
     const std::string &name, const Luau::AutocompleteEntry &entry,
     const std::vector<Luau::AstNode *> &ancestry,
     const Luau::ModulePtr &localModule, const Luau::Position &position) {
-    if (entry.documentationSymbol)
+    if (entry.documentationSymbol) {
         if (auto docs =
-                printDocumentation(documentation, *entry.documentationSymbol))
+                printDocumentation(documentation, *entry.documentationSymbol)) {
             return docs;
+        }
+    }
 
-    if (entry.type.has_value())
-        if (auto documentation = getDocumentationForType(entry.type.value()))
+    if (entry.type.has_value()) {
+        if (auto documentation = getDocumentationForType(entry.type.value())) {
             return documentation;
+        }
+    }
 
     if (entry.kind == Luau::AutocompleteEntryKind::Type) {
         std::optional<Luau::AstName> importedPrefix = std::nullopt;
-        if (auto node = ancestry.back())
-            if (auto typeReference = node->as<Luau::AstTypeReference>())
+        if (auto node = ancestry.back()) {
+            if (auto typeReference = node->as<Luau::AstTypeReference>()) {
                 importedPrefix = typeReference->prefix;
+            }
+        }
 
         auto scope = Luau::findScopeAtPosition(*localModule, position);
         if (auto documentation = getDocumentationForTypeReference(
                 localModule->name, scope, importedPrefix, name,
-                /* forAutocomplete= */ true))
+                /* forAutocomplete= */ true)) {
             return documentation;
+        }
     }
 
     if (entry.prop) {
@@ -2714,18 +2803,20 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAutocompleteEntry(
             if (localModule) {
                 Luau::TypeId *parentTy = nullptr;
                 if (auto node = ancestry.back()) {
-                    if (auto indexName = node->as<Luau::AstExprIndexName>())
+                    if (auto indexName = node->as<Luau::AstExprIndexName>()) {
                         parentTy = localModule->astTypes.find(indexName->expr);
-                    else if (auto indexExpr =
-                                 node->as<Luau::AstExprIndexExpr>())
+                    } else if (auto indexExpr =
+                                   node->as<Luau::AstExprIndexExpr>()) {
                         parentTy = localModule->astTypes.find(indexExpr->expr);
-                    else if (node->is<Luau::AstExprGlobal>()) {
+                    } else if (node->is<Luau::AstExprGlobal>()) {
                         // potentially autocompleting a property inside of a
                         // table literal
-                        if (ancestry.size() > 2)
+                        if (ancestry.size() > 2) {
                             if (auto table = ancestry[ancestry.size() - 2]
-                                                 ->as<Luau::AstExprTable>())
+                                                 ->as<Luau::AstExprTable>()) {
                                 parentTy = localModule->astTypes.find(table);
+                            }
+                        }
                     }
                 }
 
@@ -2735,28 +2826,33 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAutocompleteEntry(
                     auto followedTy = Luau::follow(*parentTy);
                     if (auto propInformation =
                             LuauLsp::lookupProp(followedTy, name);
-                        !propInformation.empty())
+                        !propInformation.empty()) {
                         definitionModuleName = Luau::getDefinitionModuleName(
                             propInformation[0].baseTableTy);
-                    else
+                    } else {
                         definitionModuleName =
                             Luau::getDefinitionModuleName(followedTy);
+                    }
                 }
             }
         }
 
         if (definitionModuleName) {
-            if (auto propLocation = entry.prop.value()->location)
+            if (auto propLocation = entry.prop.value()->location) {
                 if (auto text = printMoonwaveDocumentation(getComments(
                         definitionModuleName.value(), propLocation.value()));
-                    !text.isEmpty())
+                    !text.isEmpty()) {
                     return text;
+                }
+            }
 
-            if (auto typeLocation = entry.prop.value()->typeLocation)
+            if (auto typeLocation = entry.prop.value()->typeLocation) {
                 if (auto text = printMoonwaveDocumentation(getComments(
                         definitionModuleName.value(), typeLocation.value()));
-                    !text.isEmpty())
+                    !text.isEmpty()) {
                     return text;
+                }
+            }
         }
     }
 
@@ -2775,25 +2871,29 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
             DocumentHandle(getUri(moduleName), it->second.textDocument.get());
     } else {
         sourceModule = frontend.getSourceModule(moduleName);
-        if (!sourceModule)
+        if (!sourceModule) {
             return {};
+        }
 
         textDocument = getOrCreateTextDocumentFromModuleName(moduleName);
-        if (!textDocument)
+        if (!textDocument) {
             return {};
+        }
     }
 
     auto commentLocations = getCommentLocations(sourceModule, node);
-    if (commentLocations.empty())
+    if (commentLocations.empty()) {
         return {};
+    }
 
     const auto source = textDocument.document->toPlainText();
     const auto offsetForPosition = [&source](const Luau::Position &position) {
         qsizetype offset = 0;
         for (std::uint32_t line = 0; line < position.line; ++line) {
             const auto newline = source.indexOf('\n', offset);
-            if (newline < 0)
+            if (newline < 0) {
                 return qsizetype(-1);
+            }
             offset = newline + 1;
         }
         const auto result = offset + position.column;
@@ -2802,13 +2902,15 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
 
     QStringList comments;
     for (auto &comment : commentLocations) {
-        if (comment.type == Luau::Lexeme::Type::BrokenComment)
+        if (comment.type == Luau::Lexeme::Type::BrokenComment) {
             continue;
+        }
 
         const auto start = offsetForPosition(comment.location.begin);
         const auto end = offsetForPosition(comment.location.end);
-        if (start < 0 || end < start)
+        if (start < 0 || end < start) {
             continue;
+        }
         auto commentText = source.sliced(start, end - start);
 
         if (comment.type == Luau::Lexeme::Type::Comment) {
@@ -2821,8 +2923,9 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
             continue;
         }
 
-        if (comment.type != Luau::Lexeme::Type::BlockComment)
+        if (comment.type != Luau::Lexeme::Type::BlockComment) {
             continue;
+        }
 
         static const QRegularExpression blockStart(R"(^--\[(=*)\[)");
         auto match = blockStart.match(commentText);
@@ -2903,22 +3006,26 @@ std::optional<QString> LuauLanguageServer::getDocumentationForTypeReference(
     bool forAutocomplete) {
     if (prefix) {
         auto importedModuleName = lookupImportedModule(*scope, prefix->value);
-        if (!importedModuleName)
+        if (!importedModuleName) {
             return std::nullopt;
+        }
         auto importedModule = getModule(*importedModuleName,
                                         /* forAutocomplete: */ forAutocomplete);
-        if (!importedModule)
+        if (!importedModule) {
             return std::nullopt;
+        }
         if (const auto it = importedModule->exportedTypeBindings.find(typeName);
             it != importedModule->exportedTypeBindings.end() &&
-            it->second.definitionLocation)
+            it->second.definitionLocation) {
             return printMoonwaveDocumentation(getComments(
                 *importedModuleName, *it->second.definitionLocation));
+        }
         return std::nullopt;
     } else {
         auto typeLocation = lookupTypeLocation(*scope, typeName);
-        if (!typeLocation)
+        if (!typeLocation) {
             return std::nullopt;
+        }
         return printMoonwaveDocumentation(
             getComments(moduleName, *typeLocation));
     }
@@ -3001,10 +3108,11 @@ void LuauLanguageServer::registerTypes() {
             // Update the text document URI to point to the actual file on
             // disk
             if (auto it = definitionsFileState.find(packageName);
-                it != definitionsFileState.end())
+                it != definitionsFileState.end()) {
                 it->second.textDocument->setPlainText(QString::fromUtf8(
                     definitionsContents.data(),
                     static_cast<qsizetype>(definitionsContents.size())));
+            }
         } else {
             qCritical("[LuauLanguageServer] Failed to load definitions '%s'",
                       qPrintable(resolvedFilePath));
@@ -3061,11 +3169,13 @@ parseLuauConfig(const QString &configPath, const std::string &contents,
         auto *info =
             static_cast<LuauConfigInterruptInfo *>(lua_getthreaddata(L));
         if (info->limits.finishTime &&
-            Luau::TimeTrace::getClock() > *info->limits.finishTime)
+            Luau::TimeTrace::getClock() > *info->limits.finishTime) {
             throw Luau::TimeLimitError{info->module};
+        }
         if (info->limits.cancellationToken &&
-            info->limits.cancellationToken->requested())
+            info->limits.cancellationToken->requested()) {
             throw Luau::UserCancelError{info->module};
+        }
     };
 
     return Luau::extractLuauConfig(contents, result, aliasOpts,

@@ -508,8 +508,9 @@ double QHexMetadata::calculateContrastRatio(const QColor &color1,
     double luminance2 = calculateLuminance(color2);
 
     // Ensure luminance1 is the lighter one
-    if (luminance1 < luminance2)
+    if (luminance1 < luminance2) {
         std::swap(luminance1, luminance2);
+    }
 
     return (luminance1 + 0.05) / (luminance2 + 0.05);
 }
@@ -574,10 +575,11 @@ void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {
             length = lastChar - start + 1;
         } else {
             // fix the bug by wingsummer
-            if (firstRow != lastRow)
+            if (firstRow != lastRow) {
                 length = m_lineWidth - start;
-            else
+            } else {
                 length = m_lineWidth;
+            }
         }
 
         if (length > 0) {
@@ -596,8 +598,9 @@ bool QHexMetadata::checkValidMetadata(qsizetype begin, qsizetype end,
                                       const QColor &fgcolor,
                                       const QColor &bgcolor,
                                       const QString &comment) {
-    if (begin > end || begin < 0)
+    if (begin > end || begin < 0) {
         return false;
+    }
 
     if (!fgcolor.isValid() || fgcolor.alpha() != 255) {
         if (!bgcolor.isValid() || bgcolor.alpha() != 255) {

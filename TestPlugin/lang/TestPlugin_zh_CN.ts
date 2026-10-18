@@ -269,64 +269,32 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="69"/>
+        <location filename="../testplugin.cpp" line="64"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="81"/>
-        <location filename="../testplugin.cpp" line="84"/>
-        <location filename="../testplugin.cpp" line="87"/>
-        <location filename="../testplugin.cpp" line="156"/>
+        <location filename="../testplugin.cpp" line="76"/>
+        <location filename="../testplugin.cpp" line="79"/>
+        <location filename="../testplugin.cpp" line="82"/>
+        <location filename="../testplugin.cpp" line="151"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="91"/>
+        <location filename="../testplugin.cpp" line="86"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="94"/>
+        <location filename="../testplugin.cpp" line="89"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="159"/>
+        <location filename="../testplugin.cpp" line="154"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
-    </message>
-    <message>
-        <location filename="../testplugin.cpp" line="188"/>
-        <location filename="../testplugin.cpp" line="196"/>
-        <location filename="../testplugin.cpp" line="205"/>
-        <location filename="../testplugin.cpp" line="226"/>
-        <location filename="../testplugin.cpp" line="242"/>
-        <location filename="../testplugin.cpp" line="249"/>
-        <location filename="../testplugin.cpp" line="256"/>
-        <location filename="../testplugin.cpp" line="263"/>
-        <location filename="../testplugin.cpp" line="270"/>
-        <location filename="../testplugin.cpp" line="292"/>
-        <location filename="../testplugin.cpp" line="318"/>
-        <location filename="../testplugin.cpp" line="326"/>
-        <location filename="../testplugin.cpp" line="333"/>
-        <location filename="../testplugin.cpp" line="341"/>
-        <location filename="../testplugin.cpp" line="350"/>
-        <location filename="../testplugin.cpp" line="357"/>
-        <source>InvalidParamsCount</source>
-        <translation>无效参数个数</translation>
-    </message>
-    <message>
-        <location filename="../testplugin.cpp" line="219"/>
-        <location filename="../testplugin.cpp" line="235"/>
-        <source>InvalidParam</source>
-        <translation>非法参数</translation>
-    </message>
-    <message>
-        <location filename="../testplugin.cpp" line="287"/>
-        <location filename="../testplugin.cpp" line="309"/>
-        <source>AllocArrayFailed</source>
-        <translation>分配数组失败</translation>
     </message>
 </context>
 <context>

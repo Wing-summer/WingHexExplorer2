@@ -103,8 +103,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupDocking"));
+    }
     buildUpDockSystem(cw);
 
     layout->addWidget(m_dock, 1);
@@ -209,8 +210,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     auto &set = SettingManager::instance();
 
     // launch logging system
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("LaunchingLog"));
+    }
     auto &log = Logger::instance();
     log.setLogLevel(Logger::Level(set.logLevel()));
     connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
@@ -219,8 +221,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     set.checkWriteableAndWarn();
 
     // launch plugin system
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupPluginSystem"));
+    }
     auto &plg = PluginSystem::instance();
     connect(&plg, &PluginSystem::pluginLoading, this,
             [=](const QString &plgName) {
@@ -289,8 +292,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto &sm = ScriptMachine::instance();
         auto smr = sm.init();
         if (smr) {
-            plg.doneRegisterScriptObj();
-
+            smr = plg.doneRegisterScriptObj();
+        }
+        if (smr) {
             // register the callback for output error message
             // when configuring error
             ScriptMachine::RegCallBacks callbacks;
@@ -337,15 +341,18 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                               std::placeholders::_1);
                 sm.registerCallBack(ScriptMachine::Background, callbacks);
 
-                if (splash)
+                if (splash) {
                     splash->setInfoText(tr("SetupConsole"));
+                }
 
                 m_scriptConsole->init();
-                if (splash)
+                if (splash) {
                     splash->setInfoText(tr("SetupScriptManager"));
+                }
 
-                if (splash)
+                if (splash) {
                     splash->setInfoText(tr("SetupScriptService"));
+                }
 
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Input);
@@ -394,13 +401,15 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             });
 
     // ok, build up the dialog of setting
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupSetDialog"));
+    }
     buildUpSettingDialog();
 
     // we start to installing plugin widgets
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupPlgWidgets"));
+    }
     installPluginEditorWidgets();
     auto plgview = m_toolBtneditors[PLUGIN_VIEWS];
     plgview->setEnabled(!plgview->menu()->isEmpty());
@@ -408,8 +417,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     finishBuildDockSystem();
 
     // load saved docking layout
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupDockingLayout"));
+    }
 
     _defaultLayout = m_dock->saveState();
 
@@ -421,8 +431,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     m_lastusedpath = set.lastUsedPath();
 
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupWaiting"));
+    }
 
     registerGlobalSwitchViewLoop();
 
@@ -432,8 +443,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     this->setUpdatesEnabled(true);
 
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("SetupFinished"));
+    }
 }
 
 MainWindow::~MainWindow() {
@@ -2088,8 +2100,9 @@ void MainWindow::on_exportfile() {
 
     auto filename =
         WingFileDialog::getSaveFileName(this, tr("ChooseExportFile"), lastpath);
-    if (filename.isEmpty())
+    if (filename.isEmpty()) {
         return;
+    }
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     bool isWorkspace = editor->isWorkSpace();
@@ -2124,8 +2137,9 @@ void MainWindow::on_savesel() {
 
     auto filename =
         WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
-    if (filename.isEmpty())
+    if (filename.isEmpty()) {
         return;
+    }
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     QFile qfile(filename);
     if (qfile.open(QFile::WriteOnly)) {
@@ -2450,8 +2464,9 @@ void MainWindow::on_fill() {
         auto ch = uchar(v);
         if (b) {
             auto doc = hexeditor->document();
-            if (doc->isEmpty() || !hexeditor->hasSelection())
+            if (doc->isEmpty() || !hexeditor->hasSelection()) {
                 return;
+            }
 
             auto total = hexeditor->selectionCount();
             doc->beginMarco(QStringLiteral("[H*?G] {cnt: %1}").arg(total));
@@ -2475,8 +2490,9 @@ void MainWindow::on_fillzero() {
         return;
     }
     auto doc = hexeditor->document();
-    if (doc->isEmpty() || !hexeditor->hasSelection())
+    if (doc->isEmpty() || !hexeditor->hasSelection()) {
         return;
+    }
 
     auto cur = hexeditor->cursor();
     auto total = cur->selectionCount();
@@ -2788,8 +2804,9 @@ void MainWindow::on_exportfindresult() {
     }
     auto filename = WingFileDialog::getSaveFileName(
         this, tr("ChooseSaveFile"), m_lastusedpath, {"Json (*.json)"});
-    if (filename.isEmpty())
+    if (filename.isEmpty()) {
         return;
+    }
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     QFile f(filename);
@@ -3651,14 +3668,13 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
         return res;
     }
 
-    registerEditorView(ev.get());
+    auto ed = ev.release();
+    registerEditorView(ed);
     if (editor) {
-        *editor = ev.get();
+        *editor = ed;
     }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
-                          editorViewArea());
-    ev->setFocus();
-    ev.release();
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ed, editorViewArea());
+    ed->setFocus();
     return ErrFile::Success;
 }
 
@@ -3679,15 +3695,14 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
         return res;
     }
 
-    registerEditorView(ev.get());
+    auto ed = ev.release();
+    registerEditorView(ed);
     if (editor) {
-        *editor = ev.get();
+        *editor = ed;
     }
 
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
-                          editorViewArea());
-    ev->setFocus();
-    ev.release();
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ed, editorViewArea());
+    ed->setFocus();
     return ErrFile::Success;
 }
 
@@ -3727,14 +3742,13 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
         return res;
     }
 
-    registerEditorView(ev.get(), file);
+    auto ed = ev.release();
+    registerEditorView(ed, file);
     if (editor) {
-        *editor = ev.get();
+        *editor = ed;
     }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev.get(),
-                          editorViewArea());
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ed, editorViewArea());
     ev->setFocus();
-    ev.release();
 
     if (res == ErrFile::WorkSpaceUnSaved) {
         WingMessageBox::warning(this, qAppName(), tr("ChecksumFailed"));
@@ -4555,8 +4569,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
-    if (m_recentmanager->isDirty())
+    if (m_recentmanager->isDirty()) {
         set.setRecentFiles(m_recentmanager->saveRecent());
+    }
     set.setLastUsedPath(m_lastusedpath);
 
     PluginSystem::instance().destory();

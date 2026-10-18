@@ -18,11 +18,10 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "WingPlugin/iwingangel.h"
-
 #include "class/luauscheduler.h"
 #include "luau/luaudebugger.h"
 #include "luau/luauinspector.h"
+#include "luau/scriptbindingengine.h"
 #include "luau/wingluaurequire.h"
 
 #include <QObject>
@@ -74,7 +73,9 @@ private:
     explicit ScriptMachine();
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
-    bool configureEngine(lua_State *l);
+    bool
+    configureEngine(lua_State *l,
+                    WingScriptBind::ScriptBindingEngine::ObjectCodec codec);
     constexpr static int consoleModeIdx(ConsoleMode mode);
 
 public:
@@ -82,12 +83,13 @@ public:
     void destoryMachine();
 
     QVector<lua_State *> getThreadAncestors(lua_State *L) const;
-    void setCustomEvals(
-        const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals);
 
 public:
-    bool init();
+    bool init(WingScriptBind::ScriptBindingEngine::ObjectCodec codec = {});
+    void finishScriptRegistration();
+    bool scriptRegistrationFinished() const noexcept;
     bool isInited() const;
+    WingScriptBind::IScriptEngine *scriptEngine() const noexcept;
     bool isRunning(ConsoleMode mode) const;
     bool checkEngineConfigError() const;
 
@@ -165,7 +167,9 @@ private:
 
 private:
     bool _inited = false;
+    bool _scriptRegistrationFinished = false;
     lua_State *_main = nullptr;
+    std::unique_ptr<WingScriptBind::ScriptBindingEngine> _bindings;
     LuauDebugger *_debugger = nullptr;
     mutable LuauThread _ctx[ConsoleModeCount]{};
     mutable LuauThreadData _tdata[ConsoleModeCount]{};

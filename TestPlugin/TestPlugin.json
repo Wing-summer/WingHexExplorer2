@@ -3,9 +3,7 @@
     "SDK": 21,
     "Version": "0.0.1",
     "Vendor": "WingCloudStudio",
-    "Dependencies": [
-        "WingAngelAPI"
-    ],
+    "Dependencies": [],
     "Author": "wingsummer",
     "License": "MIT",
     "Url": "https://github.com/Wing-summer/WingHexExplorer2",

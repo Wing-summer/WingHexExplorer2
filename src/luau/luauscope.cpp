@@ -83,8 +83,9 @@ bool LuauScope::isTable() const { return type_ == Type::Table; }
 bool LuauScope::isUserData() const { return type_ == Type::UserData; }
 
 bool LuauScope::isLoaded() const {
-    if (!isTable() && !isUserData())
+    if (!isTable() && !isUserData()) {
         return true;
+    }
     return loaded_;
 }
 
@@ -93,8 +94,9 @@ bool LuauScope::markLoaded() const { return loaded_ = true; }
 bool LuauScope::markUnloaded() const { return loaded_ = false; }
 
 bool LuauScope::pushRef() const {
-    if (ref_ == LUA_REFNIL || L_ == nullptr)
+    if (ref_ == LUA_REFNIL || L_ == nullptr) {
         return false;
+    }
 
     lua_checkstack(L_, 1);
     lua_getref(L_, ref_);
@@ -114,8 +116,9 @@ LuauScope LuauScope::createWithType(lua_State *L, const QString &name,
 void LuauScope::createKey(std::size_t hash) { key_ = hash & 0x7FFFFFFF; }
 
 void LuauScope::newRef(int ref) {
-    if (ref == LUA_REFNIL)
+    if (ref == LUA_REFNIL) {
         return;
+    }
 
     lua_checkstack(L_, 1);
     lua_getref(L_, ref);

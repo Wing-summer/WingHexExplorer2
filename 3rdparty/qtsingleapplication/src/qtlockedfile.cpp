@@ -35,8 +35,9 @@ Qt::HANDLE QtLockedFile::getMutexHandle(int idx, bool doCreate) {
             QString::fromLatin1(MUTEX_PREFIX) + fi.absoluteFilePath().toLower();
     }
     QString mname(mutexname);
-    if (idx >= 0)
+    if (idx >= 0) {
         mname += QString::number(idx);
+    }
 
     Qt::HANDLE mutex;
     if (doCreate) {
@@ -61,8 +62,9 @@ Qt::HANDLE QtLockedFile::getMutexHandle(int idx, bool doCreate) {
                                    mname.toLocal8Bit().constData());
             });
         if (!mutex) {
-            if (GetLastError() != ERROR_FILE_NOT_FOUND)
+            if (GetLastError() != ERROR_FILE_NOT_FOUND) {
                 qErrnoWarning("QtLockedFile::lock(): OpenMutex failed");
+            }
             return 0;
         }
     }
@@ -155,28 +157,34 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
         return false;
     }
 
-    if (mode == NoLock)
+    if (mode == NoLock) {
         return unlock();
+    }
 
-    if (mode == m_lock_mode)
+    if (mode == m_lock_mode) {
         return true;
+    }
 
-    if (m_lock_mode != NoLock)
+    if (m_lock_mode != NoLock) {
         unlock();
+    }
 
 #ifdef Q_OS_WIN
-    if (!wmutex && !(wmutex = getMutexHandle(-1, true)))
+    if (!wmutex && !(wmutex = getMutexHandle(-1, true))) {
         return false;
+    }
 
-    if (!waitMutex(wmutex, block))
+    if (!waitMutex(wmutex, block)) {
         return false;
+    }
 
     if (mode == ReadLock) {
         int idx = 0;
         for (; idx < MAX_READERS; idx++) {
             rmutex = getMutexHandle(idx, false);
-            if (!rmutex || waitMutex(rmutex, false))
+            if (!rmutex || waitMutex(rmutex, false)) {
                 break;
+            }
             CloseHandle(rmutex);
         }
         bool ok = true;
@@ -186,31 +194,35 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
             ok = false;
         } else if (!rmutex) {
             rmutex = getMutexHandle(idx, true);
-            if (!rmutex || !waitMutex(rmutex, false))
+            if (!rmutex || !waitMutex(rmutex, false)) {
                 ok = false;
+            }
         }
         if (!ok && rmutex) {
             CloseHandle(rmutex);
             rmutex = 0;
         }
         ReleaseMutex(wmutex);
-        if (!ok)
+        if (!ok) {
             return false;
+        }
     } else {
         Q_ASSERT(rmutexes.isEmpty());
         for (int i = 0; i < MAX_READERS; i++) {
             Qt::HANDLE mutex = getMutexHandle(i, false);
-            if (mutex)
+            if (mutex) {
                 rmutexes.append(mutex);
+            }
         }
         if (rmutexes.size()) {
             DWORD res =
                 WaitForMultipleObjects(rmutexes.size(), rmutexes.constData(),
                                        TRUE, block ? INFINITE : 0);
             if (res != WAIT_OBJECT_0 && res != WAIT_ABANDONED) {
-                if (res != WAIT_TIMEOUT)
+                if (res != WAIT_TIMEOUT) {
                     qErrnoWarning(
                         "QtLockedFile::lock(): WaitForMultipleObjects failed");
+                }
                 m_lock_mode =
                     WriteLock; // trick unlock() to clean up - semiyucky
                 unlock();
@@ -228,8 +240,9 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
     int ret = fcntl(handle(), cmd, &fl);
 
     if (ret == -1) {
-        if (errno != EINTR && errno != EAGAIN)
+        if (errno != EINTR && errno != EAGAIN) {
             qWarning("QtLockedFile::lock(): fcntl: %s", strerror(errno));
+        }
         return false;
     }
 #endif
@@ -244,8 +257,9 @@ bool QtLockedFile::unlock() {
         return false;
     }
 
-    if (!isLocked())
+    if (!isLocked()) {
         return true;
+    }
 
 #ifdef Q_OS_WIN
     if (m_lock_mode == ReadLock) {
@@ -279,12 +293,14 @@ bool QtLockedFile::unlock() {
 }
 
 QtLockedFile::~QtLockedFile() {
-    if (isOpen())
+    if (isOpen()) {
         unlock();
+    }
 
 #ifdef Q_OS_WIN
-    if (wmutex)
+    if (wmutex) {
         CloseHandle(wmutex);
+    }
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -19,9 +19,9 @@
 #include "class/fileaccesscheck.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
+#include "class/scriptmachine.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
-#include "class/wingangel.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
@@ -31,7 +31,6 @@
 #include "dialog/colorpickerdialog.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
-#include "predefgen.h"
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 
@@ -151,6 +150,23 @@ QDialog *PluginSystem::createDialog(const QObject *sender, QWidget *content) {
 
     if (content) {
         auto d = new FramelessDialogBase;
+        d->buildUpContent(content);
+        d->setWindowTitle(content->windowTitle());
+        d->setWindowIcon(content->windowIcon());
+        return d;
+    } else {
+        return nullptr;
+    }
+}
+
+QMainWindow *PluginSystem::createMainWindow(const QObject *sender,
+                                            QWidget *content) {
+    if (!checkThreadAff()) {
+        return nullptr;
+    }
+
+    if (content) {
+        auto d = new FramelessMainWindow;
         d->buildUpContent(content);
         d->setWindowTitle(content->windowTitle());
         d->setWindowIcon(content->windowIcon());
@@ -2291,46 +2307,48 @@ const QList<PluginSystem::BlockInfo> &PluginSystem::blockedPlugins() const {
     return _blkplgs;
 }
 
-void PluginSystem::doneRegisterScriptObj() {
-    // TODO
-    // // ok, then, we will register all script objects
-    // auto api = QScopedPointer(new WingAngel(_angelplg, _scriptMarcos));
+bool PluginSystem::doneRegisterScriptObj() {
+    if (!checkThreadAff()) {
+        return false;
+    }
 
-    // // don't register evalutors for internal types
-    // auto &m = ScriptMachine::instance();
-    // auto engine = m.engine();
-    // auto total = engine->GetObjectTypeCount();
-    // QList<int> excludeTypeId;
-    // excludeTypeId.reserve(total);
-    // for (asUINT i = 0; i < total; ++i) {
-    //     auto obj = engine->GetObjectTypeByIndex(i);
-    //     auto typeId = obj->GetTypeId();
-    //     typeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
-    //     if (typeId) {
-    //         excludeTypeId.append(typeId);
-    //     }
-    // }
-    // api->setExcludeEvalIDs(excludeTypeId);
+    auto &machine = ScriptMachine::instance();
+    auto *engine = machine.scriptEngine();
+    if (!machine.isInited() || !engine) {
+        return false;
+    }
+    if (machine.scriptRegistrationFinished()) {
+        return true;
+    }
 
-    // auto ptr = api.data();
-    // for (const auto &p : std::as_const(_loadedplgs)) {
-    //     auto puid = getPUID(p);
-    //     ptr->setCurrentPluginSession(puid.toUtf8());
-    //     p->onRegisterScriptObj(ptr);
-    // }
-
-    // for (const auto &p : std::as_const(_loadeddevs)) {
-    //     auto puid = getPUID(p);
-    //     ptr->setCurrentPluginSession(puid.toUtf8());
-    //     p->onRegisterScriptObj(ptr);
-    // }
-
-    // auto evals = api->customEvals();
-    // m.setCustomEvals(evals);
-
-    // ptr->setCurrentPluginSession({});
-    // generateScriptPredefined(ScriptMachine::instance().engine(),
-    //                          Utilities::getASPredefPath());
+    QString currentPlugin;
+    try {
+        for (const auto &plugin : std::as_const(_loadedplgs)) {
+            currentPlugin = getPUID(plugin);
+            plugin->onRegisterScriptObj(
+                engine->global().beginNamespace(currentPlugin));
+        }
+        for (const auto &device : std::as_const(_loadeddevs)) {
+            currentPlugin = getPUID(device);
+            device->onRegisterScriptObj(
+                engine->global().beginNamespace(currentPlugin));
+        }
+        currentPlugin.clear();
+        machine.finishScriptRegistration();
+        return true;
+    } catch (const WingScriptBind::ScriptException &error) {
+        Logger::critical(QStringLiteral("Script registration failed [%1]: %2")
+                             .arg(currentPlugin, error.getErrorString()));
+    } catch (const std::exception &error) {
+        Logger::critical(
+            QStringLiteral("Script registration failed [%1]: %2")
+                .arg(currentPlugin, QString::fromUtf8(error.what())));
+    } catch (...) {
+        Logger::critical(QStringLiteral("Script registration failed [%1]")
+                             .arg(currentPlugin));
+    }
+    machine.destoryMachine();
+    return false;
 }
 
 IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
@@ -2497,8 +2515,6 @@ void PluginSystem::logWarn(const QObject *sender, const QString &message) {
 
 QString PluginSystem::currentLoadingPlugin() const { return _curLoadingPlg; }
 
-QStringList PluginSystem::scriptMarcos() const { return _scriptMarcos; }
-
 QSet<int> PluginSystem::scriptHandles() const {
     static QSet<int> ret;
     if (_handleDirty) {
@@ -2518,8 +2534,6 @@ void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
         // closeHandle(_angelplg, h);
     }
 }
-
-void PluginSystem::scriptPragmaBegin() { _pragmaedPlg.clear(); }
 
 qsizetype PluginSystem::pluginAPICount() const { return _api._fnTable.size(); }
 
@@ -3059,8 +3073,9 @@ void PluginSystem::loadExtPlugin() {
     for (qsizetype i = 0; i < n; ++i) {
         const auto &plugin = loadables[i].meta;
         for (const auto &dep : plugin.dependencies) {
-            if (isDependencyMet(dep))
+            if (isDependencyMet(dep)) {
                 continue;
+            }
 
             const auto it = idToIndex.constFind(dep.puid);
             if (it != idToIndex.cend()) {
@@ -3091,8 +3106,9 @@ void PluginSystem::loadExtPlugin() {
         const qsizetype u = q.dequeue();
         topo.push_back(u);
         for (const qsizetype v : std::as_const(graph[u])) {
-            if (--indegree[v] == 0)
+            if (--indegree[v] == 0) {
                 q.enqueue(v);
+            }
         }
     }
 
@@ -3314,11 +3330,6 @@ QString PluginSystem::packLoadPlgMessage(const QString &header,
     return QStringLiteral("{ %1 } %2").arg(header, content);
 }
 
-void PluginSystem::registerPluginDetectMarco(const QString &id) {
-    static auto sep = QStringLiteral("_");
-    _scriptMarcos.append(sep + id + sep);
-}
-
 void PluginSystem::registerEvents(IWingPlugin *plg) {
     Q_ASSERT(plg);
     auto evs = plg->registeredEvents();
@@ -3482,8 +3493,6 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
         _loadedplgs.append(p);
         _pinfos.insert(p, meta);
 
-        registerPluginDetectMarco(meta.id);
-
         Logger::info(tr("PluginName :") + p->pluginName());
         Logger::debug(tr("PluginAuthor :") + meta.author);
         Logger::debug(tr("PluginWidgetRegister"));
@@ -3549,7 +3558,6 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 
         _loadeddevs.append(p);
         _pinfos.insert(p, meta);
-        registerPluginDetectMarco(meta.id);
 
         // ok register into menu open
         auto menu =

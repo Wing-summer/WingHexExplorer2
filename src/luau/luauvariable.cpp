@@ -111,8 +111,9 @@ QString LuauVariable::getValue() const { return value_; }
 QString LuauVariable::getType() const { return LuauTypes::getTypeName(type_); }
 
 QString LuauVariable::setValue(LuauScope scope, const QString &value) {
-    if (!LuauUtil::pushBreakEnv(L_, level_))
+    if (!LuauUtil::pushBreakEnv(L_, level_)) {
         throw std::runtime_error("Failed to push break environment");
+    }
 
     auto result = LuauUtil::eval(L_, preprocess(value), -1);
     if (!result.has_value()) {
@@ -127,8 +128,9 @@ QString LuauVariable::setValue(LuauScope scope, const QString &value) {
         return value_;
     }
 
-    if (ret_count > 1)
+    if (ret_count > 1) {
         lua_pop(L_, ret_count - 1);
+    }
 
     auto name = name_.toUtf8();
     auto new_value = LuauTypes::toDbgString(L_, -1);
@@ -199,13 +201,15 @@ LuauVariable::LuauVariable(LuauVariableRegistry *registry, lua_State *L,
 }
 
 void LuauVariable::addScope(LuauVariableRegistry *registry, lua_State *L) {
-    if (!hasFields())
+    if (!hasFields()) {
         return;
+    }
 
-    if (isTable())
+    if (isTable()) {
         scope_ = LuauScope::createTable(L);
-    else if (isUserData())
+    } else if (isUserData()) {
         scope_ = LuauScope::createUserData(L);
+    }
 
     scope_.setName(name_);
     scope_.setLevel(level_);
@@ -239,8 +243,9 @@ void LuauVariable::addRawFields(LuauVariableRegistry *registry, lua_State *L,
 void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
                                  const LuauScope &scope, int value_idx) {
     auto variables = registry->getVariables(scope, false);
-    if (!variables)
+    if (!variables) {
         return;
+    }
 
     variables->clear();
 
@@ -267,8 +272,9 @@ void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
                       qUtf8Printable(scope.getName()), lua_tostring(L, -1));
             return;
         }
-        if (lua_isnil(L, -2))
+        if (lua_isnil(L, -2)) {
             return;
+        }
 
         variables->append(addField(L, registry, scope));
 
@@ -286,8 +292,9 @@ void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
 void LuauVariable::addCustomFields(LuauVariableRegistry *registry, lua_State *L,
                                    const LuauScope &scope, int value_idx) {
     auto variables = registry->getVariables(scope, false);
-    if (!variables)
+    if (!variables) {
         return;
+    }
 
     variables->clear();
 

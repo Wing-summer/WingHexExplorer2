@@ -95,8 +95,9 @@ void ColorPickerDialog::updateColor(QColor color) {
 QColor ColorPickerDialog::color() const { return _color; }
 
 void ColorPickerDialog::setColor(const QColor &newColor) {
-    if (_color == newColor)
+    if (_color == newColor) {
         return;
+    }
     _oldColor = newColor;
     updateColor(newColor);
 }

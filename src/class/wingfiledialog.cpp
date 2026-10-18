@@ -26,10 +26,11 @@ QString WingFileDialog::getExistingDirectory(QWidget *parent,
     const QStringList schemes = QStringList(QStringLiteral("file"));
     const QUrl selectedUrl = getExistingDirectoryUrl(
         parent, caption, QUrl::fromLocalFile(dir), options, schemes);
-    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty())
+    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty()) {
         return selectedUrl.toLocalFile();
-    else
+    } else {
         return selectedUrl.toString();
+    }
 }
 
 QUrl WingFileDialog::getExistingDirectoryUrl(
@@ -55,8 +56,9 @@ QUrl WingFileDialog::getExistingDirectoryUrl(
         QObject::connect(filedialog, &QFileDialog::finished, &d,
                          &FramelessDialogBase::done);
 
-        if (d.exec() == QDialog::Accepted)
+        if (d.exec() == QDialog::Accepted) {
             return filedialog->selectedUrls().value(0);
+        }
         return QUrl();
     }
 }
@@ -70,10 +72,11 @@ QString WingFileDialog::getOpenFileName(QWidget *parent, const QString &caption,
     const QUrl selectedUrl =
         getOpenFileUrl(parent, caption, QUrl::fromLocalFile(dir), filter,
                        selectedFilter, options, schemes);
-    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty())
+    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty()) {
         return selectedUrl.toLocalFile();
-    else
+    } else {
         return selectedUrl.toString();
+    }
 }
 
 QStringList WingFileDialog::getOpenFileNames(QWidget *parent,
@@ -89,10 +92,11 @@ QStringList WingFileDialog::getOpenFileNames(QWidget *parent,
     QStringList fileNames;
     fileNames.reserve(selectedUrls.size());
     for (const QUrl &url : selectedUrls) {
-        if (url.isLocalFile() || url.isEmpty())
+        if (url.isLocalFile() || url.isEmpty()) {
             fileNames << url.toLocalFile();
-        else
+        } else {
             fileNames << url.toString();
+        }
     }
     return fileNames;
 }
@@ -122,11 +126,13 @@ QUrl WingFileDialog::getOpenFileUrl(QWidget *parent, const QString &caption,
         QObject::connect(dialog, &QFileDialog::finished, &d,
                          &FramelessDialogBase::done);
 
-        if (selectedFilter && !selectedFilter->isEmpty())
+        if (selectedFilter && !selectedFilter->isEmpty()) {
             dialog->selectNameFilter(*selectedFilter);
+        }
         if (d.exec() == QDialog::Accepted) {
-            if (selectedFilter)
+            if (selectedFilter) {
                 *selectedFilter = dialog->selectedNameFilter();
+            }
             return dialog->selectedUrls().value(0);
         }
         return QUrl();
@@ -157,11 +163,13 @@ QList<QUrl> WingFileDialog::getOpenFileUrls(
         QObject::connect(dialog, &QFileDialog::finished, &d,
                          &FramelessDialogBase::done);
 
-        if (selectedFilter && !selectedFilter->isEmpty())
+        if (selectedFilter && !selectedFilter->isEmpty()) {
             dialog->selectNameFilter(*selectedFilter);
+        }
         if (d.exec() == QDialog::Accepted) {
-            if (selectedFilter)
+            if (selectedFilter) {
                 *selectedFilter = dialog->selectedNameFilter();
+            }
             return dialog->selectedUrls();
         }
         return {};
@@ -177,10 +185,11 @@ QString WingFileDialog::getSaveFileName(QWidget *parent, const QString &caption,
     const QUrl selectedUrl =
         getSaveFileUrl(parent, caption, QUrl::fromLocalFile(dir), filter,
                        selectedFilter, options, schemes);
-    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty())
+    if (selectedUrl.isLocalFile() || selectedUrl.isEmpty()) {
         return selectedUrl.toLocalFile();
-    else
+    } else {
         return selectedUrl.toString();
+    }
 }
 
 QUrl WingFileDialog::getSaveFileUrl(QWidget *parent, const QString &caption,
@@ -209,11 +218,13 @@ QUrl WingFileDialog::getSaveFileUrl(QWidget *parent, const QString &caption,
         QObject::connect(dialog, &QFileDialog::finished, &d,
                          &FramelessDialogBase::done);
 
-        if (selectedFilter && !selectedFilter->isEmpty())
+        if (selectedFilter && !selectedFilter->isEmpty()) {
             dialog->selectNameFilter(*selectedFilter);
+        }
         if (d.exec() == QDialog::Accepted) {
-            if (selectedFilter)
+            if (selectedFilter) {
                 *selectedFilter = dialog->selectedNameFilter();
+            }
             return dialog->selectedUrls().value(0);
         }
         return QUrl();

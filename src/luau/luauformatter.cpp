@@ -32,8 +32,9 @@ qsizetype advanceUtf16Offset(const QByteArray &text, size_t targetByteOffset,
                                      : (first & 0xe0) == 0xc0 ? 2
                                      : (first & 0xf0) == 0xe0 ? 3
                                                               : 4;
-        if (currentByteOffset + characterSize > targetByteOffset)
+        if (currentByteOffset + characterSize > targetByteOffset) {
             break;
+        }
         currentByteOffset += characterSize;
         currentUtf16Offset += characterSize == 4 ? 2 : 1;
     }
@@ -46,8 +47,9 @@ LuauFormat::LuauFormat(const FormatOptions &options) : options_(options) {}
 // ============ Low-level output ============
 
 void LuauFormat::write(const QByteArray &str) {
-    if (str.isEmpty())
+    if (str.isEmpty()) {
         return;
+    }
     if (atLineStart_) {
         writeIndent();
         atLineStart_ = false;
@@ -56,10 +58,11 @@ void LuauFormat::write(const QByteArray &str) {
 }
 
 void LuauFormat::writeIndent() {
-    if (options_.useTabs)
+    if (options_.useTabs) {
         output_ += QByteArray(indentLevel_, '\t');
-    else
+    } else {
         output_ += QByteArray(indentLevel_ * options_.indentSize, ' ');
+    }
 }
 
 void LuauFormat::newline() {
@@ -84,8 +87,9 @@ void LuauFormat::writeKeyword(const QByteArray &kw) {
     if (!output_.isEmpty() && !atLineStart_) {
         char last = output_.back();
         bool needSpace = std::isalnum(last) || last == '_';
-        if (needSpace)
+        if (needSpace) {
             output_.append(' ');
+        }
     }
     write(kw);
 }
@@ -94,8 +98,9 @@ void LuauFormat::writeIdentifier(const QByteArray &ident) {
     if (!output_.isEmpty() && !atLineStart_) {
         char last = output_.back();
         bool needSpace = std::isalnum(last) || last == '_';
-        if (needSpace)
+        if (needSpace) {
             output_.append(' ');
+        }
     }
     write(ident);
 }
@@ -108,8 +113,9 @@ void LuauFormat::writeLiteral(const QByteArray &lit) {
         char last = output_.back();
         bool lastIsIdent = std::isalnum(last) || last == '_';
         bool firstIsDigit = !lit.isEmpty() && !std::isdigit(lit[0]);
-        if (lastIsIdent && firstIsDigit)
+        if (lastIsIdent && firstIsDigit) {
             output_.append(' ');
+        }
     }
     write(lit);
 }
@@ -208,8 +214,9 @@ void LuauFormat::writeString(
 // ============ CST helpers ============
 
 QByteArray LuauFormat::getIndentString() const {
-    if (options_.useTabs)
+    if (options_.useTabs) {
         return QByteArray(indentLevel_, '\t');
+    }
     return QByteArray(indentLevel_ * options_.indentSize, ' ');
 }
 
@@ -237,8 +244,9 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
         lexer.setSkipComments(false);
         while (true) {
             const Luau::Lexeme &lexeme = lexer.next();
-            if (lexeme.type == Luau::Lexeme::Eof)
+            if (lexeme.type == Luau::Lexeme::Eof) {
                 break;
+            }
             tokens.push_back(lexeme.location);
         }
     };
@@ -247,14 +255,16 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
 
     std::vector<size_t> outputLineOffsets{0};
     for (size_t i = 0; i < static_cast<size_t>(output_.size()); ++i) {
-        if (output_[static_cast<qsizetype>(i)] == '\n')
+        if (output_[static_cast<qsizetype>(i)] == '\n') {
             outputLineOffsets.push_back(i + 1);
+        }
     }
     const auto offsetForPosition = [](const Luau::Position &position,
                                       const std::vector<size_t> &lineOffsets,
                                       size_t textSize) {
-        if (position.line >= lineOffsets.size())
+        if (position.line >= lineOffsets.size()) {
             return textSize;
+        }
         return std::min(textSize, lineOffsets[position.line] +
                                       static_cast<size_t>(position.column));
     };
@@ -300,16 +310,20 @@ qsizetype LuauFormat::mapCursorPosition(qsizetype sourcePosition) const {
                             anchor.outputEnd - anchor.outputBegin);
         }
 
-        if (sourcePosition < anchor.sourceBegin)
+        if (sourcePosition < anchor.sourceBegin) {
             break;
-        if (sourcePosition >= anchor.sourceEnd)
+        }
+        if (sourcePosition >= anchor.sourceEnd) {
             previousToken = &anchor;
+        }
     }
 
-    if (previousToken)
+    if (previousToken) {
         return previousToken->outputEnd;
-    if (!tokenAnchors_.empty())
+    }
+    if (!tokenAnchors_.empty()) {
         return tokenAnchors_.front().outputBegin;
+    }
     return 0;
 }
 
@@ -500,12 +514,13 @@ void LuauFormat::writeComment(const Luau::Comment &comment,
                               bool inlineComment) {
     const QByteArray text = sourceText(comment.location);
 
-    if (inlineComment && !output_.isEmpty() && !atLineStart_)
+    if (inlineComment && !output_.isEmpty() && !atLineStart_) {
         output_.append(' ');
-    else {
+    } else {
         while (!output_.isEmpty() &&
-               (output_.back() == ' ' || output_.back() == '\t'))
+               (output_.back() == ' ' || output_.back() == '\t')) {
             output_.chop(1);
+        }
         writeIndent();
     }
     output_ += text;
@@ -515,18 +530,21 @@ void LuauFormat::writeComment(const Luau::Comment &comment,
 
 void LuauFormat::prepareSourceLine(unsigned int line, bool forceNewLine,
                                    bool suppressLeadingGap, bool preserveGap) {
-    if (!hasSourceLine_)
+    if (!hasSourceLine_) {
         return;
+    }
 
     const unsigned int lineGap = !suppressLeadingGap && line > lastSourceLine_
                                      ? line - lastSourceLine_
                                      : 0;
     unsigned int newlines = std::max(
         forceNewLine ? 1u : 0u, preserveGap ? lineGap : std::min(lineGap, 2u));
-    if (atLineStart_ && newlines > 0)
+    if (atLineStart_ && newlines > 0) {
         --newlines;
-    while (newlines-- > 0)
+    }
+    while (newlines-- > 0) {
         newline();
+    }
     hasSourceLine_ = true;
 }
 
@@ -538,57 +556,60 @@ void LuauFormat::prepareCommentLine(unsigned int line, bool suppressLeadingGap,
             : 0;
     unsigned int newlines =
         std::max(1u, preserveGap ? lineGap : std::min(lineGap, 2u));
-    if (atLineStart_)
+    if (atLineStart_) {
         --newlines;
-    while (newlines-- > 0)
+    }
+    while (newlines-- > 0) {
         newline();
+    }
 }
 
 void LuauFormat::prepareBlockCloseLine(unsigned int line) {
-    if (options_.preserveBlockNewlineGaps)
+    if (options_.preserveBlockNewlineGaps) {
         prepareSourceLine(line, false, false, true);
+    }
 }
 
 void LuauFormat::formatStat(Luau::AstStat *stat) {
-    if (auto s = stat->as<Luau::AstStatIf>())
+    if (auto s = stat->as<Luau::AstStatIf>()) {
         formatIf(s);
-    else if (auto s = stat->as<Luau::AstStatWhile>())
+    } else if (auto s = stat->as<Luau::AstStatWhile>()) {
         formatWhile(s);
-    else if (auto s = stat->as<Luau::AstStatRepeat>())
+    } else if (auto s = stat->as<Luau::AstStatRepeat>()) {
         formatRepeat(s);
-    else if (auto s = stat->as<Luau::AstStatFor>())
+    } else if (auto s = stat->as<Luau::AstStatFor>()) {
         formatFor(s);
-    else if (auto s = stat->as<Luau::AstStatForIn>())
+    } else if (auto s = stat->as<Luau::AstStatForIn>()) {
         formatForIn(s);
-    else if (auto s = stat->as<Luau::AstStatLocal>())
+    } else if (auto s = stat->as<Luau::AstStatLocal>()) {
         formatLocal(s);
-    else if (auto s = stat->as<Luau::AstStatAssign>())
+    } else if (auto s = stat->as<Luau::AstStatAssign>()) {
         formatAssign(s);
-    else if (auto s = stat->as<Luau::AstStatCompoundAssign>())
+    } else if (auto s = stat->as<Luau::AstStatCompoundAssign>()) {
         formatCompoundAssign(s);
-    else if (auto s = stat->as<Luau::AstStatReturn>())
+    } else if (auto s = stat->as<Luau::AstStatReturn>()) {
         formatReturn(s);
-    else if (stat->is<Luau::AstStatBreak>())
+    } else if (stat->is<Luau::AstStatBreak>()) {
         formatBreak();
-    else if (stat->is<Luau::AstStatContinue>())
+    } else if (stat->is<Luau::AstStatContinue>()) {
         formatContinue();
-    else if (auto s = stat->as<Luau::AstStatFunction>())
+    } else if (auto s = stat->as<Luau::AstStatFunction>()) {
         formatFunction(s);
-    else if (auto s = stat->as<Luau::AstStatLocalFunction>())
+    } else if (auto s = stat->as<Luau::AstStatLocalFunction>()) {
         formatLocalFunction(s);
-    else if (auto s = stat->as<Luau::AstStatExpr>())
+    } else if (auto s = stat->as<Luau::AstStatExpr>()) {
         formatExprStat(s);
-    else if (auto s = stat->as<Luau::AstStatTypeAlias>())
+    } else if (auto s = stat->as<Luau::AstStatTypeAlias>()) {
         formatTypeAlias(s);
-    else if (auto s = stat->as<Luau::AstStatTypeFunction>())
+    } else if (auto s = stat->as<Luau::AstStatTypeFunction>()) {
         formatTypeFunction(s);
-    else if (auto s = stat->as<Luau::AstStatDeclareGlobal>())
+    } else if (auto s = stat->as<Luau::AstStatDeclareGlobal>()) {
         formatDeclareGlobal(s);
-    else if (auto s = stat->as<Luau::AstStatDeclareFunction>())
+    } else if (auto s = stat->as<Luau::AstStatDeclareFunction>()) {
         formatDeclareFunction(s);
-    else if (auto s = stat->as<Luau::AstStatBlock>())
+    } else if (auto s = stat->as<Luau::AstStatBlock>()) {
         formatDo(s);
-    else {
+    } else {
         formatPanic(stat);
     }
 
@@ -633,8 +654,9 @@ void LuauFormat::formatIf(Luau::AstStatIf *stmt) {
     formatIfChain(stmt);
     emitCommentsBefore(stmt->location.end);
     prepareBlockCloseLine(stmt->location.end.line);
-    if (!atLineStart_)
+    if (!atLineStart_) {
         newline();
+    }
     writeKeyword(QByteArrayLiteral("end"));
 }
 
@@ -654,8 +676,9 @@ void LuauFormat::formatIfChain(Luau::AstStatIf *stmt) {
         lastSourceLine_ =
             std::max(lastSourceLine_, stmt->elsebody->location.begin.line);
         hasSourceLine_ = true;
-        if (!atLineStart_)
+        if (!atLineStart_) {
             newline();
+        }
 
         if (auto elseifStmt = stmt->elsebody->as<Luau::AstStatIf>()) {
             writeKeyword(QByteArrayLiteral("elseif"));
@@ -666,10 +689,11 @@ void LuauFormat::formatIfChain(Luau::AstStatIf *stmt) {
             writeKeyword(QByteArrayLiteral("else"));
             newline();
             increaseIndent();
-            if (auto elseBlock = stmt->elsebody->as<Luau::AstStatBlock>())
+            if (auto elseBlock = stmt->elsebody->as<Luau::AstStatBlock>()) {
                 formatBlock(elseBlock);
-            else
+            } else {
                 formatStat(stmt->elsebody);
+            }
             decreaseIndent();
         }
     }
@@ -690,8 +714,9 @@ void LuauFormat::formatIfChainInner(Luau::AstStatIf *stmt) {
         lastSourceLine_ =
             std::max(lastSourceLine_, stmt->elsebody->location.begin.line);
         hasSourceLine_ = true;
-        if (!atLineStart_)
+        if (!atLineStart_) {
             newline();
+        }
 
         if (auto elseifStmt = stmt->elsebody->as<Luau::AstStatIf>()) {
             writeKeyword(QByteArrayLiteral("elseif"));
@@ -702,10 +727,11 @@ void LuauFormat::formatIfChainInner(Luau::AstStatIf *stmt) {
             writeKeyword(QByteArrayLiteral("else"));
             newline();
             increaseIndent();
-            if (auto elseBlock = stmt->elsebody->as<Luau::AstStatBlock>())
+            if (auto elseBlock = stmt->elsebody->as<Luau::AstStatBlock>()) {
                 formatBlock(elseBlock);
-            else
+            } else {
                 formatStat(stmt->elsebody);
+            }
             decreaseIndent();
         }
     }
@@ -799,12 +825,14 @@ void LuauFormat::formatForIn(Luau::AstStatForIn *stmt) {
 }
 
 void LuauFormat::formatLocal(Luau::AstStatLocal *stmt) {
-    if (stmt->isExported)
+    if (stmt->isExported) {
         writeKeyword(QByteArrayLiteral("export "));
-    if (stmt->isConst)
+    }
+    if (stmt->isConst) {
         writeKeyword(QByteArrayLiteral("const "));
-    else
+    } else {
         writeKeyword(QByteArrayLiteral("local "));
+    }
 
     formatNameList(stmt->vars);
 
@@ -887,12 +915,13 @@ void LuauFormat::formatFunction(Luau::AstStatFunction *stmt) {
 
 void LuauFormat::formatLocalFunction(Luau::AstStatLocalFunction *stmt) {
     formatAttributes(stmt->func->attributes);
-    if (stmt->name->isExported)
+    if (stmt->name->isExported) {
         writeKeyword(QByteArrayLiteral("export "));
-    else if (stmt->name->isConst)
+    } else if (stmt->name->isConst) {
         writeKeyword(QByteArrayLiteral("const "));
-    else
+    } else {
         writeKeyword(QByteArrayLiteral("local "));
+    }
     writeKeyword(QByteArrayLiteral("function"));
     space();
     writeIdentifier(stmt->name->name.value);
@@ -904,14 +933,16 @@ void LuauFormat::formatExprStat(Luau::AstStatExpr *stmt) {
 }
 
 void LuauFormat::formatTypeAlias(Luau::AstStatTypeAlias *stmt) {
-    if (stmt->exported)
+    if (stmt->exported) {
         writeKeyword(QByteArrayLiteral("export "));
+    }
     writeKeyword(QByteArrayLiteral("type"));
     space();
     writeIdentifier(stmt->name.value);
 
-    if (stmt->generics.size > 0 || stmt->genericPacks.size > 0)
+    if (stmt->generics.size > 0 || stmt->genericPacks.size > 0) {
         formatGenericTypeList(stmt->generics, stmt->genericPacks);
+    }
 
     space();
     writeSymbol(QByteArrayLiteral("="));
@@ -920,8 +951,9 @@ void LuauFormat::formatTypeAlias(Luau::AstStatTypeAlias *stmt) {
 }
 
 void LuauFormat::formatTypeFunction(Luau::AstStatTypeFunction *stmt) {
-    if (stmt->exported)
+    if (stmt->exported) {
         writeKeyword(QByteArrayLiteral("export "));
+    }
     writeKeyword(QByteArrayLiteral("type"));
     space();
     writeKeyword(QByteArrayLiteral("function"));
@@ -946,8 +978,9 @@ void LuauFormat::formatDeclareFunction(Luau::AstStatDeclareFunction *stmt) {
     writeKeyword(QByteArrayLiteral("function"));
     space();
     writeIdentifier(stmt->name.value);
-    if (stmt->generics.size > 0 || stmt->genericPacks.size > 0)
+    if (stmt->generics.size > 0 || stmt->genericPacks.size > 0) {
         formatGenericTypeList(stmt->generics, stmt->genericPacks);
+    }
 
     writeSymbol(QByteArrayLiteral("("));
     for (size_t i = 0; i < stmt->params.types.size; i++) {
@@ -986,48 +1019,49 @@ void LuauFormat::formatDeclareFunction(Luau::AstStatDeclareFunction *stmt) {
 // ============ Expressions ============
 
 void LuauFormat::formatExpr(Luau::AstExpr *expr) {
-    if (!expr)
+    if (!expr) {
         return;
+    }
 
-    if (expr->is<Luau::AstExprGroup>())
+    if (expr->is<Luau::AstExprGroup>()) {
         formatGroup(static_cast<Luau::AstExprGroup *>(expr));
-    else if (expr->is<Luau::AstExprConstantNil>())
+    } else if (expr->is<Luau::AstExprConstantNil>()) {
         formatConstantNil();
-    else if (auto e = expr->as<Luau::AstExprConstantBool>())
+    } else if (auto e = expr->as<Luau::AstExprConstantBool>()) {
         formatConstantBool(e->value);
-    else if (auto e = expr->as<Luau::AstExprConstantNumber>())
+    } else if (auto e = expr->as<Luau::AstExprConstantNumber>()) {
         formatConstantNumberWithCst(e);
-    else if (auto e = expr->as<Luau::AstExprConstantInteger>())
+    } else if (auto e = expr->as<Luau::AstExprConstantInteger>()) {
         formatConstantInteger(e);
-    else if (auto e = expr->as<Luau::AstExprConstantString>())
+    } else if (auto e = expr->as<Luau::AstExprConstantString>()) {
         formatConstantString(e);
-    else if (auto e = expr->as<Luau::AstExprLocal>())
+    } else if (auto e = expr->as<Luau::AstExprLocal>()) {
         formatLocal(e);
-    else if (auto e = expr->as<Luau::AstExprGlobal>())
+    } else if (auto e = expr->as<Luau::AstExprGlobal>()) {
         formatGlobal(e);
-    else if (expr->is<Luau::AstExprVarargs>())
+    } else if (expr->is<Luau::AstExprVarargs>()) {
         formatVarargs();
-    else if (auto e = expr->as<Luau::AstExprCall>())
+    } else if (auto e = expr->as<Luau::AstExprCall>()) {
         formatCall(e);
-    else if (auto e = expr->as<Luau::AstExprIndexName>())
+    } else if (auto e = expr->as<Luau::AstExprIndexName>()) {
         formatIndexName(e);
-    else if (auto e = expr->as<Luau::AstExprIndexExpr>())
+    } else if (auto e = expr->as<Luau::AstExprIndexExpr>()) {
         formatIndexExpr(e);
-    else if (auto e = expr->as<Luau::AstExprFunction>())
+    } else if (auto e = expr->as<Luau::AstExprFunction>()) {
         formatFunction(e);
-    else if (auto e = expr->as<Luau::AstExprTable>())
+    } else if (auto e = expr->as<Luau::AstExprTable>()) {
         formatTable(e);
-    else if (auto e = expr->as<Luau::AstExprUnary>())
+    } else if (auto e = expr->as<Luau::AstExprUnary>()) {
         formatUnary(e);
-    else if (auto e = expr->as<Luau::AstExprBinary>())
+    } else if (auto e = expr->as<Luau::AstExprBinary>()) {
         formatBinary(e);
-    else if (auto e = expr->as<Luau::AstExprTypeAssertion>())
+    } else if (auto e = expr->as<Luau::AstExprTypeAssertion>()) {
         formatTypeAssertion(e);
-    else if (auto e = expr->as<Luau::AstExprIfElse>())
+    } else if (auto e = expr->as<Luau::AstExprIfElse>()) {
         formatIfElse(e);
-    else if (auto e = expr->as<Luau::AstExprInterpString>())
+    } else if (auto e = expr->as<Luau::AstExprInterpString>()) {
         formatInterpString(e);
-    else {
+    } else {
         formatPanic(expr);
     }
 }
@@ -1046,10 +1080,11 @@ void LuauFormat::formatConstantBool(bool value) {
 }
 
 void LuauFormat::formatConstantNumber(double value) {
-    if (value == (long long)value && value > -1e15 && value < 1e15)
+    if (value == (long long)value && value > -1e15 && value < 1e15) {
         writeLiteral(QByteArray::number(static_cast<qlonglong>(value)));
-    else
+    } else {
         writeLiteral(QByteArray::number(value, 'g', 17));
+    }
 }
 
 void LuauFormat::formatConstantNumberWithCst(
@@ -1074,9 +1109,9 @@ void LuauFormat::formatConstantInteger(Luau::AstExprConstantInteger *expr) {
 
 void LuauFormat::formatConstantString(Luau::AstExprConstantString *expr) {
     auto cst = getCstNode<Luau::CstExprConstantString>(expr);
-    if (cst && options_.quoteStyle == QuoteStyle::Preserve)
+    if (cst && options_.quoteStyle == QuoteStyle::Preserve) {
         write(sourceText(expr->location));
-    else {
+    } else {
         const QByteArray valueBytes(expr->value.data,
                                     static_cast<qsizetype>(expr->value.size));
         const QString value = QString::fromUtf8(valueBytes);
@@ -1182,10 +1217,11 @@ void LuauFormat::formatBinary(Luau::AstExprBinary *expr) {
         break;
     }
 
-    if (wordOp)
+    if (wordOp) {
         writeKeyword(opStr);
-    else
+    } else {
         writeSymbol(opStr);
+    }
 
     space();
     formatExpr(expr->right);
@@ -1242,8 +1278,9 @@ void LuauFormat::formatFunctionBody(Luau::AstExprFunction *func) {
 
 void LuauFormat::formatFunctionSignature(Luau::AstExprFunction *func) {
     // generics
-    if (func->generics.size > 0 || func->genericPacks.size > 0)
+    if (func->generics.size > 0 || func->genericPacks.size > 0) {
         formatGenericTypeList(func->generics, func->genericPacks);
+    }
 
     // args
     writeSymbol(QByteArrayLiteral("("));
@@ -1380,8 +1417,9 @@ void LuauFormat::formatTypeAssertion(Luau::AstExprTypeAssertion *expr) {
 // ============ Types ============
 
 void LuauFormat::formatType(Luau::AstType *type) {
-    if (!type)
+    if (!type) {
         return;
+    }
 
     if (auto t = type->as<Luau::AstTypeReference>()) {
         if (t->prefix) {
@@ -1396,20 +1434,21 @@ void LuauFormat::formatType(Luau::AstType *type) {
                     writeSymbol(QByteArrayLiteral(","));
                     space();
                 }
-                if (t->parameters.data[i].type)
+                if (t->parameters.data[i].type) {
                     formatType(t->parameters.data[i].type);
-                else if (t->parameters.data[i].typePack)
+                } else if (t->parameters.data[i].typePack) {
                     formatTypePack(t->parameters.data[i].typePack);
+                }
             }
             writeSymbol(QByteArrayLiteral(">"));
         }
-    } else if (auto t = type->as<Luau::AstTypeSingletonBool>())
+    } else if (auto t = type->as<Luau::AstTypeSingletonBool>()) {
         writeKeyword(t->value ? QByteArrayLiteral("true")
                               : QByteArrayLiteral("false"));
-    else if (auto t = type->as<Luau::AstTypeSingletonString>()) {
-        if (options_.quoteStyle == QuoteStyle::Preserve)
+    } else if (auto t = type->as<Luau::AstTypeSingletonString>()) {
+        if (options_.quoteStyle == QuoteStyle::Preserve) {
             write(sourceText(t->location));
-        else {
+        } else {
             const QByteArray original = sourceText(t->location);
             const QByteArray valueBytes(t->value.data,
                                         static_cast<qsizetype>(t->value.size));
@@ -1453,8 +1492,9 @@ void LuauFormat::formatType(Luau::AstType *type) {
         space();
         writeSymbol(QByteArrayLiteral("}"));
     } else if (auto t = type->as<Luau::AstTypeFunction>()) {
-        if (t->generics.size > 0 || t->genericPacks.size > 0)
+        if (t->generics.size > 0 || t->genericPacks.size > 0) {
             formatGenericTypeList(t->generics, t->genericPacks);
+        }
         writeSymbol(QByteArrayLiteral("("));
         const auto &argTypes = t->argTypes;
         for (size_t i = 0; i < argTypes.types.size; i++) {
@@ -1483,9 +1523,9 @@ void LuauFormat::formatType(Luau::AstType *type) {
         writeSymbol(QByteArrayLiteral("->"));
         space();
         formatTypePack(t->returnTypes);
-    } else if (auto t = type->as<Luau::AstTypeGroup>())
+    } else if (auto t = type->as<Luau::AstTypeGroup>()) {
         formatType(t->type);
-    else if (auto t = type->as<Luau::AstTypeUnion>()) {
+    } else if (auto t = type->as<Luau::AstTypeUnion>()) {
         for (size_t i = 0; i < t->types.size; i++) {
             if (i > 0) {
                 space();
@@ -1514,8 +1554,9 @@ void LuauFormat::formatType(Luau::AstType *type) {
 }
 
 void LuauFormat::formatTypePack(Luau::AstTypePack *typePack) {
-    if (!typePack)
+    if (!typePack) {
         return;
+    }
 
     if (auto p = typePack->as<Luau::AstTypePackVariadic>()) {
         writeSymbol(QByteArrayLiteral("..."));

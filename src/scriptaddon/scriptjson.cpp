@@ -278,8 +278,9 @@ static QJsonArray &QJsonArray_opAddAssign(QJsonArray &arr,
 asUINT QJsonArray_opForBegin(const QJsonArray *) { return 0; }
 
 bool QJsonArray_opForEnd(asUINT iter, const QJsonArray *arr) {
-    if (arr == nullptr || arr->count() <= iter)
+    if (arr == nullptr || arr->count() <= iter) {
         return true;
+    }
 
     return false;
 }

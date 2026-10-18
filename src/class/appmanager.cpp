@@ -121,8 +121,9 @@ AppManager::AppManager(int &argc, char *argv[])
                 }
             });
 
-    if (splash)
+    if (splash) {
         splash->setInfoText(tr("OpeningFiles"));
+    }
 
     if (args.size() > 1) {
         QStringList failedFile;

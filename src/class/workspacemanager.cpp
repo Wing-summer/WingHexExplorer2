@@ -84,8 +84,9 @@ QJsonDocument WorkSpaceManager::loadWorkSpace(const QString &filename) {
     QFile f(filename);
     if (f.exists()) {
         QJsonParseError err;
-        if (!f.open(QFile::ReadOnly))
+        if (!f.open(QFile::ReadOnly)) {
             return {};
+        }
         QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
         f.close();
         if (err.error == QJsonParseError::NoError) {

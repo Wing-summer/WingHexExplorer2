@@ -86,8 +86,9 @@ void IDBTreeView::saveExpansionStateRecursive(const QModelIndex &parent) {
 }
 
 void IDBTreeView::restoreExpansionState() {
-    if (!model())
+    if (!model()) {
         return;
+    }
 
     restoreExpansionStateRecursive(QModelIndex());
 }
@@ -105,16 +106,19 @@ void IDBTreeView::restoreExpansionStateRecursive(const QModelIndex &parent) {
 }
 
 QString IDBTreeView::getIndexIdentifier(const QModelIndex &index) const {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return {};
+    }
 
     void *internalPtr = index.internalPointer();
-    if (!internalPtr)
+    if (!internalPtr) {
         return {};
+    }
 
     auto *idbModel = qobject_cast<IDBTreeModel *>(model());
-    if (!idbModel)
+    if (!idbModel) {
         return {};
+    }
 
     if (idbModel->isProxyNode(index)) {
         auto proxyInfo = idbModel->getProxyNodeInfo(index);

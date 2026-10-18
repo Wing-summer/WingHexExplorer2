@@ -37,6 +37,24 @@ The project directory structure is classified in detail as follows:
   - `widgetframe`: 和无边框界面标题栏相关的代码。/ Code related to the borderless dialog title bar.
 - `theme`: 软件主题文件，里面每个文件夹以主题名命名（必须英文）。/ Software theme files, each folder in it is named with the theme name (must be in English).
 
+### 控制语句规范 / Control Statement Style
+
+本项目维护的 C++ 代码（包括 WingPlugin）中，`if`、`else`、`if constexpr`、`for`、范围 `for`、`while` 和 `do ... while` 的语句体必须使用 `{}` 块，即使只有一条语句或没有语句。`else if` 链中的每个条件分支也遵循此规范，避免后续新增语句时因遗漏花括号而改变执行逻辑。
+
+In project-owned C++ code, including WingPlugin, always enclose the bodies of `if`, `else`, `if constexpr`, `for`, range-based `for`, `while`, and `do ... while` in braces, even for a single statement or an empty body. Apply the same rule to every branch of an `else if` chain so that later additions cannot accidentally change control flow.
+
+```cpp
+if (enabled) {
+    for (const auto &value : values) {
+        process(value);
+    }
+}
+```
+
+项目根目录和 WingPlugin 的 `.clang-format` 均启用了 `InsertBraces`。整理既有代码时保持改动范围集中，不批量改写无关代码或第三方依赖。
+
+The root and WingPlugin `.clang-format` configurations enable `InsertBraces`. Keep cleanup focused on the code being changed and leave unrelated code and third-party dependencies untouched.
+
 ### 递交注释格式 / Commit Message Format
 
 每条提交消息都由**标题（header）**、**正文（body）**和**页脚（footer）**组成。标题具有特殊格式，其中包括**类型（type）**、**范围（scope）**和**主题（subject）**：

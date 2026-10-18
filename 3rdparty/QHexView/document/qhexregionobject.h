@@ -340,8 +340,9 @@ private:
             while (left > 0) {
                 qsizetype i = left - 1;
                 const P &candidate = this->at(i);
-                if (candidate.end < P::prev(merged.begin))
+                if (candidate.end < P::prev(merged.begin)) {
                     break;
+                }
                 P tmp = candidate;
                 auto res = tmp.mergeRegion(merged, nullptr);
                 if (std::holds_alternative<bool>(res) && std::get<bool>(res) &&
@@ -357,8 +358,9 @@ private:
             while (right < n) {
                 qsizetype i = right;
                 const P &candidate = this->at(i);
-                if (candidate.begin > P::next(merged.end))
+                if (candidate.begin > P::next(merged.end)) {
                     break;
+                }
                 P tmp = candidate;
                 auto res = tmp.mergeRegion(merged, nullptr);
                 if (std::holds_alternative<bool>(res) && std::get<bool>(res) &&
@@ -384,10 +386,12 @@ private:
 
         qsizetype carveLeft = left;
         qsizetype carveRight = right;
-        if (left > 0 && this->at(left - 1).isIntersected(merged))
+        if (left > 0 && this->at(left - 1).isIntersected(merged)) {
             --carveLeft;
-        if (right < n && this->at(right).isIntersected(merged))
+        }
+        if (right < n && this->at(right).isIntersected(merged)) {
             ++carveRight;
+        }
 
         struct Node {
             P item;
@@ -397,8 +401,9 @@ private:
 
         for (qsizetype i = carveLeft; i < carveRight; ++i) {
             if (i >= left && i < right && touched[i]) {
-                if (i != anchor)
+                if (i != anchor) {
                     ret.removed.append(i);
+                }
                 continue;
             }
 
@@ -411,10 +416,12 @@ private:
                 P cur = old;
                 auto r = cur.removeRegion(merged, nullptr);
                 ret.removed.append(i);
-                if (cur.isValid())
+                if (cur.isValid()) {
                     leftFrag.append({cur, true});
-                if (std::holds_alternative<P>(r))
+                }
+                if (std::holds_alternative<P>(r)) {
                     rightFrag.append({std::get<P>(r), true});
+                }
             }
         }
 
@@ -422,12 +429,14 @@ private:
         out.reserve(carveLeft + leftFrag.size() + 1 + rightFrag.size() +
                     (n - carveRight));
 
-        for (qsizetype i = 0; i < carveLeft; ++i)
+        for (qsizetype i = 0; i < carveLeft; ++i) {
             out.append(this->at(i));
+        }
 
         for (const auto &node : leftFrag) {
-            if (node.inserted)
+            if (node.inserted) {
                 ret.inserted.append(out.size());
+            }
             out.append(node.item);
         }
 
@@ -439,13 +448,15 @@ private:
         }
 
         for (const auto &node : rightFrag) {
-            if (node.inserted)
+            if (node.inserted) {
                 ret.inserted.append(out.size());
+            }
             out.append(node.item);
         }
 
-        for (qsizetype i = carveRight; i < n; ++i)
+        for (qsizetype i = carveRight; i < n; ++i) {
             out.append(this->at(i));
+        }
 
         this->swap(out);
         return ret;

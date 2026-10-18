@@ -54,8 +54,9 @@ void TreeFilterEdit::paintEvent(QPaintEvent *event) {
 
     QPainter painter(this);
     QRect iconRect(m_iconPosition.x(), m_iconPosition.y(), 16, 16);
-    if (event->region().intersects(iconRect))
+    if (event->region().intersects(iconRect)) {
         m_searchIcon.paint(&painter, iconRect);
+    }
 }
 
 void TreeFilterEdit::resizeEvent(QResizeEvent *event) {
@@ -83,8 +84,9 @@ void TreeFilterEdit::recomputeIconPos() {
 static QTreeWidgetItem *firstVisibleItem(QTreeWidgetItem *parent) {
     for (int i = 0; i < parent->childCount(); ++i) {
         QTreeWidgetItem *item = parent->child(i);
-        if (!item->isHidden())
+        if (!item->isHidden()) {
             return item;
+        }
     }
     return nullptr;
 }
@@ -106,8 +108,9 @@ FilteredTreePopup::FilteredTreePopup(QWidget *parent) : QWidget(parent) {
     connect(m_filter, &TreeFilterEdit::navigateDown, this, [this] {
         m_tree->setFocus();
         auto topItem = firstVisibleItem(m_tree->invisibleRootItem());
-        if (topItem)
+        if (topItem) {
             m_tree->setCurrentItem(topItem);
+        }
     });
 }
 
@@ -167,10 +170,11 @@ void FilteredTreePopup::showEvent(QShowEvent *e) {
 bool FilteredTreePopup::focusNextPrevChild(bool) {
     // The default Qt tab navigation doesn't seem to work correctly
     // in a popup widget
-    if (m_filter->hasFocus())
+    if (m_filter->hasFocus()) {
         m_tree->setFocus();
-    else
+    } else {
         m_filter->setFocus();
+    }
     return true;
 }
 
@@ -189,8 +193,9 @@ SyntaxPopup::SyntaxPopup(QWidget *parent) : FilteredTreePopup(parent) {
     const auto syntaxDefs = syntaxRepo.definitions();
     QMap<QString, QTreeWidgetItem *> groupItems;
     for (const auto &def : syntaxDefs) {
-        if (def.isHidden() || def == WingCodeEdit::nullSyntax())
+        if (def.isHidden() || def == WingCodeEdit::nullSyntax()) {
             continue;
+        }
 
         QTreeWidgetItem *parentItem =
             groupItems.value(def.translatedSection(), Q_NULLPTR);
@@ -208,8 +213,9 @@ SyntaxPopup::SyntaxPopup(QWidget *parent) : FilteredTreePopup(parent) {
 }
 
 void SyntaxPopup::syntaxItemChosen(QTreeWidgetItem *current, int) {
-    if (!current)
+    if (!current) {
         return;
+    }
 
     if (current == m_plainTextItem) {
         Q_EMIT syntaxSelected(WingCodeEdit::nullSyntax());
@@ -240,10 +246,12 @@ EncodingPopup::EncodingPopup(QWidget *parent) : FilteredTreePopup(parent) {
 }
 
 void EncodingPopup::encodingItemChosen(QTreeWidgetItem *current, int) {
-    if (!current)
+    if (!current) {
         return;
+    }
 
     QVariant codecName = current->data(0, Qt::UserRole);
-    if (codecName.isValid())
+    if (codecName.isValid()) {
         Q_EMIT encodingSelected(codecName.toString());
+    }
 }

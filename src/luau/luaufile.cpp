@@ -43,8 +43,9 @@ LuaFileRef::~LuaFileRef() { release(); }
 LuaFileRef::LuaFileRef(const LuaFileRef &other) { copyFrom(other); }
 
 LuaFileRef &LuaFileRef::operator=(const LuaFileRef &other) {
-    if (this == &other)
+    if (this == &other) {
         return *this;
+    }
 
     copyFrom(other);
     return *this;

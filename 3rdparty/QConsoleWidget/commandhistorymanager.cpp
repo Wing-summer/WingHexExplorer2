@@ -38,8 +38,9 @@ void CommandHistoryManager::save(const QStringList &strings) {
     if (f.open(QFile::WriteOnly | QFile::Truncate)) {
         QTextStream os(&f);
         int n = strings.size();
-        while (n > 0)
+        while (n > 0) {
             os << strings.at(--n) << Qt::endl;
+        }
     }
 }
 

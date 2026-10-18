@@ -110,10 +110,12 @@ void CheckSumDialog::on_accept() {
 void CheckSumDialog::on_reject() { done(0); }
 
 void CheckSumDialog::onItemChanged(QTreeWidgetItem *item, int column) {
-    if (!item)
+    if (!item) {
         return;
-    if (m_updating)
+    }
+    if (m_updating) {
         return;
+    }
 
     m_updating = true;
     auto parent = item->parent();
@@ -125,10 +127,12 @@ void CheckSumDialog::onItemChanged(QTreeWidgetItem *item, int column) {
 }
 
 void CheckSumDialog::onItemClicked(QTreeWidgetItem *item, int) {
-    if (!item)
+    if (!item) {
         return;
-    if (m_updating)
+    }
+    if (m_updating) {
         return;
+    }
 
     if (item->childCount() > 0) {
         m_updating = true;
@@ -154,8 +158,9 @@ void CheckSumDialog::onItemClicked(QTreeWidgetItem *item, int) {
 
 void CheckSumDialog::collectCheckedLeaves(QTreeWidgetItem *item,
                                           QList<int> &out) {
-    if (!item)
+    if (!item) {
         return;
+    }
     if (item->childCount() == 0) {
         if (item->checkState(0) == Qt::Checked) {
             auto data = item->data(0, Qt::UserRole);
@@ -256,10 +261,11 @@ void CheckSumDialog::updateCheckStatus(QTreeWidgetItem *parent) {
     int total = parent->childCount();
     for (int i = 0; i < total; ++i) {
         Qt::CheckState cs = parent->child(i)->checkState(0);
-        if (cs == Qt::Checked)
+        if (cs == Qt::Checked) {
             ++checked;
-        else if (cs == Qt::Unchecked)
+        } else if (cs == Qt::Unchecked) {
             ++unchecked;
+        }
     }
     if (checked == total) {
         parent->setCheckState(0, Qt::Checked);

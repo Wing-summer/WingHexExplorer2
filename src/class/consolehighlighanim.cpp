@@ -40,8 +40,9 @@ ConsoleHighlighAnim::ConsoleHighlighAnim(QObject *parent)
 int ConsoleHighlighAnim::getAlpha() const { return m_alpha; }
 
 void ConsoleHighlighAnim::setAlpha(int newAlpha) {
-    if (m_alpha == newAlpha)
+    if (m_alpha == newAlpha) {
         return;
+    }
     m_alpha = newAlpha;
 
     auto clsname = _w->metaObject()->className();

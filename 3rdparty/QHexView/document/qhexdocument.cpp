@@ -199,15 +199,17 @@ void QHexDocument::setLockKeepSize(bool b) { m_lockKeepSize = b; }
 bool QHexDocument::lockKeepSize() const { return m_lockKeepSize; }
 
 bool QHexDocument::setLockedFile(bool b) {
-    if (m_readonly)
+    if (m_readonly) {
         return false;
+    }
     m_islocked = b;
     Q_EMIT documentLockedFile(b);
     return true;
 }
 bool QHexDocument::setKeepSize(bool b) {
-    if (m_readonly || m_lockKeepSize)
+    if (m_readonly || m_lockKeepSize) {
         return false;
+    }
 
     m_keepsize = b;
     Q_EMIT documentKeepSize(b);
@@ -340,8 +342,9 @@ qsizetype QHexDocument::bookMarkPos(qsizetype index) {
 }
 
 bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
-    if (!m_keepsize)
+    if (!m_keepsize) {
         return false;
+    }
     if (pos.isEmpty()) {
         return true;
     }
@@ -402,8 +405,9 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
                                 const QByteArray &b, QList<qsizetype> &results,
                                 const std::function<bool()> &pred) {
     results.clear();
-    if (!b.length())
+    if (!b.length()) {
         return;
+    }
     qsizetype p = begin > 0 ? begin : 0;
     qsizetype e = end > begin ? end : -1;
     auto offset = b.size();
@@ -437,8 +441,9 @@ void QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
     qsizetype n = pattern.size();
     while (pos + n <= end && pred()) {
         qsizetype f = findNextExt(pos, pattern);
-        if (f < 0 || f + n > end)
+        if (f < 0 || f + n > end) {
             break;
+        }
         results.append(f);
         pos = f + 1;
         if (results.size() >= QHEXVIEW_FIND_LIMIT) {
@@ -449,33 +454,38 @@ void QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {
     if (m_keepsize || m_readonly || m_islocked ||
-        (offset < m_buffer->length() && m_metadata->hasMetadata()))
+        (offset < m_buffer->length() && m_metadata->hasMetadata())) {
         return false;
+    }
     return this->insert(offset, QByteArray(1, char(b)));
 }
 
 bool QHexDocument::insert(qsizetype offset, const QByteArray &data) {
     if (m_keepsize || m_readonly || m_islocked ||
-        (offset < m_buffer->length() && m_metadata->hasMetadata()))
+        (offset < m_buffer->length() && m_metadata->hasMetadata())) {
         return false;
+    }
     return this->_insert(offset, data);
 }
 
 bool QHexDocument::replace(qsizetype offset, uchar b) {
-    if (m_readonly || m_islocked)
+    if (m_readonly || m_islocked) {
         return false;
+    }
     return this->replace(offset, QByteArray(1, char(b)));
 }
 
 bool QHexDocument::replace(qsizetype offset, const QByteArray &data) {
-    if (m_readonly || m_islocked)
+    if (m_readonly || m_islocked) {
         return false;
+    }
     return this->_replace(offset, data);
 }
 
 bool QHexDocument::remove(qsizetype offset, qsizetype len) {
-    if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
+    if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata()) {
         return false;
+    }
     return this->_remove(offset, len);
 }
 
@@ -547,21 +557,23 @@ bool QHexDocument::parsePattern(const QString &pattern,
 
 int QHexDocument::hex2Int(const QChar &c) {
     ushort u = c.unicode();
-    if (u >= '0' && u <= '9')
+    if (u >= '0' && u <= '9') {
         return u - '0';
-    else if (u >= 'A' && u <= 'F')
+    } else if (u >= 'A' && u <= 'F') {
         return 10 + (u - 'A');
-    else if (u >= 'a' && u <= 'f')
+    } else if (u >= 'a' && u <= 'f') {
         return 10 + (u - 'a');
-    else
+    } else {
         return -1;
+    }
 }
 
 qsizetype QHexDocument::findNextExt(qsizetype begin,
                                     const QList<PatternByte> &patterns) {
     if (patterns.isEmpty() || begin < 0 ||
-        begin + patterns.size() > m_buffer->length())
+        begin + patterns.size() > m_buffer->length()) {
         return -1;
+    }
     qsizetype n = patterns.size();
     for (qsizetype pos = begin; pos + n <= m_buffer->length(); ++pos) {
         bool ok = true;
@@ -571,16 +583,18 @@ qsizetype QHexDocument::findNextExt(qsizetype begin,
                 break;
             }
         }
-        if (ok)
+        if (ok) {
             return pos;
+        }
     }
     return -1;
 }
 
 qsizetype QHexDocument::findPreviousExt(qsizetype begin,
                                         const QList<PatternByte> &patterns) {
-    if (patterns.isEmpty() || begin < 0)
+    if (patterns.isEmpty() || begin < 0) {
         return -1;
+    }
     qsizetype n = patterns.size();
     qsizetype maxStart = qMin(begin, m_buffer->length() - n);
     for (qsizetype pos = maxStart; pos >= 0; --pos) {
@@ -591,8 +605,9 @@ qsizetype QHexDocument::findPreviousExt(qsizetype begin,
                 break;
             }
         }
-        if (ok)
+        if (ok) {
             return pos;
+        }
     }
     return -1;
 }
@@ -723,8 +738,9 @@ void QHexDocument::Append(QHexCursor *cursor, uchar b, int nibbleindex) {
 
 void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
                           int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked)
+    if (m_keepsize || m_readonly || m_islocked) {
         return;
+    }
     auto cmd = MakeAppend(nullptr, cursor, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
@@ -749,8 +765,9 @@ bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
 
 bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                           int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked)
+    if (m_keepsize || m_readonly || m_islocked) {
         return false;
+    }
     auto cmd = MakeRemove(nullptr, cursor, offset, len, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);

@@ -42,8 +42,9 @@ bool WingLuauRequire::initRequire(lua_State *L, Options options) {
 }
 
 void WingLuauRequire::installRequire() {
-    if (!L_)
+    if (!L_) {
         return;
+    }
 
     const int top = lua_gettop(L_);
 
@@ -58,8 +59,9 @@ void WingLuauRequire::installRequire() {
 }
 
 void WingLuauRequire::installProxyRequire(const char *globalName) {
-    if (!L_ || !globalName || !*globalName)
+    if (!L_ || !globalName || !*globalName) {
         return;
+    }
 
     const int top = lua_gettop(L_);
     luarequire_pushproxyrequire(L_, &WingLuauRequire::configInit, this);
@@ -141,8 +143,9 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
 }
 
 void WingLuauRequire::clearRequireCache() {
-    if (!L_)
+    if (!L_) {
         return;
+    }
 
     lua_pushcfunction(L_, luarequire_clearcache, "luarequire_clearcache");
     lua_call(L_, 0, 0);
@@ -164,14 +167,16 @@ const WingLuauRequire::Options &WingLuauRequire::options() const {
 }
 
 QString WingLuauRequire::callerChunkname(lua_State *L) {
-    if (!L)
+    if (!L) {
         return {};
+    }
 
     lua_Debug ar;
     int level = 1;
     do {
-        if (!lua_getinfo(L, level++, "s", &ar))
+        if (!lua_getinfo(L, level++, "s", &ar)) {
             return {};
+        }
     } while (ar.what[0] == 'C');
 
     return ar.source ? QString::fromUtf8(ar.source) : QString();
@@ -225,16 +230,19 @@ QString WingLuauRequire::joinPath(const QString &base, const QString &name) {
 
 bool WingLuauRequire::pathEqualOrBelow(const QString &path,
                                        const QString &root) {
-    if (root.isEmpty())
+    if (root.isEmpty()) {
         return false;
+    }
 
     const auto p = normalizeExistingPath(path);
     const auto r = normalizeExistingPath(root);
-    if (p.isEmpty() || r.isEmpty())
+    if (p.isEmpty() || r.isEmpty()) {
         return false;
+    }
 
-    if (p == r)
+    if (p == r) {
         return true;
+    }
 
     auto prefix = r;
     if (!prefix.endsWith('/')) {
@@ -277,24 +285,27 @@ WingLuauRequire::resolveFileModule(const QString &basePath,
     const auto targetPath = joinPath(basePath, requestedPath);
     const QFileInfo targetInfo(targetPath);
     if (!targetInfo.suffix().isEmpty()) {
-        if (isFileModuleCandidate(targetInfo))
+        if (isFileModuleCandidate(targetInfo)) {
             return {FileModuleResolution::Kind::File,
                     normalizeExistingPath(targetPath)};
+        }
         if (targetInfo.exists() && targetInfo.isDir()) {
             QString initPath;
             const auto initStatus = directoryInitStatus(targetPath, &initPath);
-            if (initStatus == InitStatus::Ambiguous)
+            if (initStatus == InitStatus::Ambiguous) {
                 return {FileModuleResolution::Kind::Ambiguous, {}};
-            if (initStatus == InitStatus::Present)
+            }
+            if (initStatus == InitStatus::Present) {
                 return {FileModuleResolution::Kind::ModuleDirectory, initPath};
+            }
             return {FileModuleResolution::Kind::NamespaceDirectory,
                     normalizeExistingPath(targetPath)};
         }
         return {};
     }
 
-    const auto luauPath = targetPath + QStringLiteral(".luau");
-    const auto luaPath = targetPath + QStringLiteral(".lua");
+    const QString luauPath = targetPath + QStringLiteral(".luau");
+    const QString luaPath = targetPath + QStringLiteral(".lua");
     const bool hasLuauFile = isFileModuleCandidate(QFileInfo(luauPath));
     const bool hasLuaFile = isFileModuleCandidate(QFileInfo(luaPath));
     const bool hasDirectory = targetInfo.exists() && targetInfo.isDir();
@@ -437,14 +448,17 @@ WingLuauRequire::findAliasSources(const QString &alias) const {
 }
 
 QString WingLuauRequire::sourcePrefixForNode(const Node &node) const {
-    if (node.kind == NodeKind::Builtin)
+    if (node.kind == NodeKind::Builtin) {
         return QStringLiteral("@b/");
+    }
 
-    if (node.scope == Scope::User)
+    if (node.scope == Scope::User) {
         return QStringLiteral("@u/");
+    }
 
-    if (node.scope == Scope::System)
+    if (node.scope == Scope::System) {
         return QStringLiteral("@s/");
+    }
 
     return QStringLiteral("@x/");
 }
@@ -480,12 +494,14 @@ WingLuauRequire::Candidate WingLuauRequire::makeCandidateFromBase(
     Candidate result;
 
     if (component.isEmpty() || component == QLatin1String(".") ||
-        component == QLatin1String("..") || component.contains('/'))
+        component == QLatin1String("..") || component.contains('/')) {
         return result;
+    }
 
     const QString basePath = normalizeExistingPath(base);
-    if (basePath.isEmpty())
+    if (basePath.isEmpty()) {
         return result;
+    }
 
     const auto resolution = resolveFileModule(basePath, component);
     using ResolutionKind = FileModuleResolution::Kind;
@@ -579,8 +595,9 @@ WingLuauRequire::resolveChild(const QString &component) const {
         // Builtins form a logical registry tree, not a filesystem root.
         // A registered module can also have registered descendants, so a
         // node may act as both a module and a namespace.
-        if (!builtinNamespaces_.contains(child))
+        if (!builtinNamespaces_.contains(child)) {
             return {};
+        }
 
         Candidate result;
         result.result = Candidate::Result::Success;
@@ -622,8 +639,9 @@ WingLuauRequire::PackageLookup
 WingLuauRequire::findPackageInScope(Scope scope,
                                     const QString &packageName) const {
     const QString root = rootForScope(scope);
-    if (root.isEmpty())
+    if (root.isEmpty()) {
         return {};
+    }
 
     const Candidate candidate =
         resolveChildFromSingleRoot(root, scope, packageName, false);
@@ -721,12 +739,14 @@ QString WingLuauRequire::loadPathForNode(const Node &node) const {
 }
 
 QString WingLuauRequire::cacheKeyForNode(const Node &node) const {
-    if (node.kind == NodeKind::Builtin)
+    if (node.kind == NodeKind::Builtin) {
         return QStringLiteral("builtin:") + node.builtinPath;
+    }
 
     const QString loadPath = loadPathForNode(node);
-    if (loadPath.isEmpty())
+    if (loadPath.isEmpty()) {
         return {};
+    }
 
     QString key = QStringLiteral("file:") + normalizeExistingPath(loadPath);
 #ifdef Q_OS_WIN
@@ -925,8 +945,9 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     //     @b/json
     // ------------------------------------------------------------
     if (first.compare(QLatin1String("b"), Qt::CaseInsensitive) == 0) {
-        if (parts.size() < 2)
+        if (parts.size() < 2) {
             return NAVIGATE_NOT_FOUND;
+        }
 
         const QString builtinPath = parts.sliced(1).join('/').toLower();
 
@@ -963,8 +984,9 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        if (parts.size() < 2)
+        if (parts.size() < 2) {
             return NAVIGATE_NOT_FOUND;
+        }
 
         current_ = makeScopeRootNode(scope, {}, true);
 
@@ -1587,8 +1609,9 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
     const int resumeStatus = lua_resume(ML, L, 0);
 
     if (resumeStatus == LUA_OK) {
-        if (lua_gettop(ML) != 1)
+        if (lua_gettop(ML) != 1) {
             luaL_error(L, "module must return a single value");
+        }
     } else if (resumeStatus == LUA_YIELD) {
         luaL_error(L, "module can not yield");
     } else if (!lua_isstring(ML, -1)) {
@@ -1608,8 +1631,9 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
 }
 
 void WingLuauRequire::configInit(luarequire_Configuration *config) {
-    if (!config)
+    if (!config) {
         return;
+    }
 
     std::memset(config, 0, sizeof(luarequire_Configuration));
     config->is_require_allowed = &WingLuauRequire::cbIsRequireAllowed;

@@ -28,13 +28,15 @@ RichTextItemDelegate::RichTextItemDelegate(QObject *parent)
 void RichTextItemDelegate::paint(QPainter *painter,
                                  const QStyleOptionViewItem &option,
                                  const QModelIndex &index) const {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return;
+    }
 
     // Get the rich text content
     QString text = index.data(Qt::DisplayRole).toString();
-    if (text.isEmpty())
+    if (text.isEmpty()) {
         return;
+    }
 
     // Get alignment
     QVariant alignmentVariant = index.data(Qt::TextAlignmentRole);
@@ -84,8 +86,9 @@ void RichTextItemDelegate::paint(QPainter *painter,
 QSize RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
                                      const QModelIndex &index) const {
     QString text = index.data(Qt::DisplayRole).toString();
-    if (text.isEmpty())
+    if (text.isEmpty()) {
         return QStyledItemDelegate::sizeHint(option, index);
+    }
 
     QTextDocument doc;
     doc.setHtml(text);

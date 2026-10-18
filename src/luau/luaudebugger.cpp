@@ -219,8 +219,9 @@ void LuauDebugger::onDebugBreak(lua_State *L, lua_Debug *, BreakReason reason) {
 bool LuauDebugger::isDebugBreak() { return attached_ && !resume_; }
 
 void LuauDebugger::stepOver() {
-    if (!isDebugBreak())
+    if (!isDebugBreak()) {
         return;
+    }
 
     const auto oldContext = breakContext_;
     processSingleStep([this, oldContext](lua_State *L, lua_Debug *) {

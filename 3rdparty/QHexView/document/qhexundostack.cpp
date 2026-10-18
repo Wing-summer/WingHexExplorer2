@@ -64,8 +64,9 @@ void QHexUndoStack::recomputeUnsaved() {
 
 void QHexUndoStack::collectRecursive(const QUndoCommand *cmd,
                                      QSet<int> &out) const {
-    if (!cmd)
+    if (!cmd) {
         return;
+    }
 
     int cmdId = cmd->id();
     if (cmdId >= 0) {
