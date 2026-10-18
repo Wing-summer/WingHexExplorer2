@@ -246,8 +246,6 @@ set(CONTROL_SRC
 set(CLASS_SRC
     src/class/appmanager.cpp
     src/class/appmanager.h
-    src/class/luaucompletion.cpp
-    src/class/luaucompletion.h
     src/class/changedstringlist.cpp
     src/class/changedstringlist.h
     src/class/codeinfotip.cpp
@@ -282,6 +280,10 @@ set(CLASS_SRC
     src/class/logger.h
     src/class/lspeditorinterface.cpp
     src/class/lspeditorinterface.h
+    src/class/luaucompletion.cpp
+    src/class/luaucompletion.h
+    src/class/luauindentation.cpp
+    src/class/luauindentation.h
     src/class/mutisavebuttondelegate.cpp
     src/class/mutisavebuttondelegate.h
     src/class/pluginsystem.cpp

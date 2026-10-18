@@ -32,7 +32,7 @@ public:
     struct History {
         QStringList strings_;
         int pos_;
-        QString token_;
+        QString token_; // Draft restored after browsing the newest entry.
         bool active_;
         int maxsize_;
         History(void);
@@ -94,6 +94,9 @@ protected:
 
     virtual void handleReturnKey(Qt::KeyboardModifiers mod);
     virtual void handleTabKey(Qt::KeyboardModifiers mod);
+    virtual bool handleBackspaceAtInputStart();
+    virtual void prepareInputNavigation();
+    void handleHistoryKey(QKeyEvent *event);
 
     // reimp QPlainTextEdit functions
     void keyPressEvent(QKeyEvent *e) override;
@@ -105,7 +108,9 @@ protected:
     // replace the command line
     void replaceCommandLine(const QString &str);
 
-    QString currentCommandLine() const;
+    virtual QString currentCommandLine() const;
+    virtual int inputStartForBlock(const QTextBlock &block) const;
+    int blockTextStart(const QTextBlock &block) const override;
 
 protected:
     virtual void dragMoveEvent(QDragMoveEvent *e) override;

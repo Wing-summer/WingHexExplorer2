@@ -43,19 +43,19 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="117"/>
+        <location filename="../../src/class/appmanager.cpp" line="116"/>
         <location filename="../../src/class/appmanager.cpp" line="138"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="118"/>
+        <location filename="../../src/class/appmanager.cpp" line="117"/>
         <location filename="../../src/class/appmanager.cpp" line="139"/>
         <source>ErrOpenFileBelow</source>
         <translation>An error occurred while opening the file (due to insufficient permissions). The following is the file that failed to open:</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="125"/>
+        <location filename="../../src/class/appmanager.cpp" line="124"/>
         <source>OpeningFiles</source>
         <translation>Opening the files</translation>
     </message>
@@ -118,57 +118,57 @@
 <context>
     <name>CodeEdit</name>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="315"/>
+        <location filename="../../src/control/codeedit.cpp" line="320"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="317"/>
+        <location filename="../../src/control/codeedit.cpp" line="322"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="319"/>
+        <location filename="../../src/control/codeedit.cpp" line="324"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="323"/>
+        <location filename="../../src/control/codeedit.cpp" line="328"/>
         <source>Find</source>
         <translation>Find</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="327"/>
+        <location filename="../../src/control/codeedit.cpp" line="332"/>
         <source>Replace</source>
         <translation>Replace</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="330"/>
+        <location filename="../../src/control/codeedit.cpp" line="335"/>
         <source>Goto</source>
         <translation>Go to</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="334"/>
+        <location filename="../../src/control/codeedit.cpp" line="339"/>
         <source>GoToDef</source>
         <translation>Go to Definition</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="336"/>
+        <location filename="../../src/control/codeedit.cpp" line="341"/>
         <source>GoToTypeDef</source>
         <translation>Go to Type Definition</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="340"/>
+        <location filename="../../src/control/codeedit.cpp" line="345"/>
         <source>Comment/UnComment</source>
         <translation>Comment/Uncomment</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="344"/>
+        <location filename="../../src/control/codeedit.cpp" line="349"/>
         <source>Fold/UnFold</source>
         <translation>Fold/Unfold</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="351"/>
+        <location filename="../../src/control/codeedit.cpp" line="356"/>
         <source>FoldAll</source>
         <translation>Fold all</translation>
     </message>
@@ -391,7 +391,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="1191"/>
+        <location filename="../../src/control/editorview.cpp" line="1192"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
@@ -720,32 +720,32 @@
 <context>
     <name>HexLineEdit</name>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="163"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="165"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="170"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="172"/>
         <source>Redo</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="181"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="183"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="187"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="189"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="193"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="195"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/hexlineedit.cpp" line="199"/>
+        <location filename="../../src/control/hexlineedit.cpp" line="201"/>
         <source>Select all</source>
         <translation>Select all</translation>
     </message>
@@ -942,12 +942,12 @@
     <name>MainWindow</name>
     <message>
         <location filename="../../src/dialog/mainwindow.ui" line="14"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3579"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3595"/>
         <source>WingHexExplorer</source>
         <translation>WingHexExplorer</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="237"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="240"/>
         <source>SetupRecent</source>
         <translation>Enabling Recent Files Service</translation>
     </message>
@@ -962,1295 +962,1295 @@
         <translation>Starting the Dock service</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="131"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="132"/>
         <source>loc</source>
         <translation>Loc</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="141"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="142"/>
         <source>sel</source>
         <translation>Sel</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="160"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1488"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="161"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1499"/>
         <source>InfoSave</source>
         <translation>Saved</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="169"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1493"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="170"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1504"/>
         <source>ReadOnly</source>
         <translation>Readonly</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="179"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1497"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="180"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1508"/>
         <source>SetLocked</source>
         <translation>Enable/Disable Locked Editing</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="190"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1501"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="191"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1512"/>
         <source>SetOver</source>
         <translation>Enable/Disable File Resizing</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="213"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="214"/>
         <source>LaunchingLog</source>
         <translation>Lanching the logging system</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="223"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="225"/>
         <source>SetupPluginSystem</source>
         <translation>Launching the Plugin System</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="228"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="231"/>
         <source>LoadingPlg:</source>
         <translation>The loading plugin :</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="316"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="319"/>
         <source>EngineConfigError</source>
         <translation>Engine configuration error</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="329"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="332"/>
         <source>InputRequest</source>
         <translation>Input Request</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="330"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2880"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="333"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2896"/>
         <source>PleaseInput</source>
         <translation>Please enter</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="342"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="345"/>
         <source>SetupConsole</source>
         <translation>Launching Script Console</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="346"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="350"/>
         <source>SetupScriptManager</source>
         <translation>Launching Script Manager</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="349"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="354"/>
         <source>SetupScriptService</source>
         <translation>Starting the script service</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="365"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="371"/>
         <source>ScriptEngineInitFailed</source>
         <translation>The script engine failed to start and will be automatically disabled.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="399"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="405"/>
         <source>SetupSetDialog</source>
         <translation>Building Setting Dialog</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="404"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="411"/>
         <source>SetupPlgWidgets</source>
         <translation>Launching Plugin Component</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="413"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="421"/>
         <source>SetupDockingLayout</source>
         <translation>Restoring Dock Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="426"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="435"/>
         <source>SetupWaiting</source>
         <translation>Startup is almost complete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="437"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="447"/>
         <source>SetupFinished</source>
         <translation>Startup complete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="454"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="465"/>
         <source>File</source>
         <translation>File</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="456"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="467"/>
         <source>Edit</source>
         <translation>Edit</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="458"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1520"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="469"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1531"/>
         <source>View</source>
         <translation>View</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="463"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="474"/>
         <source>Script</source>
         <translation>Script</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="468"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1526"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1630"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="479"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1537"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1641"/>
         <source>Plugin</source>
         <translation>Plugin</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="472"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1654"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1710"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="483"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1665"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1721"/>
         <source>Setting</source>
         <translation>Settings</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="474"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="485"/>
         <source>About</source>
         <translation>About</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="493"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3051"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="504"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3067"/>
         <source>OlderVersion</source>
         <translation>You are using an outdated version of the software. We recommend downloading the latest release from the GitHub and Gitee repositories.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="631"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="642"/>
         <source>NoExtension</source>
         <translation>No extensions</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="660"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="747"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="809"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="890"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1177"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1321"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="671"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="758"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="820"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="901"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1188"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1332"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="670"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1693"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2973"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="681"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1704"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2989"/>
         <source>ExportLog</source>
         <translation>Export Logs</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="673"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1695"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="684"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1706"/>
         <source>ClearLog</source>
         <translation>Clear Logs</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="678"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1692"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="689"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1703"/>
         <source>Log</source>
         <translation>Log</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="696"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="700"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="790"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="707"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="711"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="801"/>
         <source>FindResult</source>
         <translation>Search Results</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="704"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1540"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="715"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1551"/>
         <source>Encoding</source>
         <translation>Encoding</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="753"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="816"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="895"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2182"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2418"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="764"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="827"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="906"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2195"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2431"/>
         <source>CopyToClipBoard</source>
         <translation>Data has been copied to the clipboard.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="757"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="768"/>
         <source>ExportFindResult</source>
         <translation>Export search results</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="760"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="771"/>
         <source>ClearFindResult</source>
         <translation>Clear search history</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="733"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="744"/>
         <source>ShowDec</source>
         <translation>Decoded text</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="835"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="846"/>
         <source>LittleEndian</source>
         <translation>Little-endian</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="845"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="856"/>
         <source>BigEndian</source>
         <translation>Big-endian</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="859"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="870"/>
         <source>UnsignedHex</source>
         <translation>Unsigned Hex</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="871"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="882"/>
         <source>Number</source>
         <translation>Number</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="898"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1181"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="909"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1192"/>
         <source>Clear</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="921"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1346"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="932"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1357"/>
         <source>CheckSum</source>
         <translation>Checksum</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="952"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1053"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="963"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1064"/>
         <source>ExportResult</source>
         <translation>Export Results</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="960"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1385"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="971"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1396"/>
         <source>DeleteBookMark</source>
         <translation>Delete bookmark</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="986"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1389"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="997"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1400"/>
         <source>ClearBookMark</source>
         <translation>Clear Bookmarks</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="999"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1381"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2511"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2519"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1010"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1392"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2526"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2534"/>
         <source>BookMark</source>
         <translation>Bookmark</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1031"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1042"/>
         <source>CustomHeader</source>
         <translation>Custom header</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1061"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1072"/>
         <source>DeleteMetadata</source>
         <translation>Delete metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1085"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1096"/>
         <source>ClearMetadata</source>
         <translation>Clear Metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1103"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1379"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1393"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1453"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1470"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1114"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1390"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1404"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1464"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1481"/>
         <source>MetaData</source>
         <translation>Metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1114"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1125"/>
         <source>PleaseSelectBytes</source>
         <translation>Please select the byte sequences</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1116"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4175"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4180"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1127"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4191"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4196"/>
         <source>DecodeText</source>
         <translation>Decoding</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1141"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1152"/>
         <source>ScriptConsole</source>
         <translation>Script Console</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1162"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1173"/>
         <source>BgScriptOutputHere</source>
         <translation>Backend script execution will output here.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1171"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1182"/>
         <source>SelectAll</source>
         <translation>Select all</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1187"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1198"/>
         <source>AbortScript</source>
         <translation>Terminate script</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1210"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1221"/>
         <source>BgScriptOutput</source>
         <translation>Backend script output</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1229"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1240"/>
         <source>ConsoleObj</source>
         <translation>Console Script Object</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1239"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1250"/>
         <source>UndoStack</source>
         <translation>Undo Stack</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1247"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1607"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1258"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1618"/>
         <source>Basic</source>
         <translation>Basic</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1248"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1259"/>
         <source>New</source>
         <translation>New</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1251"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1262"/>
         <source>OpenF</source>
         <translation>Open</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1255"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1266"/>
         <source>OpenWorkSpace</source>
         <translation>Open Workspace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1261"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1272"/>
         <source>OpenExt</source>
         <translation>Open (Ext)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1264"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1275"/>
         <source>RecentFiles</source>
         <translation>Recent</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1267"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1278"/>
         <source>Reload</source>
         <translation>Reload</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1273"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1275"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1284"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1286"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1279"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1290"/>
         <source>SaveAs</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1284"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1295"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1289"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1300"/>
         <source>ConvertWS</source>
         <translation>Convert to workspace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1293"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1304"/>
         <source>SaveSel</source>
         <translation>Save Selection Bytes</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1305"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1628"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1652"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1316"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1639"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1663"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1307"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1318"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1312"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1323"/>
         <source>Redo</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1318"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1329"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1324"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1335"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1327"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1338"/>
         <source>Delete</source>
         <translation>Delete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1330"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1341"/>
         <source>Clone</source>
         <translation>Clone</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1336"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1347"/>
         <source>Lookup</source>
         <translation>Lookup</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1338"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1349"/>
         <source>Find</source>
         <translation>Find</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1342"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1353"/>
         <source>Goto</source>
         <translation>Go to</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1349"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1360"/>
         <source>FileInfo</source>
         <translation>File Information</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1355"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1512"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1366"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1523"/>
         <source>Hex</source>
         <translation>Hex</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1357"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1368"/>
         <source>CutHex</source>
         <translation>Cut (Hex)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1362"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1373"/>
         <source>CopyHex</source>
         <translation>Copy (Hex)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1366"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1377"/>
         <source>PasteHex</source>
         <translation>Paste (Hex)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1370"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2442"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1381"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2455"/>
         <source>Fill</source>
         <translation>Fill</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1373"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1384"/>
         <source>FillZero</source>
         <translation>Fill with zeros</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1397"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1408"/>
         <source>MetaDataEdit</source>
         <translation>Edit metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1401"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1412"/>
         <source>DeleteMetaData</source>
         <translation>Delete metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1405"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1416"/>
         <source>ClearMetaData</source>
         <translation>Clear Metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1417"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1428"/>
         <source>Display</source>
         <translation>Display</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1446"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1457"/>
         <source>Scale</source>
         <translation>Zoom</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1448"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1459"/>
         <source>ResetScale</source>
         <translation>Reset Zoom</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1458"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1469"/>
         <source>ShowMetafg</source>
         <translation>Show Foreground</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1462"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1473"/>
         <source>ShowMetabg</source>
         <translation>Show Background</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1466"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1477"/>
         <source>ShowMetaComment</source>
         <translation>Show Comment</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1474"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1485"/>
         <source>MetaShowAll</source>
         <translation>Show all metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1478"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1489"/>
         <source>MetaHideAll</source>
         <translation>Hide all metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1484"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1495"/>
         <source>FileStatus</source>
         <translation>File Status</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2749"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2764"/>
         <source>ErrUnLock</source>
         <translation>Lock editing failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2759"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2774"/>
         <source>ErrUnOver</source>
         <translation>Failed to lock file size</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1507"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1518"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1509"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1520"/>
         <source>Editor</source>
         <translation>Editor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1522"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1533"/>
         <source>Tools</source>
         <translation>Tools</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1532"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1543"/>
         <source>HexEditorLayout</source>
         <translation>Editor Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1534"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1545"/>
         <source>SetBaseAddr</source>
         <translation>Set Base Address</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2361"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2374"/>
         <source>addressBase</source>
         <translation>Base address</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2362"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2375"/>
         <source>inputAddressBase</source>
         <translation>Please enter the base address</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2370"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2383"/>
         <source>WarnBigBaseAddress</source>
         <translation>The base address is too large, and the address you obtain will be incorrect!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2375"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2388"/>
         <source>ErrBaseAddress</source>
         <translation>Invalid base address input</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1543"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1554"/>
         <source>SetColInfo</source>
         <translation>Show/Hide Address Bar</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1551"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1562"/>
         <source>SetHeaderInfo</source>
         <translation>Show/Hide Headers</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1559"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1570"/>
         <source>SetAsciiString</source>
         <translation>Show/Hide Decoding</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1569"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1580"/>
         <source>Layout</source>
         <translation>Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1570"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1581"/>
         <source>Fullscreen</source>
         <translation>Fullscreen</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1576"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1587"/>
         <source>Default</source>
         <translation>Default</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1592"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1603"/>
         <source>RestoreLayout</source>
         <translation>Restore Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1595"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2880"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2886"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1606"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2896"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2902"/>
         <source>SaveLayout</source>
         <translation>Save Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1597"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1608"/>
         <source>DelLayout</source>
         <translation>Remove Layout</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1608"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1619"/>
         <source>ScriptEditor</source>
         <translation>Script Editor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1613"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1624"/>
         <source>Scripts</source>
         <translation>Scripts</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1636"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1647"/>
         <source>PluginFunctions</source>
         <translation>Plugin Functionality</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1660"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1818"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1671"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1829"/>
         <source>ScriptSetting</source>
         <translation>Script Settings</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1665"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1676"/>
         <source>PluginSettings</source>
         <translation>Plugin Settings</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1678"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1689"/>
         <source>Info</source>
         <translation>Information</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1679"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1690"/>
         <source>Software</source>
         <translation>Software</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1681"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1692"/>
         <source>Sponsor</source>
         <translation>Sponsor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1683"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1694"/>
         <source>Wiki</source>
         <translation>Wiki</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1685"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1696"/>
         <source>AboutQT</source>
         <translation>About QT</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1687"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1698"/>
         <source>CheckUpdate</source>
         <translation>Check for Updates</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1697"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1708"/>
         <source>InsepctQt</source>
         <translation>Inspect Qt</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1775"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1786"/>
         <source>SetPageIDEmptyTryUseName</source>
         <translation>The page ID is empty. Attempting to use the name as the ID.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1785"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1796"/>
         <source>SetPageDupNameIgnored</source>
         <translation>Duplicate ID names on the settings page have been ignored during loading.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1858"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1869"/>
         <source>Plugin %1 contains a duplicate ID (%2) that is already registered by plugin %3</source>
         <translation>Plugin %1 contains a duplicate ID (%2) that is already registered by plugin %3</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1921"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2246"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1932"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2259"/>
         <source>Finding...</source>
         <translation>Finding...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1943"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1954"/>
         <source>Opening...</source>
         <translation>Opening...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1947"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1982"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1958"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1993"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1537"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2388"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1548"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2401"/>
         <source>HexWidth</source>
         <translation>Hex width</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2388"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2401"/>
         <source>PleaseChoose</source>
         <translation>Please choose</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2887"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2903"/>
         <source>DupLayoutID</source>
         <translation>Save failed for duplicated layout identifier</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2932"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2948"/>
         <source>NothingToRemove</source>
         <translation>No entry to remove</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2960"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2976"/>
         <source>DelLayoutSuccess</source>
         <translation>Layout removed successfully</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2963"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2979"/>
         <source>DelLayoutError</source>
         <translation>Layout removed failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2973"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2989"/>
         <source>Logs (*.log)</source>
         <translation>Logs (*.log)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4308"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4324"/>
         <source>AlreadyOpened</source>
         <translation>The file has been opened.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4324"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4340"/>
         <source>FileInvalidFmt</source>
         <translation>Unsupported file format</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4477"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4493"/>
         <source>LayoutRestoreBreak</source>
         <translation>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4539"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4555"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1954"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1956"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1965"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1967"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2050"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2139"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3147"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3227"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3234"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3625"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3981"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3990"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4312"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4315"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4318"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4321"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4324"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4327"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4335"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1978"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2061"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2152"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3163"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3243"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3250"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3641"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3997"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4006"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4328"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4331"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4334"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4337"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="4340"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4343"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4351"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4356"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1954"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4318"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1965"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4334"/>
         <source>FileNotExist</source>
         <translation>File does not exist!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1957"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3981"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3990"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4315"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1968"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3997"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4006"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4331"/>
         <source>FilePermission</source>
         <translation>Access denied due to file permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1968"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1979"/>
         <source>UnkownError</source>
         <translation>An unknown error occurred</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1978"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1989"/>
         <source>WorkSpaceOpening...</source>
         <translation>Open in workspace...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1982"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1993"/>
         <source>ProjectFile (*.wingpro)</source>
         <translation>Project File (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2006"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2017"/>
         <source>Reloading...</source>
         <translation>Reloading...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2015"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2026"/>
         <source>ReloadSuccessfully</source>
         <translation>File reloaded successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2015"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2026"/>
         <source>ReloadUnSuccessfully</source>
         <translation>File reload failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2020"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2031"/>
         <source>Saving...</source>
         <translation>Saving...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4321"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4337"/>
         <source>SaveWSError</source>
         <translation>Workspace save error!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4022"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4682"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4710"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4038"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4699"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4727"/>
         <source>SaveSuccessfully</source>
         <translation>Saved successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2038"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2049"/>
         <source>SaveNewFirst</source>
         <translation>Please save the newly created file first.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2043"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2054"/>
         <source>AlreadyWorkSpace</source>
         <translation>This is already a workspace; no conversion is needed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2050"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2054"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2061"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2065"/>
         <source>ConvWorkSpaceFailed</source>
         <translation>Failed to convert to workspace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2053"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2064"/>
         <source>ConvWorkSpaceSuccess</source>
         <translation>Conversion to workspace successful</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2063"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2074"/>
         <source>SavingAs...</source>
         <translation>Saving as...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2127"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2791"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3949"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4700"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2139"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2806"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3965"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4717"/>
         <source>ChooseSaveFile</source>
         <translation>Please select the file save location:</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3094"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4682"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4710"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3110"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4699"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4727"/>
         <source>SaveUnSuccessfully</source>
         <translation>Save failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2075"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2086"/>
         <source>Exporting...</source>
         <translation>Exporting...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2091"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2102"/>
         <source>ChooseExportFile</source>
         <translation>Please select the export file path:</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2099"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2111"/>
         <source>ExportSuccessfully</source>
         <translation>Export successful!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2099"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2111"/>
         <source>ExportUnSuccessfully</source>
         <translation>Export failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2103"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2115"/>
         <source>SavingSel...</source>
         <translation>Saving Selection...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2137"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2150"/>
         <source>SaveSelSuccess</source>
         <translation>Saved selection bytes successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2140"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2153"/>
         <source>SaveSelError</source>
         <translation>Failed to save selection bytes because the file lacks write permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2168"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2404"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2181"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2417"/>
         <source>CutToClipBoard</source>
         <translation>Data has been copied to the clipboard!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2171"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2407"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2184"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2420"/>
         <source>UnCutToClipBoard</source>
         <translation>Due to size constraints, data clipping to the clipboard failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2185"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2421"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2198"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2434"/>
         <source>UnCopyToClipBoard</source>
         <translation>Due to size constraints, data failed to be copied to the clipboard!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2196"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2432"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2209"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2445"/>
         <source>PasteFailedNote</source>
         <translation>Paste failed. Please check permissions or content length.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2208"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2221"/>
         <source>DeleteFailed</source>
         <translation>Deletion failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2220"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2233"/>
         <source>NoMoreClone</source>
         <translation>Cloning has reached its limit and cannot proceed further!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2255"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2268"/>
         <source>FindFininish</source>
         <translation>Search results complete!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2259"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2313"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2272"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2326"/>
         <source>FindFininishBusy</source>
         <translation>Searching is currently busy. Please do not search again!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2263"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2276"/>
         <source>MayTooMuchFindResult</source>
         <translation>The search volume has reached its limit. Results may be incomplete. We recommend searching by segment.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2442"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2455"/>
         <source>PleaseInputFill</source>
         <translation>Please enter the padding byte value</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2449"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2462"/>
         <source>FillInputTruncWarn</source>
         <translation>The input value is too large and it will be truncated.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2468"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2482"/>
         <source>FillInputError</source>
         <translation>Invalid filling byte input</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2500"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2515"/>
         <source>TooManyBookMarks</source>
         <translation>Exceeding the bookmark limit</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2511"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2519"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2526"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2534"/>
         <source>InputComment</source>
         <translation>Please enter your comment:</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2550"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2558"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2565"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2573"/>
         <source>BookmarkDelSuccess</source>
         <translation>Bookmark deleted successfully</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2564"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2579"/>
         <source>BookmarkDelNoItem</source>
         <translation>No bookmarks to delete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2574"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2589"/>
         <source>BookmarkClearSuccess</source>
         <translation>Bookmarks cleared</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2587"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2602"/>
         <source>TooManyMetaData</source>
         <translation>Exceeding the metadata limit</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2617"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3395"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2632"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3411"/>
         <source>NoSelection</source>
         <translation>No selection made, operation cannot proceed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2654"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2669"/>
         <source>NoMetaData</source>
         <translation>Uneditable metadata</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2668"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2683"/>
         <source>PleaseClearSel</source>
         <translation>Please clear your selection.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2673"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2688"/>
         <source>MetaDelSuccess</source>
         <translation>Metadata deletion successful</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2675"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2690"/>
         <source>MetaDelNoItem</source>
         <translation>No metadata to delete</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2686"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2701"/>
         <source>MetaClearSuccess</source>
         <translation>Metadata cleared.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2772"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2787"/>
         <source>FindResultExporting...</source>
         <translation>Search results are being exported...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2778"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2787"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2793"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2802"/>
         <source>EmptyFindResult</source>
         <translation>No search results available for export!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2823"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2839"/>
         <source>SaveFindResult</source>
         <translation>Search results exported successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2827"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2843"/>
         <source>SaveFindResultError</source>
         <translation>Export failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3158"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3174"/>
         <source>WorkspaceCorruptedSeeLog</source>
         <translation>Workspace data anomaly, please see the log for details.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3209"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3225"/>
         <source>Warn</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2873"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2889"/>
         <source>LayoutSaving...</source>
         <translation>Layout saving...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2911"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4461"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2927"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4477"/>
         <source>LayoutRestoring...</source>
         <translation>Restoring layout...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2918"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2934"/>
         <source>SaveLayoutSuccess</source>
         <translation>Layout saved successfully</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2921"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2937"/>
         <source>SaveLayoutError</source>
         <translation>Layout saved failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2969"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2985"/>
         <source>LogExporting...</source>
         <translation>Exporting logs...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2985"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3001"/>
         <source>ExportLogError</source>
         <translation>Log export failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2982"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2998"/>
         <source>ExportLogSuccess</source>
         <translation>Log export successful</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2994"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3010"/>
         <source>ClearLogSuccess</source>
         <translation>Logs successfully cleared!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3036"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3052"/>
         <source>CheckingUpdate</source>
         <translation>Checking for updates...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3049"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3065"/>
         <source>BadNetwork</source>
         <translation>Unable to establish a connection with the remote server for update checks. Please check your network connection.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3054"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3070"/>
         <source>NewestVersion</source>
         <translation>The software is currently the latest version.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3148"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3164"/>
         <source>Too much opened files</source>
         <translation>Too many files are open to continue!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3209"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3225"/>
         <source>HasClonedView</source>
         <translation>This edit page has been cloned for editing. Closing it will also close the associated pages. Are you sure to proceed?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3234"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3250"/>
         <source>FilePermissionSure2Quit</source>
         <translation>Due to file permission issues, the file cannot be saved. Are you sure to exit?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3227"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3243"/>
         <source>UnknownErrorSure2Quit</source>
         <translation>An unknown error occurred preventing saving. Are you sure to exit?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3455"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3471"/>
         <source>CopyLimit</source>
         <translation>Copy bytes exceeded limit</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3487"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3503"/>
         <source>EditLimitHit</source>
         <translation>Permission restricted. Please adjust.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3626"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3642"/>
         <source>ErrOpenFileBelow</source>
         <translation>An error occurred while opening the file (due to insufficient permissions). The following is the file that failed to open:</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3738"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3754"/>
         <source>ChecksumFailed</source>
         <translation>File fingerprint match failed. Please verify whether the file you opened has been modified externally.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3936"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3952"/>
         <source>SaveWorkSpace</source>
         <translation>Save WorkSpace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3937"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3953"/>
         <source>WingHexWorkSpace (*.wingpro)</source>
         <translation>WingHex WorkSpace (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3943"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3959"/>
         <source>NothingToSave</source>
         <translation>No saved data</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4221"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4237"/>
         <source>TooManyBytesDecode</source>
         <translation>Exceeding the decoding byte limit...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4233"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4249"/>
         <source>SetupScriptEditor</source>
         <translation>Building Script Editor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4286"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4302"/>
         <source>ConfirmSave</source>
         <translation>Closing unsaved files or workspaces. Are you sure to save?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4312"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4328"/>
         <source>DevNotFound</source>
         <translation>No devices found</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4327"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4343"/>
         <source>TooManyOpenedFile</source>
         <translation>Too many files are open to continue!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4336"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4352"/>
         <source>UnknownError</source>
         <translation>An unknown error occurred</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4424"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4440"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4432"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4448"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4440"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4456"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
@@ -2258,27 +2258,27 @@
 <context>
     <name>MetaDataModel</name>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="123"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="125"/>
         <source>Begin</source>
         <translation>Begin</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="125"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="127"/>
         <source>End</source>
         <translation>End</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="127"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="129"/>
         <source>Foreground</source>
         <translation>Foreground</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="129"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="131"/>
         <source>Background</source>
         <translation>Background</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="131"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="133"/>
         <source>Comment</source>
         <translation>Comment</translation>
     </message>
@@ -2708,7 +2708,7 @@
         <translation>WingCloudStudio</translation>
     </message>
     <message>
-        <location filename="../../src/utilities.h" line="436"/>
+        <location filename="../../src/utilities.h" line="442"/>
         <source>OptionNeedRestart</source>
         <translation>Restart to take effect</translation>
     </message>
@@ -2731,92 +2731,92 @@
         <translation>Font Size</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="112"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="101"/>
         <source>Font</source>
         <translation>Font</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="125"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="114"/>
         <source>Tab width</source>
         <translation>Tab width</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="160"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="149"/>
         <source>Indentation</source>
         <translation>Indentation</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="182"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="171"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="276"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="265"/>
         <source>MatchBraces</source>
         <translation>Match Braces</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="236"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="225"/>
         <source>AutoCloseChar</source>
         <translation>Auto Close Char</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="226"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="215"/>
         <source>Folding</source>
         <translation>Folding</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="246"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="235"/>
         <source>Whitespace</source>
         <translation>Whitespace</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="206"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="195"/>
         <source>LineNumber</source>
         <translation>Line Number</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="216"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="205"/>
         <source>WordWrap</source>
         <translation>Word Wrap</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="266"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="255"/>
         <source>IndentGuides</source>
         <translation>Indent Guides</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.ui" line="256"/>
+        <location filename="../../src/settings/qeditconfig.ui" line="245"/>
         <source>AutoIden</source>
         <translation>Auto Indent</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="161"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="170"/>
         <source>Console</source>
         <translation>Console</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="165"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="174"/>
         <source>Edit</source>
         <translation>Edit</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="306"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="311"/>
         <source>Default</source>
         <translation>Default</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="316"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="321"/>
         <source>IndentSpaces</source>
         <translation>Indent Spaces</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="317"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="322"/>
         <source>IndentTabs</source>
         <translation>Indent Tabs</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="319"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="324"/>
         <source>IndentMixed</source>
         <translation>Indent Mixed</translation>
     </message>
@@ -2853,7 +2853,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../../src/class/wingmessagebox.cpp" line="79"/>
+        <location filename="../../src/class/wingmessagebox.cpp" line="80"/>
         <source>About Qt</source>
         <translation>About Qt</translation>
     </message>
@@ -3083,48 +3083,48 @@
 <context>
     <name>ScriptingConsole</name>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="184"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="283"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="191"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="290"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="198"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="297"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="297"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="397"/>
         <source>[Console]</source>
         <translation>[Console]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="522"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="648"/>
         <source>Copy</source>
         <translation type="unfinished">Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="525"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="651"/>
         <source>Cut</source>
         <translation type="unfinished">Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="530"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="657"/>
         <source>Paste</source>
         <translation type="unfinished">Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="535"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="556"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="663"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="684"/>
         <source>Clear</source>
         <translation type="unfinished">Clear</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="541"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="669"/>
         <source>AbortScript</source>
         <translation type="unfinished">Terminate script</translation>
     </message>
@@ -3132,7 +3132,7 @@
 <context>
     <name>ScriptingConsoleBase</name>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="96"/>
+        <location filename="../../src/control/scriptingconsolebase.cpp" line="167"/>
         <source>Scripting console for WingHexExplorer</source>
         <translation>Scripting console for WingHexExplorer</translation>
     </message>
@@ -3188,7 +3188,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="298"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1596"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1597"/>
         <source>New</source>
         <translation>New</translation>
     </message>
@@ -3204,7 +3204,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="308"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1538"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1539"/>
         <source>Reload</source>
         <translation>Reload</translation>
     </message>
@@ -3525,12 +3525,12 @@
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="864"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1170"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1545"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1623"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1660"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1688"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1714"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2151"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1546"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1624"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1661"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1689"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1716"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2154"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
@@ -3542,7 +3542,7 @@
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="912"/>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1195"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1997"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1999"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
@@ -3573,22 +3573,22 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1171"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1624"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1625"/>
         <source>InvalidFileOrPermission</source>
         <translation>Invalid file format or insufficient file access permissions</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1596"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1597"/>
         <source>NewFileWithDbgExists</source>
         <translation>The newly created file name conflicts with the file being debugged.</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1688"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1689"/>
         <source>FilePermission</source>
         <translation>Access denied due to file permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="2151"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="2154"/>
         <source>BusyRunScript</source>
         <translation>Script running busy</translation>
     </message>
@@ -3603,58 +3603,58 @@
         <translation> (Selected: %1)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1539"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1540"/>
         <source>ReloadNeededYesOrNo</source>
         <translation>Should the target file be reloaded after modification?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1588"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1641"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1589"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1642"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1543"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1658"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1544"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1659"/>
         <source>ReloadSuccessfully</source>
         <translation>File reloaded successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1546"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1660"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1547"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1661"/>
         <source>ReloadUnSuccessfully</source>
         <translation>File reload failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1686"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1712"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1687"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1714"/>
         <source>SaveSuccessfully</source>
         <translation>Saved successfully!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1700"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1701"/>
         <source>ChooseSaveFile</source>
         <translation>Please select the file save location:</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="1234"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1714"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1716"/>
         <source>SaveUnSuccessfully</source>
         <translation>Save failed!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1786"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1788"/>
         <source>FormatCodeFailed</source>
         <translation>Code formatting failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1840"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1842"/>
         <source>LayoutRestoreBreak</source>
         <translation>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1880"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1907"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1882"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1909"/>
         <source>CannotSave2RunScript</source>
         <translation>Unable to save, therefore unable to continue running the script.</translation>
     </message>
@@ -3727,18 +3727,18 @@
         <translation>Replace:</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="248"/>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="310"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="253"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="319"/>
         <source>The specified text was not found</source>
         <translation>The specified text was not found</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="255"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="260"/>
         <source>The specified text was not found in the selection</source>
         <translation>The specified text was not found in the selection</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="284"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="292"/>
         <source>Successfully replaced %1 matches</source>
         <translation>Successfully replaced %1 matches</translation>
     </message>
@@ -3808,12 +3808,12 @@
 <context>
     <name>ShowInShell</name>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="149"/>
+        <location filename="../../src/class/showinshell.cpp" line="154"/>
         <source>Launching Windows Explorer Failed</source>
         <translation>Launching Windows Explorer Failed</translation>
     </message>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="151"/>
+        <location filename="../../src/class/showinshell.cpp" line="156"/>
         <source>Could not find explorer.exe in path to launch Windows Explorer.</source>
         <translation>Could not find explorer.exe in path to launch Windows Explorer.</translation>
     </message>
@@ -3834,7 +3834,7 @@
 <context>
     <name>SyntaxPopup</name>
     <message>
-        <location filename="../../src/control/settingspopup.cpp" line="185"/>
+        <location filename="../../src/control/settingspopup.cpp" line="189"/>
         <source>Plain Text</source>
         <translation>Plain Text</translation>
     </message>

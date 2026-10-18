@@ -65,6 +65,11 @@ private:
     static lsp::DocumentUri lspURL();
 
     void setEditMode(ConsoleMode mode);
+    void appendContinuationPrompt();
+
+    int sourceFirstBlock() const;
+    int sourceLineStart(const QTextBlock &block) const;
+    CursorPos consolePosition(const lsp::Position &position) const;
 
 public slots:
     void init();
@@ -93,6 +98,8 @@ private:
 protected:
     virtual void contextMenuEvent(QContextMenuEvent *event) override;
     virtual void handleReturnKey(Qt::KeyboardModifiers mod) override;
+    virtual bool handleBackspaceAtInputStart() override;
+    virtual void prepareInputNavigation() override;
     virtual void keyPressEvent(QKeyEvent *e) override;
     virtual void mousePressEvent(QMouseEvent *e) override;
     virtual void wheelEvent(QWheelEvent *e) override;

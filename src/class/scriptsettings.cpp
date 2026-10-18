@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -18,7 +18,7 @@
 #include "scriptsettings.h"
 
 #include <QApplication>
-#include <QFontInfo>
+#include <QFontDatabase>
 
 #include "settings/settings.h"
 #include "wingcodeedit.h"
@@ -58,6 +58,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_SHOW_WHITESPACE,
                           ("console.whitespace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_AUTO_CLOSE_CHAR,
                           ("console.auto_close_char"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_AUTO_IDEN, ("console.auto_iden"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_QUOTE_STYLE, ("lsp.quoteStyle"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_KEEPNEWLINE_GAP, ("lsp.newLineGap"))
@@ -65,26 +66,27 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_INDENT_SPACE, ("lsp.indentspace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_USE_TAB_INDENT, ("lsp.useTabIndent"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_AUTO_FMT, ("lsp.autoFmt"))
 
+static QString fixedFontFamily(const QString &family, const QFont &fallback) {
+    if (family.isEmpty()) {
+        return fallback.family();
+    }
+    return QFontDatabase::isFixedPitch(family) ? family : fallback.family();
+}
+
 ScriptSettings &ScriptSettings::instance() {
     static ScriptSettings ins;
     return ins;
 }
 
 void ScriptSettings::load() {
-    auto defaultFontSize = _defaultFont.pointSize();
-    Q_ASSERT(defaultFontSize > 0);
     HANDLE_CONFIG;
 
     READ_CONFIG_STRING(m_editorFontFamily, CODEEDIT_FONT,
                        _defaultFont.family());
-    if (!QFontInfo(QFont(m_editorFontFamily)).exactMatch()) {
-        m_editorFontFamily = _defaultFont.family();
-    }
+    m_editorFontFamily = fixedFontFamily(m_editorFontFamily, _defaultFont);
     READ_CONFIG_STRING(m_consoleFontFamily, CONSOLE_FONT,
                        _defaultFont.family());
-    if (!QFontInfo(QFont(m_consoleFontFamily)).exactMatch()) {
-        m_consoleFontFamily = _defaultFont.family();
-    }
+    m_consoleFontFamily = fixedFontFamily(m_consoleFontFamily, _defaultFont);
 
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, CODEEDIT_FONT_SIZE, 10);
     m_editorfontSize = qBound(6, m_editorfontSize, 50);
@@ -117,7 +119,9 @@ void ScriptSettings::load() {
     READ_CONFIG_BOOL(m_editorShowLineNumber, CODEEDIT_SHOW_LINENUMBER, true);
     READ_CONFIG_BOOL(m_editorFolding, CODEEDIT_SHOW_FOLDING, true);
     READ_CONFIG_BOOL(m_editorShowGuideLine, CODEEDIT_SHOW_INDENTGUIDES, true);
+
     READ_CONFIG_BOOL(m_editorAutoIden, CODEEDIT_AUTO_IDEN, true);
+    READ_CONFIG_BOOL(m_consoleAutoIden, CONSOLE_AUTO_IDEN, true);
 
     READ_CONFIG_BOOL(m_editorShowWhiteSpace, CODEEDIT_SHOW_WHITESPACE, false);
     READ_CONFIG_BOOL(m_consoleShowWhiteSpace, CONSOLE_SHOW_WHITESPACE, false);
@@ -145,7 +149,7 @@ void ScriptSettings::reset(SETTINGS cat) {
 void ScriptSettings::__reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG(CODEEDIT_FONT, _defaultFont.defaultFamily());
+        WRITE_CONFIG(CODEEDIT_FONT, _defaultFont.family());
         WRITE_CONFIG(CODEEDIT_FONT_SIZE, 10);
         WRITE_CONFIG(CODEEDIT_THEME, {});
         WRITE_CONFIG(CODEEDIT_TABS_WIDTH, 4);
@@ -161,7 +165,7 @@ void ScriptSettings::__reset(SETTINGS cat) {
     }
 
     if (cat.testFlag(SETTING::CONSOLE)) {
-        WRITE_CONFIG(CONSOLE_FONT, _defaultFont.defaultFamily());
+        WRITE_CONFIG(CONSOLE_FONT, _defaultFont.family());
         WRITE_CONFIG(CONSOLE_FONT_SIZE, 10);
         WRITE_CONFIG(CONSOLE_THEME, {});
         WRITE_CONFIG(CONSOLE_TABS_WIDTH, 4);
@@ -169,6 +173,7 @@ void ScriptSettings::__reset(SETTINGS cat) {
         WRITE_CONFIG(CONSOLE_MATCH_BRACES, true);
         WRITE_CONFIG(CONSOLE_SHOW_WHITESPACE, false);
         WRITE_CONFIG(CONSOLE_AUTO_CLOSE_CHAR, true);
+        WRITE_CONFIG(CONSOLE_AUTO_IDEN, true);
     }
 
     if (cat.testFlag(SETTING::FORMAT)) {
@@ -181,11 +186,13 @@ void ScriptSettings::__reset(SETTINGS cat) {
 }
 
 ScriptSettings::ScriptSettings() : QObject() {
-    _defaultFont = qApp->font();
+    _defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     load();
 }
 
 bool ScriptSettings::editorAutoIden() const { return m_editorAutoIden; }
+
+bool ScriptSettings::consoleAutoIden() const { return m_consoleAutoIden; }
 
 int ScriptSettings::fmtIndentSpace() const { return m_indentSpace; }
 
@@ -203,6 +210,15 @@ void ScriptSettings::setEditorAutoIden(bool newEditorAutoIden) {
         WRITE_CONFIG(CODEEDIT_AUTO_IDEN, newEditorAutoIden);
         m_editorAutoIden = newEditorAutoIden;
         Q_EMIT editorSettingsUpdate();
+    }
+}
+
+void ScriptSettings::setConsoleAutoIden(bool newConsoleAutoIden) {
+    if (m_consoleAutoIden != newConsoleAutoIden) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(CONSOLE_AUTO_IDEN, newConsoleAutoIden);
+        m_consoleAutoIden = newConsoleAutoIden;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -456,15 +472,30 @@ void ScriptSettings::setEditorFontSize(int newEditorfontSize) {
     }
 }
 
+QFont ScriptSettings::editorFont() const {
+    auto font = _defaultFont;
+    font.setFamily(m_editorFontFamily);
+    font.setPointSize(m_editorfontSize);
+    return font;
+}
+
+QFont ScriptSettings::consoleFont() const {
+    auto font = _defaultFont;
+    font.setFamily(m_consoleFontFamily);
+    font.setPointSize(m_consolefontSize);
+    return font;
+}
+
 QString ScriptSettings::consoleFontFamily() const {
     return m_consoleFontFamily;
 }
 
 void ScriptSettings::setConsoleFontFamily(const QString &newConsoleFontFamily) {
-    if (m_consoleFontFamily != newConsoleFontFamily) {
+    const auto family = fixedFontFamily(newConsoleFontFamily, _defaultFont);
+    if (m_consoleFontFamily != family) {
         HANDLE_CONFIG;
-        WRITE_CONFIG(CONSOLE_FONT, newConsoleFontFamily);
-        m_consoleFontFamily = newConsoleFontFamily;
+        WRITE_CONFIG(CONSOLE_FONT, family);
+        m_consoleFontFamily = family;
         Q_EMIT consoleSettingUpdate();
     }
 }
@@ -472,10 +503,11 @@ void ScriptSettings::setConsoleFontFamily(const QString &newConsoleFontFamily) {
 QString ScriptSettings::editorFontFamily() const { return m_editorFontFamily; }
 
 void ScriptSettings::setEditorFontFamily(const QString &newEditorFontFamily) {
-    if (m_editorFontFamily != newEditorFontFamily) {
+    const auto family = fixedFontFamily(newEditorFontFamily, _defaultFont);
+    if (m_editorFontFamily != family) {
         HANDLE_CONFIG;
-        WRITE_CONFIG(CODEEDIT_FONT, newEditorFontFamily);
-        m_editorFontFamily = newEditorFontFamily;
+        WRITE_CONFIG(CODEEDIT_FONT, family);
+        m_editorFontFamily = family;
         Q_EMIT editorSettingsUpdate();
     }
 }

@@ -42,6 +42,8 @@ public:
     void __reset(SETTINGS cat);
 
 public:
+    QFont editorFont() const;
+    QFont consoleFont() const;
     QString editorFontFamily() const;
     QString consoleFontFamily() const;
     int editorFontSize() const;
@@ -63,6 +65,7 @@ public:
     bool editorAutoCloseChar() const;
     bool consoleAutoCloseChar() const;
     bool editorAutoIden() const;
+    bool consoleAutoIden() const;
 
     int fmtIndentSpace() const;
     int fmtStrQuoteStyle() const;
@@ -92,6 +95,7 @@ public slots:
     void setEditorAutoCloseChar(bool newEditorAutoCloseChar);
     void setConsoleAutoCloseChar(bool newConsoleAutoCloseChar);
     void setEditorAutoIden(bool newEditorAutoIden);
+    void setConsoleAutoIden(bool newConsoleAutoIden);
 
     void setFmtIndentSpace(int newIndentSpace);
     void setFmtStrQuoteStyle(int newStrQuoteStyle);
@@ -131,7 +135,9 @@ private:
     bool m_editorShowLineNumber = true;
     bool m_editorFolding = true;
     bool m_editorShowGuideLine = true;
+
     bool m_editorAutoIden = true;
+    bool m_consoleAutoIden = true;
 
     bool m_editorShowWhiteSpace = false;
     bool m_consoleShowWhiteSpace = false;

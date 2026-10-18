@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -32,6 +32,7 @@
 
 #include "class/skinmanager.h"
 
+#include <QSignalBlocker>
 #include <QVBoxLayout>
 
 #include <KSyntaxHighlighting/Definition>
@@ -63,7 +64,7 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         console->appendCommandPrompt();
         console->write(QStringLiteral(R"(for i = 0, 4 do)"));
         console->appendCommandPrompt(true);
-        console->write(QStringLiteral(R"(print(i))"));
+        console->write(QStringLiteral(R"(    print(i))"));
         console->appendCommandPrompt(true);
         console->write(QStringLiteral("end"));
         console->newLine();
@@ -106,21 +107,31 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 }
             });
 
-    auto font = _edit->font();
+    const auto &settings = ScriptSettings::instance();
     ui->cbFont->setFontFilters(QFontComboBox::MonospacedFonts);
-    ui->cbFont->setCurrentFont(font);
-    ui->spnFontSize->setValue(font.pointSize());
+    setPreviewFont(m_isConsole ? settings.consoleFont()
+                               : settings.editorFont());
     connect(ui->cbFont, &QFontComboBox::currentFontChanged, _edit,
             [this](const QFont &font) {
-                auto f = font;
-                f.setPointSize(ui->spnFontSize->value());
-                _edit->setFont(f);
+                auto &settings = ScriptSettings::instance();
+                if (m_isConsole) {
+                    settings.setConsoleFontFamily(font.family());
+                } else {
+                    settings.setEditorFontFamily(font.family());
+                }
+                setPreviewFont(m_isConsole ? settings.consoleFont()
+                                           : settings.editorFont());
             });
     connect(ui->spnFontSize, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
             [this](int value) {
-                auto f = ui->cbFont->currentFont();
-                f.setPointSize(value);
-                _edit->setFont(f);
+                auto &settings = ScriptSettings::instance();
+                if (m_isConsole) {
+                    settings.setConsoleFontSize(value);
+                } else {
+                    settings.setEditorFontSize(value);
+                }
+                setPreviewFont(m_isConsole ? settings.consoleFont()
+                                           : settings.editorFont());
             });
     connect(ui->spnTabWidth, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
             &CodeEdit::setIndentWidth);
@@ -156,7 +167,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         ui->chkShowFolding->setEnabled(false);
         ui->chkShowIndentGuides->setEnabled(false);
         ui->chkWordWrap->setEnabled(false);
-        ui->chkAutoIden->setEnabled(false);
 
         _name = tr("Console");
         _id = QStringLiteral("Console");
@@ -179,13 +189,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 set.setConsoleTheme(ui->cbTheme->currentText());
             }
         });
-        connect(ui->cbFont, &QFontComboBox::currentFontChanged, set,
-                [](const QFont &font) {
-                    ScriptSettings::instance().setConsoleFontFamily(
-                        font.family());
-                });
-        connect(ui->spnFontSize, &QSpinBox::valueChanged, set,
-                &ScriptSettings::setConsoleFontSize);
         connect(ui->spnTabWidth, &QSpinBox::valueChanged, set,
                 &ScriptSettings::setConsoleTabWidth);
         connect(ui->cbIndentation, &QComboBox::currentIndexChanged, set,
@@ -199,6 +202,8 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 &ScriptSettings::setConsoleShowWhiteSpace);
         connect(ui->chkAutoCloseChar, &QCheckBox::toggled, set,
                 &ScriptSettings::setConsoleAutoCloseChar);
+        connect(ui->chkAutoIden, &QCheckBox::toggled, set,
+                &ScriptSettings::setConsoleAutoIden);
     } else {
         connect(ui->cbTheme, &QComboBox::currentIndexChanged, set, [this]() {
             auto &set = ScriptSettings::instance();
@@ -208,13 +213,6 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 set.setEditorTheme(ui->cbTheme->currentText());
             }
         });
-        connect(ui->cbFont, &QFontComboBox::currentFontChanged, set,
-                [](const QFont &font) {
-                    ScriptSettings::instance().setEditorFontFamily(
-                        font.family());
-                });
-        connect(ui->spnFontSize, &QSpinBox::valueChanged, set,
-                &ScriptSettings::setEditorFontSize);
         connect(ui->spnTabWidth, &QSpinBox::valueChanged, set,
                 &ScriptSettings::setEditorTabWidth);
         connect(ui->cbIndentation, &QComboBox::currentIndexChanged, set,
@@ -241,6 +239,16 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
 
 QEditConfig::~QEditConfig() { delete ui; }
 
+void QEditConfig::setPreviewFont(const QFont &font) {
+    const QSignalBlocker fontBlocker(ui->cbFont);
+    const QSignalBlocker sizeBlocker(ui->spnFontSize);
+    _edit->setDefaultFont(font);
+    ui->cbFont->setCurrentFont(font);
+    // Platform aliases may not have a matching row in the font family model.
+    ui->cbFont->setEditText(font.family());
+    ui->spnFontSize->setValue(font.pointSize());
+}
+
 /*!
         \brief Restore default values for all subcontrols
 
@@ -266,9 +274,7 @@ void QEditConfig::reload() {
             ui->cbTheme->setCurrentText(set.consoleTheme());
         }
 
-        auto dfont = QFont(set.consoleFontFamily());
-        ui->cbFont->setCurrentFont(dfont);
-        ui->spnFontSize->setValue(set.consoleFontSize());
+        setPreviewFont(set.consoleFont());
         ui->spnTabWidth->setValue(set.consoleTabWidth());
 
         ui->cbIndentation->setCurrentText(
@@ -276,6 +282,7 @@ void QEditConfig::reload() {
         ui->chkMatchBraces->setChecked(set.consoleMatchBraces());
         ui->chkShowWhitespace->setChecked(set.consoleShowWhiteSpace());
         ui->chkAutoCloseChar->setChecked(set.consoleAutoCloseChar());
+        ui->chkAutoIden->setChecked(set.consoleAutoIden());
     } else {
         auto theme = set.editorTheme();
         if (theme.isEmpty()) {
@@ -284,9 +291,7 @@ void QEditConfig::reload() {
             ui->cbTheme->setCurrentText(set.editorTheme());
         }
 
-        auto dfont = QFont(set.editorFontFamily());
-        ui->cbFont->setCurrentFont(dfont);
-        ui->spnFontSize->setValue(set.editorFontSize());
+        setPreviewFont(set.editorFont());
         ui->spnTabWidth->setValue(set.editorTabWidth());
 
         ui->cbIndentation->setCurrentText(
@@ -298,6 +303,7 @@ void QEditConfig::reload() {
         ui->chkMatchBraces->setChecked(set.editorMatchBraces());
         ui->chkShowWhitespace->setChecked(set.editorShowWhiteSpace());
         ui->chkAutoCloseChar->setChecked(set.editorAutoCloseChar());
+        ui->chkAutoIden->setChecked(set.editorAutoIden());
     }
 }
 

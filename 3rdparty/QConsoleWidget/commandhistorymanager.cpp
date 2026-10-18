@@ -19,28 +19,48 @@
 
 #include "utilities.h"
 
-#include <QTextStream>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QSaveFile>
+
+constexpr auto COMMAND_FILE_SIZE_LIMIT = 4 * 1024 * 1024;
 
 QStringList CommandHistoryManager::load() {
     QStringList ret;
     QFile f(getHistoryPath());
-    if (f.open(QFile::ReadOnly)) {
-        QTextStream is(&f);
-        while (!is.atEnd()) {
-            ret.append(is.readLine());
+    if (f.size() > COMMAND_FILE_SIZE_LIMIT) {
+        return {};
+    }
+    if (f.open(QFile::ReadOnly | QFile::Text)) {
+        const auto contents = f.readAll();
+        const auto document = QJsonDocument::fromJson(f.readAll());
+        if (!document.isArray()) {
+            return {};
+        }
+        for (const auto &entry : document.array()) {
+            if (!entry.isString()) {
+                return {};
+            }
+            ret.append(entry.toString());
         }
     }
     return ret;
 }
 
 void CommandHistoryManager::save(const QStringList &strings) {
-    QFile f(getHistoryPath());
-    if (f.open(QFile::WriteOnly | QFile::Truncate)) {
-        QTextStream os(&f);
-        int n = strings.size();
-        while (n > 0) {
-            os << strings.at(--n) << Qt::endl;
+    QJsonArray entries;
+    // Load feeds entries into History::add, which prepends the newest entry.
+    for (auto it = strings.crbegin(); it != strings.crend(); ++it) {
+        entries.append(*it);
+    }
+    const auto contents = QJsonDocument(entries).toJson();
+    QSaveFile f(getHistoryPath());
+    if (f.open(QFile::WriteOnly)) {
+        if (f.write(contents) != contents.size()) {
+            f.cancelWriting();
+            return;
         }
+        f.commit();
     }
 }
 

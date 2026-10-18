@@ -17,6 +17,8 @@
 
 #include "scriptingconsolebase.h"
 
+#include <QScopedValueRollback>
+#include <QSignalBlocker>
 #include <QTextBlock>
 #include <QTextStream>
 
@@ -32,6 +34,75 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     setSyntax(syntaxRepo().definitionForName("Luau"));
 
     _s.setDevice(this->device());
+    connect(this, &QPlainTextEdit::textChanged, this, [this]() {
+        if (mode() == Input) {
+            refreshInputBlocks();
+        }
+    });
+}
+
+void ScriptingConsoleBase::setTabWidth(int width) {
+    QConsoleWidget::setTabWidth(width);
+    consoleHighligher()->rehighlight();
+}
+
+void ScriptingConsoleBase::changeEvent(QEvent *event) {
+    QConsoleWidget::changeEvent(event);
+    if (event->type() == QEvent::FontChange) {
+        QMetaObject::invokeMethod(
+            this, [this]() { setTabWidth(tabWidth()); }, Qt::QueuedConnection);
+    }
+}
+
+void ScriptingConsoleBase::refreshInputBlocks() {
+    if (_refreshingInput) {
+        return;
+    }
+    QScopedValueRollback refreshing(_refreshingInput, true);
+    const QSignalBlocker blocker(this);
+    auto cursor = textCursor();
+    auto block = document()->findBlock(inpos_);
+    if (!block.isValid()) {
+        return;
+    }
+    auto h = consoleHighligher();
+    const auto prefixLength = inpos_ - block.position();
+    h->setBlockAsCodeWithPrefix(block, prefixLength, {}, !_lastCommandPrompt);
+    block = block.next();
+    const auto prompt = this->commandPrompt(true);
+    while (block.isValid()) {
+        if (!h->hasContinuationPrompt(block)) {
+            QTextCursor prefixCursor(block);
+            prefixCursor.insertText(prompt);
+        }
+        h->setBlockAsCodeWithPrefix(block, prompt.length());
+        block = block.next();
+    }
+    setTextCursor(cursor);
+}
+
+QString ScriptingConsoleBase::commandPrompt(bool storeOnly) {
+    if (storeOnly) {
+        return QStringLiteral(".... > ");
+    } else {
+        return QStringLiteral("luau > ");
+    }
+}
+
+QString ScriptingConsoleBase::currentCommandLine() const {
+    QStringList lines;
+    auto block = document()->findBlock(inpos_);
+    while (block.isValid()) {
+        const auto start = inputStartForBlock(block) - block.position();
+        lines.append(block.text().sliced(start));
+        block = block.next();
+    }
+    return lines.join('\n');
+}
+
+int ScriptingConsoleBase::inputStartForBlock(const QTextBlock &block) const {
+    return qMax(inpos_, block.position() +
+                            consoleHighligher()->blockPrefixLength(block));
 }
 
 void ScriptingConsoleBase::stdOutLine(QString str,
@@ -113,20 +184,39 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
         }
     }
 
-    if (storeOnly) {
-        commandPrompt += QStringLiteral(".... > ");
-    } else {
-        commandPrompt += QStringLiteral("luau > ");
-    }
-
+    commandPrompt += this->commandPrompt(storeOnly);
     _lastCommandPrompt = storeOnly;
     auto id = write(commandPrompt);
     blk = doc->findBlockByNumber(id);
-    h->setBlockAsCodeWithPrefix(blk, commandPrompt.length());
+    h->setBlockAsCodeWithPrefix(blk, commandPrompt.length(), {}, !storeOnly);
 }
 
 bool ScriptingConsoleBase::lastCommandPrompt() const {
     return _lastCommandPrompt;
+}
+
+bool ScriptingConsoleBase::restorePreviousCommandPrompt(bool storeOnly) {
+    auto block = document()->findBlock(inpos_).previous();
+    auto h = consoleHighligher();
+    const auto prefixLength = h->blockPrefixLength(block);
+    if (!block.isValid() || prefixLength <= 0) {
+        return false;
+    }
+
+    const auto inputStart = block.position() + prefixLength;
+    const auto joinPosition = block.position() + block.length() - 1;
+    setMode(Output);
+    auto cursor = textCursor();
+    cursor.setPosition(joinPosition);
+    cursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    cursor.removeSelectedText();
+    setMode(Input);
+    inpos_ = inputStart;
+    cursor.setPosition(joinPosition);
+    setTextCursor(cursor);
+    _lastCommandPrompt = storeOnly;
+    h->setBlockAsCodeWithPrefix(block, prefixLength, {}, !storeOnly);
+    return true;
 }
 
 WingConsoleHighligher *ScriptingConsoleBase::consoleHighligher() const {

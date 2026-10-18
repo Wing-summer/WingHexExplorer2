@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -19,6 +19,7 @@
 #include "QConsoleIODevice.h"
 
 #include <QAbstractItemView>
+#include <QAbstractTextDocumentLayout>
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>
@@ -31,13 +32,14 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocumentFragment>
+#include <QTextLayout>
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
 QConsoleWidget::QConsoleWidget(QWidget *parent)
-    : WingCodeEdit(parent), mode_(Output) {
+    : WingCodeEdit(parent), mode_(Output), inpos_(0) {
     iodevice_ = new QConsoleIODevice(this, this);
 
     setTextInteractionFlags(Qt::TextEditorInteraction);
@@ -67,6 +69,7 @@ void QConsoleWidget::setMode(ConsoleMode m) {
     }
 
     if (m == Output) {
+        history_.deactivate();
         mode_ = Output;
     }
 }
@@ -78,21 +81,22 @@ QString QConsoleWidget::getCommandLine() {
         return {};
     }
 
-    // select text in edit zone (from the input pos to the end)
-    QTextCursor textCursor = this->textCursor();
-    textCursor.movePosition(QTextCursor::End);
-    textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
-    QString code = textCursor.selectedText();
+    QString code = currentCommandLine();
     code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
     return code.trimmed();
 }
 
 void QConsoleWidget::paste() {
+    if (mode() != Input || !canPaste()) {
+        return;
+    }
     QTextCursor textCursor = this->textCursor();
     const QMimeData *const clipboard = QApplication::clipboard()->mimeData();
     const QString text = clipboard->text();
     if (!text.isNull()) {
+        history_.deactivate();
         textCursor.insertText(text);
+        setTextCursor(textCursor);
     }
 }
 
@@ -124,18 +128,80 @@ void QConsoleWidget::handleReturnKey(Qt::KeyboardModifiers mod) {
 }
 
 void QConsoleWidget::handleTabKey(Qt::KeyboardModifiers mod) {
-    Q_UNUSED(mod);
+    const auto key =
+        mod.testFlag(Qt::ShiftModifier) ? Qt::Key_Backtab : Qt::Key_Tab;
+    QKeyEvent event(QEvent::KeyPress, key, mod, QStringLiteral("\t"));
+    WingCodeEdit::keyPressEvent(&event);
+}
 
-    QTextCursor tc = this->textCursor();
-    int anchor = tc.anchor();
-    int position = tc.position();
-    tc.setPosition(inpos_);
-    tc.setPosition(position, QTextCursor::KeepAnchor);
-    QString text = tc.selectedText().trimmed();
-    tc.setPosition(anchor, QTextCursor::MoveAnchor);
-    tc.setPosition(position, QTextCursor::KeepAnchor);
-    if (text.isEmpty()) {
-        tc.insertText(QString(4, ' '));
+bool QConsoleWidget::handleBackspaceAtInputStart() { return false; }
+
+void QConsoleWidget::prepareInputNavigation() {}
+
+void QConsoleWidget::handleHistoryKey(QKeyEvent *event) {
+    prepareInputNavigation();
+    const auto up = event->key() == Qt::Key_Up;
+    const auto modifiers = event->modifiers();
+    event->accept();
+    auto doc = this->document();
+    auto cursor = textCursor();
+    const auto first = doc->findBlock(inpos_);
+    const auto last = doc->lastBlock();
+    auto block = cursor.block();
+    doc->documentLayout()->blockBoundingRect(block);
+    const auto line =
+        block.layout()->lineForTextPosition(cursor.positionInBlock());
+    const auto firstLine =
+        first.layout()->lineForTextPosition(inpos_ - first.position());
+    const auto atBoundary =
+        up ? block == first && (!line.isValid() || !firstLine.isValid() ||
+                                line.lineNumber() <= firstLine.lineNumber())
+           : block == last &&
+                 (!line.isValid() ||
+                  line.lineNumber() == last.layout()->lineCount() - 1);
+
+    if (modifiers != Qt::NoModifier || !atBoundary) {
+        if (cursor.anchor() < inpos_) {
+            cursor.setPosition(inpos_);
+        }
+        const auto anchorMode = modifiers.testFlag(Qt::ShiftModifier)
+                                    ? QTextCursor::KeepAnchor
+                                    : QTextCursor::MoveAnchor;
+        cursor.movePosition(up ? QTextCursor::Up : QTextCursor::Down,
+                            anchorMode);
+        cursor.setPosition(
+            qMax(cursor.position(), inputStartForBlock(cursor.block())),
+            anchorMode);
+        setTextCursor(cursor);
+        ensureCursorVisible();
+        return;
+    }
+
+    if (!history_.isActive()) {
+        if (!up) {
+            return;
+        }
+        auto code = currentCommandLine();
+        code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
+        history_.activate(code);
+    }
+    if (history_.move(up)) {
+        replaceCommandLine(history_.currentValue());
+        cursor = textCursor();
+        if (up) {
+            cursor.setPosition(inpos_);
+        } else {
+            cursor.movePosition(QTextCursor::End);
+        }
+        setTextCursor(cursor);
+        if (history_.pos_ == -1) {
+            history_.deactivate();
+        }
+    } else {
+        if (history_.pos_ == -1) {
+            history_.deactivate();
+        }
+        QApplication::beep();
     }
 }
 
@@ -144,12 +210,19 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         return;
     }
 
+    int key = e->key();
+    if (mode() == Input && (key == Qt::Key_Up || key == Qt::Key_Down ||
+                            key == Qt::Key_Tab || key == Qt::Key_Backtab)) {
+        prepareInputNavigation();
+    }
+
     QTextCursor textCursor = this->textCursor();
     bool selectionInEditZone = isSelectionInEditZone();
-    int key = e->key();
+
+    auto mods = e->modifiers();
 
     // check for user abort request
-    if (e->modifiers() == Qt::ControlModifier) {
+    if (mods == Qt::ControlModifier) {
         switch (key) {
         case Qt::Key_Q:
             Q_EMIT abortEvaluation();
@@ -171,12 +244,13 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         return;
     }
 
-    if (e->modifiers() == Qt::ControlModifier) {
+    if (mods == Qt::ControlModifier) {
         switch (key) {
         case Qt::Key_X:
             // Allow cut only if the selection is limited to the interactive
             // area
             if (selectionInEditZone) {
+                history_.deactivate();
                 cut();
             }
             e->accept();
@@ -191,14 +265,20 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             return;
         case Qt::Key_Backspace:
             e->accept();
+            history_.deactivate();
             replaceCommandLine(QString());
             return;
         }
     }
 
-    int shiftMod = e->modifiers() == Qt::ShiftModifier;
+    const auto shiftMod = mods.testFlag(Qt::ShiftModifier);
 
-    if (history_.isActive() && key != Qt::Key_Up && key != Qt::Key_Down) {
+    const auto navigationKey =
+        key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Left ||
+        key == Qt::Key_Right || key == Qt::Key_Home || key == Qt::Key_End ||
+        key == Qt::Key_PageUp || key == Qt::Key_PageDown ||
+        key == Qt::Key_Shift || key == Qt::Key_Control || key == Qt::Key_Alt;
+    if (history_.isActive() && !navigationKey) {
         history_.deactivate();
     }
 
@@ -206,78 +286,121 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     // for all keys except modifiers
     if (!isCursorInEditZone() && key != Qt::Key_Control &&
         key != Qt::Key_Shift && key != Qt::Key_Alt) {
-        textCursor.movePosition(QTextCursor::End);
+        auto block = textCursor.block();
+        if (block.position() >= document()->findBlock(inpos_).position()) {
+            textCursor.setPosition(inputStartForBlock(block));
+        } else {
+            textCursor.movePosition(QTextCursor::End);
+        }
         setTextCursor(textCursor);
     }
 
     switch (key) {
     case Qt::Key_Up:
-        // Activate the history and move to the 1st matching history item
-        if (!history_.isActive()) {
-            history_.activate(getCommandLine());
-        }
-        if (history_.move(true)) {
-            replaceCommandLine(history_.currentValue());
-        } else {
-            QApplication::beep();
-        }
-        e->accept();
+    case Qt::Key_Down:
+        handleHistoryKey(e);
         break;
 
-    case Qt::Key_Down:
-        if (history_.move(false)) {
-            replaceCommandLine(history_.currentValue());
-        } else {
-            QApplication::beep();
-        }
-        e->accept();
-
-    case Qt::Key_Left:
-        if (textCursor.position() > inpos_) {
+    case Qt::Key_Left: {
+        auto pos = textCursor.position();
+        auto block = textCursor.block();
+        if ((!textCursor.hasSelection() || shiftMod) &&
+            pos == inputStartForBlock(block) && pos > inpos_) {
+            textCursor.movePosition(QTextCursor::PreviousBlock,
+                                    shiftMod ? QTextCursor::KeepAnchor
+                                             : QTextCursor::MoveAnchor);
+            textCursor.movePosition(QTextCursor::EndOfBlock,
+                                    shiftMod ? QTextCursor::KeepAnchor
+                                             : QTextCursor::MoveAnchor);
+            setTextCursor(textCursor);
+        } else if (pos > inputStartForBlock(block)) {
             processDefaultKeyPressEvent(e);
+            auto cursor = this->textCursor();
+            if (cursor.position() < inputStartForBlock(block)) {
+                cursor.setPosition(inputStartForBlock(block),
+                                   shiftMod ? QTextCursor::KeepAnchor
+                                            : QTextCursor::MoveAnchor);
+                setTextCursor(cursor);
+            }
         } else {
             QApplication::beep();
             e->accept();
         }
-        break;
+    } break;
+
+    case Qt::Key_Right: {
+        auto block = textCursor.block();
+        auto nextBlock = block.next();
+        if (textCursor.atBlockEnd() && nextBlock.isValid()) {
+            textCursor.setPosition(inputStartForBlock(nextBlock),
+                                   shiftMod ? QTextCursor::KeepAnchor
+                                            : QTextCursor::MoveAnchor);
+            setTextCursor(textCursor);
+        } else {
+            processDefaultKeyPressEvent(e);
+        }
+    } break;
 
     case Qt::Key_Delete:
         e->accept();
         if (selectionInEditZone) {
             cut();
         } else {
+            auto block = textCursor.block();
+            auto nextBlock = block.next();
             // cursor must be in edit zone
-            if (textCursor.selectionStart() < inpos_) {
+            if (textCursor.hasSelection() ||
+                textCursor.selectionStart() < inpos_) {
                 QApplication::beep();
+            } else if (!textCursor.hasSelection() && textCursor.atBlockEnd() &&
+                       nextBlock.isValid()) {
+                textCursor.setPosition(inputStartForBlock(nextBlock),
+                                       QTextCursor::KeepAnchor);
+                textCursor.removeSelectedText();
+                setTextCursor(textCursor);
             } else {
                 processDefaultKeyPressEvent(e);
             }
         }
         break;
 
-    case Qt::Key_Backspace:
+    case Qt::Key_Backspace: {
         e->accept();
+        auto block = textCursor.block();
+        if (!textCursor.hasSelection() &&
+            textCursor.position() == inputStartForBlock(block) &&
+            e->modifiers() == Qt::NoModifier && handleBackspaceAtInputStart()) {
+            break;
+        }
         if (selectionInEditZone) {
             cut();
         } else {
             // cursor must be in edit zone
-            if (textCursor.selectionStart() <= inpos_) {
+            if (textCursor.hasSelection() ||
+                textCursor.selectionStart() <= inputStartForBlock(block)) {
                 QApplication::beep();
             } else {
                 processDefaultKeyPressEvent(e);
             }
         }
-        break;
+    } break;
 
     case Qt::Key_Tab:
+    case Qt::Key_Backtab:
         e->accept();
-        handleTabKey(e->modifiers());
+        if (textCursor.hasSelection() && !selectionInEditZone) {
+            return;
+        }
+        handleTabKey(key == Qt::Key_Backtab ? mods | Qt::ShiftModifier : mods);
         return;
 
     case Qt::Key_Home:
         e->accept();
-        textCursor.setPosition(inpos_, shiftMod ? QTextCursor::KeepAnchor
-                                                : QTextCursor::MoveAnchor);
+        textCursor.setPosition(mods.testFlag(Qt::ControlModifier)
+                                   ? inpos_
+                                   : inputStartForBlock(textCursor.block()),
+                               shiftMod ? QTextCursor::KeepAnchor
+                                        : QTextCursor::MoveAnchor);
         setTextCursor(textCursor);
         break;
 
@@ -289,6 +412,10 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     default:
         e->accept();
+        if (textCursor.hasSelection() && !selectionInEditZone &&
+            !e->text().isEmpty()) {
+            return;
+        }
         processDefaultKeyPressEvent(e);
         break;
     }
@@ -322,22 +449,21 @@ bool QConsoleWidget::isSelectionInEditZone() const {
         return false;
     }
 
-    int selectionStart = textCursor.selectionStart();
-    int selectionEnd = textCursor.selectionEnd();
-
-    return selectionStart >= inpos_ && selectionEnd >= inpos_;
+    return canPaste();
 }
 
 bool QConsoleWidget::isCursorInEditZone() const {
-    return textCursor().position() >= inpos_;
+    auto textCursor = this->textCursor();
+    return textCursor.position() >= inputStartForBlock(textCursor.block());
 }
 
 bool QConsoleWidget::canPaste() const {
     QTextCursor textCursor = this->textCursor();
-    if (textCursor.position() < inpos_) {
+    if (textCursor.position() < inputStartForBlock(textCursor.block())) {
         return false;
     }
-    if (textCursor.anchor() < inpos_) {
+    textCursor.setPosition(textCursor.anchor());
+    if (textCursor.position() < inputStartForBlock(textCursor.block())) {
         return false;
     }
     return true;
@@ -365,6 +491,17 @@ QString QConsoleWidget::currentCommandLine() const {
     textCursor.movePosition(QTextCursor::End);
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
     return textCursor.selectedText();
+}
+
+int QConsoleWidget::inputStartForBlock(const QTextBlock &block) const {
+    return qMax(inpos_, block.position());
+}
+
+int QConsoleWidget::blockTextStart(const QTextBlock &block) const {
+    if (block.position() < document()->findBlock(inpos_).position()) {
+        return -1;
+    }
+    return inputStartForBlock(block) - block.position();
 }
 
 void QConsoleWidget::dragMoveEvent(QDragMoveEvent *e) { e->ignore(); }
@@ -469,24 +606,7 @@ bool QConsoleWidget::History::move(bool dir) {
 }
 
 int QConsoleWidget::History::indexOf(bool dir, int from) const {
-    int i = from, to = from;
-    if (dir) {
-        while (i < strings_.size() - 1) {
-            const QString &si = strings_.at(++i);
-            if (si.startsWith(token_)) {
-                return i;
-            }
-        }
-    } else {
-        while (i > 0) {
-            const QString &si = strings_.at(--i);
-            if (si.startsWith(token_)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    return to;
+    return qBound(-1, from + (dir ? 1 : -1), int(strings_.size()) - 1);
 }
 
 /////////////////// Stream manipulators /////////////////////
@@ -533,7 +653,8 @@ void QConsoleWidget::mousePressEvent(QMouseEvent *event) {
 }
 
 void QConsoleWidget::insertFromMimeData(const QMimeData *source) {
-    if (isSelectionInEditZone()) {
+    if (mode() == Input && canPaste()) {
+        history_.deactivate();
         WingCodeEdit::insertFromMimeData(source);
     }
 }

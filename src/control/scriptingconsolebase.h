@@ -30,6 +30,7 @@ public:
     QTextStream &consoleStream();
 
     bool lastCommandPrompt() const;
+    void setTabWidth(int width);
 
 public:
     WingConsoleHighligher *consoleHighligher() const;
@@ -47,12 +48,26 @@ public slots:
     //! return prefix length
     void appendCommandPrompt(bool storeOnly = false);
 
+protected:
+    void changeEvent(QEvent *event) override;
+    bool restorePreviousCommandPrompt(bool storeOnly);
+    void setLastCommandPrompt(bool storeOnly) {
+        _lastCommandPrompt = storeOnly;
+    }
+    QString currentCommandLine() const override;
+    int inputStartForBlock(const QTextBlock &block) const override;
+    void refreshInputBlocks();
+
+private:
+    static QString commandPrompt(bool storeOnly);
+
 private:
     QTextStream _s;
     QTextCharFormat _warnCharFmt;
     QTextCharFormat _errCharFmt;
 
     bool _lastCommandPrompt = false;
+    bool _refreshingInput = false;
 };
 
 #endif // SCRIPTINGCONSOLEBASE_H

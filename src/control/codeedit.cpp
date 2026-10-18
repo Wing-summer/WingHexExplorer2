@@ -109,7 +109,11 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
     }
 
     auto tip = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+    auto edit = textCursor();
+    edit.beginEditBlock();
     tip.applyEdit(this, completer->completionPrefix(), true);
+    reindentCurrentLine();
+    edit.endEditBlock();
 }
 
 void CodeEdit::addEditorBasicShortcut() {
@@ -144,8 +148,6 @@ void CodeEdit::addMoveLineShortcut() {
 
 void CodeEdit::applyEditorSetStyle() {
     auto &set = ScriptSettings::instance();
-    auto dfont = QFont(set.editorFontFamily());
-    dfont.setPointSize(set.editorFontSize());
 
     auto thname = set.editorTheme();
     if (thname.isEmpty()) {
@@ -163,7 +165,7 @@ void CodeEdit::applyEditorSetStyle() {
         this->setTheme(syntaxRepo().theme(thname));
     }
 
-    this->setFont(dfont);
+    setDefaultFont(set.editorFont());
     this->setTabWidth(set.editorTabWidth());
     this->setIndentationMode(WingCodeEdit::IndentationMode(set.editorInden()));
     this->setShowLineNumbers(set.editorShowLineNumber());

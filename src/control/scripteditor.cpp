@@ -20,6 +20,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "class/editorlspevent.h"
 #include "class/luaucompletion.h"
+#include "class/luauindentation.h"
 #include "class/scriptsettings.h"
 #include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauformatter.h"
@@ -49,6 +50,7 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
     m_editor = new CodeEdit(this);
+    m_editor->setIndentationStrategy(LuauIndentation::forEditor);
     m_editor->setSyntax(m_editor->syntaxRepo().definitionForName("Luau"));
     connect(m_editor, &CodeEdit::textChanged, this, [this]() {
         syncDocChange();

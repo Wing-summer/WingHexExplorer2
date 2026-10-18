@@ -47,6 +47,7 @@ private:
     void reload();
     void loadThemes();
     void loadIndentations();
+    void setPreviewFont(const QFont &font);
 
 private:
     Ui::QEditConfig *ui;

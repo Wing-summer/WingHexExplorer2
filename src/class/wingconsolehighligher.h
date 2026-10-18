@@ -20,6 +20,9 @@
 
 #include "WingCodeEdit/wingsyntaxhighlighter.h"
 
+#include <QFont>
+#include <QTextCharFormat>
+
 struct WingEditorMetaInfo {
     bool isClickable = false;
     QString section;
@@ -45,11 +48,13 @@ public:
     void setBlockAsTextWithFormat(QTextBlock &block, const QTextCharFormat &fmt,
                                   const WingEditorMetaInfo &info = {});
     void setBlockAsCodeWithPrefix(QTextBlock &block, int codePrefix = 0,
-                                  const WingEditorMetaInfo &info = {});
+                                  const WingEditorMetaInfo &info = {},
+                                  bool startsCommand = false);
     void setBlockEditorMetaInfo(QTextBlock &block,
                                 const WingEditorMetaInfo &info);
 
     bool isDefaultBlock(const QTextBlock &block) const;
+    bool hasContinuationPrompt(const QTextBlock &block) const;
 
     WingEditorMetaInfo blockEditorMetaInfo(const QTextBlock &block);
     int blockPrefixLength(const QTextBlock &block);
@@ -62,6 +67,18 @@ protected:
     virtual void
     applyFolding(int offset, int length,
                  KSyntaxHighlighting::FoldingRegion region) override;
+
+private:
+    void highlightPrompt(QStringView prompt);
+
+    int _formatOffset = 0;
+    // One-entry cache: continuation prompts normally repeat across many blocks.
+    bool _promptCacheValid = false;
+    QFont _promptDocumentFont;
+    QString _promptText;
+    qreal _promptTabWidth = -1;
+    QTextCharFormat _promptFormat;
+    QTextCharFormat _promptTailFormat;
 };
 
 #endif // WINGCONSOLEHIGHLIGHER_H
