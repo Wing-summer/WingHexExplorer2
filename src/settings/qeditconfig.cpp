@@ -24,13 +24,13 @@
         \see QEditConfig
 */
 
-#include "class/scriptsettings.h"
-#include "control/codeedit.h"
-#include "control/scriptingconsolebase.h"
+#include "luau/runtime/scriptsettings.h"
+#include "control/editor/codeedit.h"
+#include "control/console/scriptingconsolebase.h"
 #include "ui_qeditconfig.h"
 #include "utilities.h"
 
-#include "class/skinmanager.h"
+#include "class/settings/skinmanager.h"
 
 #include <QSignalBlocker>
 #include <QVBoxLayout>

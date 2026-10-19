@@ -20,7 +20,7 @@
 
 #include <QAbstractTableModel>
 
-#include "class/cryptographichash.h"
+#include "class/util/cryptographichash.h"
 
 class CheckSumModel : public QAbstractTableModel {
     Q_OBJECT

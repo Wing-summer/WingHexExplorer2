@@ -20,7 +20,7 @@
 
 #include "control/idbtreeview.h"
 #include "control/objtreewidget.h"
-#include "control/scriptingconsole.h"
+#include "control/console/scriptingconsole.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
 
@@ -29,8 +29,8 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingCodeEdit/wingsquiggleinfomodel.h"
-#include "class/recentfilemanager.h"
-#include "control/scripteditor.h"
+#include "class/file/recentfilemanager.h"
+#include "control/editor/scripteditor.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/idbwatchmodel.h"
 #include "utilities.h"

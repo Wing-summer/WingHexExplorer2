@@ -16,9 +16,9 @@
 */
 
 #include "fileinfodialog.h"
-#include "class/compositeiconengine.h"
-#include "class/pluginsystem.h"
-#include "class/showinshell.h"
+#include "control/common/compositeiconengine.h"
+#include "class/plugin/pluginsystem.h"
+#include "class/file/showinshell.h"
 #include "control/toast.h"
 #include "utilities.h"
 

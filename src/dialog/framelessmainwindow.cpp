@@ -20,7 +20,7 @@
 #include <QStyle>
 
 #ifdef WINGHEX_USE_FRAMELESS
-#include "class/settingmanager.h"
+#include "class/settings/settingmanager.h"
 #include <widgetframe/windowbutton.h>
 #endif
 

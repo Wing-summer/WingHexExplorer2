@@ -8,9 +8,9 @@ if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
 endif()
 add_executable(language_probe
     language_probe.cpp
-    ../../src/class/languagemanager.cpp
+    ../../src/class/settings/languagemanager.cpp
     builtin.qrc)
-target_include_directories(language_probe PRIVATE stubs ../../src/class)
+target_include_directories(language_probe PRIVATE stubs ../../src/class/settings)
 target_compile_definitions(language_probe PRIVATE LANG_PAK_NAME="winghex_tr.pak")
 target_link_libraries(language_probe PRIVATE Qt6::Core Qt6::CorePrivate Qt6::Gui Qt6::Widgets)
 find_package(Qt6 REQUIRED COMPONENTS UiTools LinguistTools)

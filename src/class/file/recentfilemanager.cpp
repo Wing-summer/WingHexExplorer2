@@ -1,0 +1,297 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
+#include "recentfilemanager.h"
+#include "class/plugin/pluginsystem.h"
+#include "luau/runtime/scriptmanager.h"
+#include "control/toast.h"
+#include "dialog/historydeldialog.h"
+#include "utilities.h"
+
+#include <QFile>
+#include <QMenu>
+
+RecentFileManager::RecentFileManager(QMenu *menu, bool isScriptFile)
+    : QObject(), m_menu(menu), _isScriptFile(isScriptFile) {
+    Q_ASSERT(menu);
+    menu->setToolTipsVisible(true);
+}
+
+void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
+    Q_ASSERT(parent);
+    this->setParent(parent);
+    m_parent = parent;
+
+    QAction *a;
+    a = new QAction(m_menu);
+    a->setText(tr("Clear history"));
+    a->setIcon(ICONRES("clearhis"));
+    connect(a, &QAction::triggered, this, &RecentFileManager::clearFile);
+    m_menu->addAction(a);
+
+    a = new QAction(m_menu);
+    a->setText(tr("Remove item"));
+    a->setIcon(ICONRES("del"));
+    connect(a, &QAction::triggered, this, [this] {
+        if (hitems.count() == 0) {
+            Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                         tr("No history entries to remove."));
+            return;
+        }
+
+        HistoryDelDialog hisdlg(m_recents, _isScriptFile);
+        if (hisdlg.exec()) {
+            auto idxs = hisdlg.getResult();
+
+            if (idxs.isEmpty()) {
+                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                             tr("No history entries to remove."));
+            } else {
+                // indices are already ordered
+                for (auto pidx = idxs.rbegin(); pidx != idxs.rend(); ++pidx) {
+                    auto ind = *pidx;
+                    m_recents.removeAt(ind);
+                    auto action = hitems.takeAt(ind);
+                    m_menu->removeAction(action);
+                    action->deleteLater();
+                    _dirty = true;
+                }
+                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                             tr("History entries removed."));
+            }
+        }
+    });
+    m_menu->addAction(a);
+
+    m_menu->addSeparator();
+
+    for (auto pitem = files.rbegin(); pitem != files.rend(); ++pitem) {
+        addRecentFile(*pitem);
+    }
+}
+
+const QList<RecentFileManager::RecentInfo> &
+RecentFileManager::saveRecent() const {
+    return m_recents;
+}
+
+bool RecentFileManager::existsPath(const RecentInfo &info) {
+    const auto &url = info.url;
+    if (url.isLocalFile()) {
+        auto f = url.toLocalFile();
+        if (_isScriptFile) {
+            if (!ScriptManager::isScriptFile(f)) {
+                return false;
+            }
+        }
+        return QFile::exists(f);
+    } else {
+        if (_isScriptFile) {
+            return false;
+        }
+        auto scheme = url.scheme();
+        if (scheme.compare(QStringLiteral("wdrv"), Qt::CaseInsensitive) == 0) {
+            // plugin extension
+            auto &plgsys = PluginSystem::instance();
+            auto plgID = url.authority();
+            return plgsys.ext2Device(plgID) != nullptr;
+        }
+    }
+    return false;
+}
+
+bool RecentFileManager::isDirtyInfo(const RecentInfo &old,
+                                    const RecentInfo &info) {
+    return old.cursorRow != info.cursorRow || old.cursorCol != info.cursorCol ||
+           old.scroll != info.scroll || old.view != info.view ||
+           old.lineWidth != info.lineWidth ||
+           old.lastUseEncoding != info.lastUseEncoding;
+}
+
+bool RecentFileManager::isDirty() const { return _dirty; }
+
+QString RecentFileManager::getDisplayFileName(const RecentInfo &info,
+                                              bool isScriptFile) {
+    auto url = info.url;
+    QString displayName;
+
+    if (isScriptFile || url.isLocalFile()) {
+        QFileInfo finfo(url.toLocalFile());
+        displayName = finfo.fileName();
+    } else {
+        auto ext = url.authority();
+        auto file = url.path();
+        if (file.front() == '/') {
+            file.removeFirst();
+        }
+        displayName = QStringLiteral("[") + ext + QStringLiteral("] ") + file;
+    }
+
+    return displayName;
+}
+
+QString RecentFileManager::getDisplayTooltip(const RecentInfo &info,
+                                             bool isScriptFile) {
+    QString tt;
+    if (isScriptFile) {
+        tt = info.url.toLocalFile();
+    } else {
+        tt = QStringLiteral("<p>") + tr("[File]") + info.url.toDisplayString() +
+             QStringLiteral("</p>");
+
+        tt += QStringLiteral("<p>") + tr("[Workspace]") +
+              (info.isWorkSpace ? tr("True") : tr("False")) +
+              QStringLiteral("</p>");
+    }
+    return tt;
+}
+
+RecentFileManager::~RecentFileManager() {}
+
+void RecentFileManager::addRecentFile(const RecentInfo &info) {
+    if (!existsPath(info)) {
+        return;
+    }
+    int o = m_recents.indexOf(info);
+    if (o < 0) {
+        while (m_recents.count() >= 10) {
+            m_recents.removeLast();
+            auto a = hitems.takeLast();
+            m_menu->removeAction(a);
+            delete a;
+            _dirty = true;
+        }
+        auto a = new QAction(m_menu);
+
+        const auto &url = info.url;
+        a->setToolTip(getDisplayTooltip(info, _isScriptFile));
+        if (url.isLocalFile()) {
+            QMimeDatabase db;
+            auto fileName = info.url.toLocalFile();
+            auto mt = db.mimeTypeForFile(fileName);
+            auto title = getDisplayFileName(info, _isScriptFile);
+            if (_isScriptFile) {
+                a->setText(title);
+                a->setIcon(Utilities::getIconFromFile(qApp->style(), fileName));
+            } else {
+                if (info.isWorkSpace) {
+                    a->setText(title);
+                    a->setIcon(ICONRES(QStringLiteral("pro")));
+                    auto font = a->font();
+                    font.setUnderline(true);
+                    a->setFont(font);
+                } else {
+                    a->setText(title + QStringLiteral(" (") + mt.name() +
+                               QStringLiteral(")"));
+                    a->setIcon(
+                        Utilities::getIconFromFile(qApp->style(), fileName));
+                }
+            }
+        } else {
+            // plugin extension
+            auto &plgsys = PluginSystem::instance();
+            auto plgID = url.authority();
+            a->setText(getDisplayFileName(info, false));
+            auto r = plgsys.ext2Device(plgID);
+            if (r) {
+                a->setIcon(r->supportedFileIcon());
+            } else {
+                a->setIcon(ICONRES(QStringLiteral("devext")));
+            }
+        }
+        connect(a, &QAction::triggered, this, [this, a] {
+            auto send = qobject_cast<QAction *>(sender());
+            if (send) {
+                auto idx = hitems.indexOf(send);
+                if (idx < 0) {
+                    return;
+                }
+                auto f = m_recents.at(idx);
+                if (existsPath(f)) {
+                    auto idx = hitems.indexOf(a);
+                    if (idx > 0) {
+                        m_menu->removeAction(a);
+                        m_menu->insertAction(hitems.first(), a);
+                        hitems.move(idx, 0);
+                        m_recents.move(idx, 0);
+                        _dirty = true;
+                    }
+                    Q_EMIT triggered(f);
+                } else {
+                    auto index = hitems.indexOf(send);
+                    if (index >= 0) {
+                        m_menu->removeAction(send);
+                        hitems.removeAt(index);
+                        send->deleteLater();
+                        m_recents.removeAt(index);
+                        _dirty = true;
+                        Toast::toast(m_parent,
+                                     NAMEICONRES(QStringLiteral("clearhis")),
+                                     tr("The file does not exist; this entry "
+                                        "has been removed!"));
+                    }
+                }
+            }
+        });
+
+        if (hitems.count()) {
+            m_menu->insertAction(hitems.first(), a);
+        } else {
+            m_menu->addAction(a);
+        }
+        m_recents.prepend(info);
+        hitems.prepend(a);
+    } else {
+        if (hitems.count() > 1) {
+            auto a = hitems.at(o);
+            m_menu->removeAction(a);
+            m_menu->insertAction(hitems.first(), a);
+            hitems.move(o, 0);
+            m_recents.move(o, 0);
+            _dirty = true;
+        }
+    }
+}
+
+void RecentFileManager::updateRecentFile(const RecentInfo &info) {
+    int o = m_recents.indexOf(info);
+    if (o < 0) {
+        return;
+    }
+    auto &ninfo = m_recents[o];
+    if (isDirtyInfo(ninfo, info)) {
+        ninfo = info;
+        _dirty = true;
+    }
+}
+
+void RecentFileManager::clearFile() {
+    if (hitems.count() == 0) {
+        Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                     tr("No history entries to remove."));
+        return;
+    }
+    for (const auto &item : std::as_const(hitems)) {
+        m_menu->removeAction(item);
+        delete item;
+    }
+    m_recents.clear();
+    hitems.clear();
+    _dirty = true;
+    Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                 tr("History cleared."));
+}

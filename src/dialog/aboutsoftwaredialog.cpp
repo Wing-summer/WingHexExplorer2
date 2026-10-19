@@ -18,7 +18,7 @@
 #include "aboutsoftwaredialog.h"
 #include "ui_aboutsoftwaredialog.h"
 
-#include "class/languagemanager.h"
+#include "class/settings/languagemanager.h"
 #include "utilities.h"
 
 AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)

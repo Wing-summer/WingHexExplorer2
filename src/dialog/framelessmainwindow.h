@@ -19,7 +19,7 @@
 #define FRAMELESSMAINWINDOW_H
 
 #ifdef WINGHEX_USE_FRAMELESS
-#include "class/framelesshelper.h"
+#include "widgetframe/framelesshelper.h"
 #endif
 
 #include <QMainWindow>

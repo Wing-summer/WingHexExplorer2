@@ -15,13 +15,13 @@
 ** =============================================================================
 */
 
-#include "class/appmanager.h"
-#include "class/languagemanager.h"
-#include "class/settingmanager.h"
-#include "class/wingmessagebox.h"
+#include "class/application/appmanager.h"
+#include "class/settings/languagemanager.h"
+#include "class/settings/settingmanager.h"
+#include "dialog/common/wingmessagebox.h"
 
 #ifndef QT_DEBUG
-#include "class/fileaccesscheck.h"
+#include "class/file/fileaccesscheck.h"
 #endif
 
 #include "define.h"

@@ -18,7 +18,7 @@
 #ifndef CODECOMPLETIONMODEL_H
 #define CODECOMPLETIONMODEL_H
 
-#include "class/codeinfotip.h"
+#include "control/editor/codeinfotip.h"
 
 #include <QAbstractListModel>
 

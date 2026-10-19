@@ -18,8 +18,8 @@
 #include "lspsettingdialog.h"
 #include "ui_lspsettingdialog.h"
 
-#include "class/scriptsettings.h"
-#include "class/settingmanager.h"
+#include "luau/runtime/scriptsettings.h"
+#include "class/settings/settingmanager.h"
 #include "luau/luauformatter.h"
 #include "utilities.h"
 

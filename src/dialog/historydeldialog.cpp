@@ -18,7 +18,7 @@
 #include "historydeldialog.h"
 #include "ui_historydeldialog.h"
 
-#include "class/pluginsystem.h"
+#include "class/plugin/pluginsystem.h"
 #include "utilities.h"
 
 #include <QListWidgetItem>

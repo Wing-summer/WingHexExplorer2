@@ -18,7 +18,7 @@
 #include "scriptcrypto.h"
 
 #include "class/angelscripthelper.h"
-#include "class/cryptographichash.h"
+#include "class/util/cryptographichash.h"
 #include "define.h"
 
 static CScriptArray *crypto_hash(const CScriptArray &data,

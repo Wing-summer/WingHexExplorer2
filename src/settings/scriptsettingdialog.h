@@ -19,8 +19,8 @@
 #define SCRIPTSETTINGDIALOG_H
 
 #include "WingPlugin/settingpage.h"
-#include "class/changedstringlist.h"
-#include "class/scriptmanager.h"
+#include "class/util/changedstringlist.h"
+#include "luau/runtime/scriptmanager.h"
 #include <QWidget>
 
 namespace Ui {

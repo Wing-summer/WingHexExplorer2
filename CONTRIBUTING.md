@@ -27,14 +27,15 @@ The project directory structure is classified in detail as follows:
 - `lang`: 程序的语言本地化文件，里面文件夹以国际标准化代码来指示一种语言支持。/ The language localization files of the program, the folders inside indicate a language support with international standardized codes.
 - `mkinstaller`: 打包发行版工具，里面的文件夹以生成的文件为名表示支持的安装包类型。/ A distribution packaging tool. The folders in it are named after the generated files to indicate the supported installation package types.
 - `src`: 软件源码。/ Software source code.
-  - `class`: 所有的通用功能代码类。/ All common function code classes.
-  - `control`: 控件相关代码。/ Control related code.
-  - `dialog`: 界面类。/ Dialog class.
-  - `model`: `Model-View`中使用的数据模型。/ The data model used in `Model-View`.
-  - `plugin`: 插件相关的类。/ Plugin related classes.
-  - `scriptaddon`: 为`AngelScript`提供额外功能的绑定类。/ Binding class that provides additional functionality to `AngelScript`.
-  - `settings`: 设置相关代码。/ Codes for APP Settings.
-  - `widgetframe`: 和无边框界面标题栏相关的代码。/ Code related to the borderless dialog title bar.
+  - 详细职责与子目录规则见 [src/README.md](src/README.md)。/ See [src/README.md](src/README.md) for responsibilities and subdirectory rules.
+  - `class`: 应用、文件、插件、设置、布局及通用服务。/ Application, file, plugin, settings, layout, and utility services.
+  - `control`: 控件、编辑器、控制台、委托和停靠扩展。/ Widgets, editors, console, delegates, and docking extensions.
+  - `dialog`: 对话框、主窗口及通用对话框封装。/ Dialogs, main windows, and common dialog wrappers.
+  - `luau`: Luau 运行时、绑定、调试、语言服务。/ Luau runtime, bindings, debugging, and language services.
+  - `scriptaddon`: 未参与构建的历史 AngelScript 扩展。/ Legacy AngelScript addons excluded from the build.
+  - `model`: Model-View 数据模型。/ Model-View data models.
+  - `settings`: 设置页面。/ Settings pages.
+  - `widgetframe`: 无边框窗口和标题栏支持。/ Frameless window and title bar support.
 - `theme`: 软件主题文件，里面每个文件夹以主题名命名（必须英文）。/ Software theme files, each folder in it is named with the theme name (must be in English).
 
 ### 控制语句规范 / Control Statement Style

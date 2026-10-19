@@ -17,7 +17,7 @@
 
 #include "gotolinewidget.h"
 
-#include "class/skinmanager.h"
+#include "class/settings/skinmanager.h"
 
 #include <QHBoxLayout>
 #include <QLabel>

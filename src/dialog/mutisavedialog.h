@@ -18,7 +18,7 @@
 #ifndef MUTISAVEDIALOG_H
 #define MUTISAVEDIALOG_H
 
-#include "class/editorinfo.h"
+#include "control/editor/editorinfo.h"
 #include "framelessdialogbase.h"
 
 #include <QVector>

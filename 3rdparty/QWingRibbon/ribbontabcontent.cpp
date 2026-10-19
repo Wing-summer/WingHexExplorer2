@@ -12,7 +12,7 @@
 #include "ribbonbuttongroup.h"
 #include "ui_ribbontabcontent.h"
 
-#include "../src/class/eventfilter.h"
+#include "control/common/eventfilter.h"
 
 #include <QScrollBar>
 #include <QWheelEvent>

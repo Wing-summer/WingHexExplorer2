@@ -16,7 +16,7 @@
  */
 #include "objtreewidget.h"
 
-#include "class/codeinfotip.h"
+#include "control/editor/codeinfotip.h"
 #include "utilities.h"
 
 #include <QHeaderView>

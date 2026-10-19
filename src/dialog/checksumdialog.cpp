@@ -18,7 +18,7 @@
 #include "checksumdialog.h"
 #include "utilities.h"
 
-#include "class/cryptographichash.h"
+#include "class/util/cryptographichash.h"
 #include "control/toast.h"
 
 #include <QDialogButtonBox>

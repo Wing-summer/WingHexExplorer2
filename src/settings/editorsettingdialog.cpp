@@ -18,7 +18,7 @@
 #include "editorsettingdialog.h"
 #include "ui_editorsettingdialog.h"
 
-#include "class/settingmanager.h"
+#include "class/settings/settingmanager.h"
 #include "utilities.h"
 
 EditorSettingDialog::EditorSettingDialog(QWidget *parent)

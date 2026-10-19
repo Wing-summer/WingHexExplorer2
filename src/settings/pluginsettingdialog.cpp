@@ -18,11 +18,11 @@
 #include "pluginsettingdialog.h"
 #include "ui_pluginsettingdialog.h"
 
-#include "class/eventfilter.h"
-#include "class/pluginsystem.h"
-#include "class/settingmanager.h"
-#include "class/showinshell.h"
-#include "class/wingplugincert.h"
+#include "control/common/eventfilter.h"
+#include "class/plugin/pluginsystem.h"
+#include "class/settings/settingmanager.h"
+#include "class/file/showinshell.h"
+#include "class/plugin/wingplugincert.h"
 #include "utilities.h"
 
 #include <QDesktopServices>

@@ -18,7 +18,7 @@
 #ifndef HISTORYDELDIALOG_H
 #define HISTORYDELDIALOG_H
 
-#include "class/recentfilemanager.h"
+#include "class/file/recentfilemanager.h"
 #include "framelessdialogbase.h"
 
 namespace Ui {

@@ -18,7 +18,7 @@
 #include "settingdialog.h"
 #include "ui_settingdialog.h"
 
-#include "class/wingmessagebox.h"
+#include "dialog/common/wingmessagebox.h"
 #include "control/toast.h"
 #include "utilities.h"
 

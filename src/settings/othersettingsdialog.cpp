@@ -16,8 +16,8 @@
 */
 
 #include "othersettingsdialog.h"
-#include "class/logger.h"
-#include "class/settingmanager.h"
+#include "class/application/logger.h"
+#include "class/settings/settingmanager.h"
 #include "ui_othersettingsdialog.h"
 #include "utilities.h"
 

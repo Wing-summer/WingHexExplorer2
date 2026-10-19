@@ -18,7 +18,7 @@
 #ifndef GOTOLINEWIDGET_H
 #define GOTOLINEWIDGET_H
 
-#include "control/codeeditcontrolwidget.h"
+#include "control/editor/codeeditcontrolwidget.h"
 
 #include <QSpinBox>
 

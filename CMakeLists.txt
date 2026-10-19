@@ -165,6 +165,12 @@ set(DIALOG_SRC
     src/dialog/colorpickerdialog.cpp
     src/dialog/colorpickerdialog.h
     src/dialog/colorpickerdialog.ui
+    src/dialog/common/wingfiledialog.cpp
+    src/dialog/common/wingfiledialog.h
+    src/dialog/common/winginputdialog.cpp
+    src/dialog/common/winginputdialog.h
+    src/dialog/common/wingmessagebox.cpp
+    src/dialog/common/wingmessagebox.h
     src/dialog/crashreport.cpp
     src/dialog/crashreport.h
     src/dialog/crashreport.ui
@@ -203,16 +209,50 @@ set(DIALOG_SRC
     src/dialog/splashdialog.ui)
 
 set(CONTROL_SRC
-    src/control/idbtreeview.cpp
-    src/control/idbtreeview.h
-    src/control/objtreewidget.cpp
-    src/control/objtreewidget.h
-    src/control/codeedit.cpp
-    src/control/codeedit.h
-    src/control/codeeditcontrolwidget.cpp
-    src/control/codeeditcontrolwidget.h
-    src/control/dockwidgettab.cpp
-    src/control/dockwidgettab.h
+    src/control/common/compositeiconengine.cpp
+    src/control/common/compositeiconengine.h
+    src/control/common/eventfilter.h
+    src/control/console/consolehighlighanim.cpp
+    src/control/console/consolehighlighanim.h
+    src/control/console/scriptingconsole.cpp
+    src/control/console/scriptingconsole.h
+    src/control/console/scriptingconsolebase.cpp
+    src/control/console/scriptingconsolebase.h
+    src/control/console/wingconsolehighligher.cpp
+    src/control/console/wingconsolehighligher.h
+    src/control/delegate/mutisavebuttondelegate.cpp
+    src/control/delegate/mutisavebuttondelegate.h
+    src/control/delegate/richtextitemdelegate.cpp
+    src/control/delegate/richtextitemdelegate.h
+    src/control/docking/dockcomponentsfactory.cpp
+    src/control/docking/dockcomponentsfactory.h
+    src/control/docking/dockwidgettab.cpp
+    src/control/docking/dockwidgettab.h
+    src/control/editor/codeedit.cpp
+    src/control/editor/codeedit.h
+    src/control/editor/codeeditcontrolwidget.cpp
+    src/control/editor/codeeditcontrolwidget.h
+    src/control/editor/codeinfotip.cpp
+    src/control/editor/codeinfotip.h
+    src/control/editor/editorinfo.h
+    src/control/editor/editorlspevent.cpp
+    src/control/editor/editorlspevent.h
+    src/control/editor/editorviewcontext.cpp
+    src/control/editor/editorviewcontext.h
+    src/control/editor/lspeditorinterface.cpp
+    src/control/editor/lspeditorinterface.h
+    src/control/editor/luaucompletion.cpp
+    src/control/editor/luaucompletion.h
+    src/control/editor/luauindentation.cpp
+    src/control/editor/luauindentation.h
+    src/control/editor/scripteditor.cpp
+    src/control/editor/scripteditor.h
+    src/control/editor/scriptinfobroswer.cpp
+    src/control/editor/scriptinfobroswer.h
+    src/control/editor/searchreplacewidget.cpp
+    src/control/editor/searchreplacewidget.h
+    src/control/editor/snippetprocessor.cpp
+    src/control/editor/snippetprocessor.h
     src/control/editorview.cpp
     src/control/editorview.h
     src/control/gotolinewidget.cpp
@@ -224,106 +264,58 @@ set(CONTROL_SRC
     src/control/hexlineedit.h
     src/control/huecolorpickerslider.cpp
     src/control/huecolorpickerslider.h
+    src/control/idbtreeview.cpp
+    src/control/idbtreeview.h
+    src/control/objtreewidget.cpp
+    src/control/objtreewidget.h
     src/control/qcolorpicker_slider.cpp
     src/control/qcolorpicker_slider.hpp
     src/control/qtableviewext.cpp
     src/control/qtableviewext.h
-    src/control/scripteditor.cpp
-    src/control/scripteditor.h
-    src/control/scriptinfobroswer.cpp
-    src/control/scriptinfobroswer.h
-    src/control/scriptingconsole.cpp
-    src/control/scriptingconsole.h
-    src/control/scriptingconsolebase.cpp
-    src/control/scriptingconsolebase.h
-    src/control/searchreplacewidget.cpp
-    src/control/searchreplacewidget.h
     src/control/settingspopup.cpp
     src/control/settingspopup.h
     src/control/toast.cpp
     src/control/toast.h)
 
 set(CLASS_SRC
-    src/class/appmanager.cpp
-    src/class/appmanager.h
-    src/class/changedstringlist.cpp
-    src/class/changedstringlist.h
-    src/class/codeinfotip.cpp
-    src/class/codeinfotip.h
-    src/class/compositeiconengine.cpp
-    src/class/compositeiconengine.h
-    src/class/consolehighlighanim.cpp
-    src/class/consolehighlighanim.h
-    src/class/crashhandler.cpp
-    src/class/crashhandler.h
-    src/class/cryptographichash.cpp
-    src/class/cryptographichash.h
-    src/class/dockcomponentsfactory.cpp
-    src/class/dockcomponentsfactory.h
-    src/class/editorinfo.h
-    src/class/editorlspevent.cpp
-    src/class/editorlspevent.h
-    src/class/editorviewcontext.cpp
-    src/class/editorviewcontext.h
-    src/class/eventfilter.h
-    src/class/fileaccesscheck.cpp
-    src/class/fileaccesscheck.h
-    src/class/inspectqtloghelper.cpp
-    src/class/inspectqtloghelper.h
-    src/class/luauscheduler.h
-    src/class/luauscheduler.cpp
-    src/class/languagemanager.cpp
-    src/class/languagemanager.h
-    src/class/layoutmanager.cpp
-    src/class/layoutmanager.h
-    src/class/logger.cpp
-    src/class/logger.h
-    src/class/lspeditorinterface.cpp
-    src/class/lspeditorinterface.h
-    src/class/luaucompletion.cpp
-    src/class/luaucompletion.h
-    src/class/luauindentation.cpp
-    src/class/luauindentation.h
-    src/class/mutisavebuttondelegate.cpp
-    src/class/mutisavebuttondelegate.h
-    src/class/pluginsystem.cpp
-    src/class/pluginsystem.h
-    src/class/qkeysequences.cpp
-    src/class/qkeysequences.h
-    src/class/recentfilemanager.cpp
-    src/class/recentfilemanager.h
-    src/class/resettabletimer.cpp
-    src/class/resettabletimer.h
-    src/class/richtextitemdelegate.cpp
-    src/class/richtextitemdelegate.h
-    src/class/scriptmachine.cpp
-    src/class/scriptmachine.h
-    src/class/scriptmanager.cpp
-    src/class/scriptmanager.h
-    src/class/scriptsettings.cpp
-    src/class/scriptsettings.h
-    src/class/settingmanager.cpp
-    src/class/settingmanager.h
-    src/class/showinshell.cpp
-    src/class/showinshell.h
-    src/class/skinmanager.cpp
-    src/class/skinmanager.h
-    src/class/snippetprocessor.cpp
-    src/class/snippetprocessor.h
-    src/class/wingconsolehighligher.cpp
-    src/class/wingconsolehighligher.h
-    src/class/wingfiledialog.cpp
-    src/class/wingfiledialog.h
-    src/class/winginputdialog.cpp
-    src/class/winginputdialog.h
-    src/class/wingmessagebox.cpp
-    src/class/wingmessagebox.h
-    src/class/wingplugincert.cpp
-    src/class/wingplugincert.h
-    src/class/wingupdater.cpp
-    src/class/wingupdater.h
-    src/class/workspacemanager.cpp
-    src/class/workspacemanager.h)
+    src/class/application/appmanager.cpp
+    src/class/application/appmanager.h
+    src/class/application/crashhandler.cpp
+    src/class/application/crashhandler.h
+    src/class/application/inspectqtloghelper.cpp
+    src/class/application/inspectqtloghelper.h
+    src/class/application/logger.cpp
+    src/class/application/logger.h
+    src/class/application/wingupdater.cpp
+    src/class/application/wingupdater.h
+    src/class/file/fileaccesscheck.cpp
+    src/class/file/fileaccesscheck.h
+    src/class/file/recentfilemanager.cpp
+    src/class/file/recentfilemanager.h
+    src/class/file/showinshell.cpp
+    src/class/file/showinshell.h
+    src/class/file/workspacemanager.cpp
+    src/class/file/workspacemanager.h
+    src/class/layout/layoutmanager.cpp
+    src/class/layout/layoutmanager.h
+    src/class/plugin/pluginsystem.cpp
+    src/class/plugin/pluginsystem.h
+    src/class/plugin/wingplugincert.cpp
+    src/class/plugin/wingplugincert.h
+    src/class/settings/languagemanager.cpp
+    src/class/settings/languagemanager.h
+    src/class/settings/settingmanager.cpp
+    src/class/settings/settingmanager.h
+    src/class/settings/skinmanager.cpp
+    src/class/settings/skinmanager.h
+    src/class/util/changedstringlist.cpp
+    src/class/util/changedstringlist.h
+    src/class/util/cryptographichash.cpp
+    src/class/util/cryptographichash.h
+    src/class/util/qkeysequences.cpp
+    src/class/util/qkeysequences.h
+    src/class/util/resettabletimer.cpp
+    src/class/util/resettabletimer.h)
 
 set(LUAU_LS
     src/luau/lsp/attachcommentsvisitor.cpp
@@ -339,39 +331,47 @@ set(LUAU_LS
     src/luau/lsp/typehelpers.h)
 
 set(LUAU_MOD_SRC
-    src/luau/scriptbindingengine.h
-    src/luau/scriptbindingengine.cpp
-    src/luau/luauutil.h
-    src/luau/luauutil.cpp
-    src/luau/luauformatter.h
-    src/luau/luauformatter.cpp
-    src/luau/wingluaurequire.h
-    src/luau/wingluaurequire.cpp
     ${LUAU_LS}
-    src/luau/luaufile.h
-    src/luau/luaufile.cpp
-    src/luau/breakpoint.h
     src/luau/breakpoint.cpp
-    src/luau/luauinspector.h
-    src/luau/luauinspector.cpp
-    src/luau/luauscope.h
-    src/luau/luauscope.cpp
-    src/luau/luaudebugger.h
+    src/luau/breakpoint.h
     src/luau/luaudebugger.cpp
-    src/luau/luautypes.h
+    src/luau/luaudebugger.h
+    src/luau/luaufile.cpp
+    src/luau/luaufile.h
+    src/luau/luauformatter.cpp
+    src/luau/luauformatter.h
+    src/luau/luauinspector.cpp
+    src/luau/luauinspector.h
+    src/luau/luauscope.cpp
+    src/luau/luauscope.h
     src/luau/luautypes.cpp
-    src/luau/luauvariable.h
+    src/luau/luautypes.h
+    src/luau/luauutil.cpp
+    src/luau/luauutil.h
     src/luau/luauvariable.cpp
+    src/luau/luauvariable.h
+    src/luau/luauvariableregistry.cpp
     src/luau/luauvariableregistry.h
-    src/luau/luauvariableregistry.cpp)
+    src/luau/runtime/luauscheduler.cpp
+    src/luau/runtime/luauscheduler.h
+    src/luau/runtime/scriptmachine.cpp
+    src/luau/runtime/scriptmachine.h
+    src/luau/runtime/scriptmanager.cpp
+    src/luau/runtime/scriptmanager.h
+    src/luau/runtime/scriptsettings.cpp
+    src/luau/runtime/scriptsettings.h
+    src/luau/scriptbindingengine.cpp
+    src/luau/scriptbindingengine.h
+    src/luau/wingluaurequire.cpp
+    src/luau/wingluaurequire.h)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
         src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
         src/widgetframe/windowbar_p.h src/widgetframe/windowbutton.cpp
         src/widgetframe/windowbutton.h src/widgetframe/windowbutton_p.h)
-    list(APPEND CLASS_SRC src/class/framelesshelper.h
-         src/class/framelesshelper.cpp)
+    list(APPEND WIDGET_FRAME_SRC src/widgetframe/framelesshelper.h
+         src/widgetframe/framelesshelper.cpp)
 else()
     set(WIDGET_FRAME_SRC)
 endif()

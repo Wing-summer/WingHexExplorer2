@@ -19,7 +19,7 @@
 #define PLUGINSETTINGDIALOG_H
 
 #include "WingPlugin/settingpage.h"
-#include "class/changedstringlist.h"
+#include "class/util/changedstringlist.h"
 
 #include <QListWidget>
 #include <QTextBrowser>

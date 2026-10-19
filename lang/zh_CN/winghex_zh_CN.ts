@@ -43,25 +43,25 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="117"/>
-        <location filename="../../src/class/appmanager.cpp" line="140"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="117"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="140"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="118"/>
-        <location filename="../../src/class/appmanager.cpp" line="141"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="118"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="141"/>
         <source>Could not open the following file. Check that it exists and that you have permission to read it:</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="125"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="125"/>
         <source>Opening files...</source>
         <translation>打开文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.cpp" line="203"/>
-        <location filename="../../src/class/appmanager.cpp" line="217"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="203"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="217"/>
         <source>This file is already open.</source>
         <translation>文件已被打开</translation>
     </message>
@@ -118,57 +118,57 @@
 <context>
     <name>CodeEdit</name>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="320"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="320"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="322"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="322"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="324"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="324"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="328"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="328"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="332"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="332"/>
         <source>Replace</source>
         <translation>替换</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="335"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="335"/>
         <source>Go to</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="339"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="339"/>
         <source>Go to definition</source>
         <translation>跳转到定义</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="341"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="341"/>
         <source>Go to type definition</source>
         <translation>跳转到类型定义</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="346"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="346"/>
         <source>Toggle comment</source>
         <translation>注释/取消注释</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="350"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="350"/>
         <source>Toggle folding</source>
         <translation>折叠/展开</translation>
     </message>
     <message>
-        <location filename="../../src/control/codeedit.cpp" line="357"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="357"/>
         <source>Fold all</source>
         <translation>折叠所有</translation>
     </message>
@@ -220,37 +220,37 @@
 <context>
     <name>DockWidgetTab</name>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="36"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="36"/>
         <source>Close edit group</source>
         <translation>关闭编辑组</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="37"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="37"/>
         <source>Left</source>
         <translation>左侧</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="69"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="69"/>
         <source>Right</source>
         <translation>右侧</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="101"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="101"/>
         <source>All</source>
         <translation>全部</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="125"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="125"/>
         <source>Other</source>
         <translation>其他</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="165"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="165"/>
         <source>File information</source>
         <translation>文件信息</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="216"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="216"/>
         <source>Show in file manager</source>
         <translation>显示包含目录</translation>
     </message>
@@ -794,12 +794,12 @@
 <context>
     <name>InspectQtLogHelper</name>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="30"/>
+        <location filename="../../src/class/application/inspectqtloghelper.cpp" line="30"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="44"/>
+        <location filename="../../src/class/application/inspectqtloghelper.cpp" line="44"/>
         <source>Inspect</source>
         <translation>监视</translation>
     </message>
@@ -820,57 +820,57 @@
 <context>
     <name>Logger</name>
     <message>
-        <location filename="../../src/class/logger.cpp" line="99"/>
+        <location filename="../../src/class/application/logger.cpp" line="99"/>
         <source>[Trace]</source>
         <translation>【跟踪】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="108"/>
+        <location filename="../../src/class/application/logger.cpp" line="108"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="117"/>
+        <location filename="../../src/class/application/logger.cpp" line="117"/>
         <source>[Info]</source>
         <translation>【信息】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="126"/>
+        <location filename="../../src/class/application/logger.cpp" line="126"/>
         <source>[Debug]</source>
         <translation>【调试】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="135"/>
+        <location filename="../../src/class/application/logger.cpp" line="135"/>
         <source>[Error]</source>
         <translation>【错误】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="163"/>
+        <location filename="../../src/class/application/logger.cpp" line="163"/>
         <source>Critical</source>
         <translation>崩溃</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="165"/>
+        <location filename="../../src/class/application/logger.cpp" line="165"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="167"/>
+        <location filename="../../src/class/application/logger.cpp" line="167"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="169"/>
+        <location filename="../../src/class/application/logger.cpp" line="169"/>
         <source>Information</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="171"/>
+        <location filename="../../src/class/application/logger.cpp" line="171"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="173"/>
+        <location filename="../../src/class/application/logger.cpp" line="173"/>
         <source>Trace</source>
         <translation>跟踪</translation>
     </message>
@@ -2611,104 +2611,104 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3180"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3275"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3180"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3275"/>
         <source>Loading plugins:</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2890"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="2890"/>
         <source>Program shutdown canceled:</source>
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3221"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3221"/>
         <source>Total number of device extension plugins discovered:</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3471"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3537"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3471"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3537"/>
         <source>Could not load the plugin: invalid plugin name.</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3492"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3492"/>
         <source>Could not initialize the plugin.</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3499"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3499"/>
         <source>Plugin name:</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3500"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3500"/>
         <source>Plugin author:</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3501"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3501"/>
         <source>Registering plugin objects...</source>
         <translation>注册插件对象中......</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3540"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3540"/>
         <source>Device extension plugin author:</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3541"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3541"/>
         <source>Registering device extension plugin objects...</source>
         <translation>设备拓展注册插件对象中......</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3558"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3558"/>
         <source>Could not initialize the device extension plugin.</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3580"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3580"/>
         <source>Select file</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3617"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3617"/>
         <source>Empty dock widget name:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3627"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3627"/>
         <source>Invalid dock widget name:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3635"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3635"/>
         <source>Invalid empty dock widget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3750"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3750"/>
         <source>Not allowed operation in non-ui thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1399"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="1399"/>
         <source>Detected an abnormally pushed undo command</source>
         <translation>监测到异常推入的撤销命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2963"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="2963"/>
         <source>Total number of plugins found:</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3797"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3797"/>
         <source>Skipping certificate verification is dangerous. Are you sure you want to continue?</source>
         <translation>忽略证书验证存在严重风险，确认继续吗？</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3832"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="3832"/>
         <source>Plugins loaded!</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -2721,12 +2721,12 @@
         <translation>该设置需要程序重启后生效</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.h" line="37"/>
+        <location filename="../../src/class/application/appmanager.h" line="37"/>
         <source>wingsummer</source>
         <translation>寂静的羽夏</translation>
     </message>
     <message>
-        <location filename="../../src/class/appmanager.h" line="38"/>
+        <location filename="../../src/class/application/appmanager.h" line="38"/>
         <source>WingCloudStudio</source>
         <translation>羽云工作室</translation>
     </message>
@@ -2860,18 +2860,18 @@
 <context>
     <name>QMessageBox</name>
     <message>
-        <location filename="../../src/class/wingmessagebox.cpp" line="32"/>
+        <location filename="../../src/dialog/common/wingmessagebox.cpp" line="32"/>
         <source>&lt;h3&gt;About Qt&lt;/h3&gt;&lt;p&gt;This program uses Qt version %1.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;关于 Qt&lt;/h3&gt;&lt;p&gt;此程序使用 Qt 版本 %1。&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingmessagebox.cpp" line="39"/>
+        <location filename="../../src/dialog/common/wingmessagebox.cpp" line="39"/>
         <source>&lt;p&gt;Qt is a C++ toolkit for cross-platform application development.&lt;/p&gt;&lt;p&gt;Qt provides single-source portability across all major desktop operating systems. It is also available for embedded Linux and other embedded and mobile operating systems.&lt;/p&gt;&lt;p&gt;Qt is available under multiple licensing options designed to accommodate the needs of our various users.&lt;/p&gt;&lt;p&gt;Qt licensed under our commercial license agreement is appropriate for development of proprietary/commercial software where you do not want to share any source code with third parties or otherwise cannot comply with the terms of GNU (L)GPL.&lt;/p&gt;&lt;p&gt;Qt licensed under GNU (L)GPL is appropriate for the development of Qt&amp;nbsp;applications provided you can comply with the terms and conditions of the respective licenses.&lt;/p&gt;&lt;p&gt;Please see &lt;a href=&quot;https://%2/&quot;&gt;%2&lt;/a&gt; for an overview of Qt licensing.&lt;/p&gt;&lt;p&gt;Copyright (C) The Qt Company Ltd. and other contributors.&lt;/p&gt;&lt;p&gt;Qt and the Qt logo are trademarks of The Qt Company Ltd.&lt;/p&gt;&lt;p&gt;Qt is The Qt Company Ltd. product developed as an open source project. See &lt;a href=&quot;https://%3/&quot;&gt;%3&lt;/a&gt; for more information.&lt;/p&gt;</source>
         <extracomment>Leave this text untranslated or include a verbatim copy of it below and note that it is the authoritative version in case of doubt.</extracomment>
         <translation>&lt;p&gt;Qt 是用于跨平台应用程序开发的 C++ 工具包。&lt;/p&gt;&lt;p&gt;Qt 支持使用同一套源代码开发适用于主流桌面操作系统、嵌入式 Linux 及其他嵌入式和移动操作系统的应用程序。&lt;/p&gt;&lt;p&gt;Qt 提供多种许可方式，以满足不同用户的需求。&lt;/p&gt;&lt;p&gt;如果您不希望向第三方公开源代码，或无法遵守 GNU (L)GPL 条款，可以选择 Qt 商业许可来开发专有或商业软件。&lt;/p&gt;&lt;p&gt;如果您能够遵守相关许可条款，可以使用 GNU (L)GPL 许可的 Qt 开发 Qt 应用程序。&lt;/p&gt;&lt;p&gt;有关 Qt 许可的信息，请参阅 &lt;a href=&quot;https://%2/&quot;&gt;%2&lt;/a&gt;。&lt;/p&gt;&lt;p&gt;版权所有 (C) The Qt Company Ltd. 及其他贡献者。&lt;/p&gt;&lt;p&gt;Qt 和 Qt 标志是 The Qt Company Ltd. 的商标。&lt;/p&gt;&lt;p&gt;Qt 是 The Qt Company Ltd. 开发的开源产品。更多信息请参阅 &lt;a href=&quot;https://%3/&quot;&gt;%3&lt;/a&gt;。&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingmessagebox.cpp" line="80"/>
+        <location filename="../../src/dialog/common/wingmessagebox.cpp" line="80"/>
         <source>About Qt</source>
         <translation>关于 QT</translation>
     </message>
@@ -2902,54 +2902,54 @@
 <context>
     <name>RecentFileManager</name>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="41"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="41"/>
         <source>Clear history</source>
         <translation>清空历史</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="47"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="47"/>
         <source>Remove item</source>
         <translation>删除项目</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="52"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="62"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="285"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="52"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="62"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="285"/>
         <source>No history entries to remove.</source>
         <translation>无打开历史项目可删除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="74"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="74"/>
         <source>History entries removed.</source>
         <translation>删除历史项目成功</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="153"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="153"/>
         <source>[File]</source>
         <translation>【文件】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="156"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="156"/>
         <source>[Workspace]</source>
         <translation>【是否工作区】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="157"/>
         <source>True</source>
         <translation>是</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="157"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="157"/>
         <source>False</source>
         <translation>否</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="244"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="244"/>
         <source>The file does not exist; this entry has been removed!</source>
         <translation>文件不存在，该选项已被清除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="296"/>
+        <location filename="../../src/class/file/recentfilemanager.cpp" line="296"/>
         <source>History cleared.</source>
         <translation>历史记录已清空。</translation>
     </message>
@@ -2957,37 +2957,37 @@
 <context>
     <name>ScriptInfoBroswer</name>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="36"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="36"/>
         <source>Raw name:</source>
         <translation>源名称：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="37"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="37"/>
         <source>Name:</source>
         <translation>名称：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="38"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="38"/>
         <source>Author:</source>
         <translation>作者：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="39"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="39"/>
         <source>License:</source>
         <translation>协议：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="40"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="40"/>
         <source>Context menu:</source>
         <translation>是否为右键菜单：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="44"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="44"/>
         <source>Homepage:</source>
         <translation>主页：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptinfobroswer.cpp" line="51"/>
+        <location filename="../../src/control/editor/scriptinfobroswer.cpp" line="51"/>
         <source>Comment:</source>
         <translation>说明：</translation>
     </message>
@@ -2995,22 +2995,22 @@
 <context>
     <name>ScriptManager</name>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="105"/>
+        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="105"/>
         <source>Run script</source>
         <translation>执行脚本</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="106"/>
+        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="106"/>
         <source>User scripts cannot run as root under the current security policy.</source>
         <translation>由于限制策略，无法在 Root 模式下运行用户脚本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="392"/>
+        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="392"/>
         <source>Script running</source>
         <translation>脚本运行中</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="393"/>
+        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="393"/>
         <source>The script is still running. Do you want to terminate the previous script before proceeding?</source>
         <translation>脚本仍在运行中，是否终止上一个脚本再执行？</translation>
     </message>
@@ -3101,48 +3101,48 @@
 <context>
     <name>ScriptingConsole</name>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="283"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="283"/>
         <source>[Info]</source>
         <translation>【信息】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="290"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="290"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="297"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="297"/>
         <source>[Error]</source>
         <translation>【错误】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="397"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="397"/>
         <source>[Console]</source>
         <translation>【控制台】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="647"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="647"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="650"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="650"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="656"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="656"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="662"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="683"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="662"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="683"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="668"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="668"/>
         <source>Terminate script</source>
         <translation>终止脚本</translation>
     </message>
@@ -3150,7 +3150,7 @@
 <context>
     <name>ScriptingConsoleBase</name>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="167"/>
+        <location filename="../../src/control/console/scriptingconsolebase.cpp" line="167"/>
         <source>Scripting console for WingHexExplorer</source>
         <translation>羽云十六进制编辑器脚本控制台</translation>
     </message>
@@ -3677,83 +3677,83 @@
 <context>
     <name>SearchReplaceWidget</name>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="50"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="50"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="59"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="59"/>
         <source>Search settings</source>
         <translation>搜索设置</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="64"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="64"/>
         <source>Match ca&amp;se</source>
         <translation>区分大小写(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="66"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="66"/>
         <source>Match &amp;whole words</source>
         <translation>全词匹配(&amp;W)</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="68"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="68"/>
         <source>Regular e&amp;xpressions</source>
         <translation>正则表达式(&amp;X)</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="70"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="70"/>
         <source>&amp;Escape sequences</source>
         <translation>转义序列(&amp;E)</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="72"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="72"/>
         <source>Wrap aro&amp;und</source>
         <translation>环绕(&amp;U)</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="75"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="75"/>
         <source>Replace in selection</source>
         <translation>选区替换</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="98"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="98"/>
         <source>Find next</source>
         <translation>查找下一个</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="103"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="103"/>
         <source>Find previous</source>
         <translation>查找上一个</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="115"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="115"/>
         <source>Replace current</source>
         <translation>替换当前</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="120"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="120"/>
         <source>Replace all</source>
         <translation>替换所有</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="136"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="136"/>
         <source>Replace:</source>
         <translation>替换：</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="253"/>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="319"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="253"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="319"/>
         <source>The specified text was not found</source>
         <translation>未找到指定文本</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="260"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="260"/>
         <source>The specified text was not found in the selection</source>
         <translation>在选定内容中未找到指定的文本</translation>
     </message>
     <message>
-        <location filename="../../src/control/searchreplacewidget.cpp" line="292"/>
+        <location filename="../../src/control/editor/searchreplacewidget.cpp" line="292"/>
         <source>Successfully replaced %1 matches</source>
         <translation>已成功替换 %1 个匹配项</translation>
     </message>
@@ -3815,7 +3815,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="450"/>
+        <location filename="../../src/class/settings/settingmanager.cpp" line="450"/>
         <source>The program will be unable to save the configuration. Please check the permissions for the configuration file.</source>
         <translation>程序将无法保存配置，请检查配置文件权限。</translation>
     </message>
@@ -3823,12 +3823,12 @@
 <context>
     <name>ShowInShell</name>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="154"/>
+        <location filename="../../src/class/file/showinshell.cpp" line="154"/>
         <source>Could not open Windows Explorer</source>
         <translation>无法打开 Windows 资源管理器</translation>
     </message>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="156"/>
+        <location filename="../../src/class/file/showinshell.cpp" line="156"/>
         <source>Could not find explorer.exe in path to launch Windows Explorer.</source>
         <translation>在启动 Windows 资源管理器的路径中找不到 explorer.exe。</translation>
     </message>
@@ -3836,13 +3836,13 @@
 <context>
     <name>SkinManager</name>
     <message>
-        <location filename="../../src/class/skinmanager.cpp" line="102"/>
+        <location filename="../../src/class/settings/skinmanager.cpp" line="102"/>
         <location filename="../../src/settings/generalsettingdialog.cpp" line="42"/>
         <source>Dark</source>
         <translation>暗黑</translation>
     </message>
     <message>
-        <location filename="../../src/class/skinmanager.cpp" line="103"/>
+        <location filename="../../src/class/settings/skinmanager.cpp" line="103"/>
         <location filename="../../src/settings/generalsettingdialog.cpp" line="44"/>
         <source>Light</source>
         <translation>浅色</translation>
@@ -3999,43 +3999,43 @@
         <translation>脱离</translation>
     </message>
     <message>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="188"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="626"/>
-        <location filename="../../src/control/dockwidgettab.cpp" line="188"/>
         <source>Pin To...</source>
         <translation>固定到...</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="186"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="186"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="622"/>
         <source>Pin</source>
         <translation>固定</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="189"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="189"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="628"/>
         <source>Top</source>
         <translation>顶部</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="191"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="191"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="629"/>
         <source>Left</source>
         <translation>左侧</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="193"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="193"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="630"/>
         <source>Right</source>
         <translation>右侧</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="195"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="195"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="631"/>
         <source>Bottom</source>
         <translation>底部</translation>
     </message>
     <message>
-        <location filename="../../src/control/dockwidgettab.cpp" line="206"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="206"/>
         <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="636"/>
         <source>Close</source>
         <translation>关闭</translation>

@@ -200,7 +200,7 @@
   <customwidget>
    <class>ScriptInfoBroswer</class>
    <extends>QTextBrowser</extends>
-   <header>control/scriptinfobroswer.h</header>
+   <header>control/editor/scriptinfobroswer.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -20,9 +20,9 @@
 
 #include <QMetaEnum>
 
-#include "class/languagemanager.h"
-#include "class/settingmanager.h"
-#include "class/skinmanager.h"
+#include "class/settings/languagemanager.h"
+#include "class/settings/settingmanager.h"
+#include "class/settings/skinmanager.h"
 #include "utilities.h"
 
 #include <QLibraryInfo>

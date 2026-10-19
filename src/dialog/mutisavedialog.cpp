@@ -16,7 +16,7 @@
 */
 
 #include "mutisavedialog.h"
-#include "class/mutisavebuttondelegate.h"
+#include "control/delegate/mutisavebuttondelegate.h"
 #include "ui_mutisavedialog.h"
 
 #include "utilities.h"
