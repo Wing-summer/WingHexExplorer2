@@ -59,28 +59,28 @@
       <item>
        <widget class="QCheckBox" name="cbDontShowSplash">
         <property name="text">
-         <string>DontShowSplash</string>
+         <string>Hide splash window</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="cbNativeFileDialog">
         <property name="text">
-         <string>UseNativeFileDialog</string>
+         <string>Use native file dialog</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="cbNativeTitile">
         <property name="text">
-         <string>UseNativeTitleBar</string>
+         <string>Use native titlebar</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btnAppData">
         <property name="text">
-         <string>OpenAppData</string>
+         <string>Open application data folder</string>
         </property>
        </widget>
       </item>
@@ -183,7 +183,7 @@
       <item>
        <widget class="QCheckBox" name="cbCheckWhenStartup">
         <property name="text">
-         <string>CheckWhenStartup</string>
+         <string>Check for updates at startup</string>
         </property>
        </widget>
       </item>

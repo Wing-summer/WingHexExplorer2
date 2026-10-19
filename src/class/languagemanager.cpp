@@ -18,8 +18,10 @@
 #include "languagemanager.h"
 
 #include "class/settingmanager.h"
-#include "define.h"
-#include "wingmessagebox.h"
+#include <QDebug>
+#include <QFile>
+#include <QMap>
+#include <utility>
 
 #include <QApplication>
 #include <QDir>
@@ -46,59 +48,80 @@ LanguageManager::LanguageManager() {
                  {"zh_TW", QStringLiteral("繁體中文")},
                  {"en_US", QStringLiteral("English")}};
 
-    QString langPath =
-        qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
+    // English is built in and must work without an external language directory.
+    const QLocale english(QStringLiteral("en_US"));
+    _defaultLocale = english;
+    const auto readResource = [](const QString &path) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+            return QString::fromUtf8(file.readAll());
+        }
+        qWarning("Cannot read built-in language resource: %s",
+                 qUtf8Printable(path));
+        return QString();
+    };
+    _data.about = readResource(QStringLiteral(":/i18n/en/about.md"));
+    _data.dev = readResource(QStringLiteral(":/i18n/en/devs.md"));
 
-    QDir langDir(langPath);
-    Q_ASSERT(langDir.exists());
-
+    const QString langPath =
+        qApp->applicationDirPath() + QStringLiteral("/lang");
     QMap<QString, QLocale> localeMap;
     const auto langFiles =
-        langDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        QDir(langPath).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const auto &langinfo : langFiles) {
-        auto lang = langinfo.fileName();
-        QLocale locale(lang);
-        if (locale == QLocale::c()) {
+        const auto lang = langinfo.fileName();
+        const QLocale locale(lang);
+        if (locale.language() == QLocale::C || locale.language() == QLocale::English) {
             continue;
         }
-        m_langs << lang;
-        localeMap.insert(lang, locale);
-    }
-
-    auto lang = SettingManager::instance().defaultLang();
-    if (lang.isEmpty()) {
-        _defaultLocale = QLocale::system();
-    } else {
-        QLocale locale(lang);
-        if (locale == QLocale::c()) {
-            _defaultLocale = QLocale::system();
-        } else {
-            _defaultLocale = locale;
+        if (QFile::exists(langinfo.absoluteFilePath() + QStringLiteral("/") +
+                          QStringLiteral(LANG_PAK_NAME))) {
+            localeMap.insert(lang, locale);
         }
     }
-
-    if (m_langs.isEmpty()) {
-        abortAndExit();
-    }
-
-    bool found = false;
-    for (auto p = localeMap.begin(); p != localeMap.end(); ++p) {
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-        if (p->territory() == _defaultLocale.territory() &&
-#else
-        if (p->country() == _defaultLocale.country() &&
-#endif
-            p->language() == _defaultLocale.language() &&
-            p->script() == _defaultLocale.script()) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        _defaultLocale = localeMap.value(m_langs.first());
-    }
-
     m_langs = localeMap.keys();
+    m_langs.prepend(QStringLiteral("en_US"));
+
+    const auto configured = SettingManager::instance().defaultLang();
+    const QLocale requested =
+        configured.isEmpty() ? QLocale::system() : QLocale(configured);
+    if (requested.language() != QLocale::English &&
+        requested.language() != QLocale::C) {
+        const auto key = requested.name();
+        const auto available = localeMap.value(key, english);
+        if (localeMap.contains(key) &&
+            available.language() == requested.language() &&
+            available.script() == requested.script() &&
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            available.territory() == requested.territory()) {
+#else
+            available.country() == requested.country()) {
+#endif
+            LanguageData candidate;
+            const auto package = langPath + QStringLiteral("/") + key +
+                                 QStringLiteral("/") +
+                                 QStringLiteral(LANG_PAK_NAME);
+            auto translator = new QTranslator(qApp);
+            if (unpackTr(package, requested, candidate) &&
+                translator->load(reinterpret_cast<const uchar *>(
+                                     candidate.trFiles.constData()),
+                                 candidate.trFiles.size()) &&
+                qApp->installTranslator(translator)) {
+                _data = std::move(candidate);
+                _defaultLocale = requested;
+            } else {
+                qWarning("Cannot load language package; using English: %s",
+                         qUtf8Printable(package));
+                delete translator;
+            }
+        } else {
+            qWarning("Unsupported UI language; using English: %s",
+                     qUtf8Printable(requested.name()));
+        }
+    } else if (!configured.isEmpty() && requested.language() == QLocale::C) {
+        qWarning("Invalid UI language setting; using English: %s",
+                 qUtf8Printable(configured));
+    }
 
     auto qtPath =
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
@@ -120,22 +143,10 @@ LanguageManager::LanguageManager() {
 
         qApp->installTranslator(qtTranslator);
     }
-
-    if (unpackTr(langPath + QStringLiteral("/") + _defaultLocale.name() +
-                     QStringLiteral("/") + QStringLiteral(LANG_PAK_NAME),
-                 _defaultLocale)) {
-        auto translator = new QTranslator(qApp);
-        if (translator->load(
-                reinterpret_cast<const uchar *>(_data.trFiles.data()),
-                _data.trFiles.size())) {
-            qApp->installTranslator(translator);
-        }
-    } else {
-        abortAndExit();
-    }
 }
 
-bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale) {
+bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale,
+                               LanguageData &data) {
     if (!QFile::exists(filename)) {
         return false;
     }
@@ -146,45 +157,24 @@ bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale) {
         return false;
     }
 
-    _data = {};
+    data = {};
     const auto finfos = reader.fileInfoList();
     for (const auto &file : finfos) {
         if (file.isValid() && file.isFile) {
             if (file.filePath == QStringLiteral("winghex_") + locale.name() +
                                      QStringLiteral(".qm")) {
-                _data.trFiles = reader.fileData(file.filePath);
+                data.trFiles = reader.fileData(file.filePath);
             } else if (file.filePath == QStringLiteral("about.md")) {
-                _data.about = QString::fromUtf8(reader.fileData(file.filePath));
+                data.about = QString::fromUtf8(reader.fileData(file.filePath));
             } else if (file.filePath == QStringLiteral("devs.md")) {
-                _data.dev = QString::fromUtf8(reader.fileData(file.filePath));
+                data.dev = QString::fromUtf8(reader.fileData(file.filePath));
             }
         }
     }
     reader.close();
 
-    return !_data.trFiles.isEmpty() && !_data.about.isEmpty() &&
-           !_data.dev.isEmpty();
-}
-
-void LanguageManager::abortAndExit() {
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    if (QLocale::China == _defaultLocale.territory()
-#else
-    if (QLocale::China == _defaultLocale.country()
-#endif
-    ) {
-        WingMessageBox::critical(
-            nullptr, QStringLiteral("程序损坏"),
-            QStringLiteral("语言文件已损坏，请尝试重装软件以解决这个问题。"));
-    } else {
-        WingMessageBox::critical(
-            nullptr, QStringLiteral("Corruption"),
-            QStringLiteral("The language file has been damaged. "
-                           "Please try reinstalling the software to "
-                           "solve the problem."));
-    }
-
-    throw CrashCode::LanguageFile;
+    return reader.status() == QZipReader::NoError && !data.trFiles.isEmpty() &&
+           !data.about.isEmpty() && !data.dev.isEmpty();
 }
 
 QStringList LanguageManager::langs() const { return m_langs; }

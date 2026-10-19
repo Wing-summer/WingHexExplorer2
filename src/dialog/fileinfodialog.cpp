@@ -65,13 +65,13 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
         ShowInShell::showInGraphicalShell(this, url.toLocalFile(), false);
     });
 
-    _clnbtn = new QPushButton(tr("CleanUpWSData"), this);
+    _clnbtn = new QPushButton(tr("Workspace plugin data cleanup"), this);
     _clnbtn->setVisible(editor->isWorkSpace());
     connect(_clnbtn, &QPushButton::clicked, this, [this]() {
         _editor->cleanUpPluginData();
         reloadData();
         Toast::toast(this, NAMEICONRES(QStringLiteral("workspace")),
-                     tr("CleanUpWSDataOK"));
+                     tr("Workspace plugin data cleanup complete"));
     });
 
     layout->addWidget(_lblicon, Qt::AlignHCenter);
@@ -83,7 +83,7 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
 
     reloadData();
 
-    setWindowTitle(tr("FileInfo"));
+    setWindowTitle(tr("File information"));
     setWindowIcon(ICONRES("info"));
     this->resize(500, 450);
 }
@@ -105,11 +105,11 @@ void FileInfoDialog::reloadData() {
     auto url = _editor->fileNameUrl();
     static auto sep = QStringLiteral(" : ");
     static auto link = QStringLiteral("<a href=\"%1\" title=\"%3\">%2</a>");
-    auto tt = tr("ShowInShell");
+    auto tt = tr("Show in file manager");
     if (url.isLocalFile()) {
         if (EditorView::isNewFileUrl(url)) {
             icon = this->style()->standardIcon(QStyle::SP_FileIcon);
-            _tb->append(tr("FileNew"));
+            _tb->append(tr("This file has not been saved yet."));
         } else {
             auto fileName = url.toLocalFile();
             QMimeDatabase db;
@@ -122,8 +122,8 @@ void FileInfoDialog::reloadData() {
 
             QFileInfo finfo(fileName);
 
-            _tb->append(tr("FileName") + sep + finfo.fileName());
-            _tb->append(tr("FilePath") + sep);
+            _tb->append(tr("File name") + sep + finfo.fileName());
+            _tb->append(tr("File path") + sep);
             _tb->insertHtml(
                 link.arg(url.toString(QUrl::FullyDecoded), fileName, tt));
             resetBrowserCursor(_tb);
@@ -131,23 +131,25 @@ void FileInfoDialog::reloadData() {
                 auto ws = _editor->workSpaceName();
                 QFileInfo winfo(ws);
                 _tb->append(tr("Workspace") + sep + winfo.fileName());
-                _tb->append(tr("WorkspacePath") + sep);
+                _tb->append(tr("Workspace path") + sep);
                 _tb->insertHtml(link.arg(Utilities::getUrlString(ws), ws, tt));
                 resetBrowserCursor(_tb);
             }
-            _tb->append(tr("FileSize") + sep + processBytesCount(finfo.size()));
-            _tb->append(tr("Mime") + sep + t.name());
+            _tb->append(tr("File size") + sep +
+                        processBytesCount(finfo.size()));
+            _tb->append(tr("MIME type") + sep + t.name());
             _tb->append(
-                tr("FileBirthTime") + sep +
+                tr("Created") + sep +
                 finfo.fileTime(QFile::FileTime::FileBirthTime).toString(dfmt));
             _tb->append(
-                tr("FileAccessTime") + sep +
+                tr("Last accessed") + sep +
                 finfo.fileTime(QFile::FileTime::FileAccessTime).toString(dfmt));
-            _tb->append(tr("FileModificationTime") + sep +
+            _tb->append(tr("Last modified") + sep +
                         finfo.fileTime(QFile::FileTime::FileModificationTime)
                             .toString(dfmt));
-            _tb->append(tr("LastRead") + sep + finfo.lastRead().toString(dfmt));
-            _tb->append(tr("LastMod") + sep +
+            _tb->append(tr("Last read") + sep +
+                        finfo.lastRead().toString(dfmt));
+            _tb->append(tr("Last modified") + sep +
                         finfo.lastModified().toString(dfmt));
         }
     } else {
@@ -166,14 +168,14 @@ void FileInfoDialog::reloadData() {
             icon = ICONRES(QStringLiteral("devext"));
         }
 
-        _tb->append(tr("FilePath") + sep + url.authority() + url.path());
-        _tb->append(tr("FileSize") + sep +
+        _tb->append(tr("File path") + sep + url.authority() + url.path());
+        _tb->append(tr("File size") + sep +
                     processBytesCount(_editor->hexEditor()->documentBytes()));
         if (_editor->isWorkSpace()) {
             auto ws = _editor->workSpaceName();
             QFileInfo winfo(ws);
             _tb->append(tr("Workspace") + sep + winfo.fileName());
-            _tb->append(tr("WorkspacePath") + sep);
+            _tb->append(tr("Workspace path") + sep);
             _tb->insertHtml(link.arg(Utilities::getUrlString(ws), ws, tt));
             resetBrowserCursor(_tb);
         }
@@ -197,7 +199,7 @@ void FileInfoDialog::reloadData() {
 
         const auto plgdata = _editor->pluginDataNames();
         if (!plgdata.isEmpty()) {
-            _tb->append(tr("WorkspacePluginData") + sep);
+            _tb->append(tr("Workspace plugin data") + sep);
             for (const auto &d : plgdata) {
                 _tb->append(QStringLiteral(" - ") + d);
             }

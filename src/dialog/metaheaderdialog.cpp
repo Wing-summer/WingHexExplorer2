@@ -33,7 +33,7 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
-    auto l = new QLabel(tr("ChooseHeader"), this);
+    auto l = new QLabel(tr("Select header"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     headerlist = new QListWidget(this);
@@ -57,7 +57,7 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setWindowTitle(tr("MetaHeader"));
+    this->setWindowTitle(tr("Metadata header"));
 }
 
 const QVector<bool> &MetaHeaderDialog::getResults() { return _result; }

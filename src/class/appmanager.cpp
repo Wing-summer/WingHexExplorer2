@@ -113,15 +113,16 @@ AppManager::AppManager(int &argc, char *argv[])
                 _w->show();
 
                 if (!failedFile.isEmpty()) {
-                    WingMessageBox::critical(_w, tr("Error"),
-                                             tr("ErrOpenFileBelow") +
-                                                 QStringLiteral("\n") +
-                                                 failedFile.join('\n'));
+                    WingMessageBox::critical(
+                        _w, tr("Error"),
+                        tr("Could not open the following file. Check that it "
+                           "exists and that you have permission to read it:") +
+                            QStringLiteral("\n") + failedFile.join('\n'));
                 }
             });
 
     if (splash) {
-        splash->setInfoText(tr("OpeningFiles"));
+        splash->setInfoText(tr("Opening files..."));
     }
 
     if (args.size() > 1) {
@@ -135,10 +136,11 @@ AppManager::AppManager(int &argc, char *argv[])
         }
 
         if (!failedFile.isEmpty()) {
-            WingMessageBox::critical(_w, tr("Error"),
-                                     tr("ErrOpenFileBelow") +
-                                         QStringLiteral("\n") +
-                                         failedFile.join('\n'));
+            WingMessageBox::critical(
+                _w, tr("Error"),
+                tr("Could not open the following file. Check that it exists "
+                   "and that you have permission to read it:") +
+                    QStringLiteral("\n") + failedFile.join('\n'));
         }
     }
 
@@ -197,7 +199,8 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
             if (_w->currentEditor() == editor) {
-                Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+                Toast::toast(_w, NAMEICONRES("openapp"),
+                             tr("This file is already open."));
             } else {
                 editor->raise();
             }
@@ -210,7 +213,8 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
     } else if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
         if (_w->currentEditor() == editor) {
-            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+            Toast::toast(_w, NAMEICONRES("openapp"),
+                         tr("This file is already open."));
         } else {
             editor->raise();
         }

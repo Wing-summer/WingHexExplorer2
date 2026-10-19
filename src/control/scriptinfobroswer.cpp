@@ -33,15 +33,15 @@ void ScriptInfoBroswer::updateData(const ScriptManager::ScriptDirMeta &meta) {
     this->insertHtml(
         QStringLiteral(R"(<p align="center"><img src="scicon://%1"/></p><p />)")
             .arg(meta.rawName));
-    this->insertPlainText(tr("RawName:") + meta.rawName + '\n');
+    this->insertPlainText(tr("Raw name:") + meta.rawName + '\n');
     this->insertPlainText(tr("Name:") + meta.name + '\n');
     this->insertPlainText(tr("Author:") + meta.author + '\n');
     this->insertPlainText(tr("License:") + meta.license + '\n');
-    this->insertPlainText(tr("ContextMenu:") +
+    this->insertPlainText(tr("Context menu:") +
                           (meta.isContextMenu ? QStringLiteral("true")
                                               : QStringLiteral("false")) +
                           '\n');
-    this->insertPlainText(tr("HomePage:"));
+    this->insertPlainText(tr("Homepage:"));
     this->insertHtml(
         QStringLiteral(R"(<a href="%1">%1</a>)").arg(meta.homepage));
     auto cursor = this->textCursor();

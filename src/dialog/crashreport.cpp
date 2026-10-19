@@ -50,7 +50,7 @@ void CrashReport::on_buttonBox_clicked(QAbstractButton *button) {
         auto clipboard = qApp->clipboard();
         clipboard->setText(ui->textBrowser->toPlainText());
         Toast::toast(_dialog, NAMEICONRES(QStringLiteral("copy")),
-                     tr("CopyToClipBoard"));
+                     tr("Copy to clipboard"));
     } else {
         _dialog->done(1);
     }

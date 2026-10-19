@@ -56,14 +56,14 @@
       <item>
        <widget class="QCheckBox" name="cbEnablePlugin">
         <property name="text">
-         <string>EnablePlugin</string>
+         <string>Enable plugins</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="cbEnablePluginRoot">
         <property name="text">
-         <string>EnablePluginRoot</string>
+         <string>Enable plugins when running as root</string>
         </property>
        </widget>
       </item>
@@ -84,7 +84,7 @@
         <normaloff>:/com.wingsummer.winghex/images/plugin.png</normaloff>:/com.wingsummer.winghex/images/plugin.png</iconset>
       </attribute>
       <attribute name="title">
-       <string>PluginInfo</string>
+       <string>Plugin information</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_1">
        <property name="spacing">
@@ -155,7 +155,7 @@
         <normaloff>:/com.wingsummer.winghex/images/devext.png</normaloff>:/com.wingsummer.winghex/images/devext.png</iconset>
       </attribute>
       <attribute name="title">
-       <string>DevExtInfo</string>
+       <string>Device extension information</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <property name="sizeConstraint">
@@ -186,7 +186,7 @@
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>DevExt:</string>
+              <string>Device extension:</string>
              </property>
             </widget>
            </item>
@@ -220,7 +220,7 @@
         <normaloff>:/com.wingsummer.winghex/images/certfile.svg</normaloff>:/com.wingsummer.winghex/images/certfile.svg</iconset>
       </attribute>
       <attribute name="title">
-       <string>Cert</string>
+       <string>Certificate</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <property name="sizeConstraint">

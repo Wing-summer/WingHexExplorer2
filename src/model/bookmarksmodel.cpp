@@ -55,9 +55,9 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
         if (orientation == Qt::Horizontal) {
             switch (section) {
             case 0:
-                return tr("offset");
+                return tr("Offset");
             case 1:
-                return tr("comment");
+                return tr("Comment");
             }
         } else {
             return section + 1;

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>HistoryRemove</string>
+   <string>Remove history entries</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">

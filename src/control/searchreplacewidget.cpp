@@ -56,7 +56,7 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     auto tbMenu = new QToolButton(this);
     tbMenu->setAutoRaise(true);
     tbMenu->setIcon(skin.themeIcon(QStringLiteral("menu")));
-    tbMenu->setToolTip(tr("Search Settings"));
+    tbMenu->setToolTip(tr("Search settings"));
     tbMenu->setStyleSheet(
         QStringLiteral("QToolButton::menu-indicator { image: none; }"));
 
@@ -69,7 +69,7 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     m_regex->setCheckable(true);
     m_escapes = settingsMenu->addAction(tr("&Escape sequences"));
     m_escapes->setCheckable(true);
-    m_wrapSearch = settingsMenu->addAction(tr("Wrap Aro&und"));
+    m_wrapSearch = settingsMenu->addAction(tr("Wrap aro&und"));
     m_wrapSearch->setCheckable(true);
     m_wrapSearch->setChecked(true);
     m_replaceSel = settingsMenu->addAction(tr("Replace in selection"));
@@ -95,12 +95,12 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     auto tbNext = new QToolButton(this);
     tbNext->setAutoRaise(true);
     tbNext->setIcon(skin.themeIcon(QStringLiteral("right_arrow")));
-    tbNext->setToolTip(tr("Find Next"));
+    tbNext->setToolTip(tr("Find next"));
 
     auto tbPrev = new QToolButton(this);
     tbPrev->setAutoRaise(true);
     tbPrev->setIcon(skin.themeIcon(QStringLiteral("left_arrow")));
-    tbPrev->setToolTip(tr("Find Previous"));
+    tbPrev->setToolTip(tr("Find previous"));
 
     auto mlayout = new QVBoxLayout(this);
     mlayout->setContentsMargins(5, 5, 5, 5);
@@ -112,12 +112,12 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     auto tbReplaceCur = new QToolButton(this);
     tbReplaceCur->setAutoRaise(true);
     tbReplaceCur->setIcon(skin.themeIcon(QStringLiteral("dialog_apply")));
-    tbReplaceCur->setToolTip(tr("Replace Current"));
+    tbReplaceCur->setToolTip(tr("Replace current"));
 
     auto tbReplaceAll = new QToolButton(this);
     tbReplaceAll->setAutoRaise(true);
     tbReplaceAll->setIcon(skin.themeIcon(QStringLiteral("dialog_yes_to_all")));
-    tbReplaceAll->setToolTip(tr("Replace All"));
+    tbReplaceAll->setToolTip(tr("Replace all"));
 
     auto layout = new QHBoxLayout;
     layout->setContentsMargins(0, 0, 0, 0);

@@ -33,7 +33,7 @@ template <typename T,
 void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
                     QWidget *parent) {
     Q_ASSERT(parent);
-    auto cmenu = new QMenu(DockWidgetTab::tr("CloseGroup"), parent);
+    auto cmenu = new QMenu(DockWidgetTab::tr("Close edit group"), parent);
     cmenu->addAction(DockWidgetTab::tr("Left"), parent, [dockWidget]() {
         auto app = AppManager::instance();
         QList<T *> cviews;
@@ -122,7 +122,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
             app->mainWindow()->try2CloseScriptViews(cviews);
         }
     });
-    cmenu->addAction(DockWidgetTab::tr("Others"), parent, [dockWidget]() {
+    cmenu->addAction(DockWidgetTab::tr("Other"), parent, [dockWidget]() {
         auto app = AppManager::instance();
         QList<T *> cviews;
         for (const auto &view : T::instances()) {
@@ -162,7 +162,7 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
                 initMenuItems(menu, v->fileNameUrl());
             }
         }
-        auto a = new QAction(ICONRES("info"), tr("FileInfo"), menu);
+        auto a = new QAction(ICONRES("info"), tr("File information"), menu);
         connect(a, &QAction::triggered, this, [this]() {
             auto editor = qobject_cast<EditorView *>(dockWidget());
             if (editor) {
@@ -212,7 +212,8 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
 void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
     Q_ASSERT(menu);
     if (path.isLocalFile() && !EditorView::isNewFileUrl(path)) {
-        auto a = new QAction(ICONRES("shell"), tr("ShowInShell"), menu);
+        auto a =
+            new QAction(ICONRES("shell"), tr("Show in file manager"), menu);
         auto file = path.toLocalFile();
         connect(a, &QAction::triggered, this, [file]() {
             ShowInShell::showInGraphicalShell(

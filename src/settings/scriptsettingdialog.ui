@@ -66,21 +66,21 @@
       <item>
        <widget class="QCheckBox" name="cbAllowUsrScript">
         <property name="text">
-         <string>AllowRunUsrSciptInRoot</string>
+         <string>Allow user scripts when running as root</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="cbFileWrite">
         <property name="text">
-         <string>ScriptFile overwritable</string>
+         <string>Allow scripts to overwrite files</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="cbFileSysWrite">
         <property name="text">
-         <string>ScriptFileSystem writable</string>
+         <string>Allow scripts to delete files and directories</string>
         </property>
        </widget>
       </item>
@@ -160,7 +160,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
-      <string>DataBase</string>
+      <string>Database</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <property name="sizeConstraint">

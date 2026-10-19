@@ -180,13 +180,13 @@ void ScriptSettingDialog::createPluginStandardMenu() {
     auto widget = ui->listWidget;
     widget->setSelectionMode(QListWidget::ExtendedSelection);
     widget->setContextMenuPolicy(Qt::ActionsContextMenu);
-    widget->addAction(tr("SelectShow"), widget, [widget]() {
+    widget->addAction(tr("Show selected"), widget, [widget]() {
         const auto sels = widget->selectedItems();
         for (const auto &item : sels) {
             item->setCheckState(Qt::Checked);
         }
     });
-    widget->addAction(tr("SelectHide"), widget, [widget]() {
+    widget->addAction(tr("Hide selected"), widget, [widget]() {
         const auto sels = widget->selectedItems();
         for (const auto &item : sels) {
             item->setCheckState(Qt::Unchecked);
@@ -195,12 +195,13 @@ void ScriptSettingDialog::createPluginStandardMenu() {
     auto a = new QAction(widget);
     a->setSeparator(true);
     widget->addAction(a);
-    widget->addAction(tr("SelectAll"), widget, &QListWidget::selectAll);
-    widget->addAction(tr("SelectClear"), widget, &QListWidget::clearSelection);
+    widget->addAction(tr("Select all"), widget, &QListWidget::selectAll);
+    widget->addAction(tr("Clear selection"), widget,
+                      &QListWidget::clearSelection);
     a = new QAction(widget);
     a->setSeparator(true);
     widget->addAction(a);
-    widget->addAction(tr("DiscardChanges"), this,
+    widget->addAction(tr("Discard changes"), this,
                       &ScriptSettingDialog::discard);
 }
 

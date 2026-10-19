@@ -439,7 +439,8 @@ public:
                           std::is_same_v<T, QAbstractButton> ||
                           std::is_base_of_v<QAbstractButton, T>) {
                 w->setText(w->text() + QStringLiteral(" (*)"));
-                w->setToolTip(QApplication::tr("OptionNeedRestart"));
+                w->setToolTip(QApplication::tr(
+                    "Restart the application to apply this change."));
             }
         }
     }

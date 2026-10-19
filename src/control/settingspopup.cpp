@@ -186,7 +186,7 @@ SyntaxPopup::SyntaxPopup(QWidget *parent) : FilteredTreePopup(parent) {
 
     // Default unformatted option
     m_plainTextItem =
-        new QTreeWidgetItem(tree(), QStringList{tr("Plain Text")});
+        new QTreeWidgetItem(tree(), QStringList{tr("Plain text")});
 
     // Load the syntax definitions (these are already sorted)
     auto &syntaxRepo = WingCodeEdit::syntaxRepo();

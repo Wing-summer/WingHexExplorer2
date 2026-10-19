@@ -89,7 +89,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
 
-    b = new QPushButton(tr("BeforeCursor"), this);
+    b = new QPushButton(tr("Before cursor"), this);
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
@@ -99,7 +99,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
 
-    b = new QPushButton(tr("AfterCursor"), this);
+    b = new QPushButton(tr("After cursor"), this);
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
@@ -138,7 +138,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    setWindowTitle(tr("find"));
+    setWindowTitle(tr("Find"));
     setWindowIcon(ICONRES("find"));
 
     m_lineeditor->setFocus();
@@ -149,7 +149,7 @@ FindDialog::Result FindDialog::getResult() const { return _result; }
 void FindDialog::on_accept() {
     // check the last byte nibbles
     if (!m_lineeditor->isValid()) {
-        Toast::toast(this, NAMEICONRES("find"), tr("InvalidSeq"));
+        Toast::toast(this, NAMEICONRES("find"), tr("Invalid input sequence."));
         return;
     }
 

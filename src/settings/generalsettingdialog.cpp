@@ -32,19 +32,20 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::GeneralSettingDialog) {
     ui->setupUi(this);
 
-    ui->cbLanguage->addItem(tr("SystemDefault"));
+    ui->cbLanguage->addItem(tr("Follow system"));
     auto &lang = LanguageManager::instance();
     const auto langs = lang.langs();
     for (const auto &l : langs) {
         ui->cbLanguage->addItem(lang.langDisplay(l), l);
     }
 
-    auto e = QMetaEnum::fromType<SkinManager::Theme>();
-    for (int i = 0; i < e.keyCount(); ++i) {
-        ui->cbTheme->addItem(SkinManager::tr(e.valueToKey(i)));
-    }
+    ui->cbTheme->addItem(SkinManager::tr("Dark"),
+                         int(SkinManager::Theme::Dark));
+    ui->cbTheme->addItem(SkinManager::tr("Light"),
+                         int(SkinManager::Theme::Light));
 
-    ui->cbWinState->addItems({tr("Normal"), tr("Maximized"), tr("FullScreen")});
+    ui->cbWinState->addItems(
+        {tr("Normal"), tr("Maximized"), tr("Full screen")});
 
     ui->lblQtVersion->setText(QString::fromLatin1(QLibraryInfo::build()));
     ui->lblOS->setText(QSysInfo::prettyProductName() + QStringLiteral(" - ") +
@@ -113,7 +114,10 @@ void GeneralSettingDialog::reload() {
     if (deflang.isEmpty()) {
         ui->cbLanguage->setCurrentIndex(0);
     } else {
-        ui->cbLanguage->setCurrentIndex(langs.indexOf(deflang) + 1);
+        const auto index = langs.indexOf(deflang);
+        ui->cbLanguage->setCurrentIndex(
+            index >= 0 ? index + 1
+                       : langs.indexOf(QStringLiteral("en_US")) + 1);
     }
 
     ui->sbFontSize->setValue(set.appfontSize());

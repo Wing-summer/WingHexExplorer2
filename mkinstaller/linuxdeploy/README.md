@@ -1,4 +1,4 @@
-## 文件说明
+## 文件说明 / Packaging instructions
 
 该目录的工具用于打包 Linux 通用安装包，方便没有编译环境的用户使用该软件，与此同时可以保证较好的通用性。
 
@@ -13,3 +13,17 @@
 这个警告尤其注意，它在你打包目录的`lib`目录下，你必须将警告中的文件加上可执行权限，否则部署之后的程序因该文件没有可执行权限导致无法执行。 **为啥不放到自动化脚本是因为修改权限需要 root，除非你用桌面的文件属性设置。**
 
 完成部署之后，你就可以打包了，执行`build.sh`这个脚本，要把你 **打包的目录** 作为参数，执行完之后，它会在打包工具目录下创建`build`目录生成一个文件名格式与`WingHexExplorer2-vx.x.x-xxx-installer.run`类似的文件和一个`payload.tar.gz`文件，前者是安装包，后者是生成安装包中间产物，是对你打包目录进行压缩的一个压缩包。
+
+## English
+
+The tools in this directory create a general-purpose Linux installer so that users can run the application without a build environment, while retaining broad compatibility.
+
+The packaged application has been tested on Deepin V23 and KDE Neon without known issues in those tests.
+
+To package manually, first configure CMake's `CMAKE_PREFIX_INSTALL` to point to the packaging directory, enable `install`, and build. The application will then be installed into that directory.
+
+Next, run `deploy.py` with your **build directory** as its argument. Pass the build directory, not the packaging directory; the script locates the packaging directory itself. The screenshot above shows the expected output.
+
+Pay particular attention to the warning about a file in the packaging directory's `lib` directory. Grant that file executable permission; otherwise the deployed program cannot execute it. The existing instructions leave this step manual because changing the permission requires root access, unless it can be set through the desktop file properties.
+
+After deployment, run `build.sh` with the **packaging directory** as its argument. The script creates a `build` directory inside the packaging tools directory, containing an installer named similarly to `WingHexExplorer2-vx.x.x-xxx-installer.run` and a `payload.tar.gz` archive. The former is the installer; the latter is an intermediate archive of the packaging directory used to generate it.

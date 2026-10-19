@@ -35,7 +35,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Preference</string>
+      <string>Preferences</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="sizeConstraint">
@@ -72,7 +72,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>FontSize</string>
+         <string>Font size</string>
         </property>
        </widget>
       </item>
@@ -192,7 +192,7 @@
       <item row="0" column="0">
        <widget class="QCheckBox" name="chkShowLineNumber">
         <property name="text">
-         <string>LineNumber</string>
+         <string>Line numbers</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -202,7 +202,7 @@
       <item row="2" column="0">
        <widget class="QCheckBox" name="chkWordWrap">
         <property name="text">
-         <string>WordWrap</string>
+         <string>Word wrap</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -222,7 +222,7 @@
       <item row="2" column="3">
        <widget class="QCheckBox" name="chkAutoCloseChar">
         <property name="text">
-         <string>AutoCloseChar</string>
+         <string>Automatically close delimiters</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -242,7 +242,7 @@
       <item row="0" column="2">
        <widget class="QCheckBox" name="chkAutoIden">
         <property name="text">
-         <string>AutoIden</string>
+         <string>Auto indent</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -252,7 +252,7 @@
       <item row="0" column="3">
        <widget class="QCheckBox" name="chkShowIndentGuides">
         <property name="text">
-         <string>IndentGuides</string>
+         <string>Indent guides</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -262,7 +262,7 @@
       <item row="2" column="2">
        <widget class="QCheckBox" name="chkMatchBraces">
         <property name="text">
-         <string>MatchBraces</string>
+         <string>Match braces</string>
         </property>
         <property name="checked">
          <bool>false</bool>

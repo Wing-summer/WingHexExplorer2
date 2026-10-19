@@ -63,11 +63,11 @@ QVariant DbgCallStackModel::headerData(int section, Qt::Orientation orientation,
         if (orientation == Qt::Horizontal) {
             switch (section) {
             case 0:
-                return tr("line");
+                return tr("Line");
             case 1:
-                return tr("file");
+                return tr("File");
             case 2:
-                return tr("decl");
+                return tr("Declaration");
             }
         } else {
             return section + 1;

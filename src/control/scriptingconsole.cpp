@@ -665,7 +665,7 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
         a->setShortcutContext(Qt::WidgetShortcut);
         menu.addSeparator();
         a = menu.addAction(
-            ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+            ICONRES(QStringLiteral("dbgstop")), tr("Terminate script"),
             QKeySequence(Qt::ControlModifier | Qt::Key_Q), this, [this]() {
                 auto &m = ScriptMachine::instance();
                 if (_isTerminal) {

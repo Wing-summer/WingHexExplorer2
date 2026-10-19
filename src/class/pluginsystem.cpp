@@ -1395,7 +1395,8 @@ bool PluginSystem::endMarco(const QObject *sender) {
             }
 
             if (r != undo.rbegin()) {
-                Logger::warning(tr("UnexpectedUndoCmdPushDetected"));
+                Logger::warning(
+                    tr("Detected an abnormally pushed undo command"));
                 undo.erase(r.base(), undo.end());
             }
 
@@ -2886,9 +2887,9 @@ bool PluginSystem::dispatchAppClosingEvent() {
     for (const auto &plg : plgs) {
         auto ret = plg->eventClosing();
         if (!ret) {
-            Logger::warning(tr("AppClosingCanceled:") + plg->pluginName() +
-                            QStringLiteral(" (") + getPluginID(plg) +
-                            QStringLiteral(")"));
+            Logger::warning(tr("Program shutdown canceled:") +
+                            plg->pluginName() + QStringLiteral(" (") +
+                            getPluginID(plg) + QStringLiteral(")"));
             return false;
         }
     }
@@ -2959,7 +2960,8 @@ void PluginSystem::loadExtPlugin() {
                     filter);
 
     const auto totalFound = plgs.size();
-    Logger::info(tr("FoundPluginCount") + QString::number(totalFound));
+    Logger::info(tr("Total number of plugins found:") +
+                 QString::number(totalFound));
 
     const auto plgset = QStringLiteral("plgset");
     if (!udir.exists(plgset)) {
@@ -3175,7 +3177,7 @@ void PluginSystem::loadExtPlugin() {
 
         PluginLoadGuard guard(candidate.file);
         auto fName = candidate.file.fileName();
-        Logger::info(tr("LoadingPlugin") + fName);
+        Logger::info(tr("Loading plugins:") + fName);
         auto &loader = candidate.loader;
         auto p = qobject_cast<IWingPlugin *>(loader->instance());
         if (Q_UNLIKELY(p == nullptr)) {
@@ -3216,7 +3218,8 @@ void PluginSystem::loadDevicePlugin() {
                     filter);
     const auto total = plgs.size();
 
-    Logger::info(tr("FoundDrvPluginCount") + QString::number(total));
+    Logger::info(tr("Total number of device extension plugins discovered:") +
+                 QString::number(total));
 
     auto plgset = QStringLiteral("drvset");
     if (!udir.exists(plgset)) {
@@ -3269,7 +3272,7 @@ void PluginSystem::loadDevicePlugin() {
             continue;
         }
 
-        Logger::info(tr("LoadingPlugin") + fName);
+        Logger::info(tr("Loading plugins:") + fName);
         auto p = qobject_cast<IWingDevice *>(loader->instance());
         if (Q_UNLIKELY(p == nullptr)) {
             _blkdevs.append({PluginStatus::InvalidPlugin, m});
@@ -3465,7 +3468,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
     try {
         auto name = p->pluginName();
         if (name.trimmed().isEmpty()) {
-            throw tr("ErrLoadPluginNoName");
+            throw tr("Could not load the plugin: invalid plugin name.");
         }
 
         // dependencies had been checked
@@ -3486,16 +3489,16 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
             if (!p->init(setp)) {
                 setp->deleteLater();
-                throw tr("ErrLoadInitPlugin");
+                throw tr("Could not initialize the plugin.");
             }
         }
 
         _loadedplgs.append(p);
         _pinfos.insert(p, meta);
 
-        Logger::info(tr("PluginName :") + p->pluginName());
-        Logger::debug(tr("PluginAuthor :") + meta.author);
-        Logger::debug(tr("PluginWidgetRegister"));
+        Logger::info(tr("Plugin name:") + p->pluginName());
+        Logger::debug(tr("Plugin author:") + meta.author);
+        Logger::debug(tr("Registering plugin objects..."));
 
         // ensure call only once
         registerRibbonTools(p->registeredRibbonTools());
@@ -3531,11 +3534,11 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
     try {
         auto name = p->pluginName();
         if (name.trimmed().isEmpty()) {
-            throw tr("ErrLoadPluginNoName");
+            throw tr("Could not load the plugin: invalid plugin name.");
         }
 
-        Logger::debug(tr("ExtPluginAuthor :") + meta.author);
-        Logger::debug(tr("ExtPluginWidgetRegister"));
+        Logger::debug(tr("Device extension plugin author:") + meta.author);
+        Logger::debug(tr("Registering device extension plugin objects..."));
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
@@ -3552,7 +3555,7 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 
             if (!p->init(setp)) {
                 setp->deleteLater();
-                throw tr("ErrLoadInitExtPlugin");
+                throw tr("Could not initialize the device extension plugin.");
             }
         }
 
@@ -3574,7 +3577,7 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 if (file.isEmpty()) {
                     // common dialog
                     file = WingFileDialog::getOpenFileName(
-                        _win, tr("ChooseFile"), _win->m_lastusedpath);
+                        _win, tr("Select file"), _win->m_lastusedpath);
                 }
 
                 EditorView *view = nullptr;
@@ -3611,7 +3614,7 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
                 displayName = widgetName;
             }
             if (widgetName.isEmpty()) {
-                Logger::warning(tr("EmptyNameDockWidget:") +
+                Logger::warning(tr("Empty dock widget name:") +
                                 QStringLiteral("{ ") + p->pluginName() +
                                 QStringLiteral(" }"));
                 continue;
@@ -3621,7 +3624,7 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
                 widgetName.begin(), widgetName.end(),
                 [](const QChar &ch) { return ch.isLetterOrNumber(); });
             if (inch != widgetName.end()) {
-                Logger::warning(tr("InvalidNameDockWidget:") +
+                Logger::warning(tr("Invalid dock widget name:") +
                                 QStringLiteral("{ ") + p->pluginName() +
                                 QStringLiteral(" } ") + widgetName);
                 continue;
@@ -3629,7 +3632,7 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
 
             if (info.widget == nullptr) {
                 Logger::warning(
-                    tr("InvalidNullDockWidget:") + QStringLiteral("{ ") +
+                    tr("Invalid empty dock widget:") + QStringLiteral("{ ") +
                     p->pluginName() + QStringLiteral(" } ") + widgetName +
                     QStringLiteral(" ( ") + displayName + QStringLiteral(" )"));
                 continue;
@@ -3744,7 +3747,7 @@ void PluginSystem::registeredSettingPages(IWingPlugin *p) {
 
 bool PluginSystem::checkThreadAff() {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Not allowed operation in non-UI thread"));
+        Logger::warning(tr("Not allowed operation in non-ui thread"));
         return false;
     }
     return true;
@@ -3790,7 +3793,9 @@ void PluginSystem::loadAllPlugins() {
             if (ENABLED &&
                 qEnvironmentVariableBool("WINGHEX_CERT_SKIP", false)) {
                 if (WingMessageBox::critical(
-                        _win, qAppName(), tr("SkipCertEnabledDangerContinue"),
+                        _win, qAppName(),
+                        tr("Skipping certificate verification is dangerous. "
+                           "Are you sure you want to continue?"),
                         QMessageBox::Yes | QMessageBox::No) ==
                     QMessageBox::No) {
                     throw CrashCode::PluginSetting;
@@ -3824,7 +3829,7 @@ void PluginSystem::loadAllPlugins() {
             if (enableplg) {
                 loadExtPlugin();
             }
-            Logger::info(tr("PluginLoadingFinished"));
+            Logger::info(tr("Plugins loaded!"));
         }
     }
 

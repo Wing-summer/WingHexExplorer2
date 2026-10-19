@@ -42,7 +42,7 @@ HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
     });
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
-    auto a = new QAction(tr("ChooseColor"), this);
+    auto a = new QAction(tr("Select color"), this);
     connect(a, &QAction::triggered, this, [this] {
         ColorPickerDialog d;
         d.setColor(_color);

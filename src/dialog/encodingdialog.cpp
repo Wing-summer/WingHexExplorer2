@@ -31,7 +31,7 @@ EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
     auto layout = new QVBoxLayout(widget);
 
     this->setFixedSize(500, 600);
-    auto l = new QLabel(tr("ChooseEncoding"), this);
+    auto l = new QLabel(tr("Select text encoding:"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     enclist = new QListWidget(this);

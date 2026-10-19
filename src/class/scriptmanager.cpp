@@ -16,6 +16,7 @@
 */
 
 #include "scriptmanager.h"
+#include "localizedmetadata.h"
 
 #include "DockWidgetTab.h"
 #include "dbghelper.h"
@@ -72,20 +73,8 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
 
 QString ScriptManager::readJsonObjString(const QJsonObject &jobj,
                                          const QString &key) {
-    auto t = jobj.value(key);
-    if (t.isString()) {
-        return t.toString();
-    } else if (t.isObject()) {
-        auto obj = t.toObject();
-        auto langName = LanguageManager::instance().defaultLocale().name();
-        if (obj.contains(langName)) {
-            auto o = obj[langName];
-            if (o.isString()) {
-                return o.toString();
-            }
-        }
-    }
-    return {};
+    return LocalizedMetadata::string(
+        jobj.value(key), LanguageManager::instance().defaultLocale().name());
 }
 
 bool ScriptManager::readJsonObjBool(const QJsonObject &jobj,
@@ -112,8 +101,10 @@ QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
         menu->addAction(icon, name, parent, [=] {
             if (Utilities::isRoot() && !isSys &&
                 !SettingManager::instance().allowUsrScriptInRoot()) {
-                WingMessageBox::critical(nullptr, tr("RunScript"),
-                                         tr("CanNotRunUsrScriptForPolicy"));
+                WingMessageBox::critical(
+                    nullptr, tr("Run script"),
+                    tr("User scripts cannot run as root under the current "
+                       "security policy."));
                 return;
             }
             ScriptManager::instance().runScript(file);
@@ -284,7 +275,15 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
         const auto sections = set.childGroups();
         for (const auto &sec : sections) {
             set.beginGroup(sec);
-            auto name = set.value(langName, sec).toString().trimmed();
+            auto name =
+                set.value(langName, set.value(QStringLiteral("en_US"), sec))
+                    .toString()
+                    .trimmed();
+            if (name.isEmpty()) {
+                name = set.value(QStringLiteral("en_US"), sec)
+                           .toString()
+                           .trimmed();
+            }
             if (name.isEmpty()) {
                 name = sec;
             }
@@ -301,6 +300,9 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
         }
     }
 
+    if (meta.name.trimmed().isEmpty()) {
+        meta.name = info.fileName();
+    }
     meta.rawName = info.fileName();
     return meta;
 }
@@ -387,7 +389,9 @@ void ScriptManager::runScript(const QString &filename) {
     auto &ins = ScriptMachine::instance();
     if (ins.isRunning(ScriptMachine::Background)) {
         auto ret = WingMessageBox::question(
-            nullptr, tr("ScriptRunning"), tr("ScriptRunningRequestLastStop?"));
+            nullptr, tr("Script running"),
+            tr("The script is still running. Do you want to terminate the "
+               "previous script before proceeding?"));
         if (ret == QMessageBox::Yes) {
             ins.abortScript(ScriptMachine::Background);
         } else {

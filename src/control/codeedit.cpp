@@ -332,28 +332,29 @@ void CodeEdit::contextMenuEvent(QContextMenuEvent *event) {
                    tr("Replace"), QKeySequence(QKeySequence::Replace), this,
                    [this]() { showSearchReplaceBar(true, true); });
     menu.addAction(
-        QIcon(QStringLiteral(":/qeditor/goto.png")), tr("Goto"),
+        QIcon(QStringLiteral(":/qeditor/goto.png")), tr("Go to"),
         QKeySequences::instance().keySequence(QKeySequences::Key::GOTO), this,
         [this]() { showGotoBar(true); });
     menu.addSeparator();
-    menu.addAction(tr("GoToDef"), QKeySequence(Qt::Key_F12), this,
+    menu.addAction(tr("Go to definition"), QKeySequence(Qt::Key_F12), this,
                    [this]() { navigationRequested(false); });
-    menu.addAction(tr("GoToTypeDef"), QKeySequence(Qt::SHIFT | Qt::Key_F12),
-                   this, [this]() { navigationRequested(true); });
+    menu.addAction(tr("Go to type definition"),
+                   QKeySequence(Qt::SHIFT | Qt::Key_F12), this,
+                   [this]() { navigationRequested(true); });
     menu.addSeparator();
 
-    menu.addAction(tr("Comment/UnComment"),
+    menu.addAction(tr("Toggle comment"),
                    QKeySequence(Qt::ControlModifier | Qt::Key_Slash), this,
                    &CodeEdit::toggleComment);
 
-    menu.addAction(tr("Fold/UnFold"), this, [this]() {
+    menu.addAction(tr("Toggle folding"), this, [this]() {
         if (isCurrentLineFolded()) {
             unfoldCurrentLine();
         } else {
             foldCurrentLine();
         }
     });
-    menu.addAction(tr("FoldAll"), this, [this]() { foldAll(); });
+    menu.addAction(tr("Fold all"), this, [this]() { foldAll(); });
 
     menu.exec(event->globalPos());
 }

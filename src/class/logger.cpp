@@ -160,13 +160,13 @@ QString Logger::packWarnStr(QString msg) {
 QString Logger::getString(Level level) {
     switch (level) {
     case q0FATAL:
-        return tr("Critial");
+        return tr("Critical");
     case q1ERROR:
         return tr("Error");
     case q2WARN:
         return tr("Warning");
     case q3INFO:
-        return tr("Info");
+        return tr("Information");
     case q4DEBUG:
         return tr("Debug");
     case q5TRACE:

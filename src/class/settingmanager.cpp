@@ -445,8 +445,11 @@ void SettingManager::setLogCount(qsizetype newLogCount) {
 void SettingManager::checkWriteableAndWarn() {
     HANDLE_CONFIG;
     if (!CONFIG.isWritable()) {
-        Logger::warning(QStringLiteral("<i><u>") + tr("ConfigUnableSave") +
-                        QStringLiteral("</u></i>"));
+        Logger::warning(
+            QStringLiteral("<i><u>") +
+            tr("The program will be unable to save the configuration. Please "
+               "check the permissions for the configuration file.") +
+            QStringLiteral("</u></i>"));
     }
 }
 

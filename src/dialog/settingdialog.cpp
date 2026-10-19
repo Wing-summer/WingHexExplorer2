@@ -42,8 +42,8 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
                         ui->listWidget->indexFromItem(previous).row());
                     if (page->containUnsavedChanges()) {
                         auto ret = WingMessageBox::question(
-                            this, tr("UnsavedChanges"),
-                            tr("SaveChangesDiscardLeave?"));
+                            this, tr("Unsaved changes"),
+                            tr("Discard unsaved changes and close?"));
                         if (ret == QMessageBox::Yes) {
                             page->discard();
                         } else {
@@ -82,9 +82,11 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
     auto menu = new QMenu(ui->btnRestore);
     auto a = menu->addAction(tr("Restore current"));
     connect(a, &QAction::triggered, this, [this]() {
-        auto ret = WingMessageBox::warning(this, tr("Restore"),
-                                           tr("RestoreCurPageSets?"),
-                                           QMessageBox::Yes | QMessageBox::No);
+        auto ret = WingMessageBox::warning(
+            this, tr("Restore"),
+            tr("This change is irreversible. Are you sure to restore the "
+               "default settings for this page?"),
+            QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::No) {
             return;
         }
@@ -98,9 +100,11 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
 
     a = menu->addAction(tr("Restore all"));
     connect(a, &QAction::triggered, this, [this]() {
-        auto ret =
-            WingMessageBox::critical(this, tr("Restore"), tr("RestoreAllSets?"),
-                                     QMessageBox::Yes | QMessageBox::No);
+        auto ret = WingMessageBox::critical(
+            this, tr("Restore"),
+            tr("This modification is irreversible. Are you sure to restore all "
+               "default settings?"),
+            QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::No) {
             return;
         }
@@ -191,8 +195,9 @@ bool SettingDialog::eventFilter(QObject *, QEvent *event) {
         auto e = static_cast<QCloseEvent *>(event);
         auto page = m_pages.at(ui->listWidget->currentRow());
         if (page->containUnsavedChanges()) {
-            auto ret = WingMessageBox::question(this, tr("UnsavedChanges"),
-                                                tr("SaveChangesDiscardLeave?"));
+            auto ret = WingMessageBox::question(
+                this, tr("Unsaved changes"),
+                tr("Discard unsaved changes and close?"));
             if (ret == QMessageBox::Yes) {
                 page->discard();
             } else {
@@ -213,7 +218,7 @@ void SettingDialog::toastTakeEffectReboot() {
         auto avsize = icon.availableSizes();
         Q_ASSERT(!avsize.isEmpty());
         Toast::toast(_dialog, icon.pixmap(avsize.first()),
-                     tr("TakeEffectRestart"));
+                     tr("Restart the application to apply these changes."));
     }
 }
 
@@ -223,9 +228,9 @@ void SettingDialog::toastTakeEffectReboot(WingHex::SettingPage *page) {
         auto avsize = icon.availableSizes();
         Q_ASSERT(!avsize.isEmpty());
         Toast::toast(_dialog, icon.pixmap(avsize.first()),
-                     tr("TakeEffectRestart"));
+                     tr("Restart the application to apply these changes."));
     } else {
         Toast::toast(_dialog, NAMEICONRES(QStringLiteral("setting")),
-                     tr("TakeEffectRestart"));
+                     tr("Restart the application to apply these changes."));
     }
 }

@@ -370,7 +370,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             [this](QObject *obj, QEvent *) {
                 if (obj == ui->btnplgSave) {
                     auto tabName = QCoreApplication::translate(
-                        "PluginSettingDialog", "PluginInfo", nullptr);
+                        "PluginSettingDialog", "Plugin information", nullptr);
                     if (ui->btnplgSave->isEnabled()) {
                         tabName.append(QStringLiteral(" *"));
                     }
@@ -378,7 +378,8 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                         ui->tabWidget->indexOf(ui->tabPluginInfo), tabName);
                 } else if (obj == ui->btndevSave) {
                     auto tabName = QCoreApplication::translate(
-                        "PluginSettingDialog", "DevExtInfo", nullptr);
+                        "PluginSettingDialog", "Device extension information",
+                        nullptr);
                     if (ui->btndevSave->isEnabled()) {
                         tabName.append(QStringLiteral(" *"));
                     }
@@ -441,7 +442,7 @@ void PluginSettingDialog::restore() {
 void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
     widget->setSelectionMode(QListWidget::ExtendedSelection);
     widget->setContextMenuPolicy(Qt::ActionsContextMenu);
-    widget->addAction(tr("SelectEnable"), widget, [widget]() {
+    widget->addAction(tr("Enable selected"), widget, [widget]() {
         const auto sels = widget->selectedItems();
         for (const auto &item : sels) {
             auto flags = item->flags();
@@ -450,7 +451,7 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
             }
         }
     });
-    widget->addAction(tr("SelectDisable"), widget, [widget]() {
+    widget->addAction(tr("Disable selected"), widget, [widget]() {
         const auto sels = widget->selectedItems();
         for (const auto &item : sels) {
             auto flags = item->flags();
@@ -462,12 +463,13 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
     auto a = new QAction(widget);
     a->setSeparator(true);
     widget->addAction(a);
-    widget->addAction(tr("SelectAll"), widget, &QListWidget::selectAll);
-    widget->addAction(tr("SelectClear"), widget, &QListWidget::clearSelection);
+    widget->addAction(tr("Select all"), widget, &QListWidget::selectAll);
+    widget->addAction(tr("Clear selection"), widget,
+                      &QListWidget::clearSelection);
     a = new QAction(widget);
     a->setSeparator(true);
     widget->addAction(a);
-    widget->addAction(tr("DiscardChanges"), this,
+    widget->addAction(tr("Discard changes"), this,
                       &PluginSettingDialog::discard);
 }
 
@@ -543,7 +545,7 @@ void PluginSettingDialog::loadPluginInfo(
             auto c = ct.cert(certID);
             if (ct.isSysCert(c)) {
                 t->append(getWrappedText(
-                    tr("CertID") + sep +
+                    tr("Cert ID") + sep +
                     QStringLiteral("<a href=\"cert://\" title=\"") +
                     c.subjectDisplayName() + QStringLiteral("\">") +
                     c.subjectDisplayName() + QStringLiteral("</a>")));
@@ -552,14 +554,14 @@ void PluginSettingDialog::loadPluginInfo(
                 if (finfo.exists()) {
                     auto p = finfo.absoluteFilePath();
                     t->append(getWrappedText(
-                        tr("CertID") + sep + QStringLiteral("<a href=\"") +
+                        tr("Cert ID") + sep + QStringLiteral("<a href=\"") +
                         Utilities::getUrlString(p) +
                         QStringLiteral("\" title=\"") + c.subjectDisplayName() +
                         QStringLiteral("\">") + finfo.fileName() +
                         QStringLiteral("</a>")));
                 } else {
                     appendWrappedText(
-                        t, tr("CertID"),
+                        t, tr("Cert ID"),
                         QString::fromLatin1(certID.toHex().toUpper()));
                 }
             }
@@ -582,7 +584,7 @@ void PluginSettingDialog::loadPluginInfo(
             t->append(getWrappedText(comment));
         }
     } else {
-        t->setText(tr("NoPluginLoaded"));
+        t->setText(tr("No plugins are currently loaded."));
     }
 }
 

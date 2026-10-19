@@ -319,10 +319,10 @@ void QEditConfig::loadThemes() {
 
 void QEditConfig::loadIndentations() {
     ui->cbIndentation->addItem(
-        tr("IndentSpaces"), int(WingCodeEdit::IndentationMode::IndentSpaces));
-    ui->cbIndentation->addItem(tr("IndentTabs"),
+        tr("Spaces"), int(WingCodeEdit::IndentationMode::IndentSpaces));
+    ui->cbIndentation->addItem(tr("Tabs"),
                                int(WingCodeEdit::IndentationMode::IndentTabs));
-    ui->cbIndentation->addItem(tr("IndentMixed"),
+    ui->cbIndentation->addItem(tr("Mixed tabs and spaces"),
                                int(WingCodeEdit::IndentationMode::IndentMixed));
     ui->cbIndentation->setCurrentIndex(0);
 }

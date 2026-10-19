@@ -33,14 +33,14 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
     auto layout = new QVBoxLayout(widget);
 
     this->setFixedSize(500, 600);
-    auto l = new QLabel(tr("ChooseCheckSum"), this);
+    auto l = new QLabel(tr("Select checksums to calculate:"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     hashlist = new QTreeWidget(this);
     hashlist->setColumnCount(1);
     hashlist->header()->hide();
     hashlist->setContextMenuPolicy(Qt::ActionsContextMenu);
-    hashlist->addAction(tr("CheckAll"), this, [this]() {
+    hashlist->addAction(tr("Select all"), this, [this]() {
         auto total = hashlist->topLevelItemCount();
         for (int i = 0; i < total; ++i) {
             auto parent = hashlist->topLevelItem(i);
@@ -52,7 +52,7 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
             }
         }
     });
-    hashlist->addAction(tr("UncheckAll"), this, [this]() {
+    hashlist->addAction(tr("Clear selection"), this, [this]() {
         auto total = hashlist->topLevelItemCount();
         for (int i = 0; i < total; ++i) {
             auto parent = hashlist->topLevelItem(i);
@@ -88,7 +88,7 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    setWindowTitle(tr("CheckSum"));
+    setWindowTitle(tr("Checksum"));
     setWindowIcon(ICONRES("sum"));
 }
 
@@ -101,7 +101,8 @@ void CheckSumDialog::on_accept() {
         collectCheckedLeaves(hashlist->topLevelItem(i), _result);
     }
     if (_result.isEmpty()) {
-        Toast::toast(this, NAMEICONRES("sum"), tr("Nothing2Checksum"));
+        Toast::toast(this, NAMEICONRES("sum"),
+                     tr("No files available for checksum calculation."));
         return;
     }
     done(1);

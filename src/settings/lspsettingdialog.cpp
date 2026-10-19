@@ -27,15 +27,15 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::LspSettingDialog) {
     ui->setupUi(this);
 
-    ui->cbQuoteStyle->addItem(tr("Preserve"),
+    ui->cbQuoteStyle->addItem(tr("Preserve existing quotes"),
                               int(LuauFormat::QuoteStyle::Preserve));
-    ui->cbQuoteStyle->addItem(tr("PreferDouble"),
+    ui->cbQuoteStyle->addItem(tr("Prefer double quotes"),
                               int(LuauFormat::QuoteStyle::PreferDouble));
-    ui->cbQuoteStyle->addItem(tr("PreferSingle"),
+    ui->cbQuoteStyle->addItem(tr("Prefer single quotes"),
                               int(LuauFormat::QuoteStyle::PreferSingle));
-    ui->cbQuoteStyle->addItem(tr("ForceDouble"),
+    ui->cbQuoteStyle->addItem(tr("Always use double quotes"),
                               int(LuauFormat::QuoteStyle::ForceDouble));
-    ui->cbQuoteStyle->addItem(tr("ForceSingle"),
+    ui->cbQuoteStyle->addItem(tr("Always use single quotes"),
                               int(LuauFormat::QuoteStyle::ForceSingle));
 
     ui->cbQuoteStyle->setCurrentIndex(0);

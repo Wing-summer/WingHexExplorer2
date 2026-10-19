@@ -27,6 +27,7 @@
 class LanguageManager {
 public:
     struct LanguageData {
+        // Empty for built-in English; keeps QTranslator backing memory alive.
         QByteArray trFiles;
         QString about;
         QString dev;
@@ -51,9 +52,8 @@ private:
     Q_DISABLE_COPY(LanguageManager)
 
 private:
-    bool unpackTr(const QString &filename, const QLocale &locale);
-
-    void abortAndExit();
+    bool unpackTr(const QString &filename, const QLocale &locale,
+                  LanguageData &data);
 
 private:
     LanguageData _data;

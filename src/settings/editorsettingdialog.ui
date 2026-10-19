@@ -32,7 +32,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Base</string>
+      <string>Basic</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="sizeConstraint">
@@ -59,7 +59,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>FontSize</string>
+         <string>Font size</string>
         </property>
        </widget>
       </item>
@@ -76,7 +76,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>CopyLimit</string>
+         <string>Copy limit (bytes)</string>
         </property>
        </widget>
       </item>
@@ -109,7 +109,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>DecStrLimit</string>
+         <string>Decode limit (bytes)</string>
         </property>
        </widget>
       </item>
@@ -142,7 +142,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="lblHexWidth">
           <property name="text">
-           <string>HexWidth</string>
+           <string>Bytes per line</string>
           </property>
          </widget>
         </item>
@@ -156,7 +156,7 @@
         <item row="0" column="0">
          <widget class="QCheckBox" name="cbShowaddr">
           <property name="text">
-           <string>ShowAddr</string>
+           <string>Show headers</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -166,7 +166,7 @@
         <item row="0" column="1">
          <widget class="QCheckBox" name="cbShowtext">
           <property name="text">
-           <string>ShowText</string>
+           <string>Show decoded text</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -176,7 +176,7 @@
         <item row="1" column="0">
          <widget class="QCheckBox" name="cbShowcol">
           <property name="text">
-           <string>ShowCol</string>
+           <string>Show address column</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -186,7 +186,7 @@
         <item row="1" column="1">
          <widget class="QCheckBox" name="cbCursorSync">
           <property name="text">
-           <string>CursorSync</string>
+           <string>Synchronize cursor</string>
           </property>
           <property name="checked">
            <bool>true</bool>

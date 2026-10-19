@@ -307,17 +307,17 @@ private:
     addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,
                     const QString &title, Func &&slot,
                     const QKeySequence &shortcut = QKeySequence(),
-                    QMenu *menu = nullptr) {
+                    QMenu *menu = nullptr,
+                    const QString &description = QString()) {
         return addPannelAction(pannel, ICONRES(iconName), title, slot, shortcut,
-                               menu);
+                               menu, description);
     }
 
     template <typename Func>
-    inline QToolButton *
-    addPannelAction(RibbonButtonGroup *pannel, const QIcon &icon,
-                    const QString &title, Func &&slot,
-                    const QKeySequence &shortcut = QKeySequence(),
-                    QMenu *menu = nullptr) {
+    inline QToolButton *addPannelAction(
+        RibbonButtonGroup *pannel, const QIcon &icon, const QString &title,
+        Func &&slot, const QKeySequence &shortcut = QKeySequence(),
+        QMenu *menu = nullptr, const QString &description = QString()) {
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
@@ -331,12 +331,16 @@ private:
         }
 
         a->setIcon(icon);
+        const auto tooltip =
+            (description.isEmpty() ? title : description).toHtmlEscaped();
+        a->setAccessibleName(title);
+        a->setAccessibleDescription(description);
         a->setToolTip(
             shortcut.isEmpty()
-                ? QStringLiteral("<p align=\"center\">%1</p>").arg(title)
+                ? QStringLiteral("<p align=\"center\">%1</p>").arg(tooltip)
                 : QStringLiteral(
                       "<p align=\"center\">%1</p><p align=\"center\">%2</p>")
-                      .arg(title, shortcut.toString()));
+                      .arg(tooltip, shortcut.toString().toHtmlEscaped()));
 
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, this);

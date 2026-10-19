@@ -120,15 +120,15 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
         if (orientation == Qt::Horizontal) {
             switch (section) {
             case 0:
-                return tr("line");
+                return tr("Line");
             case 1:
-                return tr("col");
+                return tr("Column");
             case 2:
-                return tr("offset");
+                return tr("Offset");
             case 3:
-                return tr("value");
+                return tr("Value");
             case 4:
-                return tr("encoding");
+                return tr("Decoded text");
             }
         } else {
             return section + 1;

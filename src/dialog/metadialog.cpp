@@ -103,7 +103,9 @@ void MetaDialog::on_accept() {
          (!_background.isValid() || _background.alpha() == 0)) ||
         (ccomment->isChecked() && m_comment->text().trimmed().length() == 0)) {
         Toast::toast(this->parentWidget(),
-                     NAMEICONRES(QStringLiteral("metadata")), tr("NoChoose"));
+                     NAMEICONRES(QStringLiteral("metadata")),
+                     tr("Configure at least one enabled option, or disable the "
+                        "option."));
         return;
     }
 

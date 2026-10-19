@@ -238,9 +238,9 @@ bool ScriptingDialog::about2Close() {
     auto ret =
         unSavedFiles.isEmpty()
             ? QMessageBox::No
-            : WingMessageBox::warning(this, qAppName(), tr("ConfirmScriptSave"),
-                                      QMessageBox::Yes | QMessageBox::No |
-                                          QMessageBox::Cancel);
+            : WingMessageBox::warning(
+                  this, qAppName(), tr("Save changes to the modified scripts?"),
+                  QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     if (ret == QMessageBox::Yes) {
         for (const auto &p : views) {
             p->requestCloseDockWidget();
@@ -269,7 +269,7 @@ void ScriptingDialog::buildUpRibbonBar() {
     buildViewPage(m_ribbon->addTab(tr("View")));
     m_editStateWidgets << buildDebugPage(m_ribbon->addTab(tr("Debugger")));
 
-    buildSettingPage(m_ribbon->addTab(tr("Setting")));
+    buildSettingPage(m_ribbon->addTab(tr("Settings")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
 
     connect(
@@ -283,7 +283,7 @@ void ScriptingDialog::buildUpRibbonBar() {
                     }
                 } else {
                     Toast::toast(this, NAMEICONRES(QStringLiteral("script")),
-                                 tr("InvalidSourceFile"));
+                                 tr("Unsupported script file."));
                 }
             }
         });
@@ -297,10 +297,10 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("new"), tr("New"),
                         &ScriptingDialog::on_newfile, QKeySequence::New);
 
-        addPannelAction(pannel, QStringLiteral("open"), tr("OpenF"),
+        addPannelAction(pannel, QStringLiteral("open"), tr("Open"),
                         &ScriptingDialog::on_openfile, QKeySequence::Open);
 
-        addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
+        addPannelAction(pannel, QStringLiteral("recent"), tr("Recent files"),
                         EMPTY_FUNC, {}, m_recentMenu);
 
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
@@ -319,7 +319,7 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
         m_Tbtneditors[ToolButtonIndex::SAVE_ACTION] = a;
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
+        a = addPannelAction(pannel, QStringLiteral("saveas"), tr("Save as"),
                             &ScriptingDialog::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
         m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION] = a;
@@ -374,7 +374,7 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
         setPannelActionToolTip(
             a, shortcuts.keySequence(QKeySequences::Key::REPLACE));
 
-        a = addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
+        a = addPannelAction(pannel, QStringLiteral("jmp"), tr("Go to"),
                             &ScriptingDialog::on_gotoline);
         setPannelActionToolTip(a,
                                shortcuts.keySequence(QKeySequences::Key::GOTO));
@@ -382,7 +382,7 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Format"));
-        addPannelAction(pannel, QStringLiteral("codefmt"), tr("CodeFormat"),
+        addPannelAction(pannel, QStringLiteral("codefmt"), tr("Format code"),
                         &ScriptingDialog::on_codefmt);
     }
 
@@ -403,9 +403,9 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Layout"));
-        addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Fullscreen"),
+        addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Full screen"),
                         &ScriptingDialog::on_fullScreen);
-        addPannelAction(pannel, QStringLiteral("layout"), tr("RestoreLayout"),
+        addPannelAction(pannel, QStringLiteral("layout"), tr("Restore layout"),
                         &ScriptingDialog::on_restoreLayout);
     }
 
@@ -424,9 +424,9 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         addPerformClickShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_F5));
         m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION] = a;
 
-        a = addPannelAction(pannel, QStringLiteral("dbgdebug"),
-                            tr("RunWithDbg"),
-                            &ScriptingDialog::on_rundbgscript);
+        a = addPannelAction(pannel, QStringLiteral("dbgdebug"), tr("Debug"),
+                            &ScriptingDialog::on_rundbgscript, {}, nullptr,
+                            tr("Run the current script in the debugger."));
         setPannelActionToolTip(a, dbgkey);
         m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
 
@@ -449,18 +449,18 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
                             &ScriptingDialog::on_restartscript);
 
         a = addPannelAction(pannel, QStringLiteral("dbgstepinto"),
-                            tr("StepInto"), &ScriptingDialog::on_stepinscript);
+                            tr("Step into"), &ScriptingDialog::on_stepinscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F11));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION] = a;
 
         a = addPannelAction(pannel, QStringLiteral("dbgstepover"),
-                            tr("StepOver"),
+                            tr("Step over"),
                             &ScriptingDialog::on_stepoverscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F10));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION] = a;
 
-        a = addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
-                            &ScriptingDialog::on_stepoutscript);
+        a = addPannelAction(pannel, QStringLiteral("dbgstepout"),
+                            tr("Step out"), &ScriptingDialog::on_stepoutscript);
         addPerformClickShortcut(a, QKeySequence(Qt::SHIFT | Qt::Key_F11));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION] = a;
 
@@ -468,15 +468,15 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
     }
 
     {
-        auto pannel = tab->addGroup(tr("BreakPoint"));
+        auto pannel = tab->addGroup(tr("Breakpoint"));
         addPannelAction(
-            pannel, QStringLiteral("scriptdbg/tbp"), tr("ToggleBreakPoint"),
+            pannel, QStringLiteral("scriptdbg/tbp"), tr("Toggle breakpoint"),
             &ScriptingDialog::on_togglebreakpoint, QKeySequence(Qt::Key_F9));
         addPannelAction(pannel, QStringLiteral("scriptdbg/bp"),
-                        tr("AddBreakPoint"),
+                        tr("Add breakpoint"),
                         &ScriptingDialog::on_addbreakpoint);
         addPannelAction(pannel, QStringLiteral("scriptdbg/delbp"),
-                        tr("RemoveBreakPoint"),
+                        tr("Remove breakpoint"),
                         &ScriptingDialog::on_removebreakpoint);
     }
 
@@ -521,7 +521,7 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
 
 RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
     updateUI();
-    auto pannel = tab->addGroup(tr("Info"));
+    auto pannel = tab->addGroup(tr("Information"));
 
     addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
                     &ScriptingDialog::on_about);
@@ -532,7 +532,7 @@ RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
     addPannelAction(pannel, QStringLiteral("wiki"), tr("Wiki"),
                     &ScriptingDialog::on_wiki);
 
-    addPannelAction(pannel, QStringLiteral("qt"), tr("AboutQT"),
+    addPannelAction(pannel, QStringLiteral("qt"), tr("About Qt"),
                     [this] { WingMessageBox::aboutQt(this); });
     return tab;
 }
@@ -551,7 +551,7 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
     vars->addTab(m_varshow, tr("Local"));
 
     m_upvarshow = new IDBTreeView(this);
-    vars->addTab(m_upvarshow, tr("UpValue"));
+    vars->addTab(m_upvarshow, tr("Upvalue"));
 
     auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
                               tr("Variables"), vars);
@@ -574,8 +574,8 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
     watchVar->setContextMenuPolicy(Qt::ActionsContextMenu);
     auto a = newAction(tr("Add"), [this]() {
         bool b;
-        auto exp = WingInputDialog::getText(this, tr("Add expresion"),
-                                            tr("PleaseInput"),
+        auto exp = WingInputDialog::getText(this, tr("Add expression"),
+                                            tr("Enter a value:"),
                                             QLineEdit::Normal, {}, &b);
         if (b) {
             m_watchModel->addWatchExpression(exp);
@@ -601,7 +601,7 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
                 auto idx = sel->currentIndex();
                 if (idx.parent().isValid()) {
                     Toast::toast(this, NAMEICONRES(QStringLiteral("watch")),
-                                 tr("CanNotEditChild"));
+                                 tr("Cannot edit child nodes"));
                     return;
                 }
                 watchVar->edit(idx);
@@ -615,9 +615,10 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
     watchVar->addAction(a);
     a = newAction(tr("Clear"), [this]() {
         if (m_watchModel->rowCount({})) {
-            auto ret = WingMessageBox::critical(
-                this, tr("ClearWatchVars"), tr("Sure2Clear"),
-                QMessageBox::Yes | QMessageBox::No);
+            auto ret =
+                WingMessageBox::critical(this, tr("Clear watch variables"),
+                                         tr("Clear all watched variables?"),
+                                         QMessageBox::Yes | QMessageBox::No);
             if (ret == QMessageBox::Yes) {
                 m_watchModel->clearAll();
             }
@@ -626,7 +627,7 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
     watchVar->addAction(a);
 
     auto dw = buildDockWidget(dock, QStringLiteral("WatchVars"),
-                              tr("WatchVars"), watchVar);
+                              tr("Watch variables"), watchVar);
     m_dbgWatchView = dw;
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -640,7 +641,7 @@ ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
     m_consoleout->setIsTerminal(false);
     m_consoleout->viewport()->installEventFilter(this);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
-                              tr("ConsoleOutput"), m_consoleout);
+                              tr("Console output"), m_consoleout);
     m_outConsole = dw;
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -674,7 +675,7 @@ ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
         });
 
     auto dw = buildDockWidget(dock, QStringLiteral("StackTrace"),
-                              tr("StackTrace"), callstack);
+                              tr("Stack trace"), callstack);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -728,13 +729,13 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
                 auto clip = qApp->clipboard();
                 clip->setText(_squinfoModel->squiggleInfoText(r));
                 Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
-                             tr("CopyToClipBoard"));
+                             tr("Copy to clipboard"));
             }
         },
         QKeySequence::Copy);
     a->setIcon(ICONRES("copy"));
     dview->addAction(a);
-    a = newAction(tr("Copy(Json)"), [this, dview]() {
+    a = newAction(tr("Copy JSON"), [this, dview]() {
         auto idx = dview->currentIndex();
         auto r = idx.row();
         if (r >= 0) {
@@ -763,14 +764,14 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
             auto clip = qApp->clipboard();
             clip->setText(QString::fromUtf8(doc.toJson()));
             Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
-                         tr("CopyToClipBoard"));
+                         tr("Copy to clipboard"));
         }
     });
     a->setIcon(ICONRES("copy"));
     dview->addAction(a);
 
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
-                              tr("Diagnosis"), dview);
+                              tr("Diagnostics"), dview);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -861,7 +862,7 @@ bool ScriptingDialog::newOpenFileSafeCheck() {
     const auto &views = ScriptEditor::instances();
     if (views.size() >= std::numeric_limits<size_t>::max() - 1) {
         WingMessageBox::critical(this, tr("Error"),
-                                 tr("Too much opened files"));
+                                 tr("Too many files are open."));
         return false;
     }
     return true;
@@ -887,7 +888,7 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
 
 QMessageBox::StandardButton ScriptingDialog::saveRequest() {
     auto ret = WingMessageBox::warning(
-        this, qAppName(), tr("ConfirmScriptSave"),
+        this, qAppName(), tr("Save changes to the modified scripts?"),
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     return ret;
 }
@@ -908,7 +909,8 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         if (m.isRunning(ScriptMachine::Scripting) &&
             editor->editor()->isReadOnly()) {
             if (WingMessageBox::warning(
-                    this, this->windowTitle(), tr("ScriptStillRunning"),
+                    this, this->windowTitle(),
+                    tr("A script is still running. Exit anyway?"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
                 return;
             }
@@ -921,10 +923,10 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
                 return;
             } else if (ret == QMessageBox::Yes) {
                 if (!editor->save()) {
-                    if (WingMessageBox::critical(this, this->windowTitle(),
-                                                 tr("ScriptSaveFailedClose"),
-                                                 QMessageBox::Yes |
-                                                     QMessageBox::No) ==
+                    if (WingMessageBox::critical(
+                            this, this->windowTitle(),
+                            tr("Could not save the script. Close anyway?"),
+                            QMessageBox::Yes | QMessageBox::No) ==
                         QMessageBox::No) {
                         return;
                     }
@@ -1055,7 +1057,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
 }
 
 void ScriptingDialog::updateWindowTitle() {
-    auto title = tr("ScriptEditor");
+    auto title = tr("Script editor");
     auto fp = windowFilePath();
     if (fp.isEmpty()) {
         this->setWindowTitle(title);
@@ -1118,7 +1120,7 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
     if (isRun) {
         if (isDbg) {
             _status->setText(QStringLiteral("<font color=\"gold\">") +
-                             tr("Debuging...") + QStringLiteral("</font>"));
+                             tr("Debugging...") + QStringLiteral("</font>"));
         } else {
             _status->setText(QStringLiteral("<font color=\"green\">") +
                              tr("Running...") + QStringLiteral("</font>"));
@@ -1155,7 +1157,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
         }
         e->raise();
         Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
-                     tr("AlreadyOpened"));
+                     tr("This file is already open."));
         return e;
     } else {
         if (opened) {
@@ -1166,8 +1168,9 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
     auto editor = std::make_unique<ScriptEditor>(this);
     auto res = editor->openFile(filename);
     if (!res) {
-        WingMessageBox::critical(this, tr("Error"),
-                                 tr("InvalidFileOrPermission"));
+        WingMessageBox::critical(
+            this, tr("Error"),
+            tr("Invalid file format or insufficient file access permissions"));
         return nullptr;
     }
 
@@ -1191,7 +1194,8 @@ bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
     auto &runner = ScriptMachine::instance();
     if (runner.isRunning(ScriptMachine::Scripting)) {
         if (WingMessageBox::warning(
-                this, this->windowTitle(), tr("ScriptStillRunning"),
+                this, this->windowTitle(),
+                tr("A script is still running. Exit anyway?"),
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
             return false;
         }
@@ -1230,7 +1234,7 @@ bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
 
             if (!views.isEmpty()) {
                 WingMessageBox::critical(this, qAppName(),
-                                         tr("SaveUnSuccessfully"));
+                                         tr("Could not save the file."));
                 return false;
             }
         } break;
@@ -1520,8 +1524,9 @@ void ScriptingDialog::updateCursorPosition() {
             e->textColumn(cursor.block().text(), cursor.positionInBlock());
         const int selectedChars =
             std::abs(cursor.selectionEnd() - cursor.selectionStart());
-        QString positionText =
-            tr("Line %1, Col %2").arg(cursor.blockNumber() + 1).arg(column + 1);
+        QString positionText = tr("Line %1, column %2")
+                                   .arg(cursor.blockNumber() + 1)
+                                   .arg(column + 1);
         if (selectedChars) {
             positionText += tr(" (Selected: %1)").arg(selectedChars);
         }
@@ -1535,15 +1540,15 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
     editor->raise();
     editor->editor()->document()->setModified();
     if (QFile::exists(editor->fileName())) {
-        auto ret = WingMessageBox::question(this, tr("Reload"),
-                                            tr("ReloadNeededYesOrNo"));
+        auto ret = WingMessageBox::question(
+            this, tr("Reload"), tr("The file has changed. Reload it?"));
         if (ret == QMessageBox::Yes) {
             if (editor->reload()) {
                 Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
-                             tr("ReloadSuccessfully"));
+                             tr("File reloaded."));
             } else {
                 WingMessageBox::critical(this, tr("Error"),
-                                         tr("ReloadUnSuccessfully"));
+                                         tr("Could not reload the file."));
             }
         }
     }
@@ -1585,7 +1590,7 @@ void ScriptingDialog::on_newfile() {
         return;
     }
     auto filename =
-        WingFileDialog::getSaveFileName(this, tr("ChooseFile"), m_lastusedpath,
+        WingFileDialog::getSaveFileName(this, tr("Select file"), m_lastusedpath,
                                         QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
@@ -1593,7 +1598,9 @@ void ScriptingDialog::on_newfile() {
         auto dbg = ScriptMachine::instance().debugger();
         if (dbg->findLoadedLuauFile(filename)) {
             auto ret = WingMessageBox::warning(
-                this, tr("New"), tr("NewFileWithDbgExists"),
+                this, tr("New"),
+                tr("The newly created file name conflicts with the file being "
+                   "debugged."),
                 QMessageBox::Yes | QMessageBox::No);
             if (ret == QMessageBox::No) {
                 return;
@@ -1621,7 +1628,8 @@ void ScriptingDialog::on_newfile() {
         auto res = editor->openFile(filename);
         if (!res) {
             WingMessageBox::critical(this, tr("Error"),
-                                     tr("InvalidFileOrPermission"));
+                                     tr("Invalid file format or insufficient "
+                                        "file access permissions"));
             return;
         }
         auto eptr = editor.release();
@@ -1638,7 +1646,7 @@ void ScriptingDialog::on_openfile() {
         return;
     }
     auto filename =
-        WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath,
+        WingFileDialog::getOpenFileName(this, tr("Select file"), m_lastusedpath,
                                         QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
@@ -1655,9 +1663,10 @@ void ScriptingDialog::on_reload() {
     }
     if (editor->reload()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
-                     tr("ReloadSuccessfully"));
+                     tr("File reloaded."));
     } else {
-        WingMessageBox::critical(this, tr("Error"), tr("ReloadUnSuccessfully"));
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("Could not reload the file."));
     }
 }
 
@@ -1683,9 +1692,11 @@ void ScriptingDialog::on_save() {
         setWindowFilePath(editor->fileName());
         updateWindowTitle();
         Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                     tr("SaveSuccessfully"));
+                     tr("File saved."));
     } else {
-        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        WingMessageBox::critical(
+            this, tr("Error"),
+            tr("You do not have permission to access this file."));
         return;
     }
 }
@@ -1697,7 +1708,7 @@ void ScriptingDialog::on_saveas() {
     }
 
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("ChooseSaveFile"), m_lastusedpath,
+        this, tr("Please select the file save location:"), m_lastusedpath,
         QStringLiteral("Luau (*.luau *.lua)"));
     if (filename.isEmpty()) {
         return;
@@ -1710,9 +1721,10 @@ void ScriptingDialog::on_saveas() {
         updateWindowTitle();
         addRecentFile(editor, filename);
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
-                     tr("SaveSuccessfully"));
+                     tr("File saved."));
     } else {
-        WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("Could not save the file."));
     }
 }
 
@@ -1784,7 +1796,7 @@ void ScriptingDialog::on_codefmt() {
     if (e) {
         if (!e->formatCode()) {
             Toast::toast(this, NAMEICONRES(QStringLiteral("codefmt")),
-                         tr("FormatCodeFailed"));
+                         tr("Code formatting failed"));
         }
     }
 }
@@ -1838,7 +1850,11 @@ void ScriptingDialog::on_restoreLayout() {
             });
         if (notSameContainer) {
             auto ret = WingMessageBox::warning(
-                this, qAppName(), tr("LayoutRestoreBreak"),
+                this, qAppName(),
+                tr("The editing views are not in the same area. Restoring the "
+                   "layout will disrupt the current simultaneous editing view "
+                   "arrangement. After restoration, they will be merged. "
+                   "Confirm to proceed?"),
                 QMessageBox::Yes | QMessageBox::No);
             if (ret == QMessageBox::No) {
                 return;
@@ -1878,7 +1894,8 @@ void ScriptingDialog::on_runscript() {
     if (editor) {
         if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
-                                     tr("CannotSave2RunScript"));
+                                     tr("Unable to save, therefore unable to "
+                                        "continue running the script."));
             return;
         }
 
@@ -1905,7 +1922,8 @@ void ScriptingDialog::on_rundbgscript() {
     for (const auto &editor : views) {
         if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
-                                     tr("CannotSave2RunScript"));
+                                     tr("Unable to save, therefore unable to "
+                                        "continue running the script."));
             editor->raise();
             return;
         }
@@ -1995,7 +2013,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     auto &runner = ScriptMachine::instance();
     if (runner.isRunning(ScriptMachine::Scripting)) {
         if (WingMessageBox::warning(
-                this, this->windowTitle(), tr("ScriptStillRunning"),
+                this, this->windowTitle(),
+                tr("A script is still running. Exit anyway?"),
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
             event->ignore();
             return;
@@ -2150,7 +2169,8 @@ void ScriptingDialog::setLinkVisible(bool b) {
 }
 
 void ScriptingDialog::reportBusyScriptRun() {
-    WingMessageBox::critical(this, tr("Error"), tr("BusyRunScript"));
+    WingMessageBox::critical(this, tr("Error"),
+                             tr("A script is already running."));
 }
 
 QPixmap ScriptingDialog::markFromPath(const QString &name) {

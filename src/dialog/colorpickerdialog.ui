@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ColorPicker</string>
+   <string>Color picker</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../../resources.qrc">

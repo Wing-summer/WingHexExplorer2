@@ -131,7 +131,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="lblFontSize">
         <property name="text">
-         <string>FontSize</string>
+         <string>Font size</string>
         </property>
        </widget>
       </item>
@@ -148,7 +148,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="lblWinState">
         <property name="text">
-         <string>WinState</string>
+         <string>Window state</string>
         </property>
        </widget>
       </item>
@@ -167,7 +167,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Info</string>
+      <string>Information</string>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
       <property name="sizeConstraint">
@@ -194,7 +194,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
-         <string>Qt Version</string>
+         <string>Qt version</string>
         </property>
        </widget>
       </item>
@@ -234,7 +234,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Software Version</string>
+         <string>Software version</string>
         </property>
        </widget>
       </item>
@@ -254,7 +254,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>PluginSDK Version</string>
+         <string>Plugin SDK version</string>
         </property>
        </widget>
       </item>

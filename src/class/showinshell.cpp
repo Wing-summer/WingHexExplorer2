@@ -152,7 +152,7 @@ bool ShowInShell::showInGraphicalShell(QWidget *parent, const QString &pathIn,
             WingMessageBox::warning(
                 parent,
                 QApplication::translate("ShowInShell",
-                                        "Launching Windows Explorer Failed"),
+                                        "Could not open Windows Explorer"),
                 QApplication::translate(
                     "ShowInShell",
                     "Could not find explorer.exe in path to launch "

@@ -361,7 +361,7 @@ QVariant IDBTreeModel::data(const QModelIndex &index, int role) const {
 
     if (isProxy(ip)) {
         if (index.column() == NameColumn) {
-            return tr("LoadMore...");
+            return tr("Load more...");
         }
         return {};
     }

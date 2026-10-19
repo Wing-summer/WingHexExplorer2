@@ -57,7 +57,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>GoTo:</string>
+      <string>Go to:</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -102,14 +102,8 @@
    </item>
    <item>
     <widget class="QPushButton" name="btnGoto">
-     <property name="minimumSize">
-      <size>
-       <width>60</width>
-       <height>0</height>
-      </size>
-     </property>
      <property name="text">
-      <string>Goto</string>
+      <string>Go to</string>
      </property>
      <property name="icon">
       <iconset resource="../../resources.qrc">
@@ -119,6 +113,12 @@
    </item>
    <item>
     <widget class="QPushButton" name="btnClose">
+     <property name="toolTip">
+      <string>Close</string>
+     </property>
+     <property name="accessibleName">
+      <string>Close</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">border:none;</string>
      </property>

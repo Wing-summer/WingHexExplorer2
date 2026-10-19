@@ -104,17 +104,17 @@ EditorView::EditorView(QWidget *parent)
 
     newAction(m_menu, QStringLiteral("cut"), tr("Cut"),
               &EditorView::sigOnCutFile, QKeySequence::Cut);
-    newAction(m_menu, QStringLiteral("cuthex"), tr("CutHex"),
+    newAction(m_menu, QStringLiteral("cuthex"), tr("Cut hex"),
               &EditorView::sigOnCutHex,
               shortcut.keySequence(QKeySequences::Key::CUT_HEX));
     newAction(m_menu, QStringLiteral("copy"), tr("Copy"),
               &EditorView::sigOnCopyFile, QKeySequence::Copy);
-    newAction(m_menu, QStringLiteral("copyhex"), tr("CopyHex"),
+    newAction(m_menu, QStringLiteral("copyhex"), tr("Copy hex"),
               &EditorView::sigOnCopyHex,
               shortcut.keySequence(QKeySequences::Key::COPY_HEX));
     newAction(m_menu, QStringLiteral("paste"), tr("Paste"),
               &EditorView::sigOnPasteFile, QKeySequence::Paste);
-    newAction(m_menu, QStringLiteral("pastehex"), tr("PasteHex"),
+    newAction(m_menu, QStringLiteral("pastehex"), tr("Paste hex"),
               &EditorView::sigOnPasteHex,
               shortcut.keySequence(QKeySequences::Key::PASTE_HEX));
     newAction(m_menu, QStringLiteral("del"), tr("Delete"),
@@ -122,21 +122,21 @@ EditorView::EditorView(QWidget *parent)
     m_menu->addSeparator();
     newAction(m_menu, QStringLiteral("find"), tr("Find"),
               &EditorView::sigOnFindFile, QKeySequence::Find);
-    newAction(m_menu, QStringLiteral("jmp"), tr("Goto"),
+    newAction(m_menu, QStringLiteral("jmp"), tr("Go to"),
               &EditorView::sigOnGoToLine,
               shortcut.keySequence(QKeySequences::Key::GOTO));
     newAction(m_menu, QStringLiteral("fill"), tr("Fill"),
               &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_menu, QStringLiteral("metadata"), tr("MetaData"),
+    newAction(m_menu, QStringLiteral("metadata"), tr("Metadata"),
               &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
-    newAction(m_menu, QStringLiteral("bookmark"), tr("BookMark"),
+    newAction(m_menu, QStringLiteral("bookmark"), tr("Bookmark"),
               &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
     newAction(m_menu, QStringLiteral("encoding"), tr("Encoding"),
               &EditorView::sigOnEncoding);
-    newAction(m_menu, QStringLiteral("sum"), tr("CheckSum"),
+    newAction(m_menu, QStringLiteral("sum"), tr("Checksum"),
               &EditorView::sigOnCheckSum);
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_hex, &QHexView::customContextMenuRequested, this,
@@ -1189,7 +1189,7 @@ bool EditorView::checkErrAndReport(const QObject *sender, const char *func) {
 
 bool EditorView::checkThreadAff() {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Not allowed operation in non-UI thread"));
+        Logger::warning(tr("Not allowed operation in non-ui thread"));
         return false;
     }
     return true;

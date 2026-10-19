@@ -1,4 +1,8 @@
 <RCC>
+    <qresource prefix="/i18n/en">
+        <file alias="about.md">lang/builtin/about.md</file>
+        <file alias="devs.md">lang/builtin/devs.md</file>
+    </qresource>
     <qresource prefix="/com.wingsummer.winghex">
         <file>images/author.jpg</file>
         <file>images/author.png</file>

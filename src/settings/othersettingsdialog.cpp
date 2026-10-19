@@ -121,7 +121,7 @@ void OtherSettingsDialog::reload() {
 
 QIcon OtherSettingsDialog::categoryIcon() const { return ICONRES("other"); }
 
-QString OtherSettingsDialog::name() const { return tr("Others"); }
+QString OtherSettingsDialog::name() const { return tr("Other"); }
 
 QString OtherSettingsDialog::id() const { return QStringLiteral("Others"); }
 

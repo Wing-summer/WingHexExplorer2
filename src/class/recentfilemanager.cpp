@@ -38,18 +38,18 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
 
     QAction *a;
     a = new QAction(m_menu);
-    a->setText(tr("ClearHistory"));
+    a->setText(tr("Clear history"));
     a->setIcon(ICONRES("clearhis"));
     connect(a, &QAction::triggered, this, &RecentFileManager::clearFile);
     m_menu->addAction(a);
 
     a = new QAction(m_menu);
-    a->setText(tr("RemoveItem"));
+    a->setText(tr("Remove item"));
     a->setIcon(ICONRES("del"));
     connect(a, &QAction::triggered, this, [this] {
         if (hitems.count() == 0) {
             Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                         tr("NoHistoryDel"));
+                         tr("No history entries to remove."));
             return;
         }
 
@@ -59,7 +59,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
 
             if (idxs.isEmpty()) {
                 Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                             tr("NoHistoryDel"));
+                             tr("No history entries to remove."));
             } else {
                 // indices are already ordered
                 for (auto pidx = idxs.rbegin(); pidx != idxs.rend(); ++pidx) {
@@ -71,7 +71,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                     _dirty = true;
                 }
                 Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                             tr("HistoryDelSuccess"));
+                             tr("History entries removed."));
             }
         }
     });
@@ -150,10 +150,10 @@ QString RecentFileManager::getDisplayTooltip(const RecentInfo &info,
     if (isScriptFile) {
         tt = info.url.toLocalFile();
     } else {
-        tt = QStringLiteral("<p>") + tr("[file]") + info.url.toDisplayString() +
+        tt = QStringLiteral("<p>") + tr("[File]") + info.url.toDisplayString() +
              QStringLiteral("</p>");
 
-        tt += QStringLiteral("<p>") + tr("[isWorkSpace]") +
+        tt += QStringLiteral("<p>") + tr("[Workspace]") +
               (info.isWorkSpace ? tr("True") : tr("False")) +
               QStringLiteral("</p>");
     }
@@ -241,7 +241,8 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                         _dirty = true;
                         Toast::toast(m_parent,
                                      NAMEICONRES(QStringLiteral("clearhis")),
-                                     tr("FileNotExistClean"));
+                                     tr("The file does not exist; this entry "
+                                        "has been removed!"));
                     }
                 }
             }
@@ -281,7 +282,7 @@ void RecentFileManager::updateRecentFile(const RecentInfo &info) {
 void RecentFileManager::clearFile() {
     if (hitems.count() == 0) {
         Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                     tr("NoHistoryDel"));
+                     tr("No history entries to remove."));
         return;
     }
     for (const auto &item : std::as_const(hitems)) {
@@ -292,5 +293,5 @@ void RecentFileManager::clearFile() {
     hitems.clear();
     _dirty = true;
     Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                 tr("HistoryClearFinished"));
+                 tr("History cleared."));
 }
