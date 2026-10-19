@@ -1,8 +1,8 @@
 # QHexView 回归测试 / QHexView regression tests
 
-需要 Qt 6 Widgets、Gui、Concurrent 和 Test；独立构建，CTest 使用 offscreen 平台，无需桌面会话。
+需要 CMake 3.20+、C++17 编译器和 Qt 6.6.2+ Widgets、Gui、Concurrent 和 Test；独立构建，CTest 使用 offscreen 平台，无需桌面会话。
 
-Requires Qt 6 Widgets, Gui, Concurrent, and Test. Build independently; CTest uses the offscreen platform without a desktop session.
+Requires CMake 3.20+, a C++17 compiler, and Qt 6.6.2+ Widgets, Gui, Concurrent, and Test. Build independently; CTest uses the offscreen platform without a desktop session.
 
 ```sh
 cmake -S tests/qhexview -B /tmp/wing-qhexview-tests -G Ninja
