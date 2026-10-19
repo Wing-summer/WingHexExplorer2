@@ -16,6 +16,7 @@
  */
 #include "objtreewidget.h"
 
+#include "class/codeinfotip.h"
 #include "utilities.h"
 
 #include <QHeaderView>
@@ -23,182 +24,45 @@
 ObjTreeWidget::ObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
     Utilities::applyTreeViewProperty(this);
     setColumnCount(2);
-    auto header = this->header();
-    header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
-    setHeaderLabels({tr("Symbol"), tr("Decl")});
+    header()->setSortIndicator(0, Qt::AscendingOrder);
+    setHeaderLabels({tr("Symbol"), tr("Declaration")});
+    connect(&LuauLanguageServer::instance(), &LuauLanguageServer::initialized,
+            this, &ObjTreeWidget::refresh);
+    refresh();
 }
 
-// void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
-//     Q_ASSERT(engine);
-//     if (engine == nullptr) {
-//         return;
-//     }
-
-//     QHash<QString, QList<CodeInfoTip>> headerNodes;
-//     addGlobalFunctionCompletion(engine, headerNodes);
-//     addClassCompletion(engine, headerNodes);
-//     addEnumCompletion(engine, headerNodes);
-
-//     for (auto node = headerNodes.constKeyValueBegin();
-//          node != headerNodes.constKeyValueEnd(); node++) {
-//         QString header = node->first;
-
-//         QTreeWidgetItem *item = nullptr;
-
-//         if (header.isEmpty()) {
-//             item = new QTreeWidgetItem({tr("[Global]")});
-//         } else {
-//             item = new QTreeWidgetItem({header});
-//         }
-
-//         item->setToolTip(0, header);
-//         item->setIcon(
-//             0, CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind::Module));
-//         createObjNodes(node->second, item);
-//         addTopLevelItem(item);
-//     }
-
-//     setSortingEnabled(true);
-//     resizeColumnToContents(0);
-// }
-
-QTreeWidgetItem *ObjTreeWidget::createObjNode(const CodeInfoTip &node,
-                                              QTreeWidgetItem *parent) {
-    Q_ASSERT(parent);
-    QStringList contents{node.label, node.documentation()};
-    auto c = new QTreeWidgetItem(contents);
-    c->setToolTip(0, contents.at(0));
-    c->setToolTip(1, contents.at(1));
-    c->setIcon(0, CodeInfoTip::getDisplayIcon(node.kind));
-    parent->addChild(c);
-    return c;
+void ObjTreeWidget::refresh() {
+    const auto symbols = LuauLanguageServer::instance().globalSymbols();
+    setSortingEnabled(false);
+    clear();
+    createObjNodes(symbols, invisibleRootItem());
+    setSortingEnabled(true);
+    resizeColumnToContents(0);
 }
 
-void ObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
-                                   QTreeWidgetItem *parent) {
-
-    for (const auto &n : nodes) {
-        // only for code namespace completion
-        auto c = createObjNode(n, parent);
-        if (!n.children.isEmpty()) {
-            createObjNodes(n.children, c);
+void ObjTreeWidget::createObjNodes(
+    const QList<LuauLanguageServer::Symbol> &nodes, QTreeWidgetItem *parent) {
+    for (const auto &node : nodes) {
+        const auto &symbol = node.item;
+        const auto detail = symbol.detail.value_or(QString());
+        auto item = new QTreeWidgetItem(parent, {symbol.label, detail});
+        const auto declaration =
+            node.fullDeclaration.isEmpty() ? detail : node.fullDeclaration;
+        const auto tooltip =
+            symbol.documentation.value.isEmpty()
+                ? declaration
+                : declaration + '\n' + symbol.documentation.value;
+        item->setToolTip(0, tooltip);
+        item->setToolTip(1, tooltip);
+        item->setIcon(0, CodeInfoTip::getDisplayIcon(symbol.kind.value_or(
+                             lsp::CompletionItemKind::Missing)));
+        if (symbol.deprecated) {
+            auto font = item->font(0);
+            font.setStrikeOut(true);
+            item->setFont(0, font);
         }
+        createObjNodes(node.children, item);
     }
-}
-
-void ObjTreeWidget::addGlobalFunctionCompletion(
-    asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
-    Q_ASSERT(engine);
-
-    // for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); ++i) {
-    //     auto fn = engine->GetGlobalFunctionByIndex(i);
-    //     CodeInfoTip fnInfo;
-    //     auto ns = QString::fromUtf8(fn->GetNamespace());
-    //     fnInfo.name = QString::fromUtf8(fn->GetName());
-    //     fnInfo.type = LSP::CompletionItemKind::Function;
-    //     fnInfo.setComment(
-    //         QString::fromUtf8(fn->GetDeclaration(true, true, true)));
-    //     c[ns].append(fnInfo);
-    // }
-}
-
-void ObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
-                                      QHash<QString, QList<CodeInfoTip>> &c) {
-    Q_ASSERT(engine);
-
-    // for (asUINT i = 0; i < engine->GetEnumCount(); ++i) {
-    //     auto etype = engine->GetEnumByIndex(i);
-    //     etype->AddRef();
-
-    //     CodeInfoTip einfo;
-    //     auto ns = QString::fromUtf8(etype->GetNamespace());
-    //     einfo.name = QString::fromUtf8(etype->GetName());
-    //     einfo.type = LSP::CompletionItemKind::Enum;
-
-    //     for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
-    //         asINT64 v;
-    //         auto e = etype->GetEnumValueByIndex(i, &v);
-
-    //         CodeInfoTip en;
-    //         en.type = LSP::CompletionItemKind::EnumMember;
-    //         en.name = QString::fromLatin1(e);
-    //         en.setComment(en.name + QStringLiteral(" = ") +
-    //         QString::number(v)); einfo.children.append(en);
-    //     }
-
-    //     etype->Release();
-    //     c[ns].append(einfo);
-    // }
-}
-
-void ObjTreeWidget::addClassCompletion(asIScriptEngine *engine,
-                                       QHash<QString, QList<CodeInfoTip>> &c) {
-    Q_ASSERT(engine);
-
-    // for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
-    //     auto obj = engine->GetObjectTypeByIndex(i);
-    //     obj->AddRef();
-
-    //     CodeInfoTip cls;
-    //     cls.type = LSP::CompletionItemKind::Class;
-    //     cls.name = QString::fromUtf8(obj->GetName());
-    //     auto ns = QString::fromUtf8(obj->GetNamespace());
-
-    //     for (asUINT i = 0; i < obj->GetFactoryCount(); ++i) {
-    //         auto b = obj->GetFactoryByIndex(i);
-    //         b->AddRef();
-    //         CodeInfoTip fn;
-    //         fn.type = LSP::CompletionItemKind::Function;
-    //         fn.name = QString::fromUtf8(b->GetDeclaration(false, false,
-    //         false)); fn.setComment(
-    //             QString::fromUtf8(b->GetDeclaration(true, true, true)));
-    //         cls.children.append(fn);
-    //         b->Release();
-    //     }
-
-    //     for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
-    //         asEBehaviours bv;
-    //         auto b = obj->GetBehaviourByIndex(i, &bv);
-    //         if (bv == asBEHAVE_CONSTRUCT) {
-    //             b->AddRef();
-    //             CodeInfoTip fn;
-    //             fn.type = LSP::CompletionItemKind::Function;
-    //             fn.name =
-    //                 QString::fromUtf8(b->GetDeclaration(false, false,
-    //                 false));
-    //             fn.setComment(
-    //                 QString::fromUtf8(b->GetDeclaration(true, true, true)));
-    //             cls.children.append(fn);
-    //             b->Release();
-    //         }
-    //     }
-
-    //     for (asUINT i = 0; i < obj->GetMethodCount(); ++i) {
-    //         auto m = obj->GetMethodByIndex(i, true);
-    //         m->AddRef();
-    //         CodeInfoTip fn;
-    //         fn.type = LSP::CompletionItemKind::Function;
-    //         fn.name = QString::fromUtf8(m->GetName());
-    //         fn.setComment(
-    //             QString::fromUtf8(m->GetDeclaration(true, true, true)));
-    //         cls.children.append(fn);
-    //         m->Release();
-    //     }
-
-    //     for (asUINT i = 0; i < obj->GetPropertyCount(); ++i) {
-    //         auto p = obj->GetPropertyDeclaration(i, true);
-    //         auto name = QString::fromUtf8(p);
-    //         CodeInfoTip pi;
-    //         pi.type = LSP::CompletionItemKind::Property;
-    //         pi.name = name;
-    //         pi.setComment(name);
-    //         cls.children.append(pi);
-    //     }
-
-    //     obj->Release();
-
-    //     c[ns].append(cls);
-    // }
 }
 
 void ObjTreeWidget::focusOutEvent(QFocusEvent *event) {

@@ -1,6 +1,22 @@
+/*==============================================================================
+** Copyright (C) 2026-2029 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "luaulanguageserver.h"
 
-#include "../wingluaurequire.h"
 #include "Luau/AstQuery.h"
 #include "Luau/BuiltinDefinitions.h"
 #include "Luau/Config.h"
@@ -8,16 +24,17 @@
 #include "Luau/LuauConfig.h"
 #include "Luau/Normalize.h"
 #include "Luau/PrettyPrinter.h"
+#include "Luau/Subtyping.h"
 #include "Luau/TimeTrace.h"
 #include "Luau/ToString.h"
 #include "Luau/TxnLog.h"
 #include "Luau/TypeFunctionRuntime.h"
 #include "Luau/TypeUtils.h"
-#include "Luau/Unifier.h"
 #include "Luau/UnifierSharedState.h"
 #include "attachcommentsvisitor.h"
 #include "findnodetype.h"
 #include "lua.h"
+#include "luau/wingluaurequire.h"
 #include "semantictokensvisitor.h"
 #include "typehelpers.h"
 
@@ -63,8 +80,8 @@ std::optional<QString> getTypeName(Luau::TypeId typeId) {
         name = QString::fromStdString(parentClass->name);
     }
     // strip synthetic typeof() for builtin tables
-    if (name && name->sliced(0, 7) == QLatin1String("typeof(") &&
-        name->back() == ')') {
+    if (name && name->startsWith(QLatin1String("typeof(")) &&
+        name->endsWith(')')) {
         return name->sliced(7, name->length() - 8);
     } else {
         return name;
@@ -105,8 +122,9 @@ findNodeOrTypeAtPositionClosed(const Luau::SourceModule &source,
 LUAU_FASTINT(LuauTypeInferRecursionLimit)
 LUAU_FASTINT(LuauTypeInferIterationLimit)
 
-// Taken from Luau/Autocomplete.cpp
-static bool checkOverloadMatch(Luau::TypePackId subTp, Luau::TypePackId superTp,
+// Use the same subtyping rules as the new solver autocomplete checks.
+static bool checkOverloadMatch(Luau::TypePackId subTp,
+                               const Luau::FunctionType &function,
                                Luau::NotNull<Luau::Scope> scope,
                                Luau::TypeArena *typeArena,
                                Luau::NotNull<Luau::BuiltinTypes> builtinTypes) {
@@ -114,14 +132,27 @@ static bool checkOverloadMatch(Luau::TypePackId subTp, Luau::TypePackId superTp,
     Luau::UnifierSharedState unifierState(&iceReporter);
     Luau::Normalizer normalizer{typeArena, builtinTypes,
                                 Luau::NotNull{&unifierState},
-                                Luau::SolverMode::Old};
-    Luau::Unifier unifier(Luau::NotNull<Luau::Normalizer>{&normalizer}, scope,
-                          Luau::Location(), Luau::Variance::Covariant);
-
-    unifier.normalize = false;
-    unifier.checkInhabited = false;
-
-    return unifier.canUnify(subTp, superTp).empty();
+                                Luau::SolverMode::New};
+    unifierState.counters.recursionLimit = FInt::LuauTypeInferRecursionLimit;
+    unifierState.counters.iterationLimit = FInt::LuauTypeInferIterationLimit;
+    Luau::TypeCheckLimits limits;
+    Luau::TypeFunctionRuntime runtime{Luau::NotNull{&iceReporter},
+                                      Luau::NotNull{&limits}};
+    Luau::Subtyping subtyping{
+        builtinTypes, Luau::NotNull{typeArena}, Luau::NotNull{&normalizer},
+        Luau::NotNull{&runtime}, Luau::NotNull{&iceReporter}};
+    // Signature help also runs while arguments are still being entered.
+    // Pad missing arguments, without adding a variadic tail to a finite call.
+    auto [arguments, tail] = Luau::flatten(subTp);
+    const auto [parameters, parameterTail] = Luau::flatten(function.argTypes);
+    if (arguments.size() < parameters.size()) {
+        arguments.resize(parameters.size(), builtinTypes->anyType);
+        subTp = typeArena->addTypePack(arguments, tail);
+    }
+    return subtyping
+        .isSubtype(subTp, function.argTypes, scope, function.generics,
+                   function.genericPacks)
+        .isSubtype;
 }
 
 static std::optional<Luau::ModuleName>
@@ -323,11 +354,14 @@ getCommentLocations(const Luau::SourceModule *module,
 }
 
 static inline lsp::DocumentUri getUri(const Luau::ModuleName &moduleName) {
-    return QUrl(QString::fromStdString(moduleName));
+    const auto name = QString::fromStdString(moduleName);
+    return QFileInfo(name).isAbsolute() ? QUrl::fromLocalFile(name)
+                                        : QUrl(name);
 }
 
 static inline Luau::ModuleName getModuleName(const lsp::DocumentUri &uri) {
-    return uri.toString().toStdString();
+    return uri.isLocalFile() ? uri.toLocalFile().toStdString()
+                             : uri.toString().toStdString();
 }
 
 static bool isPathSubdirectory(const QString &parentPath,
@@ -903,7 +937,7 @@ static const char *sortText(const Luau::Frontend &frontend, const QString &name,
     }
 
     // If the entry is `loadstring`, deprioritise it
-    auto &completionGlobals = frontend.globalsForAutocomplete;
+    auto &completionGlobals = frontend.globals;
     if (auto it = completionGlobals.globalScope->bindings.find(
             Luau::AstName("loadstring"));
         it != completionGlobals.globalScope->bindings.end()) {
@@ -952,7 +986,7 @@ LuauLanguageServer &LuauLanguageServer::instance() {
 }
 
 LuauLanguageServer::LuauLanguageServer()
-    : frontend(Luau::Frontend(this, this,
+    : frontend(Luau::Frontend(Luau::SolverMode::New, this, this,
                               {/* retainFullTypeGraphs: */ true,
                                /* forAutocomplete: */ false,
                                /* runLintChecks: */ true})) {
@@ -1024,14 +1058,13 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
 
     Luau::FragmentAutocompleteStatusResult fragmentStatusResult;
     Luau::AutocompleteResult result;
-    bool forAutocomplete = true;
     bool fragmentWasSuccessful = false;
 
-    if (frontend.allModuleDependenciesValid(moduleName, forAutocomplete) &&
-        frontend.isDirty(moduleName, forAutocomplete)) {
+    if (frontend.allModuleDependenciesValid(moduleName) &&
+        frontend.isDirty(moduleName)) {
         Luau::FrontendOptions frontendOptions;
         frontendOptions.retainFullTypeGraphs = true;
-        frontendOptions.forAutocomplete = true;
+        frontendOptions.forAutocomplete = false;
         frontendOptions.cancellationToken = cancellationToken;
 
         // Get parse information for this script
@@ -1077,7 +1110,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
 
     if (!fragmentWasSuccessful) {
         // We must perform check before autocompletion
-        checkStrict(moduleName, cancellationToken, forAutocomplete);
+        checkStrict(moduleName, cancellationToken);
 
         if (cancellationToken && cancellationToken->requested()) {
             return {};
@@ -1107,7 +1140,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
         const auto localModule =
             fragmentWasSuccessful
                 ? fragmentStatusResult.result->incrementalModule
-                : getModule(moduleName, forAutocomplete);
+                : getModule(moduleName);
         if (auto documentationString = getDocumentationForAutocompleteEntry(
                 name, entry, result.ancestry, localModule, position)) {
             item.documentation = {lsp::MarkupKind::Markdown,
@@ -1415,8 +1448,6 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
     auto position = convertPosition(params.position);
 
     // Run the type checker to ensure we are up to date
-    // Use the autocomplete checker until strict checking supports expressive
-    // types consistently.
     checkStrict(moduleName, cancellationToken);
 
     if (cancellationToken && cancellationToken->requested()) {
@@ -1428,7 +1459,10 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         return std::nullopt;
     }
 
-    auto module = getModule(moduleName, /* forAutocomplete: */ true);
+    auto module = getModule(moduleName);
+    if (!module) {
+        return std::nullopt;
+    }
     auto ancestry = Luau::findAstAncestryOfPosition(*sourceModule, position);
     auto scope = Luau::findScopeAtPosition(*module, position);
 
@@ -1472,15 +1506,18 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
     Luau::TypeArena typeArena;
     std::vector<Luau::TypeId> argumentTys;
     if (candidate->self) {
-        argumentTys.push_back(followedId);
+        if (auto index = candidate->func->as<Luau::AstExprIndexName>()) {
+            if (auto selfType = module->astTypes.find(index->expr)) {
+                argumentTys.push_back(Luau::follow(*selfType));
+            }
+        }
     }
     for (auto &&arg : candidate->args) {
         if (auto ty = module->astTypes.find(arg)) {
             argumentTys.push_back(Luau::follow(*ty));
         }
     }
-    Luau::TypePackId subTp =
-        typeArena.addTypePack(argumentTys, frontend.builtinTypes->anyTypePack);
+    Luau::TypePackId subTp = typeArena.addTypePack(argumentTys);
 
     ToStringNamedFunctionOpts opts;
     opts.hideTableKind = false;
@@ -1630,8 +1667,8 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         // If this overload matches, and we haven't yet found a match, mark
         // it as the active signature
         if (!activeSignature &&
-            checkOverloadMatch(subTp, ftv->argTypes, Luau::NotNull{&*scope},
-                               &typeArena, frontend.builtinTypes)) {
+            checkOverloadMatch(subTp, *ftv, Luau::NotNull{&*scope}, &typeArena,
+                               frontend.builtinTypes)) {
             activeSignature = signatures.size();
         }
 
@@ -1693,18 +1730,15 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
     auto position = convertPosition(params.position);
 
     // Run the type checker to ensure we are up to date
-    // Match the autocomplete checker used to render type expressions.
-    checkStrict(moduleName, cancellationToken,
-                /* forAutocomplete: */ !showTableKinds);
+    checkStrict(moduleName, cancellationToken);
 
     if (cancellationToken && cancellationToken->requested()) {
         return std::nullopt;
     }
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    auto module = getModule(moduleName,
-                            /* forAutocomplete: */ !showTableKinds);
-    if (!sourceModule) {
+    auto module = getModule(moduleName);
+    if (!sourceModule || !module) {
         return std::nullopt;
     }
 
@@ -1984,7 +2018,7 @@ QVector<SemanticToken> LuauLanguageServer::semanticTokens(
     }
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    auto module = getModule(moduleName, /* forAutocomplete: */ true);
+    auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return {};
     }
@@ -2132,7 +2166,7 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
     }
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    auto module = getModule(moduleName, /* forAutocomplete: */ true);
+    auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return result;
     }
@@ -2212,8 +2246,7 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
         if (reference->prefix) {
             if (auto importedName = lookupImportedModule(
                     *scope, reference->prefix.value().value)) {
-                auto importedModule =
-                    getModule(*importedName, /* forAutocomplete: */ true);
+                auto importedModule = getModule(*importedName);
                 if (!importedModule) {
                     return result;
                 }
@@ -2298,7 +2331,7 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
     }
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    auto module = getModule(moduleName, /* forAutocomplete: */ true);
+    auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return std::nullopt;
     }
@@ -2324,8 +2357,7 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
             if (reference->prefix) {
                 if (auto importedName = lookupImportedModule(
                         *scope, reference->prefix.value().value)) {
-                    auto importedModule =
-                        getModule(*importedName, /* forAutocomplete: */ true);
+                    auto importedModule = getModule(*importedName);
                     if (!importedModule) {
                         return std::nullopt;
                     }
@@ -2385,6 +2417,198 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
     return std::nullopt;
 }
 
+static void collectSymbolProperties(Luau::TypeId type,
+                                    Luau::TableType::Props &properties,
+                                    QSet<Luau::TypeId> &visited) {
+    type = Luau::follow(type);
+    if (visited.contains(type)) {
+        return;
+    }
+    visited.insert(type);
+    if (auto table = Luau::get<Luau::TableType>(type)) {
+        properties.insert(table->props.begin(), table->props.end());
+    } else if (auto external = Luau::get<Luau::ExternType>(type)) {
+        properties.insert(external->props.begin(), external->props.end());
+        if (external->parent) {
+            collectSymbolProperties(*external->parent, properties, visited);
+        }
+    } else if (auto meta = Luau::get<Luau::MetatableType>(type)) {
+        collectSymbolProperties(meta->table, properties, visited);
+        auto index =
+            LuauLsp::lookupProp(Luau::follow(meta->metatable), "__index");
+        if (!index.empty() && index.front().property.readTy) {
+            collectSymbolProperties(*index.front().property.readTy, properties,
+                                    visited);
+        }
+    }
+}
+
+static QString symbolTypeAnnotation(Luau::TypeId type,
+                                    Luau::ToStringOptions &options) {
+    type = Luau::follow(type);
+    if (auto table = Luau::get<Luau::TableType>(type)) {
+        if (table->name) {
+            return QString::fromStdString(*table->name);
+        }
+        return table->props.empty() && !table->indexer
+                   ? QStringLiteral("{}")
+                   : QStringLiteral("{ ... }");
+    }
+    if (Luau::get<Luau::MetatableType>(type)) {
+        return QStringLiteral("{ ... }");
+    }
+    return QString::fromStdString(Luau::toString(type, options));
+}
+
+static QString symbolFunctionSignature(const QString &name,
+                                       const Luau::FunctionType &function,
+                                       Luau::ToStringOptions &options) {
+    auto signature = QString::fromStdString(
+        Luau::toStringNamedFunction(name.toStdString(), function, options));
+    signature.replace(QLatin1String("_: "), QLatin1String());
+    return signature;
+}
+
+static void formatSymbolDeclaration(LuauLanguageServer::Symbol &symbol,
+                                    Luau::TypeId type,
+                                    Luau::ToStringOptions options) {
+    const auto &name = symbol.item.label;
+    options.hideFunctionSelfArgument =
+        symbol.item.kind == lsp::CompletionItemKind::Method;
+    if (symbol.item.kind == lsp::CompletionItemKind::Function ||
+        symbol.item.kind == lsp::CompletionItemKind::Method) {
+        QStringList signatures;
+        if (auto function = Luau::get<Luau::FunctionType>(type)) {
+            signatures.append(
+                symbolFunctionSignature(name, *function, options));
+        } else if (auto intersection =
+                       Luau::get<Luau::IntersectionType>(type)) {
+            for (auto part : intersection->parts) {
+                if (auto function =
+                        Luau::get<Luau::FunctionType>(Luau::follow(part))) {
+                    signatures.append(
+                        symbolFunctionSignature(name, *function, options));
+                }
+            }
+        }
+        if (!signatures.isEmpty()) {
+            symbol.item.detail = signatures.first();
+            if (signatures.size() > 1) {
+                *symbol.item.detail += LuauLanguageServer::tr(
+                    " (+%n overload(s))", nullptr, signatures.size() - 1);
+            }
+            symbol.fullDeclaration = signatures.join('\n');
+            return;
+        }
+    }
+
+    symbol.item.detail = name + ": " + symbolTypeAnnotation(type, options);
+    options.maxTableLength = 1000;
+    options.maxTypeLength = 2000;
+    symbol.fullDeclaration =
+        name + ": " + QString::fromStdString(Luau::toString(type, options));
+}
+
+LuauLanguageServer::Symbol LuauLanguageServer::createGlobalSymbol(
+    const QString &name, Luau::TypeId type, lsp::CompletionItemKind kind,
+    Luau::ToStringOptions &options, QSet<Luau::TypeId> &ancestors) {
+    type = Luau::follow(type);
+    Symbol symbol;
+    symbol.item.label = name;
+    if (kind != lsp::CompletionItemKind::Interface &&
+        (Luau::get<Luau::FunctionType>(type) ||
+         Luau::isOverloadedFunction(type))) {
+        kind = kind == lsp::CompletionItemKind::Property
+                   ? lsp::CompletionItemKind::Method
+                   : lsp::CompletionItemKind::Function;
+    } else if (Luau::get<Luau::ExternType>(type)) {
+        kind = lsp::CompletionItemKind::Class;
+    } else if ((Luau::get<Luau::TableType>(type) ||
+                Luau::get<Luau::MetatableType>(type)) &&
+               kind == lsp::CompletionItemKind::Variable) {
+        kind = lsp::CompletionItemKind::Module;
+    }
+    symbol.item.kind = kind;
+    formatSymbolDeclaration(symbol, type, options);
+    if (auto docs = getDocumentationForType(type)) {
+        symbol.item.documentation = {lsp::MarkupKind::Markdown, *docs};
+    }
+
+    // Keep recursive references visible, but do not expand them again.
+    if (ancestors.contains(type) || ancestors.size() >= 32) {
+        return symbol;
+    }
+    ancestors.insert(type);
+    Luau::TableType::Props properties;
+    QSet<Luau::TypeId> visited;
+    collectSymbolProperties(type, properties, visited);
+    symbol.children.reserve(properties.size());
+    for (const auto &[propertyName, property] : properties) {
+        const auto propertyType =
+            property.readTy ? property.readTy : property.writeTy;
+        if (propertyType) {
+            symbol.children.append(createGlobalSymbol(
+                QString::fromStdString(propertyName), *propertyType,
+                lsp::CompletionItemKind::Property, options, ancestors));
+        }
+    }
+    ancestors.remove(type);
+    return symbol;
+}
+
+QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
+    if (!isReady) {
+        return {};
+    }
+
+    const auto scope = frontend.globals.globalScope;
+    Luau::ToStringOptions options;
+    options.useLineBreaks = false;
+    options.hideTableKind = true;
+    options.functionTypeArguments = true;
+    options.hideTableAliasExpansions = true;
+    options.maxTableLength = 48;
+    options.maxTypeLength = 200;
+    options.scope = scope;
+    QSet<Luau::TypeId> ancestors;
+
+    QList<Symbol> symbols;
+    symbols.reserve(scope->bindings.size() +
+                    scope->exportedTypeBindings.size());
+    for (const auto &[name, binding] : scope->bindings) {
+        auto symbol = createGlobalSymbol(
+            QString::fromUtf8(name.c_str()), binding.typeId,
+            lsp::CompletionItemKind::Variable, options, ancestors);
+        symbol.item.deprecated = binding.deprecated;
+        symbols.append(std::move(symbol));
+    }
+    for (const auto &[name, type] : scope->exportedTypeBindings) {
+        auto symbol = createGlobalSymbol(
+            QString::fromStdString(name), type.type,
+            lsp::CompletionItemKind::Interface, options, ancestors);
+        const QString declaration =
+            "type " + toStringTypeFun(name, type) + " = ";
+        auto aliasOptions = options;
+        aliasOptions.exhaustive = true;
+        const auto aliasType = Luau::follow(type.type);
+        if (Luau::get<Luau::TableType>(aliasType) ||
+            Luau::get<Luau::MetatableType>(aliasType)) {
+            symbol.item.detail = declaration + QStringLiteral("{ ... }");
+        } else {
+            symbol.item.detail =
+                declaration + symbolTypeAnnotation(aliasType, aliasOptions);
+        }
+        aliasOptions.maxTableLength = 1000;
+        aliasOptions.maxTypeLength = 2000;
+        aliasOptions.hideTableAliasExpansions = false;
+        symbol.fullDeclaration =
+            declaration +
+            QString::fromStdString(Luau::toString(aliasType, aliasOptions));
+        symbols.append(std::move(symbol));
+    }
+    return symbols;
+}
+
 void LuauLanguageServer::initialize(const InitializationOptions &options) {
     if (isReady) {
         return;
@@ -2405,8 +2629,8 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
     }
 
     readAllowedCfgRoots = options.readCfgRoots;
-    frontend.setLuauSolverMode(Luau::SolverMode::Old);
     isReady = true;
+    Q_EMIT initialized();
 }
 
 QTextDocument *
@@ -2540,8 +2764,6 @@ LuauLanguageServer::loadDefinitionFile(const std::string &packageName,
                                        const std::string &source) {
     auto result =
         registerDefinitions(frontend, frontend.globals, packageName, source);
-    registerDefinitions(frontend, frontend.globalsForAutocomplete, packageName,
-                        source);
 
     if (result.success) {
         auto textDocument = std::make_unique<QTextDocument>();
@@ -2556,11 +2778,7 @@ LuauLanguageServer::loadDefinitionFile(const std::string &packageName,
 }
 
 const Luau::ModulePtr
-LuauLanguageServer::getModule(const Luau::ModuleName &moduleName,
-                              bool forAutocomplete) const {
-    if (forAutocomplete) {
-        return frontend.moduleResolverForAutocomplete.getModule(moduleName);
-    }
+LuauLanguageServer::getModule(const Luau::ModuleName &moduleName) const {
     return frontend.moduleResolver.getModule(moduleName);
 }
 
@@ -2643,15 +2861,11 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
                        // closed
     }
 
-    // Check the module
-    // In the new solver, we end up calling `checkStrict` (retain type
-    // graphs), because documentation diagnostics is typically on the file a
-    // user is working on. So, we will end up having to call checkStrict
-    // later for Hover etc. i.e., calling 2 typechecks for no reason. In the
-    // old solver, it doesn't really matter, because there is a differnce
-    // between module + moduleForAutocomplete. So we prefer using
-    // checkSimple as we won't use the type graphs
-    Luau::CheckResult cr = checkSimple(moduleName, cancellationToken);
+    // Keep the active document's type graph for completion, hover and
+    // navigation. Unmanaged dependency diagnostics can discard their graphs.
+    Luau::CheckResult cr = managedFiles.find(moduleName) != managedFiles.end()
+                               ? checkStrict(moduleName, cancellationToken)
+                               : checkSimple(moduleName, cancellationToken);
 
     if (cancellationToken && cancellationToken->requested()) {
         return report;
@@ -2731,14 +2945,13 @@ LuauLanguageServer::checkSimple(const Luau::ModuleName &moduleName,
 
 Luau::CheckResult
 LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
-                                const LSPCancellationToken &cancellationToken,
-                                bool forAutocomplete) {
+                                const LSPCancellationToken &cancellationToken) {
     // HACK: note that a previous call to `Frontend::check(moduleName, {
     // retainTypeGraphs: false })` and then a call
     // `Frontend::check(moduleName, { retainTypeGraphs: true })` will NOT
     // actually retain the type graph if the module is not marked dirty. We
     // do a manual check and dirty marking to fix this
-    auto module = getModule(moduleName, forAutocomplete);
+    auto module = getModule(moduleName);
     if (module && module->internalTypes->types
                       .empty()) { // If we didn't retain type graphs, then the
                                   // internalTypes arena is empty
@@ -2746,10 +2959,16 @@ LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
     }
 
     Luau::FrontendOptions options{/* retainFullTypeGraphs: */ true,
-                                  forAutocomplete,
+                                  /* forAutocomplete: */ false,
                                   /* runLintChecks: */ true};
     options.cancellationToken = cancellationToken;
-    return frontend.check(moduleName, options);
+    try {
+        return frontend.check(moduleName, options);
+    } catch (const Luau::InternalCompilerError &err) {
+        qCritical("[LuauLanguageServer] Internal compiler error in '%s': %s",
+                  moduleName.c_str(), err.what());
+        return {};
+    }
 }
 
 void LuauLanguageServer::publishDiagnostics(
@@ -2786,8 +3005,7 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAutocompleteEntry(
 
         auto scope = Luau::findScopeAtPosition(*localModule, position);
         if (auto documentation = getDocumentationForTypeReference(
-                localModule->name, scope, importedPrefix, name,
-                /* forAutocomplete= */ true)) {
+                localModule->name, scope, importedPrefix, name)) {
             return documentation;
         }
     }
@@ -3002,15 +3220,13 @@ LuauLanguageServer::getDocumentationForType(const Luau::TypeId ty) {
 
 std::optional<QString> LuauLanguageServer::getDocumentationForTypeReference(
     const Luau::ModuleName &moduleName, const Luau::ScopePtr &scope,
-    const std::optional<Luau::AstName> &prefix, const Luau::Name &typeName,
-    bool forAutocomplete) {
+    const std::optional<Luau::AstName> &prefix, const Luau::Name &typeName) {
     if (prefix) {
         auto importedModuleName = lookupImportedModule(*scope, prefix->value);
         if (!importedModuleName) {
             return std::nullopt;
         }
-        auto importedModule = getModule(*importedModuleName,
-                                        /* forAutocomplete: */ forAutocomplete);
+        auto importedModule = getModule(*importedModuleName);
         if (!importedModule) {
             return std::nullopt;
         }
@@ -3036,8 +3252,7 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAstNode(
     const Luau::ScopePtr scope) {
     if (auto ref = node->as<Luau::AstTypeReference>()) {
         return getDocumentationForTypeReference(moduleName, scope, ref->prefix,
-                                                ref->name.value,
-                                                /* forAutocomplete= */ true);
+                                                ref->name.value);
     } else if (auto alias = node->as<Luau::AstStatTypeAlias>()) {
         return printMoonwaveDocumentation(
             getComments(moduleName, alias->location));
@@ -3047,9 +3262,8 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAstNode(
 
 void LuauLanguageServer::registerTypes() {
     Luau::registerBuiltinGlobals(frontend, frontend.globals);
-    Luau::registerBuiltinGlobals(frontend, frontend.globalsForAutocomplete);
 
-    auto &tagRegisterGlobals = frontend.globalsForAutocomplete;
+    auto &tagRegisterGlobals = frontend.globals;
     Luau::attachTag(Luau::getGlobalBinding(tagRegisterGlobals, "require"),
                     "Require");
 
@@ -3133,7 +3347,6 @@ void LuauLanguageServer::registerTypes() {
     }
 
     Luau::freeze(frontend.globals.globalTypes);
-    Luau::freeze(frontend.globalsForAutocomplete.globalTypes);
 }
 
 Luau::SourceCode::Type

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -18,42 +18,24 @@
 #ifndef OBJTREEWIDGET_H
 #define OBJTREEWIDGET_H
 
-#include "class/codeinfotip.h"
+#include "luau/lsp/luaulanguageserver.h"
 
-#include <QHash>
 #include <QTreeWidget>
-#include <QTreeWidgetItem>
-
-// TODO
-class asIScriptEngine;
 
 class ObjTreeWidget : public QTreeWidget {
     Q_OBJECT
 public:
     explicit ObjTreeWidget(QWidget *parent = nullptr);
 
-    // void setEngine(asIScriptEngine *engine);
+public slots:
+    void refresh();
 
 private:
-    QTreeWidgetItem *createObjNode(const CodeInfoTip &node,
-                                   QTreeWidgetItem *parent);
-
-    void createObjNodes(const QList<CodeInfoTip> &nodes,
+    void createObjNodes(const QList<LuauLanguageServer::Symbol> &nodes,
                         QTreeWidgetItem *parent);
 
-private:
-    void addGlobalFunctionCompletion(asIScriptEngine *engine,
-                                     QHash<QString, QList<CodeInfoTip>> &c);
-
-    void addEnumCompletion(asIScriptEngine *engine,
-                           QHash<QString, QList<CodeInfoTip>> &c);
-
-    void addClassCompletion(asIScriptEngine *engine,
-                            QHash<QString, QList<CodeInfoTip>> &c);
-
-    // QWidget interface
 protected:
-    virtual void focusOutEvent(QFocusEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 };
 
 #endif // OBJTREEWIDGET_H

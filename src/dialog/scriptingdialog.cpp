@@ -205,7 +205,6 @@ void ScriptingDialog::initConsole() {
             &ScriptingDialog::goRunFileLine);
     connect(dbg, &LuauDebugger::onDebugActionExec, this,
             [this]() { updateRunDebugMode(); });
-    //     m_sym->setEngine(machine.engine());
 }
 
 bool ScriptingDialog::about2Close() {

@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2026-2029 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #ifndef LUAULANGUAGESERVER_H
 #define LUAULANGUAGESERVER_H
 
@@ -10,6 +27,7 @@
 
 #include <QFileInfo>
 #include <QHash>
+#include <QSet>
 #include <QStringList>
 #include <QTextDocument>
 
@@ -17,6 +35,10 @@
 #include "Luau/Documentation.h"
 #include "Luau/Frontend.h"
 #include "Luau/TypeCheckLimits.h"
+
+namespace Luau {
+struct ToStringOptions;
+}
 
 class LuauLanguageServer : public QObject,
                            Luau::FileResolver,
@@ -43,6 +65,7 @@ public:
     void onUpdateDocument(const lsp::DocumentUri &uri, QTextDocument *document);
 
 signals:
+    void initialized();
     void onPublishDiagnostic(const lsp::DocumentUri &,
                              const QVector<lsp::Diagnostic> &);
 
@@ -74,7 +97,22 @@ public:
 public:
     void initialize(const InitializationOptions &options);
 
+    struct Symbol {
+        lsp::CompletionItem item;
+        QString fullDeclaration;
+        QList<Symbol> children;
+    };
+
+    // A value snapshot of registered globals and types, independent of the
+    // frontend type graph. Empty until initialization completes.
+    QList<Symbol> globalSymbols();
+
 private:
+    Symbol createGlobalSymbol(const QString &name, Luau::TypeId type,
+                              lsp::CompletionItemKind kind,
+                              Luau::ToStringOptions &options,
+                              QSet<Luau::TypeId> &ancestors);
+
     void clearConfigCache();
 
 private:
@@ -168,22 +206,17 @@ private:
                         const LSPCancellationToken &cancellationToken,
                         bool allowUnmanagedFiles = false);
 
-    // Runs `Frontend::check` on the module and DISCARDS THE TYPE GRAPH.
-    // Uses the diagnostic type checker, so strictness and DM awareness is not
-    // enforced NOTE: do NOT use this if you later retrieve a ModulePtr (via
-    // frontend.moduleResolver.getModule). Instead use `checkStrict` NOTE: use
-    // `frontend.parse` if you do not care about typechecking
+    // Check dependency diagnostics without retaining their internal type
+    // graphs.
     Luau::CheckResult
     checkSimple(const Luau::ModuleName &moduleName,
                 const LSPCancellationToken &cancellationToken);
 
-    // Runs `Frontend::check` on the module whilst retaining the type graph.
-    // Uses the autocomplete typechecker to enforce strictness and DM awareness.
-    // NOTE: a disadvantage of the autocomplete typechecker is that it has a
-    // timeout restriction that can often be hit
-    Luau::CheckResult checkStrict(const Luau::ModuleName &moduleName,
-                                  const LSPCancellationToken &cancellationToken,
-                                  bool forAutocomplete = true);
+    // Check using the document's configured mode and retain its type graph
+    // for language features. Diagnostics and completion share one module.
+    Luau::CheckResult
+    checkStrict(const Luau::ModuleName &moduleName,
+                const LSPCancellationToken &cancellationToken);
 
     void publishDiagnostics(const lsp::DocumentUri &uri,
                             const QVector<lsp::Diagnostic> &diagnostic) const;
@@ -205,8 +238,7 @@ private:
 
     std::optional<QString> getDocumentationForTypeReference(
         const Luau::ModuleName &moduleName, const Luau::ScopePtr &scope,
-        const std::optional<Luau::AstName> &prefix, const Luau::Name &typeName,
-        bool forAutocomplete);
+        const std::optional<Luau::AstName> &prefix, const Luau::Name &typeName);
 
     std::optional<QString>
     getDocumentationForAstNode(const Luau::ModuleName &moduleName,
@@ -229,8 +261,7 @@ private:
     loadDefinitionFile(const std::string &packageName,
                        const std::string &source);
 
-    const Luau::ModulePtr getModule(const Luau::ModuleName &moduleName,
-                                    bool forAutocomplete) const;
+    const Luau::ModulePtr getModule(const Luau::ModuleName &moduleName) const;
 
     Luau::SourceCode::Type
     sourceCodeTypeFromPath(const std::string &path) const;
