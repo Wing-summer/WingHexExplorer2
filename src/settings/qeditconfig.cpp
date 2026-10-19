@@ -24,9 +24,9 @@
         \see QEditConfig
 */
 
-#include "luau/runtime/scriptsettings.h"
-#include "control/editor/codeedit.h"
 #include "control/console/scriptingconsolebase.h"
+#include "control/editor/codeedit.h"
+#include "luau/runtime/scriptsettings.h"
 #include "ui_qeditconfig.h"
 #include "utilities.h"
 

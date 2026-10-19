@@ -23,9 +23,9 @@
 
 #include "class/application/appmanager.h"
 #include "class/file/showinshell.h"
-#include "dialog/fileinfodialog.h"
-#include "control/editorview.h"
 #include "control/editor/scripteditor.h"
+#include "control/editorview.h"
+#include "dialog/fileinfodialog.h"
 
 template <typename T,
           typename = std::enable_if<std::is_same_v<T, EditorView> ||

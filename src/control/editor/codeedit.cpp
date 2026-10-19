@@ -16,11 +16,11 @@
 */
 
 #include "codeedit.h"
+#include "class/settings/skinmanager.h"
 #include "class/util/qkeysequences.h"
 #include "luau/runtime/scriptsettings.h"
-#include "class/settings/skinmanager.h"
-#include "searchreplacewidget.h"
 #include "model/codecompletionmodel.h"
+#include "searchreplacewidget.h"
 #include "wingcompleter.h"
 
 #include <QAbstractItemView>

@@ -17,8 +17,8 @@
 
 #include "luaudebugger.h"
 
-#include "luau/runtime/luauscheduler.h"
 #include "luau/luauutil.h"
+#include "luau/runtime/luauscheduler.h"
 
 LuauDebugger::LuauDebugger() : QObject() {}
 

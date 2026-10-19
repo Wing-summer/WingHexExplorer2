@@ -17,9 +17,9 @@
 
 #include "recentfilemanager.h"
 #include "class/plugin/pluginsystem.h"
-#include "luau/runtime/scriptmanager.h"
 #include "control/toast.h"
 #include "dialog/historydeldialog.h"
+#include "luau/runtime/scriptmanager.h"
 #include "utilities.h"
 
 #include <QFile>

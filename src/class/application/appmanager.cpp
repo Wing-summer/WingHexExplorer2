@@ -21,20 +21,20 @@
 
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
-#include "luau/runtime/scriptmanager.h"
+#include "class/settings/languagemanager.h"
+#include "class/settings/settingmanager.h"
+#include "class/settings/skinmanager.h"
 #include "control/toast.h"
 #include "crashhandler.h"
 #include "dbghelper.h"
 #include "define.h"
+#include "dialog/common/wingmessagebox.h"
 #include "dialog/mainwindow.h"
 #include "dialog/splashdialog.h"
 #include "inspectqtloghelper.h"
-#include "class/settings/languagemanager.h"
 #include "logger.h"
-#include "class/settings/settingmanager.h"
-#include "class/settings/skinmanager.h"
+#include "luau/runtime/scriptmanager.h"
 #include "utilities.h"
-#include "dialog/common/wingmessagebox.h"
 
 #include <KSyntaxHighlighting/Repository>
 

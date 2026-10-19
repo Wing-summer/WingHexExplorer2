@@ -16,21 +16,21 @@
 */
 
 #include "pluginsystem.h"
+#include "class/application/logger.h"
 #include "class/file/fileaccesscheck.h"
 #include "class/settings/languagemanager.h"
-#include "class/application/logger.h"
-#include "luau/runtime/scriptmachine.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/skinmanager.h"
-#include "dialog/common/wingfiledialog.h"
-#include "dialog/common/winginputdialog.h"
-#include "dialog/common/wingmessagebox.h"
-#include "wingplugincert.h"
 #include "control/toast.h"
 #include "define.h"
 #include "dialog/colorpickerdialog.h"
+#include "dialog/common/wingfiledialog.h"
+#include "dialog/common/winginputdialog.h"
+#include "dialog/common/wingmessagebox.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
+#include "luau/runtime/scriptmachine.h"
+#include "wingplugincert.h"
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 

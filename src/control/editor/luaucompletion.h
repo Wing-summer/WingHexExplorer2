@@ -19,8 +19,8 @@
 #define LUAUCOMPLETION_H
 
 #include "WingCodeEdit/wingcompleter.h"
-#include "lspeditorinterface.h"
 #include "class/util/resettabletimer.h"
+#include "lspeditorinterface.h"
 
 class LuauCompletion : public WingCompleter {
     Q_OBJECT

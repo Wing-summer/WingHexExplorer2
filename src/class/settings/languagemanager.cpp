@@ -71,7 +71,8 @@ LanguageManager::LanguageManager() {
     for (const auto &langinfo : langFiles) {
         const auto lang = langinfo.fileName();
         const QLocale locale(lang);
-        if (locale.language() == QLocale::C || locale.language() == QLocale::English) {
+        if (locale.language() == QLocale::C ||
+            locale.language() == QLocale::English) {
             continue;
         }
         if (QFile::exists(langinfo.absoluteFilePath() + QStringLiteral("/") +

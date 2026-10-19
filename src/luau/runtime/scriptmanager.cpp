@@ -28,12 +28,12 @@
 #include <QMenu>
 #include <QSettings>
 
-#include "control/common/compositeiconengine.h"
 #include "class/settings/languagemanager.h"
-#include "scriptmachine.h"
 #include "class/settings/settingmanager.h"
-#include "utilities.h"
+#include "control/common/compositeiconengine.h"
 #include "dialog/common/wingmessagebox.h"
+#include "scriptmachine.h"
+#include "utilities.h"
 
 ScriptManager &ScriptManager::instance() {
     static ScriptManager ins;

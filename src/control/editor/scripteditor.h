@@ -19,10 +19,10 @@
 #define SCRIPTEDITOR_H
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "editorinfo.h"
-#include "lspeditorinterface.h"
 #include "class/util/resettabletimer.h"
 #include "codeedit.h"
+#include "editorinfo.h"
+#include "lspeditorinterface.h"
 
 #include <QFileSystemWatcher>
 

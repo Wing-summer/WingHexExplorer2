@@ -16,8 +16,8 @@
 */
 
 #include "wingfiledialog.h"
-#include "dialog/framelessdialogbase.h"
 #include "class/settings/settingmanager.h"
+#include "dialog/framelessdialogbase.h"
 
 QString WingFileDialog::getExistingDirectory(QWidget *parent,
                                              const QString &caption,

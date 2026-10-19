@@ -18,9 +18,9 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
+#include "control/console/scriptingconsole.h"
 #include "control/idbtreeview.h"
 #include "control/objtreewidget.h"
-#include "control/console/scriptingconsole.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
 

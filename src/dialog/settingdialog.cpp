@@ -18,8 +18,8 @@
 #include "settingdialog.h"
 #include "ui_settingdialog.h"
 
-#include "dialog/common/wingmessagebox.h"
 #include "control/toast.h"
+#include "dialog/common/wingmessagebox.h"
 #include "utilities.h"
 
 #include <QApplication>

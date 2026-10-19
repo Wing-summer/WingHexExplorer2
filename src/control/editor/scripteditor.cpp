@@ -19,11 +19,11 @@
 
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "editorlspevent.h"
-#include "luaucompletion.h"
-#include "luauindentation.h"
-#include "luau/runtime/scriptsettings.h"
 #include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauformatter.h"
+#include "luau/runtime/scriptsettings.h"
+#include "luaucompletion.h"
+#include "luauindentation.h"
 #include "utilities.h"
 
 #include <QAction>

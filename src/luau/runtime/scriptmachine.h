@@ -18,11 +18,11 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "luauscheduler.h"
 #include "luau/luaudebugger.h"
 #include "luau/luauinspector.h"
 #include "luau/scriptbindingengine.h"
 #include "luau/wingluaurequire.h"
+#include "luauscheduler.h"
 
 #include <QObject>
 #include <QQueue>

@@ -18,8 +18,8 @@
 #include "settingmanager.h"
 
 #include "class/application/logger.h"
-#include "skinmanager.h"
 #include "settings/settings.h"
+#include "skinmanager.h"
 
 #include "utilities.h"
 

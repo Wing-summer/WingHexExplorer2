@@ -22,8 +22,8 @@
 #include <QRegularExpressionMatch>
 #include <QTextCursor>
 
-#include "codeeditcontrolwidget.h"
 #include "codeedit.h"
+#include "codeeditcontrolwidget.h"
 
 class QLineEdit;
 class QComboBox;

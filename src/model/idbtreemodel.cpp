@@ -17,8 +17,8 @@
 
 #include "idbtreemodel.h"
 
-#include "luau/runtime/scriptmachine.h"
 #include "luau/luauvariableregistry.h"
+#include "luau/runtime/scriptmachine.h"
 
 #include <algorithm>
 #include <functional>

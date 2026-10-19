@@ -21,12 +21,12 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 
 #include "WingPlugin/wingplugincalls_p.h"
-#include "control/common/compositeiconengine.h"
 #include "class/application/logger.h"
-#include "class/plugin/pluginsystem.h"
-#include "class/util/qkeysequences.h"
-#include "class/settings/settingmanager.h"
 #include "class/file/workspacemanager.h"
+#include "class/plugin/pluginsystem.h"
+#include "class/settings/settingmanager.h"
+#include "class/util/qkeysequences.h"
+#include "control/common/compositeiconengine.h"
 #include "utilities.h"
 
 #include <QFile>

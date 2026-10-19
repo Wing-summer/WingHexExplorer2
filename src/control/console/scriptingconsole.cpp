@@ -17,13 +17,13 @@
 
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
+#include "class/settings/skinmanager.h"
 #include "control/editor/editorlspevent.h"
 #include "control/editor/luaucompletion.h"
 #include "control/editor/luauindentation.h"
+#include "luau/lsp/luaulanguageserver.h"
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptsettings.h"
-#include "class/settings/skinmanager.h"
-#include "luau/lsp/luaulanguageserver.h"
 #include "model/codecompletionmodel.h"
 #include "utilities.h"
 

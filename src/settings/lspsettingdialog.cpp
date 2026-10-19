@@ -18,9 +18,9 @@
 #include "lspsettingdialog.h"
 #include "ui_lspsettingdialog.h"
 
-#include "luau/runtime/scriptsettings.h"
 #include "class/settings/settingmanager.h"
 #include "luau/luauformatter.h"
+#include "luau/runtime/scriptsettings.h"
 #include "utilities.h"
 
 LspSettingDialog::LspSettingDialog(QWidget *parent)
