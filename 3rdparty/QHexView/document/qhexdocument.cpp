@@ -668,6 +668,9 @@ void QHexDocument::setAreaIndent(quint8 value) { m_areaindent = value; }
 int QHexDocument::hexLineWidth() const { return m_hexlinewidth; }
 
 void QHexDocument::setHexLineWidth(quint8 value) {
+    if (!value || m_hexlinewidth == value) {
+        return;
+    }
     m_hexlinewidth = value;
     m_metadata->setLineWidth(value);
     Q_EMIT hexLineWidthChanged();

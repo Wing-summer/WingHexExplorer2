@@ -156,6 +156,10 @@ public:
                 QHexCursor::SelectionModes mode = SelectionNormal);
     void select(qsizetype length,
                 QHexCursor::SelectionModes mode = SelectionNormal);
+    // Prevent an enum mode from binding to select(line, column).
+    void select(qsizetype length, SelectionMode mode) {
+        select(length, SelectionModes(mode));
+    }
 
     void setInsertionMode(InsertionMode mode);
     void setLineWidth(quint8 width);

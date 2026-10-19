@@ -52,9 +52,6 @@ public:
     void selectArea(const QPoint &pt);
     void toggleArea();
 
-    /*==============================*/
-    // added by wingsummer
-
     void setStringVisible(bool b);
     bool stringVisible();
     void setAddressVisible(bool b);
@@ -68,8 +65,6 @@ public:
     QString stringEncodingName() const;
 
     void switchDoc(QHexDocument *doc);
-
-    /*==============================*/
 
 public:
     void blinkCursor();
@@ -123,6 +118,10 @@ public:
 
     void setCacheLineCount(qsizetype count);
 
+signals:
+    void layoutChanged();
+    void repaintRequested();
+
 private:
     QByteArray getLine(qsizetype line) const;
     qsizetype rendererLength() const;
@@ -167,16 +166,11 @@ private:
     void drawCursorBlock(QPainter *painter, const QRectF &cursorRect,
                          const AsciiCell &cell, qsizetype line, int col,
                          const CellFormat &fmt) const;
-    void drawCursorStrBlock(QPainter *painter, const QRectF &cursorRect,
-                            const QString &cursorText, qsizetype line, int col,
-                            const CellFormat &fmt) const;
 
 private:
     bool drawCursor(QPainter *painter, const QRectF &cursorRect,
                     const QString &cursorText, qsizetype line, int col,
                     Areas area) const;
-    bool drawCursor(QPainter *painter, const QRectF &cursorRect,
-                    const AsciiCell &cell, qsizetype line, int col) const;
     void drawCursor(QPainter *painter, const QRectF &cursorRect,
                     const QString &cursorText) const;
 
@@ -190,13 +184,11 @@ private:
     QVector<AsciiCell> buildAsciiCells(qsizetype line) const;
     QVector<AsciiCell> buildAsciiCellsLatin1(const QByteArray &rawline) const;
     QVector<AsciiCell> buildAsciiCellsUtf8(const QByteArray &rawline) const;
-    QVector<AsciiCell> buildAsciiCellsUtf16(const QByteArray &rawline,
-                                            bool littleEndian,
-                                            bool useBom) const;
-    QVector<AsciiCell> buildAsciiCellsUtf32(const QByteArray &rawline,
-                                            bool littleEndian,
-                                            bool useBom) const;
-    CellFormat cellFormat(qsizetype line, int column) const;
+    QVector<AsciiCell> buildAsciiCellsUnicode(const QByteArray &rawline,
+                                              int unitSize, bool littleEndian,
+                                              bool useBom) const;
+    CellFormat cellFormat(qsizetype line, int column,
+                          const QHexMetadataItem *meta) const;
 
     QVector<CellFormat> buildUpLineFormats(qsizetype line) const;
 
@@ -243,16 +235,13 @@ private:
     mutable QCache<qsizetype,
                    QPair<QByteArray, QVector<QHexRenderer::AsciiCell>>>
         m_lineCaches{30};
-    QHexRenderer::Areas m_selectedarea;
-    bool m_cursorenabled;
+    Areas m_selectedarea = Areas::HexArea;
+    bool m_cursorenabled = false;
 
-    /*==============================*/
-    // added by wingsummer
-
-    bool m_asciiVisible;
-    bool m_addressVisible;
-    bool m_headerVisible;
-    bool m_cursorSync;
+    bool m_asciiVisible = true;
+    bool m_addressVisible = true;
+    bool m_headerVisible = true;
+    bool m_cursorSync = true;
     QStringConverter::Encoding m_stringEncoding =
         QStringConverter::Encoding::Latin1;
 
@@ -265,7 +254,6 @@ private:
     QColor m_selectionColor = Qt::white;
     QColor m_selBackgroundColor = Qt::blue;
     QColor m_borderColor = Qt::white;
-    /*==============================*/
 };
 
 #endif // QHEXRENDERER_H

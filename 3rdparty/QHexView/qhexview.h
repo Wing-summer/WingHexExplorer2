@@ -112,6 +112,8 @@ public slots:
     void setDocument(const QSharedPointer<QHexDocument> &document,
                      QHexCursor *cursor = nullptr);
     void resetDocument();
+    // Capitalized editing methods record undo commands; lowercase methods
+    // modify the document directly.
     bool RemoveSelection(int nibbleindex = 1);
     bool removeSelection();
 
@@ -155,6 +157,8 @@ public slots:
 
 private:
     void establishSignal(QHexDocument *doc);
+    void refresh();
+    static QByteArray clipboardBytes(bool hex);
 
     void adjustLineVisible(qsizetype line);
 

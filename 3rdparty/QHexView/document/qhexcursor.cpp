@@ -25,9 +25,7 @@
 QHexCursor::QHexCursor(QObject *parent)
     : QObject(parent), m_insertionmode(QHexCursor::OverwriteMode) {
     m_position.line = m_position.column = 0;
-    m_position.line = m_position.column = 0;
 
-    m_selection.line = m_selection.column = 0;
     m_selection.line = m_selection.column = 0;
 
     m_position.nibbleindex = m_selection.nibbleindex = 1;
@@ -65,17 +63,8 @@ qsizetype QHexCursor::currentSelectionLength() const {
     }
 
     qsizetype len = 0;
-    const auto res = QtConcurrent::blockingMappedReduced(
-        m_sels, &QHexSelection::length,
-        QOverload<
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-            const qsizetype &
-#else
-            QVector<qsizetype>::parameter_type
-#endif
-            >::of(&QVector<qsizetype>::append));
-    for (const auto &item : res) {
-        len += item;
+    for (const auto &selection : m_sels) {
+        len += selection.length();
     }
     return len;
 }
@@ -199,7 +188,7 @@ void QHexCursor::select(qsizetype line, int column, int nibbleindex,
 
 void QHexCursor::moveTo(qsizetype offset, bool clearSelection) {
     auto line = offset / m_lineWidth;
-    this->moveTo(line, int(offset - (line * m_lineWidth)), clearSelection);
+    this->moveTo(line, int(offset - (line * m_lineWidth)), 1, clearSelection);
 }
 
 void QHexCursor::setPos(qsizetype offset, int nibbleindex,
@@ -223,13 +212,22 @@ void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {
 }
 
 void QHexCursor::setLineWidth(quint8 width) {
-    m_lineWidth = width;
-    m_position.lineWidth = width;
-    m_selection.lineWidth = width;
+    if (!width) {
+        return;
+    }
 
-    for (auto &sel : m_sels) {
-        sel.begin.lineWidth = width;
-        sel.end.lineWidth = width;
+    const auto rebase = [width](QHexPosition &position) {
+        const auto offset = position.offset();
+        position.lineWidth = width;
+        position.line = offset / width;
+        position.column = int(offset % width);
+    };
+    m_lineWidth = width;
+    rebase(m_position);
+    rebase(m_selection);
+    for (auto &selection : m_sels) {
+        rebase(selection.begin);
+        rebase(selection.end);
     }
 }
 

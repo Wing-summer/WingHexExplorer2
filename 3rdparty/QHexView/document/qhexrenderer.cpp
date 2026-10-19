@@ -21,33 +21,33 @@
 
 #include "qhexrenderer.h"
 
-#include <QApplication>
 #include <QPainterPath>
 #include <QPainterPathStroker>
-#include <QStringDecoder>
 #include <QTextLayout>
-#include <QWidget>
 #include <cctype>
 
 constexpr char HEX_UNPRINTABLE_CHAR = '.';
 
 constexpr qreal CONTRASTING_COLOR_BORDER = 0.35;
 
-/*===================================*/
-// added by wingsummer
-
 bool QHexRenderer::stringVisible() { return m_asciiVisible; }
 
 void QHexRenderer::setStringVisible(bool b) {
+    if (m_asciiVisible == b) {
+        return;
+    }
     m_asciiVisible = b;
-    Q_EMIT m_document->documentChanged();
+    Q_EMIT layoutChanged();
 }
 
 bool QHexRenderer::headerVisible() { return m_headerVisible; }
 
 void QHexRenderer::setHeaderVisible(bool b) {
+    if (m_headerVisible == b) {
+        return;
+    }
     m_headerVisible = b;
-    Q_EMIT m_document->documentChanged();
+    Q_EMIT layoutChanged();
 }
 
 void QHexRenderer::setStringEncoding(QStringConverter::Encoding encoding) {
@@ -57,7 +57,7 @@ void QHexRenderer::setStringEncoding(QStringConverter::Encoding encoding) {
 
     m_stringEncoding = encoding;
     m_lineCaches.clear();
-    Q_EMIT m_document->documentChanged();
+    Q_EMIT repaintRequested();
 }
 
 QStringConverter::Encoding QHexRenderer::stringEncoding() const {
@@ -89,37 +89,25 @@ QString QHexRenderer::stringEncodingName() const {
 bool QHexRenderer::addressVisible() { return m_addressVisible; }
 
 void QHexRenderer::setAddressVisible(bool b) {
+    if (m_addressVisible == b) {
+        return;
+    }
     m_addressVisible = b;
-    Q_EMIT m_document->documentChanged();
+    Q_EMIT layoutChanged();
 }
 
 void QHexRenderer::switchDoc(QHexDocument *doc) {
     if (doc) {
         m_document = doc;
+        m_lineCaches.clear();
     }
 }
-
-/*===================================*/
 
 QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
                            const QFontMetricsF &fontmetrics, QObject *parent)
     : QObject(parent), m_document(document), m_cursor(cursor),
-      m_fontmetrics(fontmetrics) {
-    m_selectedarea = Areas::HexArea;
-    m_cursorenabled = false;
+      m_fontmetrics(fontmetrics) {}
 
-    /*===================================*/
-    // added by wingsummer
-
-    m_asciiVisible = true;
-    m_addressVisible = true;
-    m_headerVisible = true;
-    m_cursorSync = true;
-
-    /*===================================*/
-}
-
-// modified by wingsummer
 void QHexRenderer::renderFrame(QPainter *painter) {
     QRect rect = painter->window();
     int hexx = this->getHexColumnX();
@@ -161,7 +149,6 @@ void QHexRenderer::renderAdditonalFrame(QPainter *painter, bool top,
     }
 }
 
-// modified by wingsummer
 void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
                           qsizetype firstline) {
     if (m_headerVisible) {
@@ -189,6 +176,7 @@ void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
 
 void QHexRenderer::updateMetrics(const QFontMetricsF &fm) {
     m_fontmetrics = fm;
+    Q_EMIT layoutChanged();
 }
 void QHexRenderer::enableCursor(bool b) { m_cursorenabled = b; }
 
@@ -311,7 +299,6 @@ QRectF QHexRenderer::getLineRect(qsizetype line, qsizetype firstline) const {
                   this->getEndColumnX(), lineHeight());
 }
 
-// modified by wingsummer
 int QHexRenderer::headerLineCount() const { return m_headerVisible ? 1 : 0; }
 
 qreal QHexRenderer::borderSize() const {
@@ -339,7 +326,6 @@ qsizetype QHexRenderer::rendererLength() const {
     return m_document->length() + 1;
 }
 
-// modified by wingsummer
 int QHexRenderer::getAddressWidth() const {
     auto base = m_document->baseAddress();
     quint64 maxAddr = base + quint64(this->rendererLength());
@@ -348,7 +334,6 @@ int QHexRenderer::getAddressWidth() const {
     } else {
         return 16;
     }
-    return QString::number(maxAddr, 16).length();
 }
 
 qreal QHexRenderer::getHexColumnX() const {
@@ -407,24 +392,24 @@ QHexRenderer::buildAsciiCells(qsizetype line) const {
         ret = buildAsciiCellsUtf8(rawline);
         break;
     case QStringConverter::Encoding::Utf16:
-        ret = buildAsciiCellsUtf16(
-            rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
+        ret = buildAsciiCellsUnicode(
+            rawline, 2, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
         break;
     case QStringConverter::Encoding::Utf16LE:
-        ret = buildAsciiCellsUtf16(rawline, true, false);
+        ret = buildAsciiCellsUnicode(rawline, 2, true, false);
         break;
     case QStringConverter::Encoding::Utf16BE:
-        ret = buildAsciiCellsUtf16(rawline, false, false);
+        ret = buildAsciiCellsUnicode(rawline, 2, false, false);
         break;
     case QStringConverter::Encoding::Utf32:
-        ret = buildAsciiCellsUtf32(
-            rawline, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
+        ret = buildAsciiCellsUnicode(
+            rawline, 4, QSysInfo::ByteOrder == QSysInfo::LittleEndian, true);
         break;
     case QStringConverter::Encoding::Utf32LE:
-        ret = buildAsciiCellsUtf32(rawline, true, false);
+        ret = buildAsciiCellsUnicode(rawline, 4, true, false);
         break;
     case QStringConverter::Encoding::Utf32BE:
-        ret = buildAsciiCellsUtf32(rawline, false, false);
+        ret = buildAsciiCellsUnicode(rawline, 4, false, false);
         break;
     case QStringConverter::Encoding::Latin1:
     default:
@@ -457,110 +442,50 @@ QHexRenderer::buildAsciiCellsLatin1(const QByteArray &rawline) const {
 }
 
 QVector<QHexRenderer::AsciiCell>
-QHexRenderer::buildAsciiCellsUtf16(const QByteArray &rawline, bool littleEndian,
-                                   bool useBom) const {
+QHexRenderer::buildAsciiCellsUnicode(const QByteArray &rawline, int unitSize,
+                                     bool littleEndian, bool useBom) const {
     QVector<AsciiCell> cells;
     cells.reserve(rawline.size());
 
     for (int i = 0; i < rawline.size();) {
-        if (useBom && i + 1 < rawline.size()) {
-            const quint16 markerLE = readUInt16(rawline, i, true);
-            if (markerLE == 0xFEFF) {
-                AsciiCell cell;
-                cell.start = i;
-                cell.length = 2;
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-                cells.append(cell);
-                i += 2;
-                continue;
-            }
-
-            if (markerLE == 0xFFFE) {
-                AsciiCell cell;
-                cell.start = i;
-                cell.length = 2;
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-                cells.append(cell);
-                i += 2;
-                continue;
-            }
-        }
-
-        int length = 0;
-        char32_t codepoint = 0;
-        if (decodeUtf16At(rawline, i, littleEndian, &length, &codepoint)) {
-            AsciiCell cell;
-            cell.start = i;
-            cell.length = length;
-            if (codepoint < 0x20 || codepoint == 0x7F) {
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-            } else {
-                cell.text = QString::fromUcs4(&codepoint, 1);
-            }
-            if (cell.text.isEmpty()) {
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-                cell.length = 2;
-            }
-            cells.append(cell);
-            i += cell.length;
-            continue;
-        }
-
         AsciiCell cell;
         cell.start = i;
-        cell.length = qMin(2, rawline.size() - i);
+        cell.length = qMin(qsizetype(unitSize), rawline.size() - i);
         cell.text = QString(HEX_UNPRINTABLE_CHAR);
-        cells.append(cell);
-        i += cell.length;
-    }
 
-    return cells;
-}
-
-QVector<QHexRenderer::AsciiCell>
-QHexRenderer::buildAsciiCellsUtf32(const QByteArray &rawline, bool littleEndian,
-                                   bool useBom) const {
-    QVector<AsciiCell> cells;
-    cells.reserve(rawline.size());
-
-    for (int i = 0; i < rawline.size();) {
-        if (useBom && i + 3 < rawline.size()) {
-            const quint32 markerLE = readUInt32(rawline, i, true);
-            if (markerLE == 0x0000FEFFU || markerLE == 0xFFFE0000U) {
-                AsciiCell cell;
-                cell.start = i;
-                cell.length = 4;
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-                cells.append(cell);
-                i += 4;
-                continue;
-            }
-        }
-
-        int length = 0;
-        char32_t codepoint = 0;
-        if (decodeUtf32At(rawline, i, littleEndian, &length, &codepoint)) {
-            AsciiCell cell;
-            cell.start = i;
-            cell.length = length;
-            if (codepoint < 0x20 || codepoint == 0x7F) {
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
+        // Keep BOMs as placeholder cells; decoding uses the requested byte
+        // order.
+        bool isBom = false;
+        if (useBom && cell.length == unitSize) {
+            if (unitSize == 2) {
+                const auto marker = readUInt16(rawline, i, true);
+                isBom = marker == 0xFEFF || marker == 0xFFFE;
             } else {
-                cell.text = QString::fromUcs4(&codepoint, 1);
+                const auto marker = readUInt32(rawline, i, true);
+                isBom = marker == 0x0000FEFFU || marker == 0xFFFE0000U;
             }
-            if (cell.text.isEmpty()) {
-                cell.text = QString(HEX_UNPRINTABLE_CHAR);
-                cell.length = 4;
-            }
-            cells.append(cell);
-            i += cell.length;
-            continue;
         }
 
-        AsciiCell cell;
-        cell.start = i;
-        cell.length = qMin(4, rawline.size() - i);
-        cell.text = QString(HEX_UNPRINTABLE_CHAR);
+        if (!isBom) {
+            int length = 0;
+            char32_t codepoint = 0;
+            const bool decoded = unitSize == 2
+                                     ? decodeUtf16At(rawline, i, littleEndian,
+                                                     &length, &codepoint)
+                                     : decodeUtf32At(rawline, i, littleEndian,
+                                                     &length, &codepoint);
+            if (decoded) {
+                cell.length = length;
+                if (codepoint >= 0x20 && codepoint != 0x7F) {
+                    cell.text = QString::fromUcs4(&codepoint, 1);
+                }
+                if (cell.text.isEmpty()) {
+                    cell.text = QString(HEX_UNPRINTABLE_CHAR);
+                    cell.length = unitSize;
+                }
+            }
+        }
+
         cells.append(cell);
         i += cell.length;
     }
@@ -761,47 +686,26 @@ QRectF QHexRenderer::hexNibbleRect(qreal cellWidth, qreal height, int byteIndex,
 QVector<QHexRenderer::CellFormat>
 QHexRenderer::buildUpLineFormats(qsizetype line) const {
     QVector<CellFormat> lineFormats;
-    lineFormats.reserve(hexLineWidth());
-    for (qsizetype i = 0; i < hexLineWidth(); ++i) {
-        lineFormats.append(cellFormat(line, i));
+    const auto width = hexLineWidth();
+    lineFormats.reserve(width);
+    const QHexMetadataItem *meta = nullptr;
+    auto *metadata = m_document->metadata();
+    for (int column = 0; column < width; ++column) {
+        const auto offset = line * width + column;
+        if (!meta || offset > meta->end) {
+            const auto index = metadata->getIndex(offset);
+            meta = index >= 0 ? &metadata->at(index) : nullptr;
+        }
+        lineFormats.append(cellFormat(line, column, meta));
     }
     return lineFormats;
 }
 
-QHexRenderer::CellFormat QHexRenderer::cellFormat(qsizetype line,
-                                                  int column) const {
+QHexRenderer::CellFormat
+QHexRenderer::cellFormat(qsizetype line, int column,
+                         const QHexMetadataItem *meta) const {
     CellFormat fmt;
     fmt.foreground = m_bytesColor;
-
-    // we just call QHexRenderer::cellFormat in sequential way for almost time
-    // , so cache will help a lot
-    static std::optional<QHexMetadataItem> meta;
-    static qsizetype cidx = -1;
-    auto offset = line * hexLineWidth() + column;
-    bool retry;
-
-    do {
-        retry = false;
-        if (meta) {
-            if (offset < meta->begin || offset > meta->end) {
-                meta.reset();
-            }
-        }
-        if (!meta) {
-            auto m = m_document->metadata();
-            // try to get next
-            if (cidx >= 0 && cidx + 1 < m->size()) {
-                meta = m->at(cidx + 1);
-                cidx = -1;
-                retry = true;
-                continue;
-            }
-            cidx = m->getIndex(offset);
-            if (cidx >= 0) {
-                meta = m->at(cidx);
-            }
-        }
-    } while (retry);
 
     if (meta) {
         if (m_document->metabgVisible() && meta->background.isValid() &&
@@ -828,7 +732,7 @@ QHexRenderer::CellFormat QHexRenderer::cellFormat(qsizetype line,
             strikeOut ? m_selectionColor.darker() : m_selectionColor;
         fmt.fillBackground = true;
         fmt.strikeOut = strikeOut;
-        fmt.italic = meta.has_value() || strikeOut;
+        fmt.italic = meta || strikeOut;
     }
 
     QColor bg = fmt.fillBackground
@@ -879,18 +783,8 @@ void QHexRenderer::drawHex(QPainter *painter, const QRectF &linerect,
         const auto &fmt = lineFormats.at(i);
         const auto visualRect = hexVisualRect(cellWidth, height, i);
 
-        if (fmt.background.isValid()) {
+        if (fmt.fillBackground) {
             painter->fillRect(visualRect, fmt.background);
-        }
-
-        bool strikeOut = false;
-        bool hasSelection = false;
-        const bool selected =
-            isStrByteSelected(line, i, &strikeOut, &hasSelection);
-        if (selected) {
-            painter->fillRect(visualRect, (strikeOut || hasSelection)
-                                              ? m_selBackgroundColor.darker()
-                                              : m_selBackgroundColor);
         }
     }
 
@@ -1012,9 +906,7 @@ QHexRenderer::mergeCellFormat(const QVector<CellFormat> &formats) const {
             merged.background = fmt.background;
             merged.fillBackground = true;
         }
-        if (fmt.foreground != merged.foreground) {
-            merged.foreground = fmt.foreground;
-        }
+        merged.foreground = fmt.foreground;
         merged.underline = merged.underline || fmt.underline;
         merged.bold = merged.bold || fmt.bold;
         merged.italic = merged.italic || fmt.italic;
@@ -1174,7 +1066,11 @@ void QHexRenderer::drawUnderLine(
 bool QHexRenderer::cursorSync() const { return m_cursorSync; }
 
 void QHexRenderer::setCursorSync(bool newCursorSync) {
+    if (m_cursorSync == newCursorSync) {
+        return;
+    }
     m_cursorSync = newCursorSync;
+    Q_EMIT repaintRequested();
 }
 
 void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,
@@ -1191,36 +1087,13 @@ void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,
     const auto cellWidth = getCellWidth();
     const auto height = lineHeight();
 
-    struct PreparedCell {
-        AsciiCell cell;
-        QVector<CellFormat> formats;
-        bool fallback = false;
-    };
-
-    QVector<PreparedCell> preparedCells;
-    preparedCells.reserve(cells.size());
-
+    // Paint all backgrounds before underlines and glyphs.
     for (const auto &cell : cells) {
-        PreparedCell prepared;
-        prepared.cell = cell;
-        auto &fmts = prepared.formats;
-        fmts.reserve(cell.length);
         for (qsizetype i = 0; i < cell.length; ++i) {
-            const qsizetype col = cell.start + i;
-            auto fmt = lineFormats.at(col);
-            fmts.append(fmt);
-        }
-        prepared.fallback = asciiCellNeedsByteFallback(line, cell, fmts);
-        preparedCells.append(prepared);
-    }
-
-    for (const auto &prepared : preparedCells) {
-        const auto &cell = prepared.cell;
-        const auto &fmts = prepared.formats;
-        for (qsizetype i = 0; i < cell.length; ++i) {
-            const auto &fmt = fmts.at(i);
+            const auto column = cell.start + i;
+            const auto &fmt = lineFormats.at(column);
             if (fmt.fillBackground) {
-                painter->fillRect(byteRectAt(cellWidth, height, cell.start + i),
+                painter->fillRect(byteRectAt(cellWidth, height, column),
                                   fmt.background);
             }
         }
@@ -1233,14 +1106,13 @@ void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,
         return qMakePair(startX, endX);
     });
 
-    for (const auto &prepared : preparedCells) {
-        const auto &cell = prepared.cell;
-        const auto &fmts = prepared.formats;
+    for (const auto &cell : cells) {
+        const auto fmts = lineFormats.sliced(cell.start, cell.length);
         const auto startX = cell.start * cellWidth;
         const auto width = cell.length * cellWidth;
         const QRectF cellRect(startX, 0, width, height);
 
-        if (prepared.fallback) {
+        if (asciiCellNeedsByteFallback(line, cell, fmts)) {
             for (qsizetype i = 0; i < cell.length; ++i) {
                 const auto &fmt = fmts.at(i);
                 const qsizetype col = cell.start + i;
@@ -1335,29 +1207,12 @@ void QHexRenderer::drawHeader(QPainter *painter) {
 void QHexRenderer::drawCursorBlock(QPainter *painter, const QRectF &cursorRect,
                                    const AsciiCell &cell, qsizetype line,
                                    int col, const CellFormat &fmt) const {
-    if (cell.length == 1) {
-        drawCursorStrBlock(painter, cursorRect, cell.text, line, cell.start,
-                           fmt);
-        return;
-    }
-    if (Q_UNLIKELY(!drawCursor(painter, cursorRect, cell, line, col))) {
-        QString text;
-        if (col >= 0) {
-            text = QString(HEX_UNPRINTABLE_CHAR);
-        } else {
-            text = cell.text;
-        }
+    const auto text =
+        cell.length == 1 || col < 0 ? cell.text : QString(HEX_UNPRINTABLE_CHAR);
+    const auto column = cell.length == 1 ? cell.start : col;
+    if (column < 0 || !drawCursor(painter, cursorRect, text, line, column,
+                                  Areas::AsciiArea)) {
         drawText(painter, cursorRect, text, fmt);
-    }
-}
-
-void QHexRenderer::drawCursorStrBlock(QPainter *painter,
-                                      const QRectF &cursorRect,
-                                      const QString &cursorText, qsizetype line,
-                                      int col, const CellFormat &fmt) const {
-    if (Q_UNLIKELY(!drawCursor(painter, cursorRect, cursorText, line, col,
-                               Areas::AsciiArea))) {
-        drawText(painter, cursorRect, cursorText, fmt);
     }
 }
 
@@ -1377,31 +1232,6 @@ bool QHexRenderer::drawCursor(QPainter *painter, const QRectF &cursorRect,
     }
 
     drawCursor(painter, cursorRect, cursorText);
-    return true;
-}
-
-bool QHexRenderer::drawCursor(QPainter *painter, const QRectF &cursorRect,
-                              const AsciiCell &cell, qsizetype line,
-                              int col) const {
-    if (!m_cursorSync && m_selectedarea != Areas::AsciiArea) {
-        return false;
-    }
-
-    auto pos = m_cursor->currentColumn();
-    if (line != m_cursor->currentLine()) {
-        return false;
-    }
-
-    const auto fallback = col >= 0;
-    if (fallback) {
-        if (pos != col) {
-            return false;
-        }
-    } else {
-        return false;
-    }
-
-    drawCursor(painter, cursorRect, QString(HEX_UNPRINTABLE_CHAR));
     return true;
 }
 

@@ -67,23 +67,11 @@ bool QHexView::headerVisible() { return m_renderer->headerVisible(); }
 
 bool QHexView::addressVisible() { return m_renderer->addressVisible(); }
 
-void QHexView::setAsciiVisible(bool b) {
-    m_renderer->setStringVisible(b);
-    this->adjustScrollBars();
-    this->viewport()->update();
-}
+void QHexView::setAsciiVisible(bool b) { m_renderer->setStringVisible(b); }
 
-void QHexView::setAddressVisible(bool b) {
-    m_renderer->setAddressVisible(b);
-    this->adjustScrollBars();
-    this->viewport()->update();
-}
+void QHexView::setAddressVisible(bool b) { m_renderer->setAddressVisible(b); }
 
-void QHexView::setHeaderVisible(bool b) {
-    m_renderer->setHeaderVisible(b);
-    this->adjustScrollBars();
-    this->viewport()->update();
-}
+void QHexView::setHeaderVisible(bool b) { m_renderer->setHeaderVisible(b); }
 
 quintptr QHexView::addressBase() { return m_document->baseAddress(); }
 
@@ -116,10 +104,7 @@ void QHexView::getStatus() {
 }
 
 void QHexView::establishSignal(QHexDocument *doc) {
-    connect(doc, &QHexDocument::documentChanged, this, [this]() {
-        this->adjustScrollBars();
-        update();
-    });
+    connect(doc, &QHexDocument::documentChanged, this, &QHexView::refresh);
 
     connect(doc, &QHexDocument::canUndoChanged, this,
             &QHexView::canUndoChanged);
@@ -138,13 +123,16 @@ void QHexView::establishSignal(QHexDocument *doc) {
         Q_EMIT metaCommentVisibleChanged(b);
         Q_EMIT metaStatusChanged();
     });
-    connect(doc, &QHexDocument::metaDataChanged, this, [=] { update(); });
+    connect(doc, &QHexDocument::metaDataChanged, this,
+            [this] { viewport()->update(); });
     connect(doc, &QHexDocument::documentKeepSize, this,
             &QHexView::documentKeepSize);
     connect(doc, &QHexDocument::documentLockedFile, this,
             &QHexView::documentLockedFile);
-    connect(doc, &QHexDocument::hexLineWidthChanged, this,
-            [=] { m_cursor->setLineWidth(doc->hexLineWidth()); });
+    connect(doc, &QHexDocument::hexLineWidthChanged, this, [this, doc] {
+        m_cursor->setLineWidth(doc->hexLineWidth());
+        refresh();
+    });
 }
 
 void QHexView::adjustLineVisible(qsizetype line) {
@@ -211,42 +199,47 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
         return;
     }
 
+    // Only remove this view's connections. Cursors may be shared by views.
     if (m_document) {
-        m_document->disconnect(this);
-        m_document.clear();
+        disconnect(m_document.data(), nullptr, this, nullptr);
+    }
+    if (m_cursor) {
+        disconnect(m_cursor, nullptr, this, nullptr);
     }
 
     m_document = document;
+    if (cursor) {
+        m_cursor = cursor;
+    }
+    m_cursor->setLineWidth(m_document->hexLineWidth());
 
     if (m_renderer) {
-        m_renderer->switchDoc(m_document.get());
-        if (cursor) {
-            m_cursor->disconnect();
-            m_renderer->setCursor(cursor);
-            m_cursor = cursor;
-        }
+        m_renderer->switchDoc(m_document.data());
+        m_renderer->setCursor(m_cursor);
     } else {
-        if (cursor) {
-            m_cursor->disconnect();
-            m_cursor = cursor;
-        }
         m_renderer = new QHexRenderer(m_document.data(), m_cursor,
-                                      this->fontMetrics(), this);
+                                      QFontMetricsF(font()), this);
+        connect(m_renderer, &QHexRenderer::layoutChanged, this,
+                &QHexView::refresh);
+        connect(m_renderer, &QHexRenderer::repaintRequested, this,
+                [this] { viewport()->update(); });
     }
 
     establishSignal(m_document.data());
 
     connect(m_cursor, &QHexCursor::positionChanged, this,
             &QHexView::processPosChanged);
-    connect(m_cursor, &QHexCursor::selectionChanged, this,
-            &QHexView::processPosChanged);
+    connect(m_cursor, &QHexCursor::selectionChanged, this, [this] {
+        viewport()->update();
+        processPosChanged();
+        Q_EMIT cursorSelectionChanged();
+    });
     connect(m_cursor, &QHexCursor::insertionModeChanged, this, [this]() {
         renderCurrentLine();
         Q_EMIT insertionModeChanged();
     });
 
-    this->adjustScrollBars();
-    this->viewport()->update();
+    refresh();
 }
 
 void QHexView::resetDocument() {
@@ -404,25 +397,27 @@ bool QHexView::RemoveSelection(int nibbleindex) {
         return true;
     }
 
-    if (isReadOnly() || isKeepSize()) {
+    if (isReadOnly() || isLocked() || isKeepSize()) {
         return false;
     }
 
     auto total = m_cursor->selectionCount();
+    bool success = true;
     auto msg = QStringLiteral("[H-G] {cnt: %1}").arg(total);
     m_document->beginMarco(msg);
-    for (int i = 0; i < total; ++i) {
+    for (qsizetype i = total; i-- > 0;) {
         auto res =
             m_document->Remove(m_cursor, m_cursor->selectionStart(i).offset(),
                                m_cursor->selectionLength(i), nibbleindex);
         if (!res) {
+            success = false;
             break;
         }
     }
     m_document->endMarco();
     m_cursor->clearSelection();
 
-    return true;
+    return success;
 }
 
 bool QHexView::removeSelection() {
@@ -430,11 +425,11 @@ bool QHexView::removeSelection() {
         return true;
     }
 
-    // We essure selections are ordered by desending
-    // by selection-start, so it's safe to remove
+    // Selections are sorted by start offset; remove from the end so earlier
+    // ranges retain their original offsets.
     auto total = m_cursor->selectionCount();
     bool res = true;
-    for (int i = 0; i < total; ++i) {
+    for (qsizetype i = total; i-- > 0;) {
         res &= m_document->remove(m_cursor->selectionStart(i).offset(),
                                   m_cursor->selectionLength(i));
     }
@@ -449,7 +444,7 @@ bool QHexView::atEnd() const {
 
 QByteArray QHexView::selectedBytes(qsizetype index) const {
     return m_document->read(m_cursor->selectionStart(index).offset(),
-                            m_cursor->currentSelectionLength());
+                            m_cursor->selectionLength(index));
 }
 
 QByteArray QHexView::previewSelectedBytes() const {
@@ -465,25 +460,24 @@ QByteArrayList QHexView::selectedBytes() const {
     QByteArrayList res;
     auto total = m_cursor->selectionCount();
     for (int i = 0; i < total; ++i) {
-        res << m_document->read(m_cursor->selectionStart(i).offset(),
-                                m_cursor->selectionLength(i));
+        res.append(selectedBytes(i));
     }
     return res;
 }
 
-bool QHexView::paste(bool hex) {
-    QClipboard *c = qApp->clipboard();
-
-    QByteArray data;
+QByteArray QHexView::clipboardBytes(bool hex) {
+    const auto *clipboard = qApp->clipboard();
     if (hex) {
-        data = QByteArray::fromHex(c->text().toUtf8());
-    } else {
-        auto d = c->mimeData();
-        data = d->data(QStringLiteral("application/octet-stream"));
-        if (data.isEmpty()) {
-            data = d->text().toUtf8();
-        }
+        return QByteArray::fromHex(clipboard->text().toUtf8());
     }
+
+    const auto *mime = clipboard->mimeData();
+    auto data = mime->data(QStringLiteral("application/octet-stream"));
+    return data.isEmpty() ? mime->text().toUtf8() : data;
+}
+
+bool QHexView::paste(bool hex) {
+    const auto data = clipboardBytes(hex);
 
     if (data.isEmpty()) {
         return true;
@@ -497,7 +491,9 @@ bool QHexView::paste(bool hex) {
     auto pos = m_cursor->position().offset();
     if (!m_document->isKeepSize()) {
         bool ret = m_document->insert(pos, data);
-        m_cursor->moveTo(pos + data.length()); // added by wingsummer
+        if (ret) {
+            m_cursor->moveTo(pos + data.length());
+        }
         return ret;
     } else {
         return m_document->replace(pos, data);
@@ -516,25 +512,12 @@ bool QHexView::Cut(bool hex, int nibbleindex) {
     auto res = this->copy(hex);
     if (res) {
         return this->RemoveSelection(nibbleindex);
-    } else {
-        Q_EMIT copyLimitRaised();
-        return res;
     }
+    return false;
 }
 
 bool QHexView::Paste(bool hex, int nibbleindex) {
-    QClipboard *c = qApp->clipboard();
-
-    QByteArray data;
-    if (hex) {
-        data = QByteArray::fromHex(c->text().toUtf8());
-    } else {
-        auto d = c->mimeData();
-        data = d->data(QStringLiteral("application/octet-stream"));
-        if (data.isEmpty()) {
-            data = d->text().toUtf8();
-        }
-    }
+    const auto data = clipboardBytes(hex);
 
     if (data.isEmpty()) {
         return true;
@@ -548,7 +531,9 @@ bool QHexView::Paste(bool hex, int nibbleindex) {
     auto pos = m_cursor->position().offset();
     if (m_cursor->insertionMode() == QHexCursor::InsertionMode::InsertMode) {
         auto ret = m_document->Insert(m_cursor, pos, data, nibbleindex);
-        m_cursor->moveTo(pos + data.length()); // added by wingsummer
+        if (ret) {
+            m_cursor->moveTo(pos + data.length());
+        }
         return ret;
     } else {
         return m_document->Replace(m_cursor, pos, data, nibbleindex);
@@ -572,10 +557,8 @@ bool QHexView::cut(bool hex) {
     auto res = this->copy(hex);
     if (res) {
         return this->removeSelection();
-    } else {
-        Q_EMIT copyLimitRaised();
-        return res;
     }
+    return false;
 }
 
 bool QHexView::copy(bool hex) {
@@ -1308,6 +1291,11 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
     }
 
     return false;
+}
+
+void QHexView::refresh() {
+    adjustScrollBars();
+    viewport()->update();
 }
 
 void QHexView::adjustScrollBars() {
