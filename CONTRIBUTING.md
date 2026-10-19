@@ -167,3 +167,9 @@ All PR merges need to pass CI checks. Please pay attention to whether your **cod
 最后，再次感谢您对开源的支持和帮助。
 
 Finally, thank you again for your support and help for open source.
+
+## 文档与翻译 / Documentation and translation
+
+除根目录两份 README 分别使用中英文外，项目规范在同一文件内提供中英双语。界面文字及翻译维护遵循[文案规范](docs/i18n.md)，并执行其中的检查。
+
+Keep project guidelines bilingual in the same file; only the two root READMEs use separate language versions. Follow the [UI text guide](docs/i18n.md) and run its checks when maintaining interface text and translations.

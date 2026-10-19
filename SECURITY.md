@@ -12,7 +12,7 @@ if any version of Qt is deprecated, this version will not be supported, and
 the related code will be removed. If you require support, please contact me
 for paid technical support.
 
-## 正版验证
+## 正版验证 (Verifying Authenticity)
 
 该仓库传统意义上没有官方正版的说法。由于发行版是通过 CI 方式构建自行生成的，
 而且不同 Linux 发行版的差异也会造成一些麻烦，这需要自行编译才能基本解决。
