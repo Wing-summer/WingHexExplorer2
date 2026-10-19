@@ -118,7 +118,7 @@
             <string notr="true">[0, 312480]</string>
            </property>
            <property name="suffix">
-            <string notr="true"> min</string>
+            <string> min</string>
            </property>
            <property name="minimum">
             <number>0</number>

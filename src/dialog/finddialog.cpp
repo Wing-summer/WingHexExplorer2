@@ -35,7 +35,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     layout->addWidget(new QLabel(tr("Mode:"), this));
     m_findMode = new QComboBox(this);
-    m_findMode->addItem(QStringLiteral("HEX"));
+    m_findMode->addItem(tr("Hexadecimal"));
     m_findMode->addItems(Utilities::getEncodings());
     m_findMode->setCurrentIndex(1);
 

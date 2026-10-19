@@ -128,7 +128,7 @@ EditorView::EditorView(QWidget *parent)
     newAction(m_menu, QStringLiteral("fill"), tr("Fill"),
               &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_menu, QStringLiteral("metadata"), tr("Metadata"),
+    newAction(m_menu, QStringLiteral("metadata"), tr("Add annotation"),
               &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
     newAction(m_menu, QStringLiteral("bookmark"), tr("Bookmark"),

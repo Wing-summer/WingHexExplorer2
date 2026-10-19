@@ -33,7 +33,7 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
-    auto l = new QLabel(tr("Select header"), this);
+    auto l = new QLabel(tr("Select columns to show:"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     headerlist = new QListWidget(this);
@@ -57,7 +57,7 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setWindowTitle(tr("Metadata header"));
+    this->setWindowTitle(tr("Annotation columns"));
 }
 
 const QVector<bool> &MetaHeaderDialog::getResults() { return _result; }

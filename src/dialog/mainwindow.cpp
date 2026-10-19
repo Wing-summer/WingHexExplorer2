@@ -1074,7 +1074,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_metadata->addAction(sep);
 
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
-                                 tr("Delete metadata"), m_metadata);
+                                 tr("Delete annotation"), m_metadata);
     connect(m_aDelMetaData, &QAction::triggered, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
@@ -1098,7 +1098,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_metadata->addAction(m_aDelMetaData);
 
     auto a = new QAction(ICONRES(QStringLiteral("metadatacls")),
-                         tr("Clear metadata"), m_metadata);
+                         tr("Clear annotations"), m_metadata);
     connect(a, &QAction::triggered, this, &MainWindow::on_metadatacls);
     m_metadata->addAction(a);
     m_metadata->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
@@ -1116,8 +1116,8 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
         header->setSectionHidden(i, ovdata.at(i));
     }
 
-    auto dw = buildDockWidget(dock, QStringLiteral("MetaData"), tr("Metadata"),
-                              m_metadata);
+    auto dw = buildDockWidget(dock, QStringLiteral("MetaData"),
+                              tr("Annotations"), m_metadata);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1398,7 +1398,7 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
     }
 
     {
-        auto pannel = tab->addGroup(tr("Metadata"));
+        auto pannel = tab->addGroup(tr("Markers"));
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("bookmark"), tr("Bookmark"),
             &MainWindow::on_bookmark,
@@ -1412,19 +1412,19 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
             &MainWindow::on_bookmarkcls,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK_CLS));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadata"), tr("Metadata"),
+            pannel, QStringLiteral("metadata"), tr("Add annotation"),
             &MainWindow::on_metadata,
             shortcuts.keySequence(QKeySequences::Key::METADATA));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadataedit"), tr("Edit metadata"),
+            pannel, QStringLiteral("metadataedit"), tr("Edit annotation"),
             &MainWindow::on_metadataedit,
             shortcuts.keySequence(QKeySequences::Key::METADATA_EDIT));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadatadel"), tr("Delete metadata"),
+            pannel, QStringLiteral("metadatadel"), tr("Delete annotation"),
             &MainWindow::on_metadatadel,
             shortcuts.keySequence(QKeySequences::Key::METADATA_DEL));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadatacls"), tr("Clear metadata"),
+            pannel, QStringLiteral("metadatacls"), tr("Clear annotations"),
             &MainWindow::on_metadatacls,
             shortcuts.keySequence(QKeySequences::Key::METADATA_CLS));
     }
@@ -1472,7 +1472,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
     }
 
     {
-        auto pannel = tab->addGroup(tr("Metadata"));
+        auto pannel = tab->addGroup(tr("Annotations"));
 
         auto menu = new QMenu(this);
         menu->addAction(
@@ -1489,15 +1489,15 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 shortcuts.keySequence(QKeySequences::Key::METADATA_COMMENT)));
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadata"), tr("Metadata"), EMPTY_FUNC, {},
-            menu);
+            pannel, QStringLiteral("metadata"), tr("Annotations"), EMPTY_FUNC,
+            {}, menu);
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metashow"), tr("Show all metadata"),
+            pannel, QStringLiteral("metashow"), tr("Show all annotations"),
             &MainWindow::on_metashowall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_SHOW));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metahide"), tr("Hide all metadata"),
+            pannel, QStringLiteral("metahide"), tr("Hide all annotations"),
             &MainWindow::on_metahideall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_HIDE));
     }
@@ -1673,14 +1673,17 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
-            pannel, QStringLiteral("general"), tr("Settings"),
+            pannel, QStringLiteral("general"), tr("Application"),
             &MainWindow::on_settingGeneral,
-            shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
+            shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL), nullptr,
+            tr("Configure the application, hex editor, plugins, and script "
+               "permissions."));
 
         if (set.scriptEnabled()) {
-            addPannelAction(pannel, QStringLiteral("scriptset"),
-                            tr("Script settings"),
-                            &MainWindow::on_settingScript);
+            addPannelAction(
+                pannel, QStringLiteral("scriptset"), tr("Scripting"),
+                &MainWindow::on_settingScript, {}, nullptr,
+                tr("Configure the script editor, console, and Luau tools."));
         }
     }
 
@@ -1730,7 +1733,7 @@ void MainWindow::buildUpSettingDialog() {
     auto &set = SettingManager::instance();
 
     m_setdialog = new SettingDialog(ICONRES(QStringLiteral("general")),
-                                    tr("Settings"), this);
+                                    tr("Application settings"), this);
     updateUI();
 
     auto generalPage = new GeneralSettingDialog(m_setdialog);
@@ -1840,7 +1843,7 @@ void MainWindow::buildUpSettingDialog() {
 
     // script settings
     m_scriptsetdlg = new SettingDialog(ICONRES(QStringLiteral("scriptset")),
-                                       tr("Script settings"), this);
+                                       tr("Scripting environment"), this);
     auto edit = new QEditConfig(false, m_scriptsetdlg);
     m_scriptsetdlg->addPage(edit);
     connect(edit, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,
@@ -2634,7 +2637,7 @@ void MainWindow::on_metadata() {
 
     if (meta->size() >= QHEXVIEW_METADATA_LIMIT) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                     tr("The metadata limit has been reached."));
+                     tr("The annotation limit has been reached."));
         return;
     }
 
@@ -2701,7 +2704,7 @@ void MainWindow::on_metadataedit() {
             }
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                         tr("There is no metadata to edit."));
+                         tr("There is no annotation to edit."));
         }
     }
 }
@@ -2722,10 +2725,10 @@ void MainWindow::on_metadatadel() {
     auto pos = cursor->position().offset();
     if (meta->RemoveMetadata(pos)) {
         Toast::toast(this, NAMEICONRES("metadatadel"),
-                     tr("Metadata deletion successful"));
+                     tr("Annotation deleted."));
     } else {
         Toast::toast(this, NAMEICONRES("metadatadel"),
-                     tr("No metadata to delete"));
+                     tr("No annotations to delete."));
     }
 }
 
@@ -2736,7 +2739,7 @@ void MainWindow::on_metadatacls() {
     }
     auto doc = hexeditor->document();
     doc->metadata()->Clear();
-    Toast::toast(this, NAMEICONRES("metadatacls"), tr("Metadata cleared."));
+    Toast::toast(this, NAMEICONRES("metadatacls"), tr("Annotations cleared."));
 }
 
 void MainWindow::on_metadatafg(bool checked) {

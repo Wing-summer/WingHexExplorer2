@@ -90,7 +90,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     connect(s, &QShortcut::activated, this, &MetaDialog::on_accept);
 
     buildUpContent(widget);
-    setWindowTitle(tr("Metadata"));
+    setWindowTitle(tr("Annotation"));
     setWindowIcon(ICONRES("metadata"));
 }
 
