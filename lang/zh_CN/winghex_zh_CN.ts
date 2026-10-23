@@ -34,11 +34,6 @@
         <source>Developer</source>
         <translation>开发者</translation>
     </message>
-    <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="163"/>
-        <source>Translator</source>
-        <translation>译者</translation>
-    </message>
 </context>
 <context>
     <name>AppManager</name>

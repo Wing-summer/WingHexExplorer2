@@ -28,8 +28,6 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->tbAbout->setMarkdown(data.about);
     ui->tbBaseObj->setMarkdown(readContent(
         QStringLiteral(":/com.wingsummer.winghex/src/components.md")));
-    ui->tbTr->setMarkdown(readContent(
-        QStringLiteral(":/com.wingsummer.winghex/src/translist.md")));
     ui->tbDev->setMarkdown(data.dev);
     ui->lblVersion->setText(qApp->applicationVersion());
 

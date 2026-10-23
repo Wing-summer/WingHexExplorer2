@@ -158,20 +158,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabTr">
-      <attribute name="title">
-       <string>Translator</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_14">
-       <item>
-        <widget class="QTextBrowser" name="tbTr">
-         <property name="openExternalLinks">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
   </layout>
