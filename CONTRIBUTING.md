@@ -32,7 +32,6 @@ The project directory structure is classified in detail as follows:
   - `control`: 控件、编辑器、控制台、委托和停靠扩展。/ Widgets, editors, console, delegates, and docking extensions.
   - `dialog`: 对话框、主窗口及通用对话框封装。/ Dialogs, main windows, and common dialog wrappers.
   - `luau`: Luau 运行时、绑定、调试、语言服务。/ Luau runtime, bindings, debugging, and language services.
-  - `scriptaddon`: 未参与构建的历史 AngelScript 扩展。/ Legacy AngelScript addons excluded from the build.
   - `model`: Model-View 数据模型。/ Model-View data models.
   - `settings`: 设置页面。/ Settings pages.
   - `widgetframe`: 无边框窗口和标题栏支持。/ Frameless window and title bar support.

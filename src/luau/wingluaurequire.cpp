@@ -24,6 +24,7 @@
 
 #include <QCryptographicHash>
 #include <QDebug>
+#include <algorithm>
 #include <qlatin1stringview.h>
 #include <qnamespace.h>
 
@@ -34,6 +35,10 @@ bool WingLuauRequire::initRequire(lua_State *L, Options options) {
         return false;
     }
 
+    builtinLoaders_.clear();
+    builtinModules_.clear();
+    builtinNamespaces_.clear();
+    knownChunks_.clear();
     L_ = L;
     options_ = std::move(options);
     options_.systemRoot = normalizeRoot(options_.systemRoot);
@@ -140,6 +145,36 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
 
     lua_settop(L_, top);
     return true;
+}
+
+bool WingLuauRequire::registerBuiltinLoader(
+    const QString &moduleName, std::function<int(lua_State *)> loader) {
+    const auto normalized = normalizeBuiltinName(moduleName);
+    if (!L_ || normalized.isEmpty() || !loader ||
+        builtinModules_.contains(normalized)) {
+        return false;
+    }
+    auto entry = std::make_shared<BuiltinLoader>();
+    entry->load = std::move(loader);
+    builtinLoaders_.insert(normalized, std::move(entry));
+    builtinModules_.insert(normalized);
+    QString prefix;
+    for (const auto &part : normalized.split('/', Qt::SkipEmptyParts)) {
+        prefix = prefix.isEmpty() ? part : prefix + '/' + part;
+        builtinNamespaces_.insert(prefix);
+    }
+    return true;
+}
+
+int WingLuauRequire::cbBuiltinLoad(lua_State *L) {
+    auto *entry =
+        static_cast<BuiltinLoader *>(lua_touserdata(L, lua_upvalueindex(1)));
+    try {
+        return entry->load(L);
+    } catch (const std::exception &error) {
+        lua_pushstring(L, error.what());
+    }
+    lua_error(L);
 }
 
 void WingLuauRequire::clearRequireCache() {
@@ -332,6 +367,168 @@ WingLuauRequire::resolveFileModule(const QString &basePath,
 
     return {FileModuleResolution::Kind::NamespaceDirectory,
             normalizeExistingPath(targetPath)};
+}
+
+WingLuauRequire::FileModuleResolution
+WingLuauRequire::resolveModule(const QString &contextPath,
+                               const QString &requested, const Options &options,
+                               const QSet<QString> &builtinModules,
+                               const QStringList &configRoots) {
+    return ResolutionSession(options, builtinModules, configRoots)
+        .resolve(contextPath, requested);
+}
+
+struct WingLuauRequire::ResolutionSession::Impl {
+    WingLuauRequire navigator;
+    ResolutionQuery query;
+    std::unique_ptr<lua_State, decltype(&lua_close)> state{luaL_newstate(),
+                                                           &lua_close};
+};
+
+WingLuauRequire::ResolutionSession::ResolutionSession(
+    const Options &options, const QSet<QString> &builtinModules,
+    const QStringList &configRoots)
+    : impl(std::make_unique<Impl>()) {
+    auto &navigator = impl->navigator;
+    navigator.resolutionQuery_ = &impl->query;
+    impl->query.roots = configRoots;
+    if (!impl->state || !navigator.initRequire(impl->state.get(), options)) {
+        throw std::runtime_error("Cannot initialize module resolution session");
+    }
+    luaL_openlibs(impl->state.get());
+    for (const auto &name : builtinModules) {
+        const QString normalized = name.toLower();
+        navigator.builtinModules_.insert(normalized);
+        QString prefix;
+        for (const auto &part : normalized.split('/')) {
+            prefix = prefix.isEmpty() ? part : prefix + '/' + part;
+            navigator.builtinNamespaces_.insert(prefix);
+        }
+    }
+}
+
+WingLuauRequire::ResolutionSession::~ResolutionSession() = default;
+
+WingLuauRequire::FileModuleResolution
+WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
+                                            const QString &requested) {
+    if (requested.isEmpty() || requested.contains(':')) {
+        return {};
+    }
+    const bool physicalContext = QFileInfo(contextPath).isAbsolute();
+    if (!requested.startsWith('@')) {
+        return resolveFileModule(physicalContext
+                                     ? QFileInfo(contextPath).absolutePath()
+                                     : QDir::currentPath(),
+                                 requested);
+    }
+    // Use the runtime's native resolver, including configuration aliases. Only
+    // its load callback is replaced: analysis records the destination and never
+    // executes the resolved module.
+    auto &navigator = impl->navigator;
+    auto &query = impl->query;
+    auto &state = impl->state;
+    query.resolution = {};
+    navigator.knownChunks_.clear();
+    lua_settop(state.get(), 0);
+    // Require's result cache would skip the destination-recording load
+    // callback. Reuse the VM, but resolve every query against the current
+    // filesystem.
+    navigator.clearRequireCache();
+    const QString chunk =
+        physicalContext ? '@' + contextPath : QStringLiteral("=wing-analysis");
+    if (physicalContext) {
+        Node source;
+        source.scope = Scope::External;
+        source.kind = NodeKind::ExternalFile;
+        source.physicalPath = normalizeExistingPath(contextPath);
+        if (const auto owned = navigator.mapAbsolutePathToNode(
+                Scope::User, navigator.options_.userRoot, source.physicalPath,
+                false)) {
+            source = *owned;
+        } else if (const auto owned = navigator.mapAbsolutePathToNode(
+                       Scope::System, navigator.options_.systemRoot,
+                       source.physicalPath, false)) {
+            source = *owned;
+        }
+        navigator.knownChunks_.insert(chunk, source);
+    }
+    const auto initialize = +[](luarequire_Configuration *config) {
+        configInit(config);
+        config->reset = +[](lua_State *L, void *context, const char *chunk) {
+            auto *navigator = static_cast<WingLuauRequire *>(context);
+            const auto known =
+                navigator->knownChunks_.constFind(QString::fromUtf8(chunk));
+            if (known != navigator->knownChunks_.cend()) {
+                // The requiring document may exist only in the editor buffer.
+                navigator->current_ = known.value();
+                return NAVIGATE_SUCCESS;
+            }
+            return cbReset(L, context, chunk);
+        };
+        config->get_config_status = +[](lua_State *L, void *context) {
+            auto *navigator = static_cast<WingLuauRequire *>(context);
+            auto *query = navigator->resolutionQuery_;
+            const auto directory = navigator->configDirectory();
+            if (!query->roots.isEmpty() &&
+                std::none_of(query->roots.cbegin(), query->roots.cend(),
+                             [&directory](const QString &root) {
+                                 return pathEqualOrBelow(directory, root);
+                             })) {
+                return CONFIG_ABSENT;
+            }
+            const auto status = cbGetConfigStatus(L, context);
+            if (status == CONFIG_AMBIGUOUS) {
+                query->resolution.kind = FileModuleResolution::Kind::Ambiguous;
+            }
+            return status;
+        };
+        config->to_alias_fallback =
+            +[](lua_State *L, void *context, const char *alias) {
+                const auto result = cbToAliasFallback(L, context, alias);
+                if (result == NAVIGATE_AMBIGUOUS) {
+                    static_cast<WingLuauRequire *>(context)
+                        ->resolutionQuery_->resolution.kind =
+                        FileModuleResolution::Kind::Ambiguous;
+                }
+                return result;
+            };
+        config->to_child = +[](lua_State *L, void *context, const char *name) {
+            const auto result = cbToChild(L, context, name);
+            if (result == NAVIGATE_AMBIGUOUS) {
+                static_cast<WingLuauRequire *>(context)
+                    ->resolutionQuery_->resolution.kind =
+                    FileModuleResolution::Kind::Ambiguous;
+            }
+            return result;
+        };
+        config->load = +[](lua_State *L, void *context, const char *,
+                           const char *, const char *) {
+            auto *navigator = static_cast<WingLuauRequire *>(context);
+            auto *query = navigator->resolutionQuery_;
+            if (navigator->current_.kind == NodeKind::Builtin) {
+                query->resolution = {FileModuleResolution::Kind::Builtin,
+                                     navigator->current_.builtinPath};
+            } else {
+                query->resolution = {
+                    FileModuleResolution::Kind::File,
+                    navigator->loadPathForNode(navigator->current_)};
+            }
+            lua_pushboolean(L, true);
+            return 1;
+        };
+    };
+    luarequire_pushproxyrequire(state.get(), initialize,
+                                static_cast<WingLuauRequire *>(&navigator));
+    const auto requestBytes = requested.toUtf8();
+    const auto contextBytes = chunk.toUtf8();
+    lua_pushlstring(state.get(), requestBytes.constData(), requestBytes.size());
+    lua_pushlstring(state.get(), contextBytes.constData(), contextBytes.size());
+    if (lua_pcall(state.get(), 2, 1, 0) != LUA_OK &&
+        query.resolution.kind != FileModuleResolution::Kind::Ambiguous) {
+        return {};
+    }
+    return query.resolution;
 }
 
 bool WingLuauRequire::isSafeModulePath(const QString &input) {
@@ -1536,6 +1733,48 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
         const QString builtinPath = loadName.sliced(8);
         if (!self->builtinModules_.contains(builtinPath)) {
             luaL_error(L, "builtin module '%s' is not registered", loadname);
+        }
+
+        if (auto entry = self->builtinLoaders_.value(builtinPath)) {
+            if (entry->state == BuiltinLoader::State::Loading) {
+                luaL_error(L, "Cyclic builtin initialization: %s", loadname);
+            }
+            if (entry->state == BuiltinLoader::State::Failed) {
+                lua_pushstring(L, entry->error.toUtf8().constData());
+                lua_error(L);
+            }
+            if (entry->state == BuiltinLoader::State::Pending) {
+                entry->state = BuiltinLoader::State::Loading;
+                lua_pushlightuserdata(L, entry.get());
+                lua_pushcclosure(L, cbBuiltinLoad, "builtinLoader", 1);
+                if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
+                    entry->error = QString::fromUtf8(lua_tostring(L, -1));
+                    entry->state = BuiltinLoader::State::Failed;
+                    lua_error(L);
+                }
+                if (!lua_istable(L, -1) && !lua_isfunction(L, -1)) {
+                    entry->state = BuiltinLoader::State::Failed;
+                    entry->error = QStringLiteral(
+                        "Builtin loader must return one table or function");
+                    luaL_error(L, "%s", entry->error.toUtf8().constData());
+                }
+                lua_State *main = lua_mainthread(L);
+                lua_pushvalue(L, -1);
+                if (main != L) {
+                    lua_xmove(L, main, 1);
+                }
+                const bool registered =
+                    self->registerBuiltinValue(builtinPath, -1);
+                lua_pop(main, 1);
+                if (!registered) {
+                    entry->state = BuiltinLoader::State::Failed;
+                    entry->error =
+                        QStringLiteral("Cannot retain builtin loader result");
+                    luaL_error(L, "%s", entry->error.toUtf8().constData());
+                }
+                entry->state = BuiltinLoader::State::Ready;
+                return 1;
+            }
         }
 
         lua_getfield(L, LUA_REGISTRYINDEX, builtinRegistryKey());

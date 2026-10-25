@@ -29,9 +29,11 @@
 
 #include <QApplication>
 #include <QColor>
+#include <QEventLoop>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QTemporaryFile>
 #include <QTextBlock>
@@ -92,6 +94,11 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     textCursor.movePosition(QTextCursor::End);
     setTextCursor(textCursor);
 
+    if (_isWaitingRead) {
+        Q_EMIT inputSubmitted(code);
+        return;
+    }
+
     // append the newline char and
     // send signal / update iodevice
     if (iodevice_->isOpen()) {
@@ -121,7 +128,7 @@ void ScriptingConsole::appendContinuationPrompt() {
 }
 
 void ScriptingConsole::init() {
-    _getInputFn = std::bind(&ScriptingConsole::getInput, this);
+    _getInputFn = [this]() { return getInput(); };
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
@@ -375,22 +382,37 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         });
 }
 
-QString ScriptingConsole::getInput() {
-    auto &s = consoleStream();
+QString ScriptingConsole::getInput(ScriptMachine::ConsoleMode mode) {
+    if (_isWaitingRead) {
+        return QString();
+    }
+    QEventLoop loop;
+    QString result;
+    QPointer<ScriptingConsole> guard(this);
+    connect(this, &ScriptingConsole::inputSubmitted, &loop,
+            [&result, &loop](const QString &text) {
+                result = text;
+                loop.quit();
+            });
+    connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
+    connect(this, &ScriptingConsole::inputClosed, &loop, &QEventLoop::quit);
+    connect(&ScriptMachine::instance(), &ScriptMachine::inputCancelled, &loop,
+            [&loop, mode](ScriptMachine::ConsoleMode cancelled) {
+                if (cancelled == mode) {
+                    loop.quit();
+                }
+            });
     appendCommandPrompt(true);
     _isWaitingRead = true;
     setEditMode(Input);
-    auto blk = textCursor().block();
-    consoleHighligher()->setBlockAsTextOnly(blk);
-    auto d = s.device();
-    auto ba = d->bytesAvailable();
-    d->skip(ba);
-    d->waitForReadyRead(-1);
-    QString instr;
-    s >> instr;
-    _isWaitingRead = false;
-    setEditMode(Output);
-    return instr;
+    auto block = textCursor().block();
+    consoleHighligher()->setBlockAsTextOnly(block);
+    loop.exec();
+    if (guard) {
+        _isWaitingRead = false;
+        setEditMode(Output);
+    }
+    return result;
 }
 
 QString ScriptingConsole::packUpLoggingStr(const QString &message) {
@@ -420,6 +442,10 @@ void ScriptingConsole::wheelEvent(QWheelEvent *e) {
 }
 
 bool ScriptingConsole::event(QEvent *event) {
+    if (_isWaitingRead &&
+        (event->type() == QEvent::Hide || event->type() == QEvent::Close)) {
+        Q_EMIT inputClosed();
+    }
     if (EditorLspEvent::processEvent(event, this)) {
         return true;
     }

@@ -3,4 +3,7 @@
         <file>images/btn.png</file>
         <file>images/test.png</file>
     </qresource>
+    <qresource prefix="/resources/TestPlugin">
+        <file>script/testplugin.d.luau</file>
+    </qresource>
 </RCC>

@@ -346,8 +346,22 @@ public:
                 QByteArrayLiteral(">");
             break;
 
-        case LUA_TFUNCTION:
         case LUA_TUSERDATA:
+            if (luaL_getmetafield(L, absIdx, "__tostring")) {
+                lua_pushvalue(L, absIdx);
+                if (lua_pcall(L, 1, 1, 0) == LUA_OK &&
+                    lua_type(L, -1) == LUA_TSTRING) {
+                    size_t length = 0;
+                    const char *text = lua_tolstring(L, -1, &length);
+                    buf += quoteString ? smartQuote(escapeString(text, length))
+                                       : QByteArray(text, length);
+                    lua_pop(L, 1);
+                    break;
+                }
+                lua_pop(L, 1);
+            }
+            Q_FALLTHROUGH();
+        case LUA_TFUNCTION:
         case LUA_TTHREAD:
         case LUA_TCLASS:
         case LUA_TOBJECT:

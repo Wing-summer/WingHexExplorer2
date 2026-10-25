@@ -375,6 +375,9 @@ void TestPlugin::onRegisterScriptObj(WingScriptBind::ScopeBuilder scope) {
     scope.addFunction("testCrash", [this] { testCrash(); });
     scope.addFunction("testAdd",
                       [](int left, int right) { return left + right; });
+    scope.addFunction(
+        "definition_echo", [](int value) { return value; },
+        [](const QString &value) { return value; });
     scope.addFunction("raiseScriptException", [] {
         throw WingScriptBind::ScriptException(
             WingScriptBind::Exception::RuntimeError,
@@ -391,6 +394,11 @@ void TestPlugin::onRegisterScriptObj(WingScriptBind::ScopeBuilder scope) {
         .addConstructor<void (*)(), void (*)(int)>()
         .addFunction("getV", &TestObj::getV)
         .addData("value", &TestObj::_v);
+
+    // Exercise resource definitions and duplicate-file registration.
+    const auto definitions =
+        QStringLiteral(":/resources/TestPlugin/script/testplugin.d.luau");
+    scope.addDefinitionFile(definitions).addDefinitionFile(definitions);
 }
 
 void TestPlugin::onPaintHexEditorView(QPainter *painter, QWidget *w,

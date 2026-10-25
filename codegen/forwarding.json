@@ -1,0 +1,100 @@
+{
+  "preamble": [
+    "// Generated body of the host API registration function.",
+    "const QPointer<MainWindow> window(_win);",
+    "auto scriptContext = std::make_shared<ScriptDocumentContext>([window]() -> EditorView * { return window ? window->currentEditor() : nullptr; }, [window](const QUrl &file) -> EditorView * { return window ? window->findEditorView(file) : nullptr; });"
+  ],
+  "default_body": "auto *view = scriptContext->view(); if (!view) { return $fallback; } return view->$native(this$comma_arguments);",
+  "groups": {
+    "log": {
+      "body": "$return_prefix this->$native(scriptContext->sender()$comma_arguments);"
+    },
+    "toast": {
+      "body": "$return_prefix this->$native(scriptContext->sender()$comma_arguments);"
+    },
+    "service": {
+      "body": "$return_prefix this->$native(scriptContext->sender()$comma_arguments);"
+    }
+  },
+  "method_rules": {
+    "switchDocument": {
+      "body": "return scriptContext->switchDocument($arguments);"
+    },
+    "raiseDocument": {
+      "body": "return scriptContext->raiseDocument($arguments);"
+    },
+    "openFile": {
+      "body": "return scriptContext->openFile($arguments);"
+    },
+    "closeFile": {
+      "body": "return scriptContext->closeFile($arguments);"
+    },
+    "openCurrent": {
+      "body": "return scriptContext->openCurrent($arguments);"
+    },
+    "closeCurrent": {
+      "body": "return scriptContext->closeCurrent($arguments);"
+    },
+    "beginMarco": {
+      "body": "return scriptContext->beginMacro($arguments);"
+    },
+    "endMarco": {
+      "body": "return scriptContext->endMacro($arguments);"
+    },
+    "isMacroEmpty": {
+      "body": "return scriptContext->isMacroEmpty($arguments);"
+    },
+    "resetMarco": {
+      "body": "return scriptContext->resetMacro($arguments);"
+    },
+    "isCurrentDocEditing": {
+      "body": "return scriptContext->view() != nullptr;"
+    },
+    "foreground": {
+      "native": "metadata",
+      "arguments": [
+        "arg0",
+        "arg1",
+        "arg2",
+        "QColor()",
+        "QString()"
+      ]
+    },
+    "background": {
+      "native": "metadata",
+      "arguments": [
+        "arg0",
+        "arg1",
+        "QColor()",
+        "arg2",
+        "QString()"
+      ]
+    },
+    "comment": {
+      "native": "metadata",
+      "arguments": [
+        "arg0",
+        "arg1",
+        "QColor()",
+        "QColor()",
+        "arg2"
+      ]
+    },
+    "invokeScriptService": {
+      "body": "return ::invokeScriptService(*this, scriptContext->sender(), $arguments);"
+    }
+  },
+  "fallbacks": {
+    "isReadOnly": "true",
+    "isKeepSize": "true",
+    "isLocked": "true",
+    "findNext": "-1",
+    "findPrevious": "-1"
+  },
+  "assignments": [],
+  "output": "generated/host_forwarders.inc",
+  "captures": [
+    "this",
+    "scriptContext"
+  ]
+}

@@ -22,7 +22,6 @@ Keep the top-level layers organized by technical responsibility, with subdirecto
 | `luau` | Luau 绑定、调试器、变量检查及格式化 / Luau bindings, debugging, variable inspection, and formatting |
 | `luau/runtime` | 脚本执行、调度、管理和运行配置 / Script execution, scheduling, management, and runtime settings |
 | `luau/lsp` | 语言服务器、协议和语义分析 / Language server, protocol, and semantic analysis |
-| `scriptaddon` | 历史 AngelScript 扩展绑定，当前未参与构建 / Legacy AngelScript addon bindings, currently excluded from the build |
 | `model` | Model-View 数据模型 / Model-View data models |
 | `settings` | 设置页面及其 UI 文件 / Settings pages and their UI files |
 | `widgetframe` | 无边框窗口辅助、标题栏和窗口按钮 / Frameless window support, title bars, and window buttons |

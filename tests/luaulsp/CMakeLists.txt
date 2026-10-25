@@ -30,6 +30,7 @@ add_executable(
     wing_luau_lsp_tests
     tst_luaulanguageserver.cpp
     ${WING_SOURCE_ROOT}/src/luau/lsp/luaulanguageserver.cpp
+    ${WING_SOURCE_ROOT}/src/luau/lsp/luausymbols.cpp
     ${WING_SOURCE_ROOT}/src/luau/lsp/luaulanguageserver.h
     ${WING_SOURCE_ROOT}/src/luau/lsp/lsp.h
     ${WING_SOURCE_ROOT}/src/luau/lsp/attachcommentsvisitor.cpp
@@ -67,3 +68,10 @@ foreach(
                                              "QT_QPA_PLATFORM=offscreen"
     )
 endforeach()
+
+set(WING_GENERATED_BINDINGS_DIR "" CACHE PATH "Existing generated binding project for integration coverage")
+if(WING_GENERATED_BINDINGS_DIR)
+    add_test(NAME wing_luau_lsp_bindings COMMAND wing_luau_lsp_tests bindings)
+    set_tests_properties(wing_luau_lsp_bindings PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;WING_BINDINGS_DIR=${WING_GENERATED_BINDINGS_DIR}")
+endif()

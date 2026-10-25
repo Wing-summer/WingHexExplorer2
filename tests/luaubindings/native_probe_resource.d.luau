@@ -1,0 +1,3 @@
+declare NativeProbeResource: {
+    enabled: boolean,
+}

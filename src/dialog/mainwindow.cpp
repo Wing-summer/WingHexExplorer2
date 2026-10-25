@@ -309,56 +309,52 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             sm.registerCallBack(ScriptMachine::Interactive, callbacks);
 
             m_scriptConsole->setMode(QConsoleWidget::Output);
-            auto cfgerr = sm.checkEngineConfigError();
+            ScriptMachine::RegCallBacks backgroundCallbacks;
+            backgroundCallbacks.getInputFn = [this]() -> QString {
+                auto *input = new QInputDialog;
+                input->setLabelText(tr("Enter a value:"));
+                input->setWindowFlag(Qt::Widget);
+                FramelessDialogBase dialog(this);
+                dialog.buildUpContent(input);
+                dialog.setWindowTitle(tr("Input request"));
+                connect(input, &QInputDialog::finished, &dialog,
+                        &QDialog::done);
+                connect(&ScriptMachine::instance(),
+                        &ScriptMachine::inputCancelled, &dialog,
+                        [&dialog](ScriptMachine::ConsoleMode mode) {
+                            if (mode == ScriptMachine::Background) {
+                                dialog.reject();
+                            }
+                        });
+                return dialog.exec() == QDialog::Accepted ? input->textValue()
+                                                          : QString();
+            };
+            backgroundCallbacks.clearFn = [this]() {
+                m_bgScriptOutput->clear();
+                _lastOutputType = ScriptMachine::MessageType::Unknown;
+            };
+            backgroundCallbacks.printMsgFn =
+                std::bind(&MainWindow::onOutputBgScriptOutput, this,
+                          std::placeholders::_1);
+            sm.registerCallBack(ScriptMachine::Background, backgroundCallbacks);
 
-            // At this time, service plugin has started
-            if (cfgerr) {
-                ScriptMachine::MessageInfo msg;
-                msg.type = ScriptMachine::MessageType::Error;
-                msg.mode = ScriptMachine::Interactive;
-                msg.message = tr("Engine configuration error");
-                m_scriptConsole->onOutput(msg);
-
-                m_scriptConsole->setReadOnly(true);
-                m_scriptConsole->verticalScrollBar()->setValue(0);
-                m_scriptConsole->horizontalScrollBar()->setValue(0);
-
-                // configure error, so disable all script feature
-                m_ribbonMaps[WingHex::WingRibbonCatagories::SCRIPT]->setEnabled(
-                    false);
-            } else {
-                ScriptMachine::RegCallBacks callbacks;
-                callbacks.getInputFn = [this]() -> QString {
-                    return WingInputDialog::getText(this, tr("Input request"),
-                                                    tr("Enter a value:"));
-                };
-                callbacks.clearFn = [this]() {
-                    m_bgScriptOutput->clear();
-                    _lastOutputType = ScriptMachine::MessageType::Unknown;
-                };
-                callbacks.printMsgFn =
-                    std::bind(&MainWindow::onOutputBgScriptOutput, this,
-                              std::placeholders::_1);
-                sm.registerCallBack(ScriptMachine::Background, callbacks);
-
-                if (splash) {
-                    splash->setInfoText(tr("Initializing script console..."));
-                }
-
-                m_scriptConsole->init();
-                if (splash) {
-                    splash->setInfoText(tr("Initializing script manager..."));
-                }
-
-                if (splash) {
-                    splash->setInfoText(tr("Initializing script service..."));
-                }
-
-                m_scriptConsole->initOutput();
-                m_scriptConsole->setMode(QConsoleWidget::Input);
-
-                m_scriptConsole->enableLSP();
+            if (splash) {
+                splash->setInfoText(tr("Initializing script console..."));
             }
+
+            m_scriptConsole->init();
+            if (splash) {
+                splash->setInfoText(tr("Initializing script manager..."));
+            }
+
+            if (splash) {
+                splash->setInfoText(tr("Initializing script service..."));
+            }
+
+            m_scriptConsole->initOutput();
+            m_scriptConsole->setMode(QConsoleWidget::Input);
+
+            m_scriptConsole->enableLSP();
 
             // attach REPL env to display
             auto *model = _scriptObjView->dataModel();

@@ -31,6 +31,12 @@ public slots:
     void refresh();
 
 private:
+    void populateChildren(QTreeWidgetItem *item);
+    QHash<QString, LuauLanguageServer::Symbol> _symbols;
+    QSet<QString> _loaded;
+    QSet<QString> _restoreExpanded;
+    QString _restoreSelected;
+
     void createObjNodes(const QList<LuauLanguageServer::Symbol> &nodes,
                         QTreeWidgetItem *parent);
 

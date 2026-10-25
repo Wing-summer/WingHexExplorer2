@@ -117,7 +117,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
 
     ScriptMachine::RegCallBacks callbacks;
     callbacks.getInputFn = [this]() -> QString {
-        return m_consoleout->getInput();
+        return m_consoleout->getInput(ScriptMachine::Scripting);
     };
     callbacks.clearFn = [this]() { m_consoleout->clearConsole(); };
     callbacks.printMsgFn = [this](const ScriptMachine::MessageInfo &message) {

@@ -49,6 +49,7 @@
 
 #include <cstring>
 #include <functional>
+#include <memory>
 #include <optional>
 
 #include "Luau/Common.h"
@@ -99,6 +100,7 @@ public:
             ModuleDirectory,
             NamespaceDirectory,
             Ambiguous,
+            Builtin,
         };
 
         Kind kind = Kind::NotFound;
@@ -107,6 +109,28 @@ public:
 
     static FileModuleResolution resolveFileModule(const QString &basePath,
                                                   const QString &requestedPath);
+
+    static FileModuleResolution
+    resolveModule(const QString &contextPath, const QString &requested,
+                  const Options &options, const QSet<QString> &builtinModules,
+                  const QStringList &configRoots = {});
+
+    // Reuse the native resolver VM while querying multiple editor imports.
+    // Each query gets fresh navigation/configuration state, never a result
+    // cache.
+    class ResolutionSession {
+    public:
+        ResolutionSession(const Options &options,
+                          const QSet<QString> &builtinModules,
+                          const QStringList &configRoots = {});
+        ~ResolutionSession();
+        FileModuleResolution resolve(const QString &contextPath,
+                                     const QString &requested);
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> impl;
+    };
 
     bool initRequire(lua_State *L, Options options);
 
@@ -136,6 +160,11 @@ public:
     // normal alias/package lookup and may be ambiguous with another source.
     bool registerBuiltinValue(const QString &moduleName, int valueIndex = -1);
 
+    // Load once through the existing builtin navigator and require cache.
+    // The callback pushes exactly one module value; failures remain failures.
+    bool registerBuiltinLoader(const QString &moduleName,
+                               std::function<int(lua_State *)> loader);
+
     // Clears the entire native require cache.
     //
     // Builtin modules registered through luarequire_registermodule() are not
@@ -148,6 +177,12 @@ public:
     const Options &options() const;
 
 private:
+    struct ResolutionQuery {
+        FileModuleResolution resolution;
+        QStringList roots;
+    };
+    ResolutionQuery *resolutionQuery_ = nullptr;
+
     enum class Scope {
         System,
         User,
@@ -253,6 +288,14 @@ private:
     // Builtins are registered with Luau under @b/<name>. These sets mirror the
     // registration names locally so shorthand and ordinary package lookups can
     // detect builtin namespaces without relying on Luau internals.
+    struct BuiltinLoader {
+        enum class State { Pending, Loading, Ready, Failed };
+        std::function<int(lua_State *)> load;
+        State state = State::Pending;
+        QString error;
+    };
+    QHash<QString, std::shared_ptr<BuiltinLoader>> builtinLoaders_;
+    static int cbBuiltinLoad(lua_State *L);
     QSet<QString> builtinModules_;
     QSet<QString> builtinNamespaces_;
 

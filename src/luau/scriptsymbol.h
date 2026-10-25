@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -15,18 +15,23 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTENV_H
-#define SCRIPTENV_H
+#ifndef SCRIPTSYMBOL_H
+#define SCRIPTSYMBOL_H
 
-#ifndef ANGELSCRIPT_H
-// Avoid having to inform include path if header is already include before
-#include <angelscript.h>
-#endif
+#include <QList>
+#include <QString>
 
-BEGIN_AS_NAMESPACE
+namespace WingScriptBind {
+// An immutable snapshot of native registrations; no VM or frontend pointers.
+struct ScriptSymbol {
+    enum class Kind { Module, Class, Function, Property, Constant };
+    QString id;
+    QString parent;
+    QString label;
+    Kind kind = Kind::Module;
+    QString detail;
+};
+using ScriptSymbolCatalog = QList<ScriptSymbol>;
+} // namespace WingScriptBind
 
-void RegisterEnv(asIScriptEngine *engine);
-
-END_AS_NAMESPACE
-
-#endif // SCRIPTENV_H
+#endif // SCRIPTSYMBOL_H

@@ -43,7 +43,6 @@ option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
        "Build with native optimization(less portable)" OFF)
 
-add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
 
 include(src/WingPlugin.cmake)
@@ -323,6 +322,7 @@ set(LUAU_LS
     src/luau/lsp/findnodetype.cpp
     src/luau/lsp/findnodetype.h
     src/luau/lsp/luaulanguageserver.cpp
+    src/luau/lsp/luausymbols.cpp
     src/luau/lsp/luaulanguageserver.h
     src/luau/lsp/semantictokensvisitor.cpp
     src/luau/lsp/semantictokensvisitor.h
@@ -361,6 +361,9 @@ set(LUAU_MOD_SRC
     src/luau/runtime/scriptsettings.cpp
     src/luau/runtime/scriptsettings.h
     src/luau/scriptbindingengine.cpp
+    src/luau/scriptsymbol.h
+    src/luau/runtime/scriptserviceapi.h
+    src/luau/runtime/scriptserviceapi.cpp
     src/luau/scriptbindingengine.h
     src/luau/wingluaurequire.cpp
     src/luau/wingluaurequire.h)
@@ -419,18 +422,6 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.h
     src/settings/scriptsettingdialog.ui
     src/settings/settings.h)
-
-set(SCRIPT_ADDON_SRC
-    src/scriptaddon/luauhelper.h
-    # src/scriptaddon/scriptenv.cpp
-    # src/scriptaddon/scriptenv.h
-    # src/scriptaddon/scriptjson.cpp
-    # src/scriptaddon/scriptjson.h
-    # src/scriptaddon/scriptregex.cpp
-    # src/scriptaddon/scriptregex.h
-    # src/scriptaddon/scripturl.cpp
-    # src/scriptaddon/scripturl.h
-)
 
 # localization support
 file(
@@ -512,7 +503,6 @@ set(PROJECT_SOURCES
     ${QCONSOLEWIDGET_SRC}
     ${QM_FILES}
     ${RIBBON_SRC}
-    ${SCRIPT_ADDON_SRC}
     ${SETTING_SRC}
     ${WIDGET_FRAME_SRC}
     main.cpp
@@ -624,6 +614,19 @@ qt6_generate_deploy_app_script(TARGET WingHexExplorer2 OUTPUT_SCRIPT
 install(SCRIPT ${deploy_script})
 
 add_subdirectory(WingPlugin)
+
+set(WINGLUAUQT_SOURCE_DIR "3rdparty/WingLuauQt" CACHE STRING "WingLuauQt source directory")
+set(WINGHEX_BINDINGS_GENERATION_CONFIG "codegen/generation.json" CACHE STRING "Binding generation configuration")
+set(WINGHEX_BINDINGS_OUTPUT_DIR "" CACHE STRING "Optional generated binding output override")
+get_filename_component(_wingluauqt "${WINGLUAUQT_SOURCE_DIR}" ABSOLUTE BASE_DIR "${CMAKE_SOURCE_DIR}")
+include("${_wingluauqt}/cmake/WingLuauQt.cmake")
+set(_binding_output_arguments)
+if(WINGHEX_BINDINGS_OUTPUT_DIR)
+  list(APPEND _binding_output_arguments OUTPUT_DIR "${WINGHEX_BINDINGS_OUTPUT_DIR}")
+endif()
+wingluauqt_integrate(TARGET WingHexExplorer2
+  CONFIG "${WINGHEX_BINDINGS_GENERATION_CONFIG}"
+  ${_binding_output_arguments})
 
 target_compile_options(
     WingHexExplorer2

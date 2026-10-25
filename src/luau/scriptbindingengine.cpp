@@ -16,6 +16,9 @@
 */
 
 #include "scriptbindingengine.h"
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 #include <QThread>
 
@@ -86,9 +89,53 @@ public:
         scopes_.insert(0, root);
     }
 
+    ScriptSymbolCatalog symbolCatalog() const {
+        checkThread();
+        ScriptSymbolCatalog result;
+        for (auto it = scopes_.cbegin(); it != scopes_.cend(); ++it) {
+            if (it.key() == 0) {
+                continue;
+            }
+            const auto id = QStringLiteral("plugin:%1").arg(it.key());
+            const auto parent =
+                it->parent == 0 ? QString()
+                                : QStringLiteral("plugin:%1").arg(it->parent);
+            result.append({id, parent, it->name,
+                           it->isClass ? ScriptSymbol::Kind::Class
+                                       : ScriptSymbol::Kind::Module,
+                           QStringLiteral("Native extension")});
+            for (auto function = it->functions.cbegin();
+                 function != it->functions.cend(); ++function) {
+                result.append({id + '/' + function.key(), id, function.key(),
+                               ScriptSymbol::Kind::Function,
+                               QStringLiteral("%1 (%2 overloads)")
+                                   .arg(function.key())
+                                   .arg(function->overloads.size())});
+            }
+            for (auto property = it->properties.cbegin();
+                 property != it->properties.cend(); ++property) {
+                result.append(
+                    {id + '/' + property.key(), id, property.key(),
+                     ScriptSymbol::Kind::Property,
+                     property->setter
+                         ? QStringLiteral("Native property")
+                         : QStringLiteral("Read-only native property")});
+            }
+            const auto constants = constants_.value(it.key());
+            for (const auto &name : constants) {
+                result.append({id + '/' + name,
+                               id,
+                               name,
+                               ScriptSymbol::Kind::Constant,
+                               {}});
+            }
+        }
+        return result;
+    }
+
     ~Impl() override {
         control_->engine = nullptr;
-        for (const auto &scope : scopes_) {
+        for (const auto &scope : std::as_const(scopes_)) {
             if (scope.table != LUA_NOREF) {
                 lua_unref(state_, scope.table);
             }
@@ -231,6 +278,43 @@ public:
     void collectGarbage() {
         checkThread();
         lua_gc(state_, LUA_GCCOLLECT, 0);
+    }
+
+    void registerDefinitionFile(ScopeId scope,
+                                QAnyStringView fileName) override {
+        checkThread();
+        if (lua_getreadonly(state_, LUA_GLOBALSINDEX)) {
+            throw ScriptException(
+                Exception::RegistrationFailed,
+                QStringLiteral("Definition registration has finished"));
+        }
+        if (get(scope).isClass) {
+            throw ScriptException(Exception::InvalidScopeKind);
+        }
+        const auto name = fileName.toString();
+        const bool resource = name.startsWith(QStringLiteral(":/"));
+        const QFileInfo info(name);
+        if (name.isEmpty() || name.contains(QChar(u'\0')) ||
+            (!resource && !info.isAbsolute()) || !info.isFile()) {
+            throw ScriptException(Exception::InvalidArgument, name);
+        }
+        const auto path =
+            resource ? QDir::cleanPath(name) : info.canonicalFilePath();
+        if (definitionPaths_.contains(path)) {
+            return;
+        }
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            throw ScriptException(Exception::InvalidArgument,
+                                  file.errorString());
+        }
+        definitionPaths_.insert(path);
+        definitionFiles_.append(path);
+    }
+
+    QStringList definitionFiles() const {
+        checkThread();
+        return definitionFiles_;
     }
 
 private:
@@ -461,6 +545,9 @@ private:
                                   QStringLiteral("Table nesting is too deep"));
         }
         Value result;
+        if (codec_.readValue && codec_.readValue(state, index, result)) {
+            return result;
+        }
         index = lua_absindex(state, index);
         switch (lua_type(state, index)) {
         case LUA_TNIL:
@@ -511,6 +598,9 @@ private:
     void pushValue(lua_State *state, const Value &value, int depth) {
         if (depth > 64 || !lua_checkstack(state, 4)) {
             throw ScriptException(Exception::InvalidArgument);
+        }
+        if (codec_.pushValue && codec_.pushValue(state, value)) {
+            return;
         }
         switch (value.kind) {
         case Value::Kind::Nil:
@@ -655,15 +745,21 @@ private:
         for (int index = first; index <= top; ++index) {
             arguments.append(readValue(state, index, tables, 0));
         }
-        for (const auto &callable : overloads) {
-            if (callable->accepts(arguments)) {
-                auto result = callable->invoke(receiver, arguments);
-                if (callable->returnsVoid()) {
-                    return 0;
+        for (int attempt = 0; attempt < 2; ++attempt) {
+            for (const auto &callable : overloads) {
+                if (callable->accepts(arguments)) {
+                    auto result = callable->invoke(receiver, arguments);
+                    if (callable->returnsVoid()) {
+                        return 0;
+                    }
+                    pushValue(state, result, 0);
+                    return 1;
                 }
-                pushValue(state, result, 0);
-                return 1;
             }
+            if (attempt != 0 || !codec_.adaptArguments) {
+                break;
+            }
+            codec_.adaptArguments(arguments);
         }
         throw ScriptException(Exception::TypeMismatch,
                               QStringLiteral("No matching overload"));
@@ -781,6 +877,8 @@ private:
     QHash<ScopeId, Scope> scopes_;
     QHash<ScopeId, QSet<QString>> constants_;
     QHash<ScopeId, int> leases_;
+    QSet<QString> definitionPaths_;
+    QStringList definitionFiles_;
     ScopeId nextScope_ = 1;
 };
 
@@ -794,5 +892,13 @@ IRegistrationApi &ScriptBindingEngine::registrations() noexcept {
 }
 
 void ScriptBindingEngine::collectGarbage() { impl_->collectGarbage(); }
+
+ScriptSymbolCatalog ScriptBindingEngine::symbolCatalog() const {
+    return impl_->symbolCatalog();
+}
+
+QStringList ScriptBindingEngine::definitionFiles() const {
+    return impl_->definitionFiles();
+}
 
 } // namespace WingScriptBind

@@ -39,7 +39,6 @@
 using namespace WingHex;
 
 class MainWindow;
-class asCScriptEngine;
 class QPluginLoader;
 
 class lua_State;

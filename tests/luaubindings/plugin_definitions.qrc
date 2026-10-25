@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/wingluau_test">
+        <file alias="native_probe_resource.d.luau">native_probe_resource.d.luau</file>
+    </qresource>
+</RCC>

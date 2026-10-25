@@ -19,6 +19,7 @@
 #define LUAULANGUAGESERVER_H
 
 #include "lsp.h"
+#include "luau/scriptsymbol.h"
 #include "semantictokensvisitor.h"
 
 #include <functional>
@@ -35,6 +36,7 @@
 #include "Luau/Documentation.h"
 #include "Luau/Frontend.h"
 #include "Luau/TypeCheckLimits.h"
+#include "luau/wingluaurequire.h"
 
 namespace Luau {
 struct ToStringOptions;
@@ -53,6 +55,11 @@ public:
         Luau::Mode defaultMode = Luau::Mode::Nonstrict;
         QStringList readCfgRoots;
         QHash<QString, QString> definitionsFiles;
+        QHash<QString, QString> builtinModuleFiles;
+        QString symbolCatalogFile;
+        QString userModuleRoot;
+        QString systemModuleRoot;
+        WingScriptBind::ScriptSymbolCatalog pluginSymbols;
     };
 
     explicit LuauLanguageServer();
@@ -97,21 +104,44 @@ public:
 public:
     void initialize(const InitializationOptions &options);
 
+    enum class SymbolSource { Catalog, Global, Plugin };
+    enum class SymbolCategory {
+        Standard,
+        Document,
+        Logging,
+        Values,
+        Data,
+        Services,
+        Qt,
+        Ffi,
+        Plugins
+    };
     struct Symbol {
         lsp::CompletionItem item;
         QString fullDeclaration;
+        QStringList overloads;
         QList<Symbol> children;
+        QString id;
+        SymbolSource source = SymbolSource::Catalog;
+        SymbolCategory category = SymbolCategory::Data;
+        QStringList path;
+        bool moduleRoot = false;
+        QString membersFile;
+        bool requiresImport = false;
+        bool hasChildren = false;
     };
 
     // A value snapshot of registered globals and types, independent of the
     // frontend type graph. Empty until initialization completes.
     QList<Symbol> globalSymbols();
+    QList<Symbol> builtinSymbols();
+    QList<Symbol> symbolChildren(const Symbol &symbol);
 
 private:
     Symbol createGlobalSymbol(const QString &name, Luau::TypeId type,
                               lsp::CompletionItemKind kind,
                               Luau::ToStringOptions &options,
-                              QSet<Luau::TypeId> &ancestors);
+                              QSet<Luau::TypeId> &ancestors, int depth = 32);
 
     void clearConfigCache();
 
@@ -153,7 +183,15 @@ private:
     Luau::TypeCheckLimits limits;
     Luau::Config defaultConfig;
 
+    QHash<QString, QString> builtinModuleFiles;
+    QString symbolCatalogFile;
+    QHash<QString, QList<Symbol>> symbolPages;
+    QList<Symbol> pluginRoots;
+    QHash<QString, QList<Symbol>> pluginPages;
+    QList<Symbol> catalogRoots;
+    std::optional<QList<Symbol>> builtinRoots;
     QStringList readAllowedCfgRoots;
+    std::unique_ptr<WingLuauRequire::ResolutionSession> requireResolver;
     /// A registered definitions file passed by the client
     std::unordered_map<std::string, QString> definitionsFiles;
     /// A registered documentation file passed by the client
@@ -234,6 +272,12 @@ private:
     QStringList getComments(const Luau::ModuleName &moduleName,
                             const Luau::Location &node);
 
+    void
+    initializeSymbolCatalog(const WingScriptBind::ScriptSymbolCatalog &plugins);
+    static void formatSymbolDeclaration(Symbol &symbol, Luau::TypeId type,
+                                        Luau::ToStringOptions options);
+    static QString symbolTypeAnnotation(Luau::TypeId type,
+                                        Luau::ToStringOptions &options);
     std::optional<QString> getDocumentationForType(const Luau::TypeId ty);
 
     std::optional<QString> getDocumentationForTypeReference(

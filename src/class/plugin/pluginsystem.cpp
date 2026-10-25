@@ -29,14 +29,12 @@
 #include "dialog/common/wingmessagebox.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
+#include "luau/runtime/scriptdocumentbindings.h"
 #include "luau/runtime/scriptmachine.h"
+#include "luau/runtime/scriptserviceapi.h"
 #include "wingplugincert.h"
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-
-#include "lualib.h"
-
-#include "LuaBridge/LuaBridge.h"
 
 #include <QDir>
 #include <QFileInfoList>
@@ -2928,10 +2926,7 @@ void PluginSystem::installAPI(lua_State *L) {
         return;
     }
 
-    // TODO: register all API functions to Lua
-    luabridge::getGlobalNamespace(L).beginNamespace("reader").endNamespace();
-
-    luabridge::getGlobalNamespace(L).beginNamespace("ctl").endNamespace();
+#include PLUGINSYSTEM_LUAU_BINDING
 }
 
 PluginInfo PluginSystem::getPluginInfo(IWingPluginBase *plg) const {

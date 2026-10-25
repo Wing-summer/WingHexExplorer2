@@ -25,12 +25,11 @@
 #include "luauscheduler.h"
 
 #include <QObject>
-#include <QQueue>
 
-class CScriptArray;
+class ScriptMachine : public QObject {
+    Q_OBJECT
+    friend class ScriptMachineBindings;
 
-class ScriptMachine {
-    Q_GADGET
 public:
     // we have three console modes
     enum ConsoleMode : int {
@@ -91,30 +90,13 @@ public:
     bool isInited() const;
     WingScriptBind::IScriptEngine *scriptEngine() const noexcept;
     bool isRunning(ConsoleMode mode) const;
-    bool checkEngineConfigError() const;
-
-    // static void registerEngineAddon(asIScriptEngine *engine);
-    // static void registerEngineClipboard(asIScriptEngine *engine);
 
     void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
-
-public:
-    void setFileEnableOverwrite(bool b);
-    void setFileSystemWrite(bool b);
-
-    bool fileEnableOverwrite() const;
-    bool fileSystemWrite() const;
 
 public:
     LuauDebugger *debugger() const;
 
     void outputMessage(const MessageInfo &info);
-
-public:
-    static void clip_setText(const QString &text);
-    static void clip_setBinary(const CScriptArray &array);
-    static QString clip_getText();
-    static CScriptArray *clip_getBinary();
 
 public:
     // debug or release?
@@ -132,8 +114,6 @@ public:
 
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
-
-    std::string getAsTypeName(int typeId);
 
 private:
     static int __output(MessageType type, lua_State *L);
@@ -155,15 +135,20 @@ private:
     static int cowrap(lua_State *L);
     static int coresume(lua_State *L);
     static int forward(lua_State *L, int index);
+    static int forwardContinuation(lua_State *L, int status);
 
-    QString input();
+    static int input(lua_State *L);
+    static int stringify(lua_State *L);
+    static int assertX(lua_State *L);
+    static int debugBreak(lua_State *L);
+    static int debugElapsedTime(lua_State *L);
+
+signals:
+    void inputCancelled(ScriptMachine::ConsoleMode mode);
 
 private:
     static void onLuauInterrupt(lua_State *L, int gc);
     static void onLuauThreadCreated(lua_State *LP, lua_State *L);
-
-private:
-    // void attachDebugBreak(asIScriptContext *ctx);
 
 private:
     bool _inited = false;

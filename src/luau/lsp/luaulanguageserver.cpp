@@ -681,6 +681,12 @@ inline static bool startsWith(std::string_view haystack,
            haystack.substr(0, needle.size()) == needle;
 }
 
+inline constexpr bool endsWith(std::string_view s,
+                               std::string_view suffix) noexcept {
+    return s.size() >= suffix.size() &&
+           s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 static lsp::Range toLspRange(const Luau::Location &loc) {
     return {{loc.begin.line, loc.begin.column}, {loc.end.line, loc.end.column}};
 }
@@ -2417,145 +2423,6 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
     return std::nullopt;
 }
 
-static void collectSymbolProperties(Luau::TypeId type,
-                                    Luau::TableType::Props &properties,
-                                    QSet<Luau::TypeId> &visited) {
-    type = Luau::follow(type);
-    if (visited.contains(type)) {
-        return;
-    }
-    visited.insert(type);
-    if (auto table = Luau::get<Luau::TableType>(type)) {
-        properties.insert(table->props.begin(), table->props.end());
-    } else if (auto external = Luau::get<Luau::ExternType>(type)) {
-        properties.insert(external->props.begin(), external->props.end());
-        if (external->parent) {
-            collectSymbolProperties(*external->parent, properties, visited);
-        }
-    } else if (auto meta = Luau::get<Luau::MetatableType>(type)) {
-        collectSymbolProperties(meta->table, properties, visited);
-        auto index =
-            LuauLsp::lookupProp(Luau::follow(meta->metatable), "__index");
-        if (!index.empty() && index.front().property.readTy) {
-            collectSymbolProperties(*index.front().property.readTy, properties,
-                                    visited);
-        }
-    }
-}
-
-static QString symbolTypeAnnotation(Luau::TypeId type,
-                                    Luau::ToStringOptions &options) {
-    type = Luau::follow(type);
-    if (auto table = Luau::get<Luau::TableType>(type)) {
-        if (table->name) {
-            return QString::fromStdString(*table->name);
-        }
-        return table->props.empty() && !table->indexer
-                   ? QStringLiteral("{}")
-                   : QStringLiteral("{ ... }");
-    }
-    if (Luau::get<Luau::MetatableType>(type)) {
-        return QStringLiteral("{ ... }");
-    }
-    return QString::fromStdString(Luau::toString(type, options));
-}
-
-static QString symbolFunctionSignature(const QString &name,
-                                       const Luau::FunctionType &function,
-                                       Luau::ToStringOptions &options) {
-    auto signature = QString::fromStdString(
-        Luau::toStringNamedFunction(name.toStdString(), function, options));
-    signature.replace(QLatin1String("_: "), QLatin1String());
-    return signature;
-}
-
-static void formatSymbolDeclaration(LuauLanguageServer::Symbol &symbol,
-                                    Luau::TypeId type,
-                                    Luau::ToStringOptions options) {
-    const auto &name = symbol.item.label;
-    options.hideFunctionSelfArgument =
-        symbol.item.kind == lsp::CompletionItemKind::Method;
-    if (symbol.item.kind == lsp::CompletionItemKind::Function ||
-        symbol.item.kind == lsp::CompletionItemKind::Method) {
-        QStringList signatures;
-        if (auto function = Luau::get<Luau::FunctionType>(type)) {
-            signatures.append(
-                symbolFunctionSignature(name, *function, options));
-        } else if (auto intersection =
-                       Luau::get<Luau::IntersectionType>(type)) {
-            for (auto part : intersection->parts) {
-                if (auto function =
-                        Luau::get<Luau::FunctionType>(Luau::follow(part))) {
-                    signatures.append(
-                        symbolFunctionSignature(name, *function, options));
-                }
-            }
-        }
-        if (!signatures.isEmpty()) {
-            symbol.item.detail = signatures.first();
-            if (signatures.size() > 1) {
-                *symbol.item.detail += LuauLanguageServer::tr(
-                    " (+%n overload(s))", nullptr, signatures.size() - 1);
-            }
-            symbol.fullDeclaration = signatures.join('\n');
-            return;
-        }
-    }
-
-    symbol.item.detail = name + ": " + symbolTypeAnnotation(type, options);
-    options.maxTableLength = 1000;
-    options.maxTypeLength = 2000;
-    symbol.fullDeclaration =
-        name + ": " + QString::fromStdString(Luau::toString(type, options));
-}
-
-LuauLanguageServer::Symbol LuauLanguageServer::createGlobalSymbol(
-    const QString &name, Luau::TypeId type, lsp::CompletionItemKind kind,
-    Luau::ToStringOptions &options, QSet<Luau::TypeId> &ancestors) {
-    type = Luau::follow(type);
-    Symbol symbol;
-    symbol.item.label = name;
-    if (kind != lsp::CompletionItemKind::Interface &&
-        (Luau::get<Luau::FunctionType>(type) ||
-         Luau::isOverloadedFunction(type))) {
-        kind = kind == lsp::CompletionItemKind::Property
-                   ? lsp::CompletionItemKind::Method
-                   : lsp::CompletionItemKind::Function;
-    } else if (Luau::get<Luau::ExternType>(type)) {
-        kind = lsp::CompletionItemKind::Class;
-    } else if ((Luau::get<Luau::TableType>(type) ||
-                Luau::get<Luau::MetatableType>(type)) &&
-               kind == lsp::CompletionItemKind::Variable) {
-        kind = lsp::CompletionItemKind::Module;
-    }
-    symbol.item.kind = kind;
-    formatSymbolDeclaration(symbol, type, options);
-    if (auto docs = getDocumentationForType(type)) {
-        symbol.item.documentation = {lsp::MarkupKind::Markdown, *docs};
-    }
-
-    // Keep recursive references visible, but do not expand them again.
-    if (ancestors.contains(type) || ancestors.size() >= 32) {
-        return symbol;
-    }
-    ancestors.insert(type);
-    Luau::TableType::Props properties;
-    QSet<Luau::TypeId> visited;
-    collectSymbolProperties(type, properties, visited);
-    symbol.children.reserve(properties.size());
-    for (const auto &[propertyName, property] : properties) {
-        const auto propertyType =
-            property.readTy ? property.readTy : property.writeTy;
-        if (propertyType) {
-            symbol.children.append(createGlobalSymbol(
-                QString::fromStdString(propertyName), *propertyType,
-                lsp::CompletionItemKind::Property, options, ancestors));
-        }
-    }
-    ancestors.remove(type);
-    return symbol;
-}
-
 QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
     if (!isReady) {
         return {};
@@ -2614,7 +2481,25 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
         return;
     }
 
+    builtinModuleFiles.clear();
+    for (auto it = options.builtinModuleFiles.cbegin();
+         it != options.builtinModuleFiles.cend(); ++it) {
+        builtinModuleFiles.insert(it.key().toLower(), it.value());
+    }
+    WingLuauRequire::Options requireOptions;
+    requireOptions.userRoot = options.userModuleRoot;
+    requireOptions.systemRoot = options.systemModuleRoot;
+    QSet<QString> names;
+    for (auto it = builtinModuleFiles.cbegin(); it != builtinModuleFiles.cend();
+         ++it) {
+        names.insert(it.key());
+    }
+    requireResolver = std::make_unique<WingLuauRequire::ResolutionSession>(
+        requireOptions, names, options.readCfgRoots);
+    symbolCatalogFile = options.symbolCatalogFile;
+    initializeSymbolCatalog(options.pluginSymbols);
     defaultConfig.mode = options.defaultMode;
+    readAllowedCfgRoots = options.readCfgRoots;
     definitionsFiles.clear();
     for (auto it = options.definitionsFiles.cbegin();
          it != options.definitionsFiles.cend(); ++it) {
@@ -2628,7 +2513,6 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
         registerTypes();
     }
 
-    readAllowedCfgRoots = options.readCfgRoots;
     isReady = true;
     Q_EMIT initialized();
 }
@@ -2661,8 +2545,7 @@ LuauLanguageServer::getOrCreateTextDocumentFromModuleName(
     }
 
     auto document = std::make_unique<QTextDocument>();
-    document->setPlainText(QString::fromUtf8(
-        source->source.data(), static_cast<qsizetype>(source->source.size())));
+    document->setPlainText(QString::fromStdString(source->source));
     return DocumentHandle(getUri(name), std::move(document));
 }
 
@@ -2720,35 +2603,24 @@ LuauLanguageServer::resolveStringRequire(const Luau::ModuleInfo *context,
                                          const std::string_view requiredString,
                                          const Luau::TypeCheckLimits &limits) {
     Q_UNUSED(limits);
-    if (!context) {
+    if (!context || requiredString.empty()) {
         return std::nullopt;
     }
-
-    if (requiredString.empty()) {
-        return std::nullopt;
+    const auto result = requireResolver->resolve(
+        QString::fromStdString(context->name),
+        QString::fromUtf8(requiredString.data(),
+                          qsizetype(requiredString.size())));
+    if (result.kind == WingLuauRequire::FileModuleResolution::Kind::Builtin) {
+        return Luau::ModuleInfo(QFileInfo(builtinModuleFiles.value(result.path))
+                                    .absoluteFilePath()
+                                    .toStdString());
     }
-
-    const auto contextPath = QFileInfo(QString::fromUtf8(
-        context->name.data(), static_cast<qsizetype>(context->name.size())));
-    if (!contextPath.isAbsolute()) {
-        return std::nullopt;
-    }
-
-    auto requested =
-        QString::fromUtf8(requiredString.data(), requiredString.size());
-    if (requested.contains(QChar(':'))) {
-        return std::nullopt;
-    }
-
-    const auto resolution = WingLuauRequire::resolveFileModule(
-        contextPath.absolutePath(), requested);
-    if (resolution.kind != WingLuauRequire::FileModuleResolution::Kind::File &&
-        resolution.kind !=
+    if (result.kind == WingLuauRequire::FileModuleResolution::Kind::File ||
+        result.kind ==
             WingLuauRequire::FileModuleResolution::Kind::ModuleDirectory) {
-        return std::nullopt;
+        return Luau::ModuleInfo(result.path.toStdString());
     }
-
-    return Luau::ModuleInfo(resolution.path.toStdString());
+    return std::nullopt;
 }
 
 Luau::LoadDefinitionFileResult LuauLanguageServer::registerDefinitions(
@@ -2789,7 +2661,9 @@ bool LuauLanguageServer::isIgnoredFile(
 
 bool LuauLanguageServer::isDefinitionFile(
     const Luau::ModuleName &moduleName) const {
-    return definitionsFiles.find(moduleName) != definitionsFiles.end();
+    return definitionsFileState.find(moduleName) !=
+               definitionsFileState.end() ||
+           definitionsFiles.find(moduleName) != definitionsFiles.end();
 }
 
 const Luau::Config &
@@ -2798,6 +2672,19 @@ LuauLanguageServer::getConfig(const Luau::ModuleName &name,
     auto path = getParentPath(QString::fromStdString(name));
     if (path.isEmpty()) {
         return defaultConfig;
+    }
+    for (const auto &entry : builtinModuleFiles) {
+        if (endsWith(name, ".d.luau") &&
+            QFileInfo(entry).absolutePath() == path) {
+            const auto key = QString::fromStdString(name);
+            auto found = configCache.find(key);
+            if (found != configCache.end()) {
+                return found->second;
+            }
+            auto config = readConfigRec(path, limits);
+            config.parseOptions.allowDeclarationSyntax = true;
+            return configCache[key] = std::move(config);
+        }
     }
     return readConfigRec(path, limits);
 }
@@ -3263,6 +3150,12 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAstNode(
 void LuauLanguageServer::registerTypes() {
     Luau::registerBuiltinGlobals(frontend, frontend.globals);
 
+    std::vector<std::pair<std::string, Luau::TypeId>> builtinTables;
+    for (const auto &[name, binding] : frontend.globals.globalScope->bindings) {
+        if (Luau::get<Luau::TableType>(Luau::follow(binding.typeId))) {
+            builtinTables.emplace_back(name.c_str(), binding.typeId);
+        }
+    }
     auto &tagRegisterGlobals = frontend.globals;
     Luau::attachTag(Luau::getGlobalBinding(tagRegisterGlobals, "require"),
                     "Require");
@@ -3313,7 +3206,8 @@ void LuauLanguageServer::registerTypes() {
         const std::string definitionsContents(definitionsBytes.constData(),
                                               definitionsBytes.size());
 
-        auto result = loadDefinitionFile(packageName, definitionsContents);
+        const auto definitionName = resolvedFilePath.toStdString();
+        auto result = loadDefinitionFile(definitionName, definitionsContents);
 
         const auto uri = QUrl::fromLocalFile(resolvedFilePath);
         if (result.success) {
@@ -3321,7 +3215,7 @@ void LuauLanguageServer::registerTypes() {
 
             // Update the text document URI to point to the actual file on
             // disk
-            if (auto it = definitionsFileState.find(packageName);
+            if (auto it = definitionsFileState.find(definitionName);
                 it != definitionsFileState.end()) {
                 it->second.textDocument->setPlainText(QString::fromUtf8(
                     definitionsContents.data(),
@@ -3346,6 +3240,16 @@ void LuauLanguageServer::registerTypes() {
         }
     }
 
+    for (const auto &[name, originalType] : builtinTables) {
+        const auto type = Luau::getGlobalBinding(frontend.globals, name);
+        auto *target = Luau::getMutable<Luau::TableType>(Luau::follow(type));
+        const auto *original =
+            Luau::get<Luau::TableType>(Luau::follow(originalType));
+        if (target && original && target != original) {
+            target->props.insert(original->props.begin(),
+                                 original->props.end());
+        }
+    }
     Luau::freeze(frontend.globals.globalTypes);
 }
 
@@ -3399,10 +3303,12 @@ const Luau::Config &
 LuauLanguageServer::readConfigRec(const QString &path,
                                   const Luau::TypeCheckLimits &limits) const {
     Luau::Config result = defaultConfig;
-    for (const auto &p : readAllowedCfgRoots) {
-        if (!isPathSubdirectory(p, path)) {
-            return defaultConfig;
-        }
+    if (!readAllowedCfgRoots.isEmpty() &&
+        std::none_of(readAllowedCfgRoots.cbegin(), readAllowedCfgRoots.cend(),
+                     [&path](const QString &root) {
+                         return isPathSubdirectory(root, path);
+                     })) {
+        return defaultConfig;
     }
 
     auto it = configCache.find(path);

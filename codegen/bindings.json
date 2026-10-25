@@ -1,0 +1,534 @@
+{
+  "common": {
+    "types": {
+      "QString": {
+        "alias": "ustring",
+        "enabled": true,
+        "methods": [
+          "*"
+        ],
+        "metamethods": {
+          "__tostring": "toStdString"
+        }
+      },
+      "QByteArray": {
+        "alias": "bytearray",
+        "enabled": true,
+        "methods": [
+          "*"
+        ]
+      },
+      "QVariant": {
+        "alias": "variant",
+        "enabled": true,
+        "methods": [
+          "*"
+        ]
+      },
+      "QColor": {
+        "alias": "color",
+        "enabled": true,
+        "methods": [
+          "*"
+        ]
+      }
+    }
+  },
+  "qt": {
+    "namespace": "qt",
+    "widgets": {
+      "include": [
+        "QVBoxLayout",
+        "QHBoxLayout",
+        "QGridLayout"
+      ],
+      "extra_types": [],
+      "expose_qwidget_base": true,
+      "hide_unselected": true
+    },
+    "ui_tools": {
+      "enabled": true,
+      "allowed_roots": []
+    },
+    "discovery": {
+      "enabled": true,
+      "modules": [
+        "QtCore",
+        "QtGui",
+        "QtWidgets"
+      ],
+      "bases": [
+        "QWidget"
+      ],
+      "blacklist": [
+        "QOpenGL*",
+        "QRhi*"
+      ],
+      "dependencies": "transitive"
+    },
+    "target_version": "6.6.2",
+    "host_windows": [
+      "QDialog",
+      "QMainWindow"
+    ],
+    "content_methods": [
+      "QWidget::layout",
+      "QWidget::setLayout"
+    ],
+    "content_accessors": {
+      "QMainWindow::centralWidget": "get",
+      "QMainWindow::setCentralWidget": "set",
+      "QMainWindow::takeCentralWidget": "take",
+      "QMainWindow::menuBar": "menu",
+      "QMainWindow::menuWidget": "menu_widget",
+      "QMainWindow::setMenuBar": "set_menu",
+      "QMainWindow::setMenuWidget": "set_menu"
+    }
+  },
+  "exclude": {
+    "classes": [
+      "QDockWidget",
+      "QFile",
+      "QThread",
+      "QProcess",
+      "QLibrary",
+      "QPluginLoader",
+      "QOpenGLWidget",
+      "QApplication",
+      "QGuiApplication",
+      "QCoreApplication",
+      "QDebug*",
+      "QNoDebug",
+      "QMdiArea",
+      "QMdiSubWindow",
+      "QWizardPage",
+      "QProcessEnvironment"
+    ],
+    "members": [
+      "QObject::moveToThread"
+    ]
+  },
+  "lsp": {
+    "server": "luau-lsp",
+    "syntax": "luau"
+  },
+  "schema_version": 1,
+  "project": {
+    "name": "WingLuauBind",
+    "namespace": "bindings",
+    "native_mode": "reference",
+    "host_targets": [
+      "WingPlugin"
+    ]
+  },
+  "extensions": [],
+  "native_apis": [
+    {
+      "headers": [
+        "WingPlugin/iwingplugin.h",
+        "WingPlugin/wingcore.h",
+        "WingPlugin/iwingplugincalls.h",
+        "WingPlugin/iwingpluginbasecalls.h"
+      ],
+      "include_dirs": [
+        "."
+      ],
+      "classes": [
+        "WingHex::IWingPluginCallsOp",
+        "WingHex::IWingEditorViewCalls",
+        "WingHex::IWingPluginCalls",
+        "WingHex::IWingPluginBaseCalls"
+      ],
+      "types": {
+        "WingHex::HexPosition": {
+          "namespace": "hex",
+          "name": "HexPosition"
+        },
+        "WingHex::MetadataInfo": {
+          "namespace": "hex",
+          "name": "MetadataInfo"
+        }
+      },
+      "enum_types": {
+        "WingHex::ErrFile": {
+          "namespace": "hex",
+          "name": "ErrFile"
+        },
+        "WingHex::SelectionMode": {
+          "namespace": "hex",
+          "name": "SelectionMode"
+        }
+      },
+      "groups": [
+        {
+          "module": "",
+          "namespace": "reader",
+          "include": [
+            "isCurrentDocEditing",
+            "isReadOnly",
+            "isInsertionMode",
+            "isKeepSize",
+            "isLocked",
+            "document*",
+            "selected*",
+            "selection*",
+            "stringVisible",
+            "addressVisible",
+            "headerVisible",
+            "addressBase",
+            "isModified",
+            "read*",
+            "find*",
+            "metadataInfo*",
+            "metadataCount",
+            "bookMark*",
+            "existBookMark",
+            "currentDoc*",
+            "currentPos",
+            "currentRow",
+            "currentColumn",
+            "currentOffset"
+          ]
+        },
+        {
+          "module": "",
+          "namespace": "ctl",
+          "include": [
+            "set*",
+            "beginMarco",
+            "endMarco",
+            "isMacroEmpty",
+            "resetMarco",
+            "write*",
+            "insert*",
+            "append*",
+            "removeBytes",
+            "moveTo",
+            "select",
+            "foreground",
+            "background",
+            "comment",
+            "metadata",
+            "removeMetadata",
+            "clearMetadata",
+            "addBookMark",
+            "modBookMark",
+            "removeBookMark",
+            "clearBookMark",
+            "switchDocument",
+            "raiseDocument",
+            "openFile",
+            "closeFile",
+            "openCurrent",
+            "closeCurrent"
+          ],
+          "exclude": [
+            "setCurrent*"
+          ]
+        },
+        {
+          "module": "",
+          "namespace": "log",
+          "include": [
+            "log*"
+          ],
+          "rename": {
+            "logInfo": "info",
+            "logTrace": "trace",
+            "logDebug": "debug",
+            "logWarn": "warn",
+            "logError": "error"
+          }
+        },
+        {
+          "module": "toast",
+          "namespace": "toast",
+          "include": [
+            "toast"
+          ],
+          "rename": {
+            "toast": "show"
+          }
+        },
+        {
+          "module": "service",
+          "namespace": "service",
+          "include": [
+            "existsServiceHost"
+          ]
+        }
+      ],
+      "integer_type": "integer",
+      "unsigned_integer_type": "integer | _qtluau_QVariant"
+    },
+    {
+      "headers": [
+        "src/luau/runtime/scriptserviceapi.h"
+      ],
+      "include_dirs": [
+        "."
+      ],
+      "classes": [],
+      "functions": {
+        "invokeScriptService": {
+          "context_parameters": 2
+        }
+      },
+      "groups": [
+        {
+          "module": "service",
+          "namespace": "service",
+          "include": [
+            "invokeScriptService"
+          ],
+          "rename": {
+            "invokeScriptService": "invokeService"
+          }
+        }
+      ]
+    }
+  ],
+  "callback_sets": [
+    {
+      "name": "HostOutputs",
+      "module": "",
+      "functions": [
+        {
+          "name": "print",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::print"
+        },
+        {
+          "name": "println",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::println"
+        },
+        {
+          "name": "warnprint",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::warnprint"
+        },
+        {
+          "name": "warnprintln",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::warnprintln"
+        },
+        {
+          "name": "infoprint",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::infoprint"
+        },
+        {
+          "name": "infoprintln",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::infoprintln"
+        },
+        {
+          "name": "errprint",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::errprint"
+        },
+        {
+          "name": "errprintln",
+          "parameters": [],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [],
+          "native": "&ScriptMachine::errprintln"
+        },
+        {
+          "name": "input",
+          "parameters": [],
+          "returns": [
+            "ustring"
+          ],
+          "native": "&ScriptMachine::input"
+        },
+        {
+          "name": "stringify",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "any"
+            }
+          ],
+          "returns": [
+            "ustring"
+          ],
+          "native": "&ScriptMachine::stringify"
+        },
+        {
+          "name": "assert_x",
+          "parameters": [
+            {
+              "name": "expression",
+              "type": "boolean"
+            },
+            {
+              "name": "message",
+              "type": "string | ustring"
+            }
+          ],
+          "returns": [],
+          "native": "&ScriptMachine::assertX"
+        }
+      ]
+    },
+    {
+      "name": "HostDebug",
+      "module": "",
+      "namespace": "debug",
+      "functions": [
+        {
+          "name": "set_break",
+          "parameters": [],
+          "returns": [],
+          "native": "&ScriptMachine::debugBreak"
+        },
+        {
+          "name": "elapsed_time",
+          "parameters": [],
+          "returns": [
+            "integer"
+          ],
+          "native": "&ScriptMachine::debugElapsedTime"
+        }
+      ]
+    },
+    {
+      "name": "HostCoroutine",
+      "module": "",
+      "namespace": "coroutine",
+      "functions": [
+        {
+          "name": "wrap",
+          "parameters": [
+            {
+              "name": "fn",
+              "type": "(...any) -> ...any"
+            }
+          ],
+          "returns": [
+            "(...any) -> ...any"
+          ],
+          "native": "&ScriptMachine::cowrap",
+          "wrap_existing": true,
+          "preserve_builtin_type": true
+        },
+        {
+          "name": "resume",
+          "parameters": [
+            {
+              "name": "thread",
+              "type": "thread"
+            }
+          ],
+          "variadic": {
+            "type": "any"
+          },
+          "returns": [
+            "boolean",
+            "...any"
+          ],
+          "native": "&ScriptMachine::coresume",
+          "wrap_existing": true,
+          "preserve_builtin_type": true
+        }
+      ]
+    }
+  ],
+  "naming": {
+    "functions": "snake_case"
+  },
+  "framework_bindings": [
+    "values",
+    "json",
+    "xml",
+    "cbor",
+    "env",
+    "crypto",
+    "clipboard",
+    "dialogs"
+  ],
+  "sdk_bindings": {
+    "transfer_ownership": {
+      "QClipboard::setMimeData": [
+        0
+      ]
+    }
+  },
+  "modules": {
+    "qt": {
+      "require": true
+    },
+    "cffi": {
+      "require": true,
+      "external": true
+    }
+  },
+  "lua_c_apis": [
+    {
+      "module": "cffi",
+      "sources": [
+        "3rdparty/cffi-luau/src/ffilib.cc"
+      ],
+      "root": "ffi_module"
+    }
+  ],
+  "symbol_categories": {
+    "reader": "document",
+    "ctl": "document",
+    "hex": "document",
+    "ustring": "values",
+    "bytearray": "values",
+    "variant": "values",
+    "color": "values",
+    "url": "values",
+    "char": "values",
+    "regex": "values",
+    "json": "data",
+    "xml": "data",
+    "cbor": "data",
+    "env": "data",
+    "crypto": "data",
+    "service": "services",
+    "toast": "services",
+    "qt": "qt",
+    "cffi": "ffi",
+    "log": "logging",
+    "debug": "standard",
+    "input": "services",
+    "stringify": "values",
+    "assert_x": "standard",
+    "coroutine": "standard"
+  }
+}

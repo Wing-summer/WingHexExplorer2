@@ -39,7 +39,8 @@ public:
     void enableLSP();
 
 public:
-    QString getInput();
+    QString
+    getInput(ScriptMachine::ConsoleMode mode = ScriptMachine::Interactive);
 
     bool isTerminal() const;
     void setIsTerminal(bool newIsTerminal);
@@ -89,6 +90,8 @@ private slots:
 
 signals:
     void consoleScriptRunFinished();
+    void inputSubmitted(const QString &text);
+    void inputClosed();
 
 private:
     void runConsoleCommand(const QString &code);

@@ -20,6 +20,8 @@
 
 #include "WingPlugin/binding/registrationapi.h"
 
+#include "scriptsymbol.h"
+#include <QStringList>
 #include <functional>
 #include <memory>
 
@@ -32,6 +34,10 @@ public:
     struct ObjectCodec {
         std::function<bool(lua_State *, int, ObjectValue &)> read;
         std::function<bool(lua_State *, const ObjectValue &)> push;
+        // Host codecs may adapt scalar values and argument representations.
+        std::function<bool(lua_State *, int, Value &)> readValue;
+        std::function<bool(lua_State *, const Value &)> pushValue;
+        std::function<void(QList<Value> &)> adaptArguments;
     };
 
     explicit ScriptBindingEngine(lua_State *state, ObjectCodec codec = {});
@@ -40,6 +46,8 @@ public:
 public:
     IRegistrationApi &registrations() noexcept override;
     void collectGarbage() override;
+    ScriptSymbolCatalog symbolCatalog() const;
+    QStringList definitionFiles() const;
 
 private:
     class Impl;

@@ -1,0 +1,23 @@
+{
+  "bindings": "bindings.json",
+  "forwarding": "forwarding.json",
+  "output": "generated/WingLuauBind",
+  "driver": "tools/generate_luau_bindings.py",
+  "dependencies": [
+    "codegen/*.json",
+    "tools/generate_luau_bindings.py",
+    "WingPlugin/*.h",
+    "3rdparty/cffi-luau/src/*.cc"
+  ],
+  "cmake": {
+    "native_sources": {
+      "LUAU_SOURCE_DIR": "3rdparty/luau",
+      "LUABRIDGE3_SOURCE_DIR": "3rdparty/LuaBridge3"
+    },
+    "registration_includes": {
+      "SCRIPTMACHINE_LUAU_BINDING": "luau/runtime/scriptmachinebindings.h",
+      "SCRIPTMACHINE_LUAU_CALLBACKS": "callback_initializers.inc",
+      "PLUGINSYSTEM_LUAU_BINDING": "host_forwarders.inc"
+    }
+  }
+}

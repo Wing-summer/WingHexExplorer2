@@ -15,11 +15,18 @@
 ** =============================================================================
 */
 
+#include "Luau/Common.h"
 #include "luau/lsp/luaulanguageserver.h"
+#include "luau/wingluaurequire.h"
+LUAU_FASTFLAG(LuauIntegerType2)
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTemporaryDir>
 
 #include <iostream>
@@ -183,6 +190,17 @@ static void testDefinitionsAndOverloads() {
     LuauLanguageServer::InitializationOptions options;
     options.definitionsFiles.insert(QStringLiteral("host"),
                                     definitions.fileName());
+    using NativeSymbol = WingScriptBind::ScriptSymbol;
+    options.pluginSymbols = {{"opaque-plugin-root",
+                              {},
+                              "PluginProbe",
+                              NativeSymbol::Kind::Module,
+                              {}},
+                             {"opaque-plugin-member",
+                              "opaque-plugin-root",
+                              "member",
+                              NativeSymbol::Kind::Function,
+                              {}}};
     server.initialize(options);
     const auto symbols = server.globalSymbols();
     bool foundChoose = false;
@@ -196,6 +214,26 @@ static void testDefinitionsAndOverloads() {
         }
     }
     require(foundChoose && foundMath, "registered symbols are missing");
+    bool browsedMath = false;
+    bool browsedPlugin = false;
+    for (auto symbol : server.builtinSymbols()) {
+        if (symbol.item.label == QLatin1String("math")) {
+            symbol.id = QStringLiteral("opaque-global-id");
+            browsedMath =
+                symbol.source == LuauLanguageServer::SymbolSource::Global &&
+                !server.symbolChildren(symbol).isEmpty();
+        } else if (symbol.item.label == QLatin1String("PluginProbe")) {
+            const auto children = server.symbolChildren(symbol);
+            browsedPlugin =
+                symbol.source == LuauLanguageServer::SymbolSource::Plugin &&
+                symbol.category ==
+                    LuauLanguageServer::SymbolCategory::Plugins &&
+                children.size() == 1 &&
+                children.front().item.label == QLatin1String("member");
+        }
+    }
+    require(browsedMath && browsedPlugin,
+            "symbol browsing inferred source from string IDs");
 
     const QString source = QStringLiteral(
         "--!strict\nlocal result = choose(\"text\")\nprint(result)\n");
@@ -293,10 +331,208 @@ static void testRequiredModuleUpdates() {
     server.onCloseDocument(moduleUri);
 }
 
+static void testBuiltinResolutionBoundaries() {
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary package directory unavailable");
+    const QDir root(directory.path());
+    require(root.mkpath("user/qt"), "cannot create package fixture");
+    QFile module(root.filePath("user/qt/init.luau"));
+    require(module.open(QIODevice::WriteOnly),
+            "cannot create installed package");
+    module.write("return { installed = true }\n");
+    module.close();
+    WingLuauRequire::Options options;
+    options.userRoot = root.filePath("user");
+    const QSet<QString> builtins{QStringLiteral("qt")};
+    WingLuauRequire::ResolutionSession session(options, builtins);
+    using Kind = WingLuauRequire::FileModuleResolution::Kind;
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@qt", options, builtins)
+                    .kind == Kind::Ambiguous,
+            "builtin shorthand ignored installed-package ambiguity");
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@b/qt", options, builtins)
+                    .kind == Kind::Builtin,
+            "explicit builtin did not bypass installed package");
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@u/qt", options, builtins)
+                    .path == QFileInfo(module).canonicalFilePath(),
+            "explicit user package failed to resolve");
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@b/missing", options, builtins)
+                    .kind == Kind::NotFound,
+            "missing builtin was resolved");
+    QFile alias(root.filePath(".luaurc"));
+    require(alias.open(QIODevice::WriteOnly),
+            "cannot create alias configuration");
+    alias.write("{\"aliases\":{\"qt\":\"./override\"}}");
+    alias.close();
+    QFile target(root.filePath("override.luau"));
+    require(target.open(QIODevice::WriteOnly),
+            "cannot create alias destination");
+    target.write("error('analysis must not execute this module')\n");
+    target.close();
+    require(
+        session.resolve(directory.filePath("main.luau"), "@b/missing").kind ==
+            Kind::NotFound,
+        "reused resolver did not report missing module");
+    require(session.resolve(directory.filePath("main.luau"), "@qt").path ==
+                QFileInfo(target).canonicalFilePath(),
+            "reused resolver retained a prior failure or stale alias "
+            "configuration");
+    require(session.resolve(directory.filePath("main.luau"), "@qt").path ==
+                QFileInfo(target).canonicalFilePath(),
+            "native require cache skipped a repeated resolution query");
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@qt", options, builtins)
+                    .path == QFileInfo(target).canonicalFilePath(),
+            "runtime configuration aliases lost precedence");
+    require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                           "@qt", options, builtins,
+                                           {root.filePath("untrusted")})
+                    .kind == Kind::Ambiguous,
+            "analysis read configuration outside its allowed roots");
+    QElapsedTimer timer;
+    timer.start();
+    for (int i = 0; i < 100; ++i) {
+        require(WingLuauRequire::resolveModule(directory.filePath("main.luau"),
+                                               "@b/qt", options, builtins)
+                        .kind == Kind::Builtin,
+                "fresh resolver query failed");
+    }
+    const auto fresh = timer.nsecsElapsed() / 1000;
+    timer.restart();
+    for (int i = 0; i < 100; ++i) {
+        require(
+            session.resolve(directory.filePath("main.luau"), "@b/qt").kind ==
+                Kind::Builtin,
+            "session resolver query failed");
+    }
+    std::cout << "100 require queries: fresh VM " << fresh << "us; reused VM "
+              << timer.nsecsElapsed() / 1000 << "us\n";
+}
+
+static void testGeneratedBindings() {
+    FFlag::LuauIntegerType2.value = true;
+    const QDir output(qEnvironmentVariable("WING_BINDINGS_DIR"));
+    QFile manifest(output.filePath("manifest.json"));
+    require(manifest.open(QIODevice::ReadOnly),
+            "generated manifest unavailable");
+    const auto model = QJsonDocument::fromJson(manifest.readAll()).object();
+    const QDir definitions(output.filePath("definitions"));
+    LuauLanguageServer::InitializationOptions options;
+    int index = 0;
+    for (const auto &name : model.value("definition_preload").toArray()) {
+        options.definitionsFiles.insert(
+            QString::number(index++).rightJustified(5, '0'),
+            definitions.filePath(name.toString()));
+    }
+    for (const QString &name : {QStringLiteral("qt"), QStringLiteral("cffi")}) {
+        options.builtinModuleFiles.insert(
+            name,
+            definitions.filePath(
+                model.value("modules").toObject().value(name).toString()));
+    }
+    options.symbolCatalogFile =
+        definitions.filePath(model.value("symbol_catalog").toString());
+    LuauLanguageServer server;
+    QElapsedTimer timer;
+    timer.start();
+    bool definitionErrors = false;
+    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+                     [&](const lsp::DocumentUri &uri,
+                         const QVector<lsp::Diagnostic> &items) {
+                         definitionErrors |= !items.isEmpty();
+                         for (const auto &item : items) {
+                             std::cerr << uri.toString().toStdString() << ":"
+                                       << item.range.start.line << ":"
+                                       << item.range.start.character << ": "
+                                       << item.message.toStdString() << '\n';
+                         }
+                     });
+    server.initialize(options);
+    std::cout << "Generated definitions initialization: " << timer.elapsed()
+              << "ms\n";
+    require(!definitionErrors, "generated ambient definitions failed");
+    timer.restart();
+    const auto roots = server.builtinSymbols();
+    bool foundQt = false;
+    bool foundFfiInstance = false;
+    for (const auto &root : roots) {
+        if (root.item.label == QLatin1String("cffi")) {
+            for (const auto &child : server.symbolChildren(root)) {
+                if (child.item.label == QLatin1String("Instance")) {
+                    foundFfiInstance = !server.symbolChildren(child).isEmpty();
+                }
+            }
+        }
+        if (root.item.label == QLatin1String("qt")) {
+            foundQt =
+                root.requiresImport && root.moduleRoot &&
+                root.children.isEmpty() &&
+                root.source == LuauLanguageServer::SymbolSource::Catalog &&
+                root.category == LuauLanguageServer::SymbolCategory::Qt;
+            const auto children = server.symbolChildren(root);
+            bool foundDialog = false;
+            for (const auto &child : children) {
+                require(child.item.label != QLatin1String("to_std_string"),
+                        "instance method leaked into Qt root");
+                require(child.item.label !=
+                            QLatin1String("QProcessEnvironment"),
+                        "excluded type in catalog");
+                foundDialog |= child.item.label == QLatin1String("QDialog");
+            }
+            require(foundDialog, "Qt class absent from lazy catalog");
+        }
+    }
+    require(foundQt, "required Qt module root missing");
+    require(foundFfiInstance, "FFI instance type absent from lazy catalog");
+    std::cout << "Catalog roots and Qt branch: " << timer.elapsed() << "ms\n";
+    QTemporaryDir directory;
+    const auto uri = QUrl::fromLocalFile(directory.filePath("main.luau"));
+    QVector<lsp::Diagnostic> diagnostics;
+    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+                     [&](const lsp::DocumentUri &document,
+                         const QVector<lsp::Diagnostic> &items) {
+                         if (document == uri) {
+                             diagnostics = items;
+                         }
+                     });
+    const QString source = QStringLiteral(
+        "--!strict\nlocal qt = require(\"@qt\")\nlocal text = "
+        "ustring(\"中文\")\nlocal calendar = "
+        "qt.QCalendar(qt.QCalendar.System.Gregorian)\nlocal valid = "
+        "calendar:is_gregorian()\nlocal dialog = qt.QDialog()\nlocal "
+        "ffi = require(\"@cffi\").new()\nlocal size = "
+        "ffi.sizeof(\"int\")\nprint(text, dialog, size, valid)\n");
+    QTextDocument document(source);
+    timer.restart();
+    server.onOpenDocument(uri, &document);
+    for (const auto &diagnostic : diagnostics) {
+        std::cerr << diagnostic.message.toStdString() << '\n';
+    }
+    require(diagnostics.isEmpty(), "generated bindings produced diagnostics");
+    std::cout << "Required Qt and cffi analysis: " << timer.elapsed() << "ms\n";
+    document.setPlainText(source + "\ndialog.\n");
+    server.onUpdateDocument(uri, &document);
+    const auto completion = server.completion(
+        {uri, positionOf(document.toPlainText(), "dialog.\n", 7), std::nullopt},
+        nullptr);
+    require(hasCompletion(completion, "set_window_title"),
+            "required Qt type lost inherited methods");
+    document.setPlainText(source + "\ndialog:missing_binding_member()\n");
+    server.onUpdateDocument(uri, &document);
+    require(!diagnostics.isEmpty(), "required Qt type degraded to any");
+    server.onCloseDocument(uri);
+}
+
 int main(int argc, char **argv) {
     QGuiApplication application(argc, argv);
     try {
         const auto scenario = application.arguments().value(1);
+        if (scenario == QLatin1String("bindings")) {
+            testGeneratedBindings();
+        }
         if (scenario.isEmpty() || scenario == QLatin1String("features")) {
             testLanguageFeatures();
         }
@@ -308,6 +544,7 @@ int main(int argc, char **argv) {
         }
         if (scenario.isEmpty() || scenario == QLatin1String("modules")) {
             testRequiredModuleUpdates();
+            testBuiltinResolutionBoundaries();
         }
         std::cout << "Luau language server tests passed\n";
         return 0;
