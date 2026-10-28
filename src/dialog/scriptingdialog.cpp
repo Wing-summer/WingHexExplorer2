@@ -26,6 +26,9 @@
 #include "class/settings/settingmanager.h"
 #include "class/util/qkeysequences.h"
 #include "control/editor/scripteditor.h"
+#include "control/delegate/wrappingitemdelegate.h"
+#include "control/qtableviewext.h"
+#include "control/tablecolumnwidthcontroller.h"
 #include "control/toast.h"
 #include "dialog/common/wingfiledialog.h"
 #include "dialog/common/winginputdialog.h"
@@ -51,6 +54,21 @@
 #include <QToolTip>
 
 constexpr auto EMPTY_FUNC = [] {};
+
+namespace {
+void configureScriptTree(QTreeView *tree) {
+    auto widths = new TableColumnWidthController(tree);
+    QTableViewExt::ColumnWidthPolicy policy;
+    policy.source = QTableViewExt::WidthSource::Weight;
+    policy.update = QTableViewExt::WidthUpdate::Continuous;
+    policy.minimumPixels =
+        tree->fontMetrics().horizontalAdvance(QChar('0')) * 14 + 16;
+    policy.weight = 2;
+    widths->setPolicy(0, policy);
+    policy.weight = 3;
+    widths->setPolicy(1, policy);
+}
+} // namespace
 
 ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     : FramelessMainWindow(parent), m_setdialog(setdlg) {
@@ -545,12 +563,15 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
     vars->setTabPosition(QTabWidget::South);
 
     m_gvarshow = new IDBTreeView(this);
+    configureScriptTree(m_gvarshow);
     vars->addTab(m_gvarshow, tr("Global"));
 
     m_varshow = new IDBTreeView(this);
+    configureScriptTree(m_varshow);
     vars->addTab(m_varshow, tr("Local"));
 
     m_upvarshow = new IDBTreeView(this);
+    configureScriptTree(m_upvarshow);
     vars->addTab(m_upvarshow, tr("Upvalue"));
 
     auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
@@ -569,6 +590,7 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
     Utilities::applyTreeViewProperty(watchVar);
     watchVar->setEditTriggers(QTreeView::DoubleClicked);
     watchVar->setModel(m_watchModel);
+    configureScriptTree(watchVar);
     watchVar->setSelectionMode(QTreeView::ExtendedSelection);
 
     watchVar->setContextMenuPolicy(Qt::ActionsContextMenu);
@@ -650,10 +672,24 @@ ads::CDockAreaWidget *
 ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
                                       ads::CDockAreaWidget *areaw) {
-    auto callstack = new QTableView(this);
+    auto callstack = new QTableViewExt(this);
     Utilities::applyTableViewProperty(callstack);
     m_callstack = new DbgCallStackModel(callstack);
     callstack->setModel(m_callstack);
+    QTableViewExt::ColumnWidthPolicy lineWidth;
+    lineWidth.source = QTableViewExt::WidthSource::Contents;
+    lineWidth.update = QTableViewExt::WidthUpdate::Continuous;
+    lineWidth.maximumRatio = 0.15;
+    callstack->setColumnWidthPolicy(0, lineWidth);
+    QTableViewExt::ColumnWidthPolicy textWidth;
+    textWidth.source = QTableViewExt::WidthSource::Weight;
+    textWidth.update = QTableViewExt::WidthUpdate::Continuous;
+    textWidth.minimumPixels =
+        callstack->fontMetrics().horizontalAdvance(QChar('0')) * 14 + 16;
+    textWidth.weight = 2;
+    callstack->setColumnWidthPolicy(1, textWidth);
+    textWidth.weight = 3;
+    callstack->setColumnWidthPolicy(2, textWidth);
     connect(
         callstack->selectionModel(), &QItemSelectionModel::currentRowChanged,
         this, [this](const QModelIndex &current, const QModelIndex &previous) {
@@ -685,6 +721,7 @@ ScriptingDialog::buildSymbolShowDock(ads::CDockManager *dock,
                                      ads::CDockAreaWidget *areaw) {
     Q_ASSERT(m_consoleout);
     m_sym = new ObjTreeWidget(this);
+    configureScriptTree(m_sym);
     auto dw =
         buildDockWidget(dock, QStringLiteral("Symbol"), tr("Symbol"), m_sym);
     return dock->addDockWidget(area, dw, areaw);
@@ -710,6 +747,13 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
         WingSquiggleInfoModel::SeverityLevel::Warning,
         QIcon(QStringLiteral(":/completion/images/completion/warn.svg")));
     dview->setModel(_squinfoModel);
+    dview->setItemDelegate(new WrappingItemDelegate(dview));
+    dview->setWordWrap(true);
+    dview->setTextElideMode(Qt::ElideNone);
+    dview->setResizeMode(QListView::Adjust);
+    dview->setUniformItemSizes(false);
+    dview->setSpacing(3);
+    dview->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     connect(dview, &QListView::doubleClicked, _squinfoModel,
             [this](const QModelIndex &index) {
                 auto editor = currentEditor();

@@ -55,6 +55,8 @@
 
 class PluginSystem;
 
+class SearchableTextBrowser;
+
 class MainWindow : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
 
@@ -491,7 +493,7 @@ private:
     QLabel *_editArea = nullptr;
     QLabel *_status = nullptr;
     QTextBrowser *m_logbrowser = nullptr;
-    QTextBrowser *m_txtDecode = nullptr;
+    SearchableTextBrowser *m_txtDecode = nullptr;
     QUndoView *_undoView = nullptr;
 
     QLabel *m_lblloc = nullptr;

@@ -49,6 +49,26 @@ int FindResultModel::columnCount(const QModelIndex &parent) const {
 }
 
 QVariant FindResultModel::data(const QModelIndex &index, int role) const {
+    if (!m_data || !index.isValid() || index.row() < 0 ||
+        index.row() >= m_data->results.size()) {
+        return {};
+    }
+    if (role == SortValueRole) {
+        const auto &result = m_data->results.at(index.row());
+        switch (index.column()) {
+        case 0:
+            return result.line;
+        case 1:
+            return result.col;
+        case 2:
+            return result.offset;
+        default:
+            return {};
+        }
+    }
+    if (role == PlainTextRole) {
+        return copyContent(index);
+    }
     switch (role) {
     case Qt::DisplayRole: {
         auto row = index.row();
@@ -160,7 +180,10 @@ void FindResultModel::setEncoding(
     const QStringConverter::Encoding &newEncoding) {
     if (m_data && m_data->encoding != newEncoding) {
         m_data->encoding = newEncoding;
-        Q_EMIT dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));
+        const int rows = rowCount(QModelIndex());
+        if (rows > 0) {
+            Q_EMIT dataChanged(index(0, 4), index(rows - 1, 4));
+        }
     }
 }
 

@@ -26,6 +26,8 @@ class FindResultModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
+    enum DataRole { SortValueRole = Qt::UserRole + 100, PlainTextRole };
+
     struct FindInfo {
         QByteArray cheader;
         QByteArray hbuffer;

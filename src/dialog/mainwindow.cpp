@@ -34,6 +34,7 @@
 #include "class/settings/settingmanager.h"
 #include "class/util/qkeysequences.h"
 #include "control/delegate/richtextitemdelegate.h"
+#include "control/searchabletextbrowser.h"
 #include "control/docking/dockcomponentsfactory.h"
 #include "control/toast.h"
 #include "define.h"
@@ -77,8 +78,30 @@
 #include <QTimer>
 
 #include <QStringDecoder>
+#include <initializer_list>
 
 constexpr auto EMPTY_FUNC = [] {};
+
+namespace {
+struct TableColumnShare {
+    int weight;
+    int minimumCharacters;
+};
+
+void configureTableColumns(QTableViewExt *view,
+                           std::initializer_list<TableColumnShare> columns) {
+    int column = 0;
+    for (const auto &share : columns) {
+        QTableViewExt::ColumnWidthPolicy policy;
+        policy.source = QTableViewExt::WidthSource::Weight;
+        policy.update = QTableViewExt::WidthUpdate::Continuous;
+        policy.weight = share.weight;
+        policy.minimumPixels = view->fontMetrics().horizontalAdvance(QChar('0')) *
+                               share.minimumCharacters + 16;
+        view->setColumnWidthPolicy(column++, policy);
+    }
+}
+} // namespace
 
 MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     this->setUpdatesEnabled(false);
@@ -759,7 +782,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
         newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
             auto idx = m_findresult->currentIndex();
             if (idx.isValid()) {
-                auto content = _findResultModel->copyContent(idx);
+                auto content = _findResultModel->copyContent(
+                    m_findresult->mapToSource(idx));
                 qApp->clipboard()->setText(content);
                 Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                              tr("Copy to clipboard"));
@@ -779,6 +803,13 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
 
     m_findresult->setItemDelegate(new RichTextItemDelegate(m_findresult));
 
+    m_findresult->setSearchEnabled(true);
+    m_findresult->setAsyncSortingEnabled(true);
+    m_findresult->setColumnSortable(3, false);
+    m_findresult->setColumnSortable(4, false);
+    m_findresult->setColumnSortRole(2, FindResultModel::SortValueRole);
+    m_findresult->setColumnSearchRole(3, FindResultModel::PlainTextRole);
+    m_findresult->setColumnSearchRole(4, FindResultModel::PlainTextRole);
     m_findresult->setModel(_findResultModel);
     m_findresult->horizontalHeader()->setSectionHidden(4, !fsds);
 
@@ -789,15 +820,25 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                 auto fm = editor->findResult();
                 auto cursor = e->cursor();
 
-                cursor->moveTo(fm.results.at(index.row()).offset);
+                cursor->moveTo(
+                    fm.results.at(m_findresult->mapToSource(index).row())
+                        .offset);
                 if (cursor->selectionCount() <= 1 && index.column() >= 3) {
                     cursor->select(fm.lastFindData.second);
                 }
             });
 
-    auto header = m_findresult->horizontalHeader();
-    header->setSectionResizeMode(3, QHeaderView::Stretch);
-    header->setSectionResizeMode(4, QHeaderView::Stretch);
+    QTableViewExt::ColumnWidthPolicy contentWidth;
+    const qreal numericLimits[] = {0.12, 0.10, 0.22};
+    for (int column = 0; column < 3; ++column) {
+        contentWidth.maximumRatio = numericLimits[column];
+        m_findresult->setColumnWidthPolicy(column, contentWidth);
+    }
+    QTableViewExt::ColumnWidthPolicy sharedWidth;
+    sharedWidth.source = QTableViewExt::WidthSource::Weight;
+    sharedWidth.update = QTableViewExt::WidthUpdate::Continuous;
+    m_findresult->setColumnWidthPolicy(3, sharedWidth);
+    m_findresult->setColumnWidthPolicy(4, sharedWidth);
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
                               tr("Search results") + QStringLiteral(" (ASCII)"),
                               m_findresult);
@@ -815,7 +856,9 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     m_numshowtable = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_numshowtable);
 
+    m_numshowtable->setSearchEnabled(true);
     m_numshowtable->setModel(_numsitem);
+    configureTableColumns(m_numshowtable, {{1, 16}});
 
     auto a = new QAction(this);
     a->setText(tr("Copy"));
@@ -892,10 +935,11 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     m_hash = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_hash);
-    m_hash->setColumnWidth(0, 350);
 
     _hashModel = new CheckSumModel(this);
+    m_hash->setSearchEnabled(true);
     m_hash->setModel(_hashModel);
+    configureTableColumns(m_hash, {{1, 24}});
 
     m_hash->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
@@ -943,9 +987,11 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     _bookMarkModel = new BookMarksModel(nullptr);
     m_bookMark = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_bookMark);
-    m_bookMark->horizontalHeader()->setDefaultSectionSize(150);
     m_bookMark->setSelectionMode(QTableViewExt::ExtendedSelection);
+    m_bookMark->setSearchEnabled(true);
+    m_bookMark->setAsyncSortingEnabled(true);
     m_bookMark->setModel(_bookMarkModel);
+    configureTableColumns(m_bookMark, {{1, 10}, {3, 16}});
 
     connect(m_bookMark, &QTableView::doubleClicked, this,
             [this](const QModelIndex &index) {
@@ -955,7 +1001,8 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                 }
                 hexeditor->renderer()->enableCursor(true);
                 QAbstractItemModel *model = _bookMarkModel;
-                auto offIndex = model->index(index.row(), 0);
+                auto offIndex =
+                    model->index(m_bookMark->mapToSource(index).row(), 0);
                 auto offset = model->data(offIndex).value<qsizetype>();
                 hexeditor->cursor()->moveTo(offset);
             });
@@ -989,7 +1036,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
         m_bookMark->clearSelection();
         doc->RemoveBookMarks(pos);
-        Q_EMIT model->layoutChanged();
+        Q_EMIT m_bookMark->sourceModel()->layoutChanged();
     });
     m_aDelBookMark->setEnabled(false);
     m_bookMark->addAction(m_aDelBookMark);
@@ -1022,7 +1069,14 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     Utilities::applyTableViewProperty(m_metadata);
     m_metadata->setSelectionMode(QTableViewExt::ExtendedSelection);
 
+    m_metadata->setSearchEnabled(true);
+    m_metadata->setAsyncSortingEnabled(true);
+    m_metadata->setColumnSortable(2, false);
+    m_metadata->setColumnSortable(3, false);
+    m_metadata->setColumnSortRole(0, Qt::UserRole);
+    m_metadata->setColumnSortRole(1, Qt::UserRole);
     m_metadata->setModel(_metadataModel);
+    configureTableColumns(m_metadata, {{2, 10}, {2, 10}, {1, 9}, {1, 9}, {4, 16}});
 
     connect(m_metadata, &QTableView::doubleClicked, this,
             [this](const QModelIndex &index) {
@@ -1083,12 +1137,12 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
         QList<QHexMetadataItem> pmetas;
         for (const auto &item : s) {
-            pmetas.push_back(mds.at(item.row()));
+            pmetas.push_back(mds.at(m_metadata->mapToSource(item).row()));
         }
 
         m_metadata->clearSelection();
         hexeditor->document()->metadata()->RemoveMetadatas(pmetas);
-        Q_EMIT m_metadata->model()->layoutChanged();
+        Q_EMIT m_metadata->sourceModel()->layoutChanged();
     });
     m_aDelMetaData->setEnabled(false);
     m_metadata->addAction(m_aDelMetaData);
@@ -1121,7 +1175,8 @@ ads::CDockAreaWidget *
 MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
                                        ads::CDockAreaWidget *areaw) {
-    m_txtDecode = new QTextBrowser(this);
+    m_txtDecode = new SearchableTextBrowser(this);
+    m_txtDecode->setSearchEnabled(true);
     m_txtDecode->setUndoRedoEnabled(false);
     m_txtDecode->setPlaceholderText(tr("Select bytes to decode."));
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
@@ -2307,12 +2362,6 @@ void MainWindow::on_findfile() {
                 auto r = editor->findResult();
                 m_findEncoding.value(r.encoding)->setChecked(true);
                 _findResultModel->refresh();
-                auto header = m_findresult->horizontalHeader();
-                auto font = QFontMetrics(m_findresult->font());
-                auto len = font.horizontalAdvance('F') * (15 + 16 * 2);
-                if (header->sectionSize(3) < len) {
-                    header->resizeSection(3, len);
-                }
 
                 m_find->raise();
                 this->showStatus({});
@@ -4666,17 +4715,6 @@ void MainWindow::showEvent(QShowEvent *event) {
     FramelessMainWindow::showEvent(event);
     static bool firstInit = true;
     if (firstInit) {
-        connect(
-            m_findresult->horizontalHeader(), &QHeaderView::sectionResized,
-            this,
-            [this]() {
-                QTimer::singleShot(0, this, [this]() {
-                    auto header = m_findresult->horizontalHeader();
-                    header->setSectionResizeMode(QHeaderView::Interactive);
-                });
-            },
-            Qt::SingleShotConnection);
-
         PluginSystem::instance().dispatchAppReadyEvent();
         firstInit = false;
     }

@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/light">
+        <file alias="menu.svg">../../theme/light/menu.svg</file>
+        <file alias="up_arrow.svg">../../theme/light/up_arrow.svg</file>
+        <file alias="down_arrow.svg">../../theme/light/down_arrow.svg</file>
+        <file alias="dialog_close.svg">../../theme/light/dialog_close.svg</file>
+        <file alias="message_warning.svg">../../theme/light/message_warning.svg</file>
+        <file alias="browser_refresh.svg">../../theme/light/browser_refresh.svg</file>
+    </qresource>
+    <qresource prefix="/dark">
+        <file alias="menu.svg">../../theme/dark/menu.svg</file>
+        <file alias="up_arrow.svg">../../theme/dark/up_arrow.svg</file>
+        <file alias="down_arrow.svg">../../theme/dark/down_arrow.svg</file>
+        <file alias="dialog_close.svg">../../theme/dark/dialog_close.svg</file>
+        <file alias="message_warning.svg">../../theme/dark/message_warning.svg</file>
+        <file alias="browser_refresh.svg">../../theme/dark/browser_refresh.svg</file>
+    </qresource>
+</RCC>

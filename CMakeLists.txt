@@ -223,6 +223,8 @@ set(CONTROL_SRC
     src/control/delegate/mutisavebuttondelegate.h
     src/control/delegate/richtextitemdelegate.cpp
     src/control/delegate/richtextitemdelegate.h
+    src/control/delegate/wrappingitemdelegate.cpp
+    src/control/delegate/wrappingitemdelegate.h
     src/control/docking/dockcomponentsfactory.cpp
     src/control/docking/dockcomponentsfactory.h
     src/control/docking/dockwidgettab.cpp
@@ -269,10 +271,18 @@ set(CONTROL_SRC
     src/control/objtreewidget.h
     src/control/qcolorpicker_slider.cpp
     src/control/qcolorpicker_slider.hpp
+    src/control/searchabletextbrowser.cpp
+    src/control/searchabletextbrowser.h
+    src/control/searchbar.cpp
+    src/control/searchbar.h
+    src/control/searchabletreewidget.cpp
+    src/control/searchabletreewidget.h
     src/control/qtableviewext.cpp
     src/control/qtableviewext.h
     src/control/settingspopup.cpp
     src/control/settingspopup.h
+    src/control/tablecolumnwidthcontroller.cpp
+    src/control/tablecolumnwidthcontroller.h
     src/control/toast.cpp
     src/control/toast.h)
 
@@ -380,6 +390,8 @@ else()
 endif()
 
 set(MODEL_SRC
+    src/model/asynctableproxymodel.cpp
+    src/model/asynctableproxymodel.h
     src/model/idbtreemodel.cpp
     src/model/idbtreemodel.h
     src/model/idbwatchmodel.cpp

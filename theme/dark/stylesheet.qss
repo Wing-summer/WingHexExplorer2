@@ -1841,7 +1841,8 @@ QTreeView::item:!selected:hover
     padding: 0.13em;
 }
 
-QAbstractItemView::item QLineEdit
+/* Restrict compact editors to direct viewport children, excluding search bars. */
+QAbstractItemView > QWidget#qt_scrollarea_viewport > QLineEdit
 {
     border: 0em transparent black;
     /*
@@ -2247,7 +2248,8 @@ QHeaderView::section::horizontal
 
 QHeaderView::section::horizontal
 {
-    /* Same as the width of the arrow subcontrols below. */
+    /* Symmetric arrow gutters keep header labels centered in the section. */
+    padding-left: 0.8em;
     padding-right: 0.8em;
 }
 
@@ -2995,3 +2997,28 @@ Toast
 QStatusBar::item { border: 0px solid black; }
 
 SplashDialog { border: 1px solid #626568; }
+
+/* Shared table and decoded-text search panel. */
+SearchBar
+{
+    background-color: #30353a;
+    border: none;
+    border-top: 1px solid #76797c;
+}
+
+SearchBar > QToolButton:!hover:!pressed:!checked,
+SearchBar > QLabel
+{
+    background-color: transparent;
+}
+
+SearchBar > QLabel
+{
+    color: #f5c451;
+}
+
+SearchBar > QLineEdit[searchError="true"]
+{
+    background-color: #642328;
+    color: #ffffff;
+}

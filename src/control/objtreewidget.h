@@ -20,9 +20,9 @@
 
 #include "luau/lsp/luaulanguageserver.h"
 
-#include <QTreeWidget>
+#include "searchabletreewidget.h"
 
-class ObjTreeWidget : public QTreeWidget {
+class ObjTreeWidget : public SearchableTreeWidget {
     Q_OBJECT
 public:
     explicit ObjTreeWidget(QWidget *parent = nullptr);
@@ -31,17 +31,23 @@ public slots:
     void refresh();
 
 private:
-    void populateChildren(QTreeWidgetItem *item);
-    QHash<QString, LuauLanguageServer::Symbol> _symbols;
-    QSet<QString> _loaded;
-    QSet<QString> _restoreExpanded;
-    QString _restoreSelected;
+    struct SymbolCache {
+        QHash<QString, LuauLanguageServer::Symbol> entries;
+        QSet<QString> loaded;
+    } _symbols;
+    struct RestoreState {
+        QSet<QString> expanded;
+        QString selected;
+    } _restore;
 
+private:
+    void populateChildren(QTreeWidgetItem *item);
     void createObjNodes(const QList<LuauLanguageServer::Symbol> &nodes,
                         QTreeWidgetItem *parent);
 
 protected:
-    void focusOutEvent(QFocusEvent *event) override;
+    void prepareSearchItem(QTreeWidgetItem *item) override;
+    bool isSearchableItem(const QTreeWidgetItem *item) const override;
 };
 
 #endif // OBJTREEWIDGET_H

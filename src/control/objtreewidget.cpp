@@ -19,11 +19,12 @@
 #include "control/editor/codeinfotip.h"
 #include "utilities.h"
 
+#include <QApplication>
 #include <QCryptographicHash>
 #include <QHeaderView>
 #include <QTreeWidgetItemIterator>
 
-ObjTreeWidget::ObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
+ObjTreeWidget::ObjTreeWidget(QWidget *parent) : SearchableTreeWidget(parent) {
     Utilities::applyTreeViewProperty(this);
     setColumnCount(2);
     header()->setSortIndicator(0, Qt::AscendingOrder);
@@ -32,24 +33,31 @@ ObjTreeWidget::ObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
             this, &ObjTreeWidget::refresh);
     connect(this, &QTreeWidget::itemExpanded, this,
             &ObjTreeWidget::populateChildren);
+    connect(qApp, &QApplication::focusChanged, this,
+            [this](QWidget *old, QWidget *now) {
+                if (old && (old == this || isAncestorOf(old)) && now &&
+                    now != this && !isAncestorOf(now)) {
+                    clearSelection();
+                }
+            });
     refresh();
 }
 
 void ObjTreeWidget::refresh() {
-    _restoreExpanded.clear();
-    _restoreSelected = currentItem()
-                           ? currentItem()->data(0, Qt::UserRole).toString()
-                           : QString();
+    _restore.expanded.clear();
+    _restore.selected = currentItem()
+                            ? currentItem()->data(0, Qt::UserRole).toString()
+                            : QString();
     for (QTreeWidgetItemIterator it(this); *it; ++it) {
         if ((*it)->isExpanded()) {
-            _restoreExpanded.insert((*it)->data(0, Qt::UserRole).toString());
+            _restore.expanded.insert((*it)->data(0, Qt::UserRole).toString());
         }
     }
     const auto symbols = LuauLanguageServer::instance().builtinSymbols();
     setSortingEnabled(false);
     clear();
-    _symbols.clear();
-    _loaded.clear();
+    _symbols.entries.clear();
+    _symbols.loaded.clear();
     using Category = LuauLanguageServer::SymbolCategory;
     struct CategoryEntry {
         Category kind;
@@ -83,19 +91,19 @@ void ObjTreeWidget::refresh() {
         const QString identity = QStringLiteral("category:") + category.id;
         item->setData(0, Qt::UserRole, identity);
         createObjNodes(members, item);
-        item->setExpanded(_restoreExpanded.contains(identity));
+        item->setExpanded(_restore.expanded.contains(identity));
     }
     setSortingEnabled(true);
-    resizeColumnToContents(0);
 }
 
 void ObjTreeWidget::populateChildren(QTreeWidgetItem *item) {
     const auto identity = item->data(0, Qt::UserRole).toString();
-    if (!_symbols.contains(identity) || _loaded.contains(identity)) {
+    if (!_symbols.entries.contains(identity) ||
+        _symbols.loaded.contains(identity)) {
         return;
     }
-    _loaded.insert(identity);
-    const auto symbol = _symbols.value(identity);
+    _symbols.loaded.insert(identity);
+    const auto symbol = _symbols.entries.value(identity);
     const auto children = LuauLanguageServer::instance().symbolChildren(symbol);
     createObjNodes(children, item);
     item->setChildIndicatorPolicy(children.isEmpty()
@@ -137,7 +145,7 @@ void ObjTreeWidget::createObjNodes(
                          : tr("Global"))
                   : detail});
         item->setData(0, Qt::UserRole, node.id);
-        _symbols.insert(node.id, node);
+        _symbols.entries.insert(node.id, node);
         if (node.hasChildren) {
             item->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
         }
@@ -156,16 +164,19 @@ void ObjTreeWidget::createObjNodes(
             font.setStrikeOut(true);
             item->setFont(0, font);
         }
-        if (_restoreExpanded.contains(node.id)) {
+        if (_restore.expanded.contains(node.id)) {
             item->setExpanded(true);
         }
-        if (_restoreSelected == node.id) {
+        if (_restore.selected == node.id) {
             setCurrentItem(item);
         }
     }
 }
 
-void ObjTreeWidget::focusOutEvent(QFocusEvent *event) {
-    clearSelection();
-    QTreeWidget::focusOutEvent(event);
+void ObjTreeWidget::prepareSearchItem(QTreeWidgetItem *item) {
+    populateChildren(item);
+}
+
+bool ObjTreeWidget::isSearchableItem(const QTreeWidgetItem *item) const {
+    return _symbols.entries.contains(item->data(0, Qt::UserRole).toString());
 }

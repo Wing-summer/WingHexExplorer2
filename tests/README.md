@@ -7,6 +7,7 @@ Each suite builds independently against production code in this repository, with
 
 | 目录 / Directory | 覆盖范围 / Coverage | 运行入口 / Runner |
 | --- | --- | --- |
+| [qtableviewext](qtableviewext/README.md) | 表格搜索、异步排序及列宽 / Table search, async sorting, and column widths | CTest |
 | [qhexview](qhexview/README.md) | 十六进制视图、选区、剪贴板与撤销 / Hex view, selections, clipboard, and undo | CTest |
 | [luaulsp](luaulsp/README.md) | Luau 诊断、补全、类型与模块解析 / Luau diagnostics, completion, types, and module resolution | CTest |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |
@@ -14,8 +15,8 @@ Each suite builds independently against production code in this repository, with
 
 ## 环境与运行 / Environment and execution
 
-需要 CMake 3.20+、Qt 6.6.2+ 和 C++ 编译器；Luau 语言服务测试需要 C++20；缩进测试默认使用 C++20，支持 C++17 回退；其余测试使用 C++17。各套所需的 Qt 模块见各自说明。使用非系统 Qt 时，通过 `CMAKE_PREFIX_PATH` 环境变量或 CMake 参数选择安装目录。依赖子模块须已初始化；测试配置不会自动下载依赖。
-Requires CMake 3.20+, Qt 6.6.2+, and a C++ compiler. Luau language-server tests require C++20; indentation tests default to C++20 and support a C++17 fallback; the other suites use C++17. See each suite for its Qt modules. Select a non-system Qt installation using the `CMAKE_PREFIX_PATH` environment variable or CMake argument. Required submodules must already be initialized; test configuration does not download dependencies.
+需要 CMake 3.20+、Qt 6.6.2+ 和 C++ 编译器；Luau 语言服务测试需要 C++20；缩进及表格扩展测试默认使用 C++20，支持 C++17 回退；其余测试使用 C++17。各套所需的 Qt 模块见各自说明。使用非系统 Qt 时，通过 `CMAKE_PREFIX_PATH` 环境变量或 CMake 参数选择安装目录。依赖子模块须已初始化；测试配置不会自动下载依赖。
+Requires CMake 3.20+, Qt 6.6.2+, and a C++ compiler. Luau language-server tests require C++20; indentation and table extension tests default to C++20 and support a C++17 fallback; the other suites use C++17. See each suite for its Qt modules. Select a non-system Qt installation using the `CMAKE_PREFIX_PATH` environment variable or CMake argument. Required submodules must already be initialized; test configuration does not download dependencies.
 
 依次执行各套说明中的命令即可运行全部测试。QHexView 和 Luau 使用 CTest 注册测试；国际化探针由 Python 驱动，单独运行 CTest 不会执行国际化测试。无桌面环境时使用 Qt 的 offscreen 平台，需要安装该平台插件。
 Run the commands in each suite guide to execute the complete test collection. QHexView and Luau register CTest tests; Python drives the internationalization probes, so CTest alone does not run them. Headless execution uses Qt's offscreen platform plugin, which must be installed.
