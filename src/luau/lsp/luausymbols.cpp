@@ -53,10 +53,41 @@ static void collectSymbolProperties(Luau::TypeId type,
     }
 }
 
+static Luau::TypeId symbolInstanceType(Luau::TypeId type) {
+    type = Luau::follow(type);
+    auto instance = [](Luau::TypeId candidate) -> std::optional<Luau::TypeId> {
+        if (auto function =
+                Luau::get<Luau::FunctionType>(Luau::follow(candidate))) {
+            if (auto result = Luau::first(function->retTypes)) {
+                if (Luau::get<Luau::ExternType>(Luau::follow(*result))) {
+                    return Luau::follow(*result);
+                }
+            }
+        }
+        return std::nullopt;
+    };
+    if (auto result = instance(type)) {
+        return *result;
+    }
+    if (auto overloads = Luau::get<Luau::IntersectionType>(type)) {
+        for (auto part : overloads->parts) {
+            if (auto result = instance(part)) {
+                return *result;
+            }
+        }
+    }
+    return type;
+}
+
 QString
 LuauLanguageServer::symbolTypeAnnotation(Luau::TypeId type,
-                                         Luau::ToStringOptions &options) {
+                                         LuauLsp::TypeDisplayOptions &options) {
     type = Luau::follow(type);
+    if (options.typeNameOverride) {
+        if (auto name = options.typeNameOverride(type)) {
+            return QString::fromStdString(*name);
+        }
+    }
     if (auto table = Luau::get<Luau::TableType>(type)) {
         if (table->name) {
             return QString::fromStdString(*table->name);
@@ -68,21 +99,22 @@ LuauLanguageServer::symbolTypeAnnotation(Luau::TypeId type,
     if (Luau::get<Luau::MetatableType>(type)) {
         return QStringLiteral("{ ... }");
     }
-    return QString::fromStdString(Luau::toString(type, options));
+    return QString::fromStdString(LuauLsp::displayType(type, options));
 }
 
 static QString symbolFunctionSignature(const QString &name,
                                        const Luau::FunctionType &function,
-                                       Luau::ToStringOptions &options) {
+                                       LuauLsp::TypeDisplayOptions &options) {
     auto signature = QString::fromStdString(
-        Luau::toStringNamedFunction(name.toStdString(), function, options));
+        LuauLsp::displayNamedFunction(name.toStdString(), function, options));
     signature.replace(QLatin1String("_: "), QLatin1String());
     return signature;
 }
 
 void LuauLanguageServer::formatSymbolDeclaration(
     LuauLanguageServer::Symbol &symbol, Luau::TypeId type,
-    Luau::ToStringOptions options) {
+    LuauLsp::TypeDisplayOptions options) {
+    configureTypeDisplay(options);
     const auto &name = symbol.item.label;
     options.hideFunctionSelfArgument =
         symbol.item.kind == lsp::CompletionItemKind::Method;
@@ -118,12 +150,14 @@ void LuauLanguageServer::formatSymbolDeclaration(
     options.maxTableLength = 1000;
     options.maxTypeLength = 2000;
     symbol.fullDeclaration =
-        name + ": " + QString::fromStdString(Luau::toString(type, options));
+        name + ": " +
+        QString::fromStdString(LuauLsp::displayType(type, options));
 }
 
 LuauLanguageServer::Symbol LuauLanguageServer::createGlobalSymbol(
     const QString &name, Luau::TypeId type, lsp::CompletionItemKind kind,
-    Luau::ToStringOptions &options, QSet<Luau::TypeId> &ancestors, int depth) {
+    LuauLsp::TypeDisplayOptions &options, QSet<Luau::TypeId> &ancestors,
+    int depth) {
     type = Luau::follow(type);
     Symbol symbol;
     symbol.item.label = name;
@@ -186,6 +220,7 @@ LuauLanguageServer::Symbol catalogSymbol(const QJsonObject &object) {
         {QStringLiteral("values"), Category::Values},
         {QStringLiteral("data"), Category::Data},
         {QStringLiteral("services"), Category::Services},
+        {QStringLiteral("network"), Category::Network},
         {QStringLiteral("qt"), Category::Qt},
         {QStringLiteral("ffi"), Category::Ffi},
         {QStringLiteral("plugins"), Category::Plugins},
@@ -224,6 +259,34 @@ QJsonObject readSymbolPage(const QString &path) {
 }
 } // namespace
 
+void LuauLanguageServer::configureTypeDisplay(
+    LuauLsp::TypeDisplayOptions &options) const {
+    options.typeNameOverride =
+        [this](Luau::TypeId type) -> std::optional<std::string> {
+        type = Luau::follow(type);
+        const Luau::Name *name = nullptr;
+        const Luau::ModuleName *module = nullptr;
+        if (auto external = Luau::get<Luau::ExternType>(type)) {
+            name = &external->name;
+            module = &external->definitionModuleName;
+        } else if (auto table = Luau::get<Luau::TableType>(type);
+                   table && table->name) {
+            name = &*table->name;
+            module = &table->definitionModuleName;
+        }
+        if (name && module) {
+            const auto found =
+                typeDisplayNames.constFind(QString::fromStdString(*name));
+            if (found != typeDisplayNames.cend() &&
+                QFileInfo(QString::fromStdString(*module)).absolutePath() ==
+                    QFileInfo(symbolCatalogFile).absolutePath()) {
+                return found->toStdString();
+            }
+        }
+        return std::nullopt;
+    };
+}
+
 void LuauLanguageServer::initializeSymbolCatalog(
     const WingScriptBind::ScriptSymbolCatalog &plugins) {
     symbolPages.clear();
@@ -231,10 +294,15 @@ void LuauLanguageServer::initializeSymbolCatalog(
     catalogRoots.clear();
     pluginRoots.clear();
     pluginPages.clear();
+    typeDisplayNames.clear();
     if (!symbolCatalogFile.isEmpty()) {
-        const auto roots = readSymbolPage(symbolCatalogFile)
-                               .value(QStringLiteral("roots"))
-                               .toArray();
+        const auto catalog = readSymbolPage(symbolCatalogFile);
+        const auto displayNames =
+            catalog.value(QStringLiteral("type_display_names")).toObject();
+        for (auto it = displayNames.begin(); it != displayNames.end(); ++it) {
+            typeDisplayNames.insert(it.key(), it.value().toString());
+        }
+        const auto roots = catalog.value(QStringLiteral("roots")).toArray();
         for (const auto &entry : roots) {
             catalogRoots.append(catalogSymbol(entry.toObject()));
         }
@@ -291,12 +359,13 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::builtinSymbols() {
         names.insert(symbol.item.label);
         result.append(symbol);
     }
-    for (const auto &symbol : std::as_const(pluginRoots)) {
+    for (auto symbol : std::as_const(pluginRoots)) {
         names.insert(symbol.item.label);
+        symbol.path = {symbol.item.label};
         result.append(symbol);
     }
     const auto scope = frontend.globals.globalScope;
-    Luau::ToStringOptions options;
+    LuauLsp::TypeDisplayOptions options;
     options.scope = scope;
     options.hideTableAliasExpansions = true;
     options.maxTableLength = 48;
@@ -338,7 +407,34 @@ LuauLanguageServer::symbolChildren(const Symbol &symbol) {
             result.append(catalogSymbol(entry.toObject()));
         }
     } else if (symbol.source == SymbolSource::Plugin) {
-        return pluginPages.value(symbol.id);
+        result = pluginPages.value(symbol.id);
+        if (!symbol.path.isEmpty()) {
+            Symbol declaration = symbol;
+            declaration.id = symbol.id + QStringLiteral("/definitions");
+            declaration.source = SymbolSource::Global;
+            for (auto child : symbolChildren(declaration)) {
+                const auto existing = std::find_if(
+                    result.begin(), result.end(), [&child](const Symbol &item) {
+                        return item.item.label == child.item.label;
+                    });
+                child.source = SymbolSource::Plugin;
+                if (existing != result.end()) {
+                    child.id = existing->id;
+                    child.hasChildren |= existing->hasChildren;
+                    if (existing->item.kind == lsp::CompletionItemKind::Class) {
+                        child.item.kind = existing->item.kind;
+                    }
+                    *existing = std::move(child);
+                } else {
+                    child.id = symbol.id + '/' + child.item.label;
+                    result.append(std::move(child));
+                }
+            }
+        }
+        for (auto &child : result) {
+            child.path = symbol.path;
+            child.path.append(child.item.label);
+        }
     } else if (symbol.source == SymbolSource::Global) {
         const auto &path = symbol.path;
         if (path.isEmpty()) {
@@ -351,13 +447,16 @@ LuauLanguageServer::symbolChildren(const Symbol &symbol) {
             auto type = *binding;
             for (qsizetype i = 1; i < path.size(); ++i) {
                 const auto properties = LuauLsp::lookupProp(
-                    Luau::follow(type), path[i].toStdString());
+                    symbolInstanceType(type), path[i].toStdString());
                 if (properties.empty() || !properties.front().property.readTy) {
                     return {};
                 }
                 type = *properties.front().property.readTy;
             }
-            Luau::ToStringOptions options;
+            if (symbol.item.kind == lsp::CompletionItemKind::Class) {
+                type = symbolInstanceType(type);
+            }
+            LuauLsp::TypeDisplayOptions options;
             options.scope = scope;
             options.maxTableLength = 48;
             options.maxTypeLength = 200;

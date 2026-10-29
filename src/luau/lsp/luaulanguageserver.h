@@ -21,6 +21,7 @@
 #include "lsp.h"
 #include "luau/scriptsymbol.h"
 #include "semantictokensvisitor.h"
+#include "typedisplay.h"
 
 #include <functional>
 #include <memory>
@@ -57,6 +58,7 @@ public:
         QHash<QString, QString> definitionsFiles;
         QHash<QString, QString> builtinModuleFiles;
         QString symbolCatalogFile;
+        QStringList pluginDefinitionFiles;
         QString userModuleRoot;
         QString systemModuleRoot;
         WingScriptBind::ScriptSymbolCatalog pluginSymbols;
@@ -112,6 +114,7 @@ public:
         Values,
         Data,
         Services,
+        Network,
         Qt,
         Ffi,
         Plugins
@@ -140,7 +143,7 @@ public:
 private:
     Symbol createGlobalSymbol(const QString &name, Luau::TypeId type,
                               lsp::CompletionItemKind kind,
-                              Luau::ToStringOptions &options,
+                              LuauLsp::TypeDisplayOptions &options,
                               QSet<Luau::TypeId> &ancestors, int depth = 32);
 
     void clearConfigCache();
@@ -185,6 +188,8 @@ private:
 
     QHash<QString, QString> builtinModuleFiles;
     QString symbolCatalogFile;
+    QStringList pluginDefinitionFiles;
+    QHash<QString, QString> typeDisplayNames;
     QHash<QString, QList<Symbol>> symbolPages;
     QList<Symbol> pluginRoots;
     QHash<QString, QList<Symbol>> pluginPages;
@@ -274,10 +279,11 @@ private:
 
     void
     initializeSymbolCatalog(const WingScriptBind::ScriptSymbolCatalog &plugins);
-    static void formatSymbolDeclaration(Symbol &symbol, Luau::TypeId type,
-                                        Luau::ToStringOptions options);
-    static QString symbolTypeAnnotation(Luau::TypeId type,
-                                        Luau::ToStringOptions &options);
+    void configureTypeDisplay(LuauLsp::TypeDisplayOptions &options) const;
+    void formatSymbolDeclaration(Symbol &symbol, Luau::TypeId type,
+                                 LuauLsp::TypeDisplayOptions options);
+    QString symbolTypeAnnotation(Luau::TypeId type,
+                                 LuauLsp::TypeDisplayOptions &options);
     std::optional<QString> getDocumentationForType(const Luau::TypeId ty);
 
     std::optional<QString> getDocumentationForTypeReference(

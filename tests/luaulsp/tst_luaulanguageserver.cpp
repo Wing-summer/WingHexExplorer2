@@ -38,6 +38,45 @@ static void require(bool condition, const char *message) {
     }
 }
 
+static void testTypeDisplayIdentity() {
+    Luau::TypeArena arena;
+    Luau::TableType table;
+    table.name = "Hidden";
+    auto hidden = arena.addType(std::move(table));
+    Luau::TableType otherTable;
+    otherTable.name = "Hidden";
+    auto other = arena.addType(std::move(otherTable));
+    auto literal =
+        arena.addType(Luau::SingletonType{Luau::StringSingleton{"Hidden"}});
+    LuauLsp::TypeDisplayOptions options;
+    options.typeNameOverride =
+        [hidden](Luau::TypeId type) -> std::optional<std::string> {
+        return Luau::follow(type) == hidden
+                   ? std::optional<std::string>{"public.Hidden"}
+                   : std::nullopt;
+    };
+    require(LuauLsp::displayType(hidden, options) == "public.Hidden",
+            "public type name missing");
+    require(LuauLsp::displayType(other, options) == "Hidden",
+            "same-name user type was rewritten");
+    require(LuauLsp::displayType(literal, options) == "\"Hidden\"",
+            "string singleton was rewritten");
+    Luau::FunctionType function(arena.addTypePack({hidden, literal, other}),
+                                arena.addTypePack({hidden, literal}));
+    const auto signature =
+        LuauLsp::displayNamedFunction("identity", function, options);
+    require(signature == "identity(_: public.Hidden, _: \"Hidden\", "
+                         "_: Hidden): (public.Hidden, \"Hidden\")",
+            "function display lost type identities or return pack layout");
+    auto functionType = arena.addType(function);
+    const auto nested = LuauLsp::displayType(functionType, options);
+    require(nested.find("public.Hidden") != std::string::npos &&
+                nested.find("\"Hidden\"") != std::string::npos,
+            "nested function type spans lost public names or literals");
+    require(Luau::toString(hidden) == "Hidden",
+            "display changed the analysis type graph");
+}
+
 static lsp::Position positionOf(const QString &source, const QString &text,
                                 int offset = 0) {
     const auto index = source.indexOf(text);
@@ -73,15 +112,17 @@ static void testLanguageFeatures() {
                          }
                      });
 
-    const QString source =
-        QStringLiteral("--!strict\n"
-                       "type Point = { x: number, y: number }\n"
-                       "local point: Point = { x = 1, y = 2 }\n"
-                       "local function twice(value: number): number\n"
-                       "    return value * 2\n"
-                       "end\n"
-                       "local result = twice(2)\n"
-                       "print(point.x, result)\n");
+    const QString source = QStringLiteral(
+        "--!strict\n"
+        "type Point = { x: number, y: number }\n"
+        "local point: Point = { x = 1, y = 2 }\n"
+        "local function twice(value: number): number\n"
+        "    return value * 2\n"
+        "end\n"
+        "local result = twice(2)\n"
+        "print(point.x, result)\n"
+        "local instance = { new = function(self: any) return 1 end }\n"
+        "local created = instance:new()\nprint(created)\n");
     QTextDocument document(source);
     server.onOpenDocument(uri, &document);
     require(diagnostics.isEmpty(), "valid strict document reported errors");
@@ -89,10 +130,23 @@ static void testLanguageFeatures() {
         server.hover({uri, positionOf(source, "point.x", 1)}, nullptr);
     require(hover && hover->contents.value.contains("number"),
             "hover lost the diagnostic type graph");
+    const auto methodHover =
+        server.hover({uri, positionOf(source, "instance:new()", 10)}, nullptr);
+    require(methodHover && methodHover->contents.value.contains("function ") &&
+                !methodHover->contents.value.contains("functioninstance") &&
+                methodHover->contents.value.contains(":new("),
+            "method hover omitted the space after function");
+    const auto functionHover =
+        server.hover({uri, positionOf(source, "twice(2)", 2)}, nullptr);
+    require(functionHover &&
+                functionHover->contents.value.contains("function twice("),
+            "local function hover omitted the space after function");
     const auto signature =
         server.signatureHelp({uri, positionOf(source, "twice(2)", 6)}, nullptr);
     require(signature && !signature->signatures.empty(),
             "signature help is empty");
+    require(signature->signatures.front().label.startsWith("function twice("),
+            "local function signature omitted the space after function");
     require(signature->signatures.front().label.contains("number"),
             "signature help lost parameter types");
     const auto definition = server.gotoDefinition(
@@ -186,10 +240,17 @@ static void testDefinitionsAndOverloads() {
     definitions.write("declare generic: ((value: number) -> number) & "
                       "(<T>(value: T) -> T)\n");
     definitions.close();
+    QFile pluginDefinitions(directory.filePath("aaa_plugin.d.luau"));
+    require(pluginDefinitions.open(QIODevice::WriteOnly),
+            "cannot create plugin definitions");
+    pluginDefinitions.write("declare PluginProbe: { member: typeof(choose), "
+                            "nested: { enabled: boolean } }\n");
+    pluginDefinitions.close();
     LuauLanguageServer server;
     LuauLanguageServer::InitializationOptions options;
     options.definitionsFiles.insert(QStringLiteral("host"),
                                     definitions.fileName());
+    options.pluginDefinitionFiles.append(pluginDefinitions.fileName());
     using NativeSymbol = WingScriptBind::ScriptSymbol;
     options.pluginSymbols = {{"opaque-plugin-root",
                               {},
@@ -228,8 +289,20 @@ static void testDefinitionsAndOverloads() {
                 symbol.source == LuauLanguageServer::SymbolSource::Plugin &&
                 symbol.category ==
                     LuauLanguageServer::SymbolCategory::Plugins &&
-                children.size() == 1 &&
-                children.front().item.label == QLatin1String("member");
+                children.size() == 2;
+            for (const auto &child : children) {
+                if (child.item.label == QLatin1String("member")) {
+                    require(child.id ==
+                                    QStringLiteral("opaque-plugin-member") &&
+                                child.overloads.size() == 2,
+                            "plugin definitions lost overloads or native IDs");
+                } else if (child.item.label == QLatin1String("nested")) {
+                    const auto nested = server.symbolChildren(child);
+                    require(nested.size() == 1 && nested.front().item.label ==
+                                                      QLatin1String("enabled"),
+                            "definition-only plugin tables cannot be expanded");
+                }
+            }
         }
     }
     require(browsedMath && browsedPlugin,
@@ -244,6 +317,8 @@ static void testDefinitionsAndOverloads() {
         {uri, positionOf(source, "choose(\"text\")", 9)}, nullptr);
     require(signature && signature->signatures.size() == 2,
             "definition overloads were lost");
+    require(signature->signatures.front().label.startsWith("function choose("),
+            "global function signature omitted the space after function");
     require(signature->activeSignature &&
                 signature->signatures.at(*signature->activeSignature)
                     .label.contains("string"),
@@ -427,7 +502,8 @@ static void testGeneratedBindings() {
             QString::number(index++).rightJustified(5, '0'),
             definitions.filePath(name.toString()));
     }
-    for (const QString &name : {QStringLiteral("qt"), QStringLiteral("cffi")}) {
+    for (const QString &name : {QStringLiteral("qt"), QStringLiteral("cffi"),
+                                QStringLiteral("network")}) {
         options.builtinModuleFiles.insert(
             name,
             definitions.filePath(
@@ -474,7 +550,13 @@ static void testGeneratedBindings() {
                 root.category == LuauLanguageServer::SymbolCategory::Qt;
             const auto children = server.symbolChildren(root);
             bool foundDialog = false;
+            bool foundLoader = false;
             for (const auto &child : children) {
+                if (child.item.label == QLatin1String("load_ui_widget_file")) {
+                    foundLoader =
+                        child.fullDeclaration.contains("qt.QWidget") &&
+                        !child.fullDeclaration.contains("_qt_");
+                }
                 require(child.item.label != QLatin1String("to_std_string"),
                         "instance method leaked into Qt root");
                 require(child.item.label !=
@@ -483,6 +565,7 @@ static void testGeneratedBindings() {
                 foundDialog |= child.item.label == QLatin1String("QDialog");
             }
             require(foundDialog, "Qt class absent from lazy catalog");
+            require(foundLoader, "catalog exposes internal Qt type names");
         }
     }
     require(foundQt, "required Qt module root missing");
@@ -504,7 +587,31 @@ static void testGeneratedBindings() {
         "qt.QCalendar(qt.QCalendar.System.Gregorian)\nlocal valid = "
         "calendar:is_gregorian()\nlocal dialog = qt.QDialog()\nlocal "
         "ffi = require(\"@cffi\").new()\nlocal size = "
-        "ffi.sizeof(\"int\")\nprint(text, dialog, size, valid)\n");
+        "ffi.sizeof(\"int\")\nprint(text, dialog, size, valid)\n"
+        "local literal: \"_qt_QWidget\" = \"_qt_QWidget\"\nprint(literal)\n"
+        "local widget = "
+        "qt.load_ui_widget_file(\"fixture.ui\")\nprint(widget)\n"
+        "local fs_file = filesystem.file(\"fixture.bin\")\n"
+        "local fs_info = filesystem.fileinfo(\"fixture.bin\")\n"
+        "local fs_dir = filesystem.dir(\".\")\n"
+        "local fs_size: integer = fs_info:size()\n"
+        "local fs_opened = "
+        "fs_file:open(filesystem.file.OpenModeFlag.ReadOnly)\n"
+        "local fs_written: integer = fs_file:write(bytearray(\"data\"))\n"
+        "local fs_raw_written: integer = fs_file:write(\"data\")\n"
+        "local fs_entries = fs_dir:entry_info_list({\"*.bin\"})\n"
+        "print(fs_size, fs_opened, fs_written, fs_raw_written, fs_entries, "
+        "fs_dir:exists())\n"
+        "local net = require(\"@network\")\n"
+        "local socket = net.tcp_socket()\n"
+        "socket:connect(\"state_changed\", function(state: number) "
+        "print(state) end)\n"
+        "local net_written: integer = socket:write(\"data\")\n"
+        "local address = net.host_address(\"127.0.0.1\")\n"
+        "local ssl_server = net.ssl_server()\n"
+        "local secure_peer = ssl_server:next_pending_connection()\n"
+        "if secure_peer then print(secure_peer:is_encrypted()) end\n"
+        "print(socket, address, net_written)\n");
     QTextDocument document(source);
     timer.restart();
     server.onOpenDocument(uri, &document);
@@ -512,6 +619,44 @@ static void testGeneratedBindings() {
         std::cerr << diagnostic.message.toStdString() << '\n';
     }
     require(diagnostics.isEmpty(), "generated bindings produced diagnostics");
+    const auto socketHover = server.hover(
+        {uri, positionOf(source, "print(socket, address", 7)}, nullptr);
+    require(socketHover &&
+                socketHover->contents.value.contains("network.tcp_socket") &&
+                !socketHover->contents.value.contains("_qt_"),
+            "socket hover exposes internal types");
+    const auto dialogHover = server.hover(
+        {uri, positionOf(source, "print(text, dialog", 13)}, nullptr);
+    require(dialogHover && dialogHover->contents.value.contains("qt.QDialog") &&
+                !dialogHover->contents.value.contains("_qt_") &&
+                !dialogHover->contents.value.contains("__WingLuauQt"),
+            "hover exposes internal Qt type names");
+    const auto ffiHover =
+        server.hover({uri, positionOf(source, "ffi.sizeof", 1)}, nullptr);
+    require(ffiHover && ffiHover->contents.value.contains("cffi.Instance") &&
+                !ffiHover->contents.value.contains("__WingLuauQt"),
+            "FFI hover lost the public instance type");
+    const auto factoryHover = server.hover(
+        {uri, positionOf(source, "\"@cffi\").new()", 10)}, nullptr);
+    require(factoryHover &&
+                factoryHover->contents.value.contains("function cffi.new("),
+            "factory hover omitted its public qualifier or function spacing");
+    const auto literalHover =
+        server.hover({uri, positionOf(source, "print(literal)", 7)}, nullptr);
+    require(literalHover &&
+                literalHover->contents.value.contains("\"_qt_QWidget\""),
+            "type rendering rewrote a string singleton");
+    const auto textHover = server.hover(
+        {uri, positionOf(source, "print(text, dialog", 7)}, nullptr);
+    require(textHover && textHover->contents.value.contains("ustring") &&
+                !textHover->contents.value.contains("__WingLuauQt"),
+            "global text type lost its public name");
+    const auto uiSignature = server.signatureHelp(
+        {uri, positionOf(source, "qt.load_ui_widget_file(", 23)}, nullptr);
+    require(uiSignature && !uiSignature->signatures.empty() &&
+                uiSignature->signatures.front().label.contains("qt.QWidget") &&
+                !uiSignature->signatures.front().label.contains("_qt_"),
+            "signature help exposes internal type names");
     std::cout << "Required Qt and cffi analysis: " << timer.elapsed() << "ms\n";
     document.setPlainText(source + "\ndialog.\n");
     server.onUpdateDocument(uri, &document);
@@ -537,6 +682,7 @@ int main(int argc, char **argv) {
             testLanguageFeatures();
         }
         if (scenario.isEmpty() || scenario == QLatin1String("types")) {
+            testTypeDisplayIdentity();
             testTypeFunctionsAndNonstrictInference();
         }
         if (scenario.isEmpty() || scenario == QLatin1String("overloads")) {

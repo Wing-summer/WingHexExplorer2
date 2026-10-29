@@ -474,7 +474,7 @@ static QString toStringTypeFun(const std::string typeName,
 template <typename T>
 static std::optional<QString> tryGetAnnotation(const Luau::ScopePtr &scope,
                                                T ty) {
-    Luau::ToStringOptions opts;
+    LuauLsp::TypeDisplayOptions opts;
     opts.useLineBreaks = false;
     opts.hideTableKind = true;
     opts.functionTypeArguments = true;
@@ -592,7 +592,8 @@ static lsp::Position convertPosition(const Luau::Position &p) {
 
 static QPair<QString, QString>
 computeLabelDetailsForFunction(const Luau::AutocompleteEntry &entry,
-                               const Luau::FunctionType *ftv) {
+                               const Luau::FunctionType *ftv,
+                               LuauLsp::TypeDisplayOptions displayOptions) {
     auto detail = QStringLiteral("(");
     auto parenthesesSnippet = QStringLiteral("(");
 
@@ -649,7 +650,7 @@ computeLabelDetailsForFunction(const Luau::AutocompleteEntry &entry,
             if (comma) {
                 detail += QLatin1String(", ");
             }
-            detail += Luau::toString(*tail);
+            detail += LuauLsp::displayType(*tail, displayOptions);
         }
     }
 
@@ -1289,7 +1290,10 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
 
         if (entry.type.has_value()) {
             auto id = Luau::follow(entry.type.value());
-            item.detail = QString::fromStdString(Luau::toString(id));
+            LuauLsp::TypeDisplayOptions displayOptions;
+            configureTypeDisplay(displayOptions);
+            item.detail = QString::fromStdString(
+                LuauLsp::displayType(id, displayOptions));
 
             // Try to infer more type info about the entry to provide better
             // suggestion info
@@ -1300,7 +1304,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
                 // Compute label details and more detailed parentheses
                 // snippet
                 auto [detail, parenthesesSnippet] =
-                    computeLabelDetailsForFunction(entry, ftv);
+                    computeLabelDetailsForFunction(entry, ftv, displayOptions);
                 item.labelDetails = {detail};
 
                 // If we had CursorAfter, then the function call would not
@@ -1329,6 +1333,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
 struct ToStringNamedFunctionOpts {
     bool hideTableKind = false;
     bool multiline = false;
+    std::function<std::optional<std::string>(Luau::TypeId)> typeNameOverride;
 };
 
 using NameOrExpr = std::variant<std::string, Luau::AstExpr *>;
@@ -1339,17 +1344,18 @@ toStringNamedFunction(const Luau::ModulePtr &module,
                       const NameOrExpr nameOrFuncExpr,
                       std::optional<Luau::ScopePtr> scope = std::nullopt,
                       const ToStringNamedFunctionOpts &stringOpts = {}) {
-    Luau::ToStringOptions opts;
+    LuauLsp::TypeDisplayOptions opts;
     opts.functionTypeArguments = true;
     opts.hideNamedFunctionTypeParameters = false;
     opts.hideTableKind = stringOpts.hideTableKind;
     opts.useLineBreaks = stringOpts.multiline;
+    opts.typeNameOverride = stringOpts.typeNameOverride;
     if (scope) {
         opts.scope = *scope;
     }
 
     auto functionString =
-        QString::fromStdString(Luau::toStringNamedFunction("", *ftv, opts));
+        QString::fromStdString(LuauLsp::displayNamedFunction("", *ftv, opts));
 
     // HACK: remove all instances of "_: " from the function string
     // They don't look great, maybe we should upstream this as an option?
@@ -1370,10 +1376,10 @@ toStringNamedFunction(const Luau::ModulePtr &module,
 
     // See if it's just in the form `func(args)`
     if (auto local = funcExpr->as<Luau::AstExprLocal>()) {
-        return QLatin1String("function") + local->local->name.value +
+        return QLatin1String("function ") + local->local->name.value +
                functionString;
     } else if (auto global = funcExpr->as<Luau::AstExprGlobal>()) {
-        return QLatin1String("function") + global->name.value + functionString;
+        return QLatin1String("function ") + global->name.value + functionString;
     } else if (funcExpr->as<Luau::AstExprGroup>() ||
                funcExpr->as<Luau::AstExprFunction>()) {
         // In the form (expr)(args), which implies that it's probably a IIFE
@@ -1391,8 +1397,8 @@ toStringNamedFunction(const Luau::ModulePtr &module,
         // If we are calling this as a method ':', we should implicitly hide
         // self, and recompute the functionString
         opts.hideFunctionSelfArgument = indexName->op == ':';
-        functionString =
-            QString::fromStdString(Luau::toStringNamedFunction("", *ftv, opts));
+        functionString = QString::fromStdString(
+            LuauLsp::displayNamedFunction("", *ftv, opts));
         functionString.replace(QLatin1String("_: "), QLatin1String());
         // We can try and give a temporary base name from what we can infer
         // by the index, and then attempt to improve it with proper
@@ -1412,12 +1418,23 @@ toStringNamedFunction(const Luau::ModulePtr &module,
     }
 
     if (!parentIt) {
-        return QLatin1String("function") + methodName + functionString;
+        return (methodName.isEmpty() ? QLatin1String("function")
+                                     : QLatin1String("function ")) +
+               methodName + functionString;
     }
-    if (auto name = getTypeName(*parentIt)) {
+    if (auto name = opts.typeNameOverride ? opts.typeNameOverride(*parentIt)
+                                          : std::nullopt) {
+        baseName = QString::fromStdString(*name);
+        // A callable namespace's type is typeof(value); qualify its functions
+        // with the public value path rather than the type expression.
+        if (baseName.startsWith(QLatin1String("typeof(")) &&
+            baseName.endsWith(')')) {
+            baseName = baseName.mid(7, baseName.size() - 8);
+        }
+    } else if (auto name = getTypeName(*parentIt)) {
         baseName = *name;
     }
-    return QLatin1String("function") + baseName + methodName + functionString;
+    return QLatin1String("function ") + baseName + methodName + functionString;
 }
 
 static std::optional<Luau::TypeId> findCallMetamethod(Luau::TypeId type) {
@@ -1527,6 +1544,9 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
 
     ToStringNamedFunctionOpts opts;
     opts.hideTableKind = false;
+    LuauLsp::TypeDisplayOptions displayOptions;
+    configureTypeDisplay(displayOptions);
+    opts.typeNameOverride = displayOptions.typeNameOverride;
 
     std::optional<size_t> activeSignature = std::nullopt;
     std::vector<lsp::SignatureInformation> signatures{};
@@ -1576,11 +1596,12 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         // type names (including module-qualified ones like "second.foo")
         // are resolved identically in both the full label and each
         // parameter search string.
-        Luau::ToStringOptions typeStringOpts;
+        LuauLsp::TypeDisplayOptions typeStringOpts;
         typeStringOpts.functionTypeArguments = true;
         typeStringOpts.hideNamedFunctionTypeParameters = false;
         typeStringOpts.hideTableKind = opts.hideTableKind;
         typeStringOpts.scope = scope;
+        configureTypeDisplay(typeStringOpts);
 
         for (; it != Luau::end(ftv->argTypes); it++, idx++) {
             // If the function has self, and the caller has called as a
@@ -1612,7 +1633,7 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                 labelString = QString::fromStdString(ftv->argNames[idx]->name) +
                               QLatin1String(": ");
             }
-            labelString += Luau::toString(*it, typeStringOpts);
+            labelString += LuauLsp::displayType(*it, typeStringOpts);
 
             auto position = label.indexOf(labelString, previousParamPos);
             if (position != std::string::npos) {
@@ -1651,9 +1672,9 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                 auto labelString = QStringLiteral("...: ");
 
                 if (vtp) {
-                    labelString += Luau::toString(vtp->ty, typeStringOpts);
+                    labelString += LuauLsp::displayType(vtp->ty, typeStringOpts);
                 } else {
-                    labelString += Luau::toString(*tp, typeStringOpts);
+                    labelString += LuauLsp::displayType(*tp, typeStringOpts);
                 }
 
                 auto position = label.indexOf(labelString, previousParamPos);
@@ -1897,14 +1918,15 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
         documentationSymbol = type.value()->documentationSymbol;
     }
 
-    Luau::ToStringOptions opts;
+    LuauLsp::TypeDisplayOptions opts;
     opts.exhaustive = true;
     opts.useLineBreaks = true;
     opts.functionTypeArguments = true;
     opts.hideNamedFunctionTypeParameters = false;
     opts.hideTableKind = false;
     opts.scope = scope;
-    auto typeString = QString::fromStdString(Luau::toString(*type, opts));
+    configureTypeDisplay(opts);
+    auto typeString = QString::fromStdString(LuauLsp::displayType(*type, opts));
 
     // If we have a function and its corresponding name
     if (typeAliasInformation) {
@@ -1923,6 +1945,7 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
         ToStringNamedFunctionOpts funcOpts;
         funcOpts.hideTableKind = !showTableKinds;
         funcOpts.multiline = multilineFunctionDefinitions;
+        funcOpts.typeNameOverride = opts.typeNameOverride;
         typeString = codeBlock(
             "luau", toStringNamedFunction(module, ftv, name, scope, funcOpts));
     } else if (exprOrLocal.getLocal() || node->as<Luau::AstExprLocal>()) {
@@ -2429,7 +2452,7 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
     }
 
     const auto scope = frontend.globals.globalScope;
-    Luau::ToStringOptions options;
+    LuauLsp::TypeDisplayOptions options;
     options.useLineBreaks = false;
     options.hideTableKind = true;
     options.functionTypeArguments = true;
@@ -2437,6 +2460,7 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
     options.maxTableLength = 48;
     options.maxTypeLength = 200;
     options.scope = scope;
+    configureTypeDisplay(options);
     QSet<Luau::TypeId> ancestors;
 
     QList<Symbol> symbols;
@@ -2469,8 +2493,8 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
         aliasOptions.maxTypeLength = 2000;
         aliasOptions.hideTableAliasExpansions = false;
         symbol.fullDeclaration =
-            declaration +
-            QString::fromStdString(Luau::toString(aliasType, aliasOptions));
+            declaration + QString::fromStdString(
+                              LuauLsp::displayType(aliasType, aliasOptions));
         symbols.append(std::move(symbol));
     }
     return symbols;
@@ -2497,6 +2521,7 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
     requireResolver = std::make_unique<WingLuauRequire::ResolutionSession>(
         requireOptions, names, options.readCfgRoots);
     symbolCatalogFile = options.symbolCatalogFile;
+    pluginDefinitionFiles = options.pluginDefinitionFiles;
     initializeSymbolCatalog(options.pluginSymbols);
     defaultConfig.mode = options.defaultMode;
     readAllowedCfgRoots = options.readCfgRoots;
@@ -3170,6 +3195,10 @@ void LuauLanguageServer::registerTypes() {
               [](const auto &left, const auto &right) {
                   return left.first < right.first;
               });
+    // Plugin declarations depend on host types and keep registration order.
+    for (const auto &file : std::as_const(pluginDefinitionFiles)) {
+        definitionsFilesToProcess.emplace_back(file.toStdString(), file);
+    }
 
     for (const auto &[packageName, definitionsFile] :
          definitionsFilesToProcess) {
