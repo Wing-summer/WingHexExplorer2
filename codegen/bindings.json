@@ -55,7 +55,8 @@
       "modules": [
         "QtCore",
         "QtGui",
-        "QtWidgets"
+        "QtWidgets",
+        "QtNetwork"
       ],
       "bases": [
         "QWidget"
@@ -88,7 +89,6 @@
   "exclude": {
     "classes": [
       "QDockWidget",
-      "QFile",
       "QThread",
       "QProcess",
       "QLibrary",
@@ -105,7 +105,19 @@
       "QProcessEnvironment"
     ],
     "members": [
-      "QObject::moveToThread"
+      "QObject::moveToThread",
+      "QFile::open(int,*)",
+      "QFile::open(FILE*,*)",
+      "QFile::handle",
+      "QFile::map",
+      "QFile::unmap",
+      "QFileDevice::handle",
+      "QFileDevice::map",
+      "QFileDevice::unmap",
+      "*::write(const char*,qint64)",
+      "*::write(const char*)",
+      "QFile::decodeName(const char*)",
+      "*::writeDatagram(const char*,qint64,const QHostAddress&,quint16)"
     ]
   },
   "lsp": {
@@ -484,6 +496,292 @@
       "QClipboard::setMimeData": [
         0
       ]
+    },
+    "class_adapters": {
+      "QFile": {
+        "includes": [
+          "src/luau/runtime/scriptfilesystem.h"
+        ],
+        "factory": "ScriptFileSystem::createScriptFile",
+        "guard": "ScriptFileSystem::checkFileAccess",
+        "inherited_methods": true,
+        "methods": {
+          "open": "ScriptFileSystem::openScriptFile"
+        },
+        "guard_selector": "file_access"
+      },
+      "QFileDevice": {
+        "includes": [
+          "src/luau/runtime/scriptfilesystem.h"
+        ],
+        "guard": "ScriptFileSystem::checkFileDeviceAccess",
+        "inherited_methods": true,
+        "guard_selector": "file_access"
+      },
+      "QIODevice": {
+        "includes": [
+          "src/luau/runtime/scriptfilesystem.h"
+        ],
+        "guard": "ScriptFileSystem::checkIODeviceAccess",
+        "guard_selector": "file_access"
+      },
+      "QDir": {
+        "includes": [
+          "src/luau/runtime/scriptfilesystem.h"
+        ],
+        "guard": "ScriptFileSystem::checkDirectoryAccess",
+        "guard_selector": "directory_access"
+      },
+      "QAbstractSocket": {
+        "inherited_methods": true,
+        "context_owned": true,
+        "constructible": false
+      },
+      "QTcpSocket": {
+        "inherited_methods": true,
+        "context_owned": true
+      },
+      "QTcpServer": {
+        "inherited_methods": true,
+        "context_owned": true
+      },
+      "QUdpSocket": {
+        "inherited_methods": true,
+        "context_owned": true
+      },
+      "QSslSocket": {
+        "inherited_methods": true,
+        "context_owned": true
+      },
+      "QSslServer": {
+        "inherited_methods": true,
+        "context_owned": true,
+        "return_types": {
+          "nextPendingConnection": "QSslSocket *"
+        }
+      },
+      "QLocalSocket": {
+        "inherited_methods": true,
+        "context_owned": true
+      },
+      "QLocalServer": {
+        "inherited_methods": true,
+        "context_owned": true,
+        "includes": [
+          "src/luau/runtime/scriptfilesystem.h"
+        ],
+        "guard": "ScriptFileSystem::checkResourceAccess",
+        "guard_selector": "local_endpoint_access"
+      }
+    },
+    "modules": {
+      "filesystem": {
+        "file": "QFile",
+        "fileinfo": "QFileInfo",
+        "dir": "QDir"
+      },
+      "network": {
+        "abstract_socket": "QAbstractSocket",
+        "tcp_socket": "QTcpSocket",
+        "tcp_server": "QTcpServer",
+        "udp_socket": "QUdpSocket",
+        "datagram": "QNetworkDatagram",
+        "local_socket": "QLocalSocket",
+        "local_server": "QLocalServer",
+        "ssl_socket": "QSslSocket",
+        "ssl_server": "QSslServer",
+        "host_address": "QHostAddress",
+        "host_info": "QHostInfo",
+        "interface": "QNetworkInterface",
+        "address_entry": "QNetworkAddressEntry",
+        "proxy": "QNetworkProxy",
+        "ssl_configuration": "QSslConfiguration",
+        "ssl_certificate": "QSslCertificate",
+        "ssl_key": "QSslKey",
+        "ssl_error": "QSslError",
+        "ssl_cipher": "QSslCipher"
+      }
+    },
+    "type_annotations": {
+      "qint64": {
+        "argument": "number | integer",
+        "result": "integer"
+      },
+      "qlonglong": {
+        "argument": "number | integer",
+        "result": "integer"
+      },
+      "long long": {
+        "argument": "number | integer",
+        "result": "integer"
+      },
+      "quint64": {
+        "argument": "number | integer | _qtluau_QVariant",
+        "result": "integer | _qtluau_QVariant"
+      },
+      "qulonglong": {
+        "argument": "number | integer | _qtluau_QVariant",
+        "result": "integer | _qtluau_QVariant"
+      },
+      "unsigned long long": {
+        "argument": "number | integer | _qtluau_QVariant",
+        "result": "integer | _qtluau_QVariant"
+      },
+      "QByteArray": {
+        "argument": "string | bytearray",
+        "result": "string"
+      },
+      "qintptr": {
+        "argument": "number | integer",
+        "result": "integer"
+      },
+      "quintptr": {
+        "argument": "number | integer | _qtluau_QVariant",
+        "result": "integer | _qtluau_QVariant"
+      }
+    },
+    "guard_selectors": {
+      "file_access": {
+        "const": "ScriptFileSystem::Access::Read",
+        "mutable": "ScriptFileSystem::Access::Unknown",
+        "rules": [
+          {
+            "methods": [
+              "remove",
+              "rename",
+              "moveToTrash",
+              "setPermissions",
+              "setFileTime"
+            ],
+            "value": "ScriptFileSystem::Access::Remove"
+          },
+          {
+            "methods": [
+              "write",
+              "putChar",
+              "resize"
+            ],
+            "value": "ScriptFileSystem::Access::Write"
+          },
+          {
+            "methods": [
+              "tr",
+              "exists",
+              "encodeName",
+              "decodeName",
+              "symLinkTarget",
+              "permissions",
+              "supportsMoveToTrash",
+              "unsetError",
+              "setCurrentReadChannel",
+              "setCurrentWriteChannel",
+              "open",
+              "close",
+              "flush",
+              "copy",
+              "link",
+              "setFileName",
+              "read",
+              "readAll",
+              "readLine",
+              "readLineInto",
+              "getChar",
+              "peek",
+              "skip",
+              "seek",
+              "reset",
+              "setTextModeEnabled",
+              "startTransaction",
+              "commitTransaction",
+              "rollbackTransaction",
+              "ungetChar",
+              "waitForReadyRead",
+              "waitForBytesWritten"
+            ],
+            "value": "ScriptFileSystem::Access::Read"
+          }
+        ]
+      },
+      "directory_access": {
+        "const": "ScriptFileSystem::Access::Read",
+        "mutable": "ScriptFileSystem::Access::Remove",
+        "rules": [
+          {
+            "methods": [
+              "remove",
+              "rmdir",
+              "rmpath",
+              "rename",
+              "removeRecursively",
+              "setCurrent",
+              "setSearchPaths",
+              "addSearchPath"
+            ],
+            "value": "ScriptFileSystem::Access::Remove"
+          },
+          {
+            "methods": [
+              "current",
+              "currentPath",
+              "home",
+              "homePath",
+              "root",
+              "rootPath",
+              "temp",
+              "tempPath",
+              "drives",
+              "searchPaths",
+              "separator",
+              "listSeparator",
+              "isAbsolutePath",
+              "isRelativePath",
+              "toNativeSeparators",
+              "fromNativeSeparators",
+              "cleanPath",
+              "match",
+              "nameFiltersFromString",
+              "mkdir",
+              "mkpath",
+              "cd",
+              "cdUp",
+              "setPath",
+              "setFilter",
+              "setNameFilters",
+              "setSorting",
+              "refresh",
+              "makeAbsolute",
+              "swap"
+            ],
+            "value": "ScriptFileSystem::Access::Read"
+          }
+        ]
+      },
+      "local_endpoint_access": {
+        "const": "ScriptFileSystem::Access::Read",
+        "mutable": "ScriptFileSystem::Access::Read",
+        "rules": [
+          {
+            "methods": [
+              "removeServer"
+            ],
+            "value": "ScriptFileSystem::Access::Remove"
+          }
+        ]
+      }
+    },
+    "module_dependencies": {
+      "network": {
+        "sdk_modules": [
+          "QtNetwork"
+        ],
+        "alias_style": "snake_case"
+      }
+    },
+    "enum_namespaces": {
+      "QSsl": {
+        "module": "network",
+        "alias": "ssl"
+      }
     }
   },
   "modules": {
@@ -493,6 +791,12 @@
     "cffi": {
       "require": true,
       "external": true
+    },
+    "filesystem": {
+      "require": false
+    },
+    "network": {
+      "require": true
     }
   },
   "lua_c_apis": [
@@ -529,6 +833,8 @@
     "input": "services",
     "stringify": "values",
     "assert_x": "standard",
-    "coroutine": "standard"
+    "coroutine": "standard",
+    "filesystem": "data",
+    "network": "network"
   }
 }

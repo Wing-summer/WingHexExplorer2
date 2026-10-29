@@ -2489,6 +2489,11 @@
         <source>Global</source>
         <translation>全局</translation>
     </message>
+    <message>
+        <location filename="../../src/control/objtreewidget.cpp" line="76"/>
+        <source>Networking</source>
+        <translation>网络</translation>
+    </message>
 </context>
 <context>
     <name>OtherSettingsDialog</name>

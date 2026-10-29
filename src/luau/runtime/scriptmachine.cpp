@@ -191,16 +191,12 @@ void ScriptMachine::finishScriptRegistration() {
     for (const auto &file : std::as_const(opts.definitionsFiles)) {
         loadedDefinitions.insert(QFileInfo(file).canonicalFilePath());
     }
-    int definitionIndex = 0;
     for (auto &file : _bindings->definitionFiles()) {
         if (loadedDefinitions.contains(file)) {
             continue;
         }
         loadedDefinitions.insert(file);
-        opts.definitionsFiles.insert(
-            QStringLiteral("wing_plugin_%1")
-                .arg(definitionIndex++, 8, 10, QChar('0')),
-            file);
+        opts.pluginDefinitionFiles.append(file);
     }
     lsp.initialize(opts);
 
@@ -227,6 +223,11 @@ bool ScriptMachine::configureEngine(
     if (L == nullptr) {
         return false;
     }
+
+    qtluau::setLuaContextResolver(L, [](lua_State *state) -> const void * {
+        auto *data = lua_getthreaddata(state);
+        return data ? data : state;
+    });
 
     WingLuauRequire::Options ropts;
     auto lualib = QStringLiteral("luaulib");
@@ -763,6 +764,7 @@ void ScriptMachine::abortDbgScript() {
 
 void ScriptMachine::abortScript(ConsoleMode mode) {
     context(mode)->requestStop = true;
+    qtluau::clearLuaContext(context(mode)->state);
     Q_EMIT inputCancelled(mode);
 }
 

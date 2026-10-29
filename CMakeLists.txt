@@ -374,6 +374,8 @@ set(LUAU_MOD_SRC
     src/luau/scriptsymbol.h
     src/luau/runtime/scriptserviceapi.h
     src/luau/runtime/scriptserviceapi.cpp
+    src/luau/runtime/scriptfilesystem.h
+    src/luau/runtime/scriptfilesystem.cpp
     src/luau/scriptbindingengine.h
     src/luau/wingluaurequire.cpp
     src/luau/wingluaurequire.h)

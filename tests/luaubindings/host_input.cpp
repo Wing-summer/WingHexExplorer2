@@ -2,20 +2,26 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
+#include "Luau/Compiler.h"
 #include "WingPlugin/binding/builder.h"
 #include "WingPlugin/iwingplugin.h"
 #include "class/settings/settingmanager.h"
 #include "control/console/scriptingconsole.h"
 #include "control/objtreewidget.h"
+#include "filesystem_checks.h"
+#include "luau/runtime/scriptfilesystem.h"
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptwindowfactory.h"
 #include "qtluau/execution.hpp"
+#include "qtluau/value_conversion.hpp"
 #include <QApplication>
+#include <QDataStream>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QKeyEvent>
 #include <QMenuBar>
 #include <QPluginLoader>
+#include <QScopeGuard>
 #include <QStatusBar>
 #include <QTemporaryDir>
 #include <QTextDocument>
@@ -32,6 +38,20 @@ static void run(lua_State *state, const QString &source, bool succeeds = true) {
         throw std::runtime_error(error.toStdString() +
                                  "\nSource: " + source.toStdString());
     }
+}
+
+static void checkFileSystem(lua_State *state) {
+    auto &settings = SettingManager::instance();
+    const auto oldOverwrite = settings.scriptFileEnableOverwrite();
+    const auto oldRemove = settings.scriptFileSystemWrite();
+    const auto restore = qScopeGuard([&] {
+        settings.setScriptFileEnableOverwrite(oldOverwrite);
+        settings.setScriptFileSystemWrite(oldRemove);
+    });
+    FilesystemChecks::check(state, [&](bool overwrite, bool remove) {
+        settings.setScriptFileEnableOverwrite(overwrite);
+        settings.setScriptFileSystemWrite(remove);
+    });
 }
 
 static void checkPluginDefinitions(const QString &path, bool testPlugin) {
@@ -124,11 +144,33 @@ static void checkPluginDefinitions(const QString &path, bool testPlugin) {
             throw std::runtime_error(
                 "TestPlugin definitions did not provide completion");
         }
+        bool foundMethod = false;
+        for (const auto &root : server.builtinSymbols()) {
+            if (root.item.label != QStringLiteral("TestPlugin")) {
+                continue;
+            }
+            for (const auto &child : server.symbolChildren(root)) {
+                if (child.item.label != QStringLiteral("TestObj")) {
+                    continue;
+                }
+                for (const auto &method : server.symbolChildren(child)) {
+                    if (method.item.label == QStringLiteral("getV")) {
+                        foundMethod = method.overloads.size() == 1 &&
+                                      method.fullDeclaration.contains(
+                                          QStringLiteral("number"));
+                    }
+                }
+            }
+        }
+        if (!foundMethod) {
+            throw std::runtime_error(
+                "Plugin class methods did not use parsed declarations");
+        }
     }
     server.onCloseDocument(uri);
 }
 
-static void checkSymbolTree(lua_State *state) {
+static void checkSymbolTree(lua_State *state, bool testPlugin) {
     QElapsedTimer timer;
     timer.start();
     ObjTreeWidget tree;
@@ -146,6 +188,28 @@ static void checkSymbolTree(lua_State *state) {
     if (!nativeSymbols) {
         throw std::runtime_error("Typed plugin symbol index lost its child");
     }
+    if (testPlugin) {
+        bool foundOverloads = false;
+        for (QTreeWidgetItemIterator it(&tree); *it; ++it) {
+            if ((*it)->text(0) != QStringLiteral("TestPlugin")) {
+                continue;
+            }
+            (*it)->setExpanded(true);
+            int overloads = 0;
+            for (int i = 0; i < (*it)->childCount(); ++i) {
+                const auto *child = (*it)->child(i);
+                if (child->text(0) == QStringLiteral("definition_echo")) {
+                    ++overloads;
+                }
+            }
+            foundOverloads = overloads == 2;
+            break;
+        }
+        if (!foundOverloads) {
+            throw std::runtime_error(
+                "Plugin definition overloads were not parsed by the tree");
+        }
+    }
     auto find = [&tree](const QString &id) -> QTreeWidgetItem * {
         for (QTreeWidgetItemIterator it(&tree); *it; ++it) {
             if ((*it)->data(0, Qt::UserRole).toString() == id) {
@@ -154,6 +218,35 @@ static void checkSymbolTree(lua_State *state) {
         }
         return nullptr;
     };
+    auto *network = find(QStringLiteral("module:network"));
+    auto *networkCategory = find(QStringLiteral("category:network"));
+    if (!network || !networkCategory || network->childCount() != 0) {
+        throw std::runtime_error(
+            "Network browser category is missing or eager");
+    }
+    QElapsedTimer networkTimer;
+    networkTimer.start();
+    network->setExpanded(true);
+    auto *tcp = find(QStringLiteral("module:network/tcp_socket"));
+    if (!tcp || tcp->childCount() != 0) {
+        throw std::runtime_error("Network branch expanded recursively");
+    }
+    tcp->setExpanded(true);
+    bool foundConnect = false;
+    for (int index = 0; index < tcp->childCount(); ++index) {
+        const auto *child = tcp->child(index);
+        foundConnect |= child->text(0) == QStringLiteral("connect_to_host");
+        if (child->text(0) == QStringLiteral("connectToHost") ||
+            child->text(1).contains(QStringLiteral("_qt_"))) {
+            throw std::runtime_error(
+                "Network tree exposes native/internal names");
+        }
+    }
+    if (!foundConnect) {
+        throw std::runtime_error("Network symbols lost inherited methods");
+    }
+    std::cout << "Network browser expansion: "
+              << networkTimer.nsecsElapsed() / 1000 << "us\n";
     auto *qt = find(QStringLiteral("module:qt"));
     if (!qt || qt->childCount() != 0) {
         throw std::runtime_error("Qt browser initialized eagerly");
@@ -408,6 +501,19 @@ int main(int argc, char **argv) {
                 "Typed native symbol snapshot lost a registration");
         }
         machine.finishScriptRegistration();
+        bool lateDefinitionRejected = false;
+        try {
+            machine.scriptEngine()->global().addDefinitionFile(
+                definitionFile.fileName());
+        } catch (const WingScriptBind::ScriptException &error) {
+            lateDefinitionRejected =
+                error.getError() ==
+                WingScriptBind::Exception::RegistrationFailed;
+        }
+        if (!lateDefinitionRejected) {
+            throw std::runtime_error(
+                "Definition registration remained open after initialization");
+        }
         checkPluginDefinitions(directory.filePath("plugin_usage.luau"),
                                testPlugin);
         if (testPlugin) {
@@ -425,7 +531,8 @@ assert(not ok and string.find(err, "raiseScriptException", 1, true))
             std::cout
                 << "Real TestPlugin runtime and resource definitions passed\n";
         }
-        checkSymbolTree(interactive);
+        checkSymbolTree(interactive, testPlugin);
+        checkFileSystem(interactive);
         ScriptingConsole console;
         console.init();
         console.show();
@@ -455,7 +562,7 @@ assert(not ok and string.find(err, "raiseScriptException", 1, true))
                 QApplication::sendEvent(&console, &enter);
             });
             run(context->state, QStringLiteral("print(input())"));
-            if (output != QStringLiteral("hello world ")) {
+            if (output != QStringLiteral("hello world")) {
                 throw std::runtime_error(
                     "print(input()) did not print its text");
             }
@@ -475,7 +582,7 @@ assert(not ok and string.find(err, "raiseScriptException", 1, true))
                                    "assert(tostring(value) == ") +
                         quoted +
                         "); assert(value:to_std_string() == " + quoted + ')');
-                if (output != text + ' ') {
+                if (output != text) {
                     throw std::runtime_error(
                         "Input output lost Unicode text: " +
                         output.toStdString());
@@ -518,6 +625,25 @@ assert(not ok and string.find(err, "raiseScriptException", 1, true))
                                "assert(input():to_std_string() == '') end)\n"
                                "assert(coroutine.resume(co))"));
         }
+        for (auto mode : {ScriptMachine::Interactive, ScriptMachine::Scripting,
+                          ScriptMachine::Background}) {
+            auto *context = machine.context(mode);
+            run(context->state, QStringLiteral(R"LUA(
+local network = require("@network")
+_network_owned = network.tcp_socket()
+local child = coroutine.create(function() return network.tcp_socket() end)
+local ok, value = coroutine.resume(child)
+assert(ok)
+_network_child = value
+)LUA"));
+            machine.abortScript(mode);
+            context->requestStop = false;
+            run(context->state, QStringLiteral(R"LUA(
+assert(not pcall(function() return _network_owned:state() end))
+assert(not pcall(function() return _network_child:state() end))
+)LUA"));
+        }
+        std::cout << "Host network abort and coroutine ownership passed\n";
         run(interactive,
             QStringLiteral(
                 "assert(type(stringify({x = 1}):to_std_string()) == "
@@ -526,6 +652,94 @@ assert(not ok and string.find(err, "raiseScriptException", 1, true))
                 "local ok, err = pcall(assert_x, false, "
                 "ustring('中文'))\n"
                 "assert(not ok and string.find(err, '中文', 1, true))"));
+        if (app.arguments().contains(QStringLiteral("--network"))) {
+            QFile socketScript(
+                directory.filePath(QStringLiteral("network-scheduler.luau")));
+            if (!socketScript.open(QIODevice::WriteOnly)) {
+                throw std::runtime_error(
+                    "Cannot create network scheduler fixture");
+            }
+            socketScript.write(R"LUA(
+local network = require("@network")
+local socket = network.udp_socket()
+local done = false
+local data = "A" .. string.char(0, 255) .. "B"
+assert(socket:bind(network.host_address("127.0.0.1"), 0))
+socket:connect("ready_read", function()
+    while socket:has_pending_datagrams() do
+        assert(socket:receive_datagram():data() == data)
+        done = true
+    end
+    local child = coroutine.create(function() return network.tcp_socket() end)
+    local ok, value = coroutine.resume(child)
+    assert(ok and value:state() == network.abstract_socket.SocketState.UnconnectedState)
+    done = true
+end)
+socket:write_datagram(data, network.host_address("127.0.0.1"), socket:local_port())
+while not done do coroutine.yield() end
+print("network-scheduler-complete")
+)LUA");
+            socketScript.close();
+            for (auto mode :
+                 {ScriptMachine::Scripting, ScriptMachine::Background}) {
+                auto *context = machine.context(mode);
+                context->reset();
+                if (!socketScript.open(QIODevice::ReadOnly)) {
+                    throw std::runtime_error("Cannot read scheduler fixture");
+                }
+                const auto source = socketScript.readAll();
+                socketScript.close();
+                const auto bytecode = Luau::compile(source.toStdString());
+                if (luau_load(context->state, "=network-scheduler-probe",
+                              bytecode.data(), bytecode.size(), 0) != LUA_OK) {
+                    throw std::runtime_error("Cannot load scheduler fixture");
+                }
+                QString messages;
+                bool finished = false;
+                bool timedOut = false;
+                QEventLoop loop;
+                QTimer timeout;
+                timeout.setSingleShot(true);
+                QObject::connect(&timeout, &QTimer::timeout, &loop, [&] {
+                    timedOut = true;
+                    machine.abortScript(mode);
+                });
+                ScriptMachine::RegCallBacks callbacks;
+                callbacks.printMsgFn =
+                    [&](const ScriptMachine::MessageInfo &message) {
+                        messages += message.message;
+                    };
+                machine.registerCallBack(mode, callbacks);
+                const auto resetCallbacks = qScopeGuard(
+                    [&machine, mode] { machine.registerCallBack(mode, {}); });
+                timeout.start(5000);
+                auto *runner = new LuauScheduler(context);
+                QObject::connect(runner, &LuauScheduler::finished, &loop,
+                                 [&](int status) {
+                                     messages += runner->executeError();
+                                     if (status != LUA_OK) {
+                                         timedOut = true;
+                                     }
+                                     context->reset();
+                                     finished = true;
+                                     loop.quit();
+                                 });
+                runner->start();
+                if (!finished) {
+                    loop.exec();
+                }
+                timeout.stop();
+                if (timedOut ||
+                    !messages.contains(
+                        QStringLiteral("network-scheduler-complete")) ||
+                    context->isRunning) {
+                    throw std::runtime_error("Host network scheduler failed: " +
+                                             messages.toStdString());
+                }
+            }
+            std::cout << "Host scheduled socket callbacks and normal-exit "
+                         "cleanup passed\n";
+        }
         checkHostWindows();
         machine.destoryMachine();
         std::cout << "Host input and helper checks passed\n";

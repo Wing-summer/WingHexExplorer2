@@ -73,6 +73,7 @@ void ObjTreeWidget::refresh() {
         {Category::Values, QStringLiteral("values"), tr("Value types")},
         {Category::Data, QStringLiteral("data"), tr("Data processing")},
         {Category::Services, QStringLiteral("services"), tr("Host services")},
+        {Category::Network, QStringLiteral("network"), tr("Networking")},
         {Category::Qt, QStringLiteral("qt"), tr("Qt")},
         {Category::Ffi, QStringLiteral("ffi"), tr("FFI")},
         {Category::Plugins, QStringLiteral("plugins"), tr("Plugin extensions")},

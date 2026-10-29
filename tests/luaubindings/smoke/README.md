@@ -30,6 +30,17 @@ python tests/luaubindings/build_host_probe.py --build build/Debug
 QT_QPA_PLATFORM=offscreen build/Debug/WingLuauHostInputProbe
 ```
 
+To exercise the real TestPlugin, enable its build and pass `--test-plugin`. This checks resource-definition deduplication, completion, type checking, definition navigation, overloaded functions, object properties and script exceptions. Registration after initialization must fail.
+
+验证真实 TestPlugin 时，启用插件构建并传入 `--test-plugin`，检查资源定义去重、补全、类型检查、定义定位、函数重载、对象属性及脚本异常，并确认初始化完成后无法追加定义。
+
+```sh
+cmake -S . -B build/Debug -DWINGHEX_BUILD_TEST_PLUGIN=ON
+cmake --build build/Debug --parallel 4
+python tests/luaubindings/build_host_probe.py --build build/Debug
+QT_QPA_PLATFORM=offscreen build/Debug/WingLuauHostInputProbe --test-plugin
+```
+
 See [validation results](../../../docs/luau-validation.md) for commands, measurements and coverage boundaries.
 
 命令、测量结果及验证边界见[验证记录](../../../docs/luau-validation.md)。
@@ -44,3 +55,7 @@ cmake -S tests/luaubindings/smoke -B build/Debug/dialog-smoke -G Ninja \
 cmake --build build/Debug/dialog-smoke --parallel 2
 ctest --test-dir build/Debug/dialog-smoke --output-on-failure --timeout 30
 ```
+
+Pass `--network` to the host probe to run loopback UDP through the real Scripting/Background scheduler. The independent `network` CTest additionally covers TCP, UDP, local sockets, TLS, suspended coroutine callback delivery and context cleanup; these tests require permission to create local sockets.
+
+宿主探针传入 `--network` 可通过真实 Scripting/Background 调度器验证回环 UDP。独立 network CTest 另覆盖 TCP、UDP、本地 socket、TLS、暂停协程回调及上下文清理；测试环境需要允许创建本地 socket。

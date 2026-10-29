@@ -7,6 +7,7 @@
 import argparse
 import json
 import pathlib
+import re
 import shlex
 import subprocess
 
@@ -26,6 +27,8 @@ def main() -> None:
     """Compile one test entry point and link the already-built application objects."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--build", type=pathlib.Path, required=True)
+    parser.add_argument("--sdk-override", action="append", default=[],
+                        help="Compile one generated SDK registration before linking the existing archive")
     args = parser.parse_args()
     build = args.build.resolve()
     root = pathlib.Path(__file__).resolve().parents[2]
@@ -41,6 +44,16 @@ def main() -> None:
     compile_args[compile_args.index("-o") + 1] = str(test_object)
     compile_args[-1] = str(root / "tests/luaubindings/host_input.cpp")
     subprocess.run(compile_args, cwd=build, check=True)
+    sdk_objects: list[str] = []
+    for native in args.sdk_override:
+        if not re.fullmatch(r"Q[A-Za-z0-9_]+", native):
+            raise ValueError("SDK override must name a Qt class")
+        source = build / "generated/WingLuauBind/generated/custom" / ("sdk_" + native + ".cpp")
+        target = build / ("host_input_sdk_" + native + ".o")
+        compile_args[compile_args.index("-o") + 1] = str(target)
+        compile_args[-1] = str(source)
+        subprocess.run(compile_args, cwd=build, check=True)
+        sdk_objects.append(str(target))
     support_object = build / "host_input_execution.o"
     compile_args[compile_args.index("-o") + 1] = str(support_object)
     compile_args[-1] = str(root / "3rdparty/WingLuauQt/support/execute_luau.cpp")
@@ -55,7 +68,7 @@ def main() -> None:
     compile_args[-1] = str(resource_source)
     subprocess.run(compile_args, cwd=build, check=True)
     link_args = command(build, "WingHexExplorer2")
-    link_args[1:1] = [str(support_object), str(resource_object)]
+    link_args[1:1] = [str(support_object), str(resource_object), *sdk_objects]
     link_args[link_args.index("-o") + 1] = str(build / "WingLuauHostInputProbe")
     link_args = [str(test_object) if value.endswith("/WingHexExplorer2.dir/main.cpp.o") else value for value in link_args]
     # Keep the application's linker dependency file separate.

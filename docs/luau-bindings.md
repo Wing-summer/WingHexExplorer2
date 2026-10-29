@@ -143,3 +143,7 @@ Exports serialize writers for the same output directory and generate in a privat
 `scriptserviceapi.h/.cpp` is a native host service adapter, not generated binding code. The generator scans its real declaration and derives the callback contract, definitions and forwarding from configuration. Its implementation stays in the host; the native signature is not duplicated in configuration.
 
 `scriptserviceapi.h/.cpp` 是宿主原生服务适配，不是生成绑定。generator 扫描真实声明，并按配置生成回调契约、定义和转发；原生行为保留在宿主，不在配置重复维护签名。
+
+The generated symbol directory also records public type presentation names for all modules, including shared host values, callable namespaces and cffi types. Browse pages use those names at generation time. LSP hover, completion details and signature help use an optional Luau type-rendering callback, selected by the named type's identity and definition origin. This does not rename bindings, mutate frozen types or rewrite rendered text; unrelated plugin/user types and string singleton types retain their original names.
+
+生成的符号目录同时记录所有模块的公开类型显示名，包括宿主共享值、可调用命名空间及 cffi 类型。浏览页在生成时使用这些名称；LSP 的 hover、补全详情和参数提示通过 Luau 可选类型渲染回调，依据命名类型及定义来源选择显示名。不重命名绑定、不修改冻结类型图，也不替换渲染后的文本；插件及用户的无关类型和字符串单例类型保持原样。

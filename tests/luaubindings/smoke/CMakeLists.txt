@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 get_filename_component(HOST_SOURCE_DIR "../../.." ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(HOST_BUILD_DIR "${HOST_SOURCE_DIR}/build/Debug" CACHE PATH "Existing host build; no dependencies are downloaded")
 set(BINDINGS_DIR "${HOST_BUILD_DIR}/generated/WingLuauBind")
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools OpenGLWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools OpenGLWidgets Network)
 find_package(Threads REQUIRED)
 find_library(WING_BINDINGS WingLuauBind PATHS "${HOST_BUILD_DIR}/luau-bindings" REQUIRED NO_DEFAULT_PATH)
 find_library(WING_PLUGIN WingPlugin PATHS "${HOST_BUILD_DIR}/WingPlugin" REQUIRED NO_DEFAULT_PATH)
@@ -17,6 +17,7 @@ foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common)
   list(APPEND _luau_libraries "${LUAU_${component}}")
 endforeach()
 add_executable(WingHexRegistrationSmoke ../registration.cpp
+  "${HOST_SOURCE_DIR}/src/luau/runtime/scriptfilesystem.cpp"
   "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/support/execute_luau.cpp"
   "${HOST_SOURCE_DIR}/src/luau/wingluaurequire.cpp"
   "${HOST_SOURCE_DIR}/src/dialog/framelessdialogbase.cpp"
@@ -34,7 +35,7 @@ foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common)
 endforeach()
 target_link_libraries(WingHexRegistrationSmoke PRIVATE "${WING_BINDINGS}"
   ${_luau_libraries} "${WING_PLUGIN}" Qt6::Core Qt6::Gui Qt6::Widgets
-  Qt6::UiTools Qt6::OpenGLWidgets Threads::Threads ${CMAKE_DL_LIBS})
+  Qt6::UiTools Qt6::OpenGLWidgets Qt6::Network Threads::Threads ${CMAKE_DL_LIBS})
 find_library(CFFI_LIBRARY cffi PATHS "${HOST_BUILD_DIR}/3rdparty/cffi-luau" REQUIRED NO_DEFAULT_PATH)
 find_library(FFI_LIBRARY ffi PATHS "${HOST_BUILD_DIR}/_deps/libffi-build" REQUIRED NO_DEFAULT_PATH)
 target_link_libraries(WingHexRegistrationSmoke PRIVATE "${CFFI_LIBRARY}" "${FFI_LIBRARY}")
@@ -70,3 +71,18 @@ if(SDK_PROBE_CLASS)
   target_sources(WingHexRegistrationSmoke PRIVATE "${_probe}")
   target_include_directories(WingHexRegistrationSmoke BEFORE PRIVATE "${_framework}/include")
 endif()
+
+# Socket integration uses the same real generated archive and existing dependencies.
+add_executable(WingHexNetworkSmoke ../network.cpp
+  "${HOST_SOURCE_DIR}/src/luau/runtime/scriptfilesystem.cpp"
+  "${HOST_SOURCE_DIR}/src/luau/wingluaurequire.cpp"
+  "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/support/execute_luau.cpp")
+get_target_property(_network_includes WingHexRegistrationSmoke INCLUDE_DIRECTORIES)
+get_target_property(_network_libraries WingHexRegistrationSmoke LINK_LIBRARIES)
+target_include_directories(WingHexNetworkSmoke PRIVATE ${_network_includes})
+target_link_libraries(WingHexNetworkSmoke PRIVATE ${_network_libraries})
+target_compile_features(WingHexNetworkSmoke PRIVATE cxx_std_17)
+target_compile_definitions(WingHexNetworkSmoke PRIVATE
+  WING_NETWORK_FIXTURES="${HOST_SOURCE_DIR}/tests/luaubindings/fixtures/network")
+add_test(NAME network COMMAND WingHexNetworkSmoke)
+set_tests_properties(network PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 45)

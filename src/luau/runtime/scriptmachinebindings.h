@@ -23,8 +23,10 @@
 #include "qtluau/value_conversion.hpp"
 #include "qtluau/value_ref.hpp"
 #include "qtluau/widget_wrappers.hpp"
+#include "scriptfilesystem.h"
 #include "scriptmachine.h"
 #include "scriptwindowfactory.h"
+#include "src/class/settings/settingmanager.h"
 #include <QDialog>
 #include <QMainWindow>
 #include <QUrl>
@@ -106,6 +108,13 @@ public:
         }
 #include SCRIPTMACHINE_LUAU_CALLBACKS
         qtluau::setUiWidgetResolver(&ScriptWindowFactory::create);
+        ScriptFileSystem::setFileSystemAccessPolicy(
+            {[] {
+                 return SettingManager::instance().scriptFileEnableOverwrite();
+             },
+             [] {
+                 return SettingManager::instance().scriptFileSystemWrite();
+             }});
         qtluau::setUiWidgetCreatedCallback(&ScriptWindowFactory::created);
         qtluau::setUiWidgetFinalizer(&ScriptWindowFactory::finalize);
         qtluau::setWidgetContentResolver(&ScriptWindowFactory::content);

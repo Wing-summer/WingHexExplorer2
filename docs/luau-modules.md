@@ -24,8 +24,10 @@ The generator owns registration, definitions and the browse-only symbol catalog.
 | cbor | global / 全局 | QCborValue and related types / CBOR 值及相关类型 |
 | env | global / 全局 | Four readonly functions listed below / 下述四个只读函数 |
 | crypto | global / 全局 | QCryptographicHash |
+| filesystem | global / 全局 | file / fileinfo / dir: QFile, QFileInfo, QDir |
 | service | global / 全局 | Service discovery and calls / 服务查询及调用 |
 | toast | global / 全局 | show |
+| network | require("@network") or require("@b/network") | TCP, UDP, TLS and local sockets / TCP、UDP、TLS 及本地 socket；见 [网络接口](luau-network.md) |
 | qt | require("@qt") or require("@b/qt") | Qt classes, dialogs, clipboard, widgets, layouts and UI loading / Qt 类、对话框、剪贴板、控件、布局、UI 加载 |
 | cffi | require("@cffi") or require("@b/cffi") | Independent FFI instances / 独立 FFI 实例 |
 
@@ -87,7 +89,8 @@ This matrix follows `main:src/class/scriptmachine.cpp` (host globals, `registerE
 | RegisterScriptMath | math | Luau native replacement / Luau 原生替换 |
 | RegisterScriptMathComplex | Not automatically exposed / 不自动公开 | Excluded by policy / 按策略排除 |
 | RegisterScriptDateTime | qt.QDate/QTime/QDateTime | Qt replacement / Qt 替换 |
-| RegisterScriptFile, FileSystem, ASReflection | Not restored as host modules / 不恢复为宿主模块 | Excluded by policy / 按策略排除 |
+| RegisterScriptFile, FileSystem | filesystem.file / fileinfo / dir | Scanned Qt replacement / Qt 扫描替换 |
+| ASReflection | Not exposed / 不公开 | Excluded by policy / 按策略排除 |
 | AngelScript engine/context/type-ID routines / 引擎、上下文、type ID | No AngelScript emulation / 不模拟 AngelScript | Engine-specific / 引擎专属 |
 
 Old dialog module names are not compatibility aliases. `qt.QDialog` and `qt.QMainWindow` retain their script names while the host factory supplies Frameless implementations. Construction and `.ui` loading use the same factory/finalizer contract. Host classes and settings remain outside WingLuauQt.

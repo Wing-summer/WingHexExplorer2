@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
+#include "filesystem_checks.h"
 #include "generated_bindings.hpp"
 #include "luau/runtime/scriptwindowfactory.h"
 #include "luau/wingluaurequire.h"
@@ -287,8 +288,9 @@ int runRegistrationTest() {
         return 1;
     }
     const auto modules = bindings::moduleFiles();
-    if (modules.size() != 2 || !modules.contains(QStringLiteral("qt")) ||
-        !modules.contains(QStringLiteral("cffi"))) {
+    if (modules.size() != 3 || !modules.contains(QStringLiteral("qt")) ||
+        !modules.contains(QStringLiteral("cffi")) ||
+        !modules.contains(QStringLiteral("network"))) {
         std::cerr << "Required module catalog is incorrect\n";
         lua_close(L);
         return 1;
@@ -314,6 +316,9 @@ int runRegistrationTest() {
         })) {
         return 1;
     }
+    require.registerBuiltinLoader("network", [](lua_State *state) {
+        return qtluau::loadRegisteredModule(state, "network", bindings::registerModule);
+    });
     luaopen_cffi(L);
     if (!require.registerBuiltinValue("cffi", -1)) {
         return 1;
@@ -397,6 +402,9 @@ for attempt = 1, 2 do
 end
 local qt = require("@b/qt")
 assert(qt == require("@b/qt") and qt == require("@qt") and _G.qt == nil)
+local network = require("@network")
+assert(network == require("@b/network") and _G.network == nil)
+assert(network.tcp_socket == qt.QTcpSocket and network.ssl_socket == qt.QSslSocket)
 assert(qt.QMdiArea == nil and qt.QMdiSubWindow == nil and qt.QWizardPage == nil)
 assert(qt.QProcessEnvironment == nil and qt.QProcess == nil and qt.QDebug == nil)
 assert(exec == nil and printf == nil and warnprintf == nil and infoprintf == nil and errprintf == nil)
@@ -492,6 +500,24 @@ assert(not pcall(function() rawset(qt.QCalendar, "unsafe_field", true) end))
     }
     std::cerr << "Lazy Qt/FFI execution: " << success << "\n";
     bool dialogs = success;
+    if (dialogs) {
+        bool overwrite = false;
+        bool remove = false;
+        ScriptFileSystem::setFileSystemAccessPolicy(
+            {[&] { return overwrite; }, [&] { return remove; }});
+        const auto restorePolicy = qScopeGuard(
+            [] { ScriptFileSystem::setFileSystemAccessPolicy({}); });
+        try {
+            FilesystemChecks::check(L,
+                                    [&](bool allowOverwrite, bool allowRemove) {
+                                        overwrite = allowOverwrite;
+                                        remove = allowRemove;
+                                    });
+        } catch (const std::exception &error) {
+            std::cerr << error.what() << '\n';
+            dialogs = false;
+        }
+    }
     if (dialogs) {
         dialogs = checkWarning(L, QStringLiteral(R"LUA(
 local qt = require("@qt")

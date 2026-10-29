@@ -21,6 +21,7 @@
 #include <QObject>
 
 #include "lua.h"
+#include "qtluau/callback.hpp"
 
 struct LuauThread;
 class LuauDebugger;
@@ -42,6 +43,7 @@ struct LuauThread {
     bool requestStop = false;
 
     inline void reset() {
+        qtluau::clearLuaContext(state);
         lua_resetthread(state);
         isRunning = false;
         requestStop = false;
