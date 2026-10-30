@@ -30,6 +30,34 @@ constexpr char HEX_UNPRINTABLE_CHAR = '.';
 
 constexpr qreal CONTRASTING_COLOR_BORDER = 0.35;
 
+namespace {
+
+constexpr qreal UNDERLINE_WIDTH = 1.0;
+constexpr qreal UNDERLINE_OUTLINE_WIDTH =
+    UNDERLINE_WIDTH + CONTRASTING_COLOR_BORDER * 2;
+
+qreal underlinePosition(qreal height) { return qMax(1.0, height - 2.0); }
+
+QColor compositeColor(const QColor &color, const QColor &background) {
+    const auto alpha = color.alphaF();
+    return QColor::fromRgbF(
+        color.redF() * alpha + background.redF() * (1 - alpha),
+        color.greenF() * alpha + background.greenF() * (1 - alpha),
+        color.blueF() * alpha + background.blueF() * (1 - alpha));
+}
+
+template <typename Formats, typename Matches>
+qsizetype formatRunEnd(const Formats &formats, qsizetype start,
+                       Matches matches) {
+    auto end = start;
+    while (end + 1 < formats.size() && matches(formats.at(end + 1))) {
+        ++end;
+    }
+    return end;
+}
+
+} // namespace
+
 bool QHexRenderer::stringVisible() { return m_asciiVisible; }
 
 void QHexRenderer::setStringVisible(bool b) {
@@ -706,11 +734,17 @@ QHexRenderer::cellFormat(qsizetype line, int column,
                          const QHexMetadataItem *meta) const {
     CellFormat fmt;
     fmt.foreground = m_bytesColor;
+    const auto base = line % 2 ? m_bytesBackground : m_bytesAlterBackground;
 
     if (meta) {
         if (m_document->metabgVisible() && meta->background.isValid() &&
             meta->background.alpha()) {
             fmt.background = meta->background;
+            const auto displayed = compositeColor(fmt.background, base);
+            if (QHexMetadata::calculateContrastRatio(displayed, base) < 1.3) {
+                fmt.backgroundOutline =
+                    QHexMetadata::generateContrastingColor(base);
+            }
             fmt.fillBackground = true;
         }
         if (m_document->metafgVisible() && meta->foreground.isValid() &&
@@ -725,6 +759,7 @@ QHexRenderer::cellFormat(qsizetype line, int column,
     bool strikeOut = false;
     bool hasSelection = false;
     if (isStrByteSelected(line, column, &strikeOut, &hasSelection)) {
+        fmt.backgroundOutline = QColor();
         fmt.background = (strikeOut || hasSelection)
                              ? m_selBackgroundColor.darker()
                              : m_selBackgroundColor;
@@ -735,9 +770,8 @@ QHexRenderer::cellFormat(qsizetype line, int column,
         fmt.italic = meta || strikeOut;
     }
 
-    QColor bg = fmt.fillBackground
-                    ? fmt.background
-                    : (line % 2 ? m_bytesBackground : m_bytesAlterBackground);
+    const auto bg =
+        fmt.fillBackground ? compositeColor(fmt.background, base) : base;
     if (!QHexMetadata::areColorsContrast(bg, fmt.foreground)) {
         fmt.bold = true;
         fmt.outline = QHexMetadata::generateContrastingColor(bg);
@@ -779,14 +813,9 @@ void QHexRenderer::drawHex(QPainter *painter, const QRectF &linerect,
     const auto cellWidth = getCellWidth();
     const auto height = lineHeight();
 
-    for (qsizetype i = 0; i < lineFormats.size(); ++i) {
-        const auto &fmt = lineFormats.at(i);
-        const auto visualRect = hexVisualRect(cellWidth, height, i);
-
-        if (fmt.fillBackground) {
-            painter->fillRect(visualRect, fmt.background);
-        }
-    }
+    drawBackgrounds(painter, lineFormats, [this, cellWidth, height](int i) {
+        return hexVisualRect(cellWidth, height, i);
+    });
 
     drawUnderLine(painter, lineFormats,
                   [this, cellWidth, height](qreal start, qreal end) {
@@ -1020,10 +1049,58 @@ void QHexRenderer::drawText(QPainter *painter, const QRectF &rect,
     painter->restore();
 }
 
+void QHexRenderer::drawBackgrounds(
+    QPainter *painter, const QVector<CellFormat> &formats,
+    const std::function<QRectF(int)> &rectAt) const {
+    for (qsizetype i = 0; i < formats.size(); ++i) {
+        if (formats.at(i).fillBackground) {
+            painter->fillRect(rectAt(i), formats.at(i).background);
+        }
+    }
+    painter->save();
+    painter->setBrush(Qt::NoBrush);
+    // Outline continuous color regions, avoiding a grid around every byte.
+    for (qsizetype i = 0; i < formats.size();) {
+        const auto &fmt = formats.at(i);
+        if (!fmt.backgroundOutline.isValid()) {
+            ++i;
+            continue;
+        }
+        const auto end = formatRunEnd(formats, i, [&](const auto &next) {
+            return next.background == fmt.background &&
+                   next.backgroundOutline == fmt.backgroundOutline;
+        });
+        bool hasUnderline = false;
+        for (auto column = i; column <= end; ++column) {
+            hasUnderline = hasUnderline || formats.at(column).underline;
+        }
+        painter->setPen(QPen(fmt.backgroundOutline, 1));
+        const auto rect =
+            rectAt(i).united(rectAt(end)).adjusted(0.5, 0.5, -0.5, -0.5);
+        if (hasUnderline) {
+            // Keep a clear gap above the entire underline stroke (including
+            // its contrast outline), and leave the bottom of the frame open.
+            const auto bottom =
+                qMax(rect.top(), underlinePosition(lineHeight()) -
+                                     UNDERLINE_OUTLINE_WIDTH / 2 - 1.5);
+            QPainterPath path;
+            path.moveTo(rect.left(), bottom);
+            path.lineTo(rect.topLeft());
+            path.lineTo(rect.topRight());
+            path.lineTo(rect.right(), bottom);
+            painter->drawPath(path);
+        } else {
+            painter->drawRect(rect);
+        }
+        i = end + 1;
+    }
+    painter->restore();
+}
+
 void QHexRenderer::drawUnderLine(
     QPainter *painter, const QVector<CellFormat> &lineFormats,
     const std::function<QPair<qreal, qreal>(qreal, qreal)> &fn) {
-    const auto underlineY = qMax(1.0, lineHeight() - 2);
+    const auto underlineY = underlinePosition(lineHeight());
     const auto count = lineFormats.size();
     for (qsizetype i = 0; i < count;) {
         const auto fmt = lineFormats.at(i);
@@ -1034,14 +1111,10 @@ void QHexRenderer::drawUnderLine(
 
         const QColor color = fmt.outline;
         qsizetype start = i;
-        qsizetype end = i;
-        while (end + 1 < count) {
-            const auto &next = lineFormats.at(end + 1);
-            if (!next.underline || next.outline != color) {
-                break;
-            }
-            ++end;
-        }
+        const auto end = formatRunEnd(lineFormats, i, [&](const auto &next) {
+            return next.underline && next.outline == color &&
+                   next.foreground == fmt.foreground;
+        });
 
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
@@ -1053,10 +1126,10 @@ void QHexRenderer::drawUnderLine(
         if (color.isValid()) {
             // outline
             QPainterPathStroker stroker;
-            stroker.setWidth(1.0 + CONTRASTING_COLOR_BORDER * 2);
+            stroker.setWidth(UNDERLINE_OUTLINE_WIDTH);
             painter->fillPath(stroker.createStroke(linePath), color);
         }
-        painter->setPen(QPen(fmt.foreground, 1));
+        painter->setPen(QPen(fmt.foreground, UNDERLINE_WIDTH));
         painter->drawPath(linePath);
         painter->restore();
         i = end + 1;
@@ -1087,17 +1160,9 @@ void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,
     const auto cellWidth = getCellWidth();
     const auto height = lineHeight();
 
-    // Paint all backgrounds before underlines and glyphs.
-    for (const auto &cell : cells) {
-        for (qsizetype i = 0; i < cell.length; ++i) {
-            const auto column = cell.start + i;
-            const auto &fmt = lineFormats.at(column);
-            if (fmt.fillBackground) {
-                painter->fillRect(byteRectAt(cellWidth, height, column),
-                                  fmt.background);
-            }
-        }
-    }
+    drawBackgrounds(painter, lineFormats, [this, cellWidth, height](int i) {
+        return byteRectAt(cellWidth, height, i);
+    });
 
     drawUnderLine(painter, lineFormats, [this](qreal start, qreal end) {
         const auto cellWidth = getCellWidth();
@@ -1239,7 +1304,7 @@ void QHexRenderer::drawCursor(QPainter *painter, const QRectF &cursorRect,
                               const QString &cursorText) const {
     const auto height = lineHeight();
     painter->save();
-    const qreal underlineY = qMax(1.0, height - 2.0);
+    const qreal underlineY = underlinePosition(height);
     painter->fillRect(cursorRect, m_bytesColor);
     drawText(painter, cursorRect, cursorText, {m_bytesBackground});
     if (m_cursor->insertionMode() != QHexCursor::OverwriteMode) {

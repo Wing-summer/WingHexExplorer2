@@ -148,6 +148,7 @@ private:
         QColor foreground;
         QColor background;
         QColor outline;
+        QColor backgroundOutline;
         bool fillBackground = false;
         bool underline = false;
         bool bold = false;
@@ -222,6 +223,8 @@ private:
                        const QColor &fallbackColor) const;
     void drawText(QPainter *painter, const QRectF &rect, const QString &text,
                   const CellFormat &fmt) const;
+    void drawBackgrounds(QPainter *painter, const QVector<CellFormat> &formats,
+                         const std::function<QRectF(int)> &rectAt) const;
     void drawUnderLine(
         QPainter *painter, const QVector<CellFormat> &lineFormats,
         const std::function<QPair<qreal, qreal>(qreal start, qreal end)> &fn);
