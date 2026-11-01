@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../../resources.qrc">
-    <normaloff>:/com.wingsummer.winghex/images/defines.png</normaloff>:/com.wingsummer.winghex/images/defines.png</iconset>
+    <normaloff>:/com.wingsummer.winghex/images/color-palette.svg</normaloff>:/com.wingsummer.winghex/images/color-palette.svg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>

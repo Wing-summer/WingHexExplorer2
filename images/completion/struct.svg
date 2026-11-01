@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" version="1.1" width="200" height="200">
+  <defs />
+  <path d="M512 512m-384 0a384 384 0 1 0 768 0 384 384 0 1 0-768 0Z" fill="#edcff8" />
+  <text x="511.41299" y="708.95001" fill="#333333" fill-opacity="1" stroke-width="14.9204">
+    <tspan x="511.41299" y="708.95001" fill="#333333" fill-opacity="1" stroke-width="14.9204">S</tspan>
+  </text>
+</svg>

@@ -34,3 +34,7 @@ git diff --check
 
 这些独立测试不能替代完整应用构建及人工交互检查。国际化 UI 尺寸检查的限制见 [文案规范](../docs/i18n.md)。
 These standalone tests do not replace a full application build or manual interaction checks. See the [UI text guide](../docs/i18n.md) for the limits of internationalization UI sizing checks.
+
+- [ThemeManager / 主题与标准图标](theme/README.md)：独立验证深浅主题、高 DPI、
+  图标状态及 SDK 调用。Standalone checks for themes, high DPI, icon states,
+  and SDK calls.

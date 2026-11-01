@@ -19,9 +19,9 @@
 #include "ui_lspsettingdialog.h"
 
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "luau/luauformatter.h"
 #include "luau/runtime/scriptsettings.h"
-#include "utilities.h"
 
 LspSettingDialog::LspSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::LspSettingDialog) {
@@ -91,7 +91,8 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
 LspSettingDialog::~LspSettingDialog() { delete ui; }
 
 QIcon LspSettingDialog::categoryIcon() const {
-    return ICONRES(QStringLiteral("luau"));
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Luau);
 }
 
 QString LspSettingDialog::name() const { return QStringLiteral("Luau"); }

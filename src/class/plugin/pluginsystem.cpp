@@ -20,7 +20,7 @@
 #include "class/file/fileaccesscheck.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "control/toast.h"
 #include "define.h"
 #include "dialog/colorpickerdialog.h"
@@ -2496,14 +2496,39 @@ HexPosition PluginSystem::currentPos(const QObject *sender) {
 }
 
 AppTheme PluginSystem::currentAppTheme(const QObject *sender) {
-    auto theme = SkinManager::instance().currentTheme();
+    auto theme = ThemeManager::instance().currentTheme();
     switch (theme) {
-    case SkinManager::Theme::Dark:
+    case ThemeManager::Theme::Dark:
         return WingHex::AppTheme::Dark;
-    case SkinManager::Theme::Light:
+    case ThemeManager::Theme::System:
+    case ThemeManager::Theme::Light:
         return WingHex::AppTheme::Light;
     }
     return WingHex::AppTheme::Invalid;
+}
+
+QIcon PluginSystem::standardIcon(const QObject *sender,
+                                 WingHex::StandardIcon icon) {
+    Q_UNUSED(sender);
+    return ThemeManager::instance().standardIcon(icon);
+}
+
+QPixmap PluginSystem::appAuthorPixmap(const QObject *sender) {
+    Q_UNUSED(sender);
+    return QPixmap(
+        QStringLiteral(":/com.wingsummer.winghex/images/author.jpg"));
+}
+
+QPixmap PluginSystem::standardPixmap(const QObject *sender,
+                                     WingHex::StandardIcon icon) {
+    Q_UNUSED(sender);
+    return ThemeManager::instance().standardPixmap(icon);
+}
+
+QByteArray PluginSystem::standardIconData(const QObject *sender,
+                                          WingHex::StandardIcon icon) {
+    Q_UNUSED(sender);
+    return ThemeManager::instance().standardIconData(icon);
 }
 
 void PluginSystem::logWarn(const QObject *sender, const QString &message) {

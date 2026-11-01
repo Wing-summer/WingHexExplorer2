@@ -21,13 +21,15 @@
 #include <QClipboard>
 #include <QPushButton>
 
-#include "utilities.h"
-
+#include "class/settings/thememanager.h"
 #include "control/toast.h"
+#include "utilities.h"
 
 CrashReport::CrashReport(QWidget *parent)
     : QWidget(parent), ui(new Ui::CrashReport) {
     ui->setupUi(this);
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Crash));
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
@@ -49,7 +51,9 @@ void CrashReport::on_buttonBox_clicked(QAbstractButton *button) {
     if (button == ui->buttonBox->button(QDialogButtonBox::Save)) {
         auto clipboard = qApp->clipboard();
         clipboard->setText(ui->textBrowser->toPlainText());
-        Toast::toast(_dialog, NAMEICONRES(QStringLiteral("copy")),
+        Toast::toast(_dialog,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Copy),
                      tr("Copy to clipboard"));
     } else {
         _dialog->done(1);

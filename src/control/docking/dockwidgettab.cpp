@@ -17,6 +17,8 @@
 
 #include "dockwidgettab.h"
 
+#include "class/settings/thememanager.h"
+
 #include <QMenu>
 
 #include "DockAreaWidget.h"
@@ -162,7 +164,9 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
                 initMenuItems(menu, v->fileNameUrl());
             }
         }
-        auto a = new QAction(ICONRES("info"), tr("File information"), menu);
+        auto a = new QAction(ThemeManager::instance().standardIcon(
+                                 ThemeManager::StandardIcon::Information),
+                             tr("File information"), menu);
         connect(a, &QAction::triggered, this, [this]() {
             auto editor = qobject_cast<EditorView *>(dockWidget());
             if (editor) {
@@ -212,8 +216,9 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
 void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
     Q_ASSERT(menu);
     if (path.isLocalFile() && !EditorView::isNewFileUrl(path)) {
-        auto a =
-            new QAction(ICONRES("shell"), tr("Show in file manager"), menu);
+        auto a = new QAction(ThemeManager::instance().standardIcon(
+                                 ThemeManager::StandardIcon::FileManager),
+                             tr("Show in file manager"), menu);
         auto file = path.toLocalFile();
         connect(a, &QAction::triggered, this, [file]() {
             ShowInShell::showInGraphicalShell(

@@ -16,6 +16,8 @@
 */
 
 #include "historydeldialog.h"
+
+#include "class/settings/thememanager.h"
 #include "ui_historydeldialog.h"
 
 #include "class/plugin/pluginsystem.h"
@@ -30,6 +32,7 @@ HistoryDelDialog::HistoryDelDialog(
       _isScriptFile(isScriptFile) {
     ui->setupUi(this);
 
+    auto &theme = ThemeManager::instance();
     for (const auto &info : files) {
         const auto &url = info.url;
         auto lw = new QListWidgetItem;
@@ -47,7 +50,8 @@ HistoryDelDialog::HistoryDelDialog(
             } else {
                 if (info.isWorkSpace) {
                     lw->setText(title);
-                    lw->setIcon(ICONRES(QStringLiteral("pro")));
+                    lw->setIcon(theme.standardIcon(
+                        ThemeManager::StandardIcon::Project));
                     auto font = lw->font();
                     font.setUnderline(true);
                     lw->setFont(font);
@@ -67,7 +71,8 @@ HistoryDelDialog::HistoryDelDialog(
             if (r) {
                 lw->setIcon(r->supportedFileIcon());
             } else {
-                lw->setIcon(ICONRES(QStringLiteral("devext")));
+                lw->setIcon(
+                    theme.standardIcon(ThemeManager::StandardIcon::Device));
             }
         }
 
@@ -79,7 +84,8 @@ HistoryDelDialog::HistoryDelDialog(
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
-    _dialog->setWindowIcon(ICONRES(QStringLiteral("clearhis")));
+    _dialog->setWindowIcon(
+        theme.standardIcon(ThemeManager::StandardIcon::ClearHistory));
     _dialog->setWindowTitle(this->windowTitle());
     _dialog->setMinimumSize(600, 400);
     Utilities::moveToCenter(_dialog);

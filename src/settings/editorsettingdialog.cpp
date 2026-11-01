@@ -19,6 +19,7 @@
 #include "ui_editorsettingdialog.h"
 
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 EditorSettingDialog::EditorSettingDialog(QWidget *parent)
@@ -65,7 +66,10 @@ void EditorSettingDialog::reload() {
     ui->sbCopyLimit->setValue(set.copylimit());
 }
 
-QIcon EditorSettingDialog::categoryIcon() const { return ICONRES("edit"); }
+QIcon EditorSettingDialog::categoryIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Edit);
+}
 
 QString EditorSettingDialog::name() const { return tr("Editor"); }
 

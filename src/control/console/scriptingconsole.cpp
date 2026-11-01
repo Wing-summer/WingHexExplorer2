@@ -17,7 +17,7 @@
 
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "control/editor/editorlspevent.h"
 #include "control/editor/luaucompletion.h"
 #include "control/editor/luauindentation.h"
@@ -25,7 +25,6 @@
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptsettings.h"
 #include "model/codecompletionmodel.h"
-#include "utilities.h"
 
 #include <QApplication>
 #include <QColor>
@@ -46,6 +45,8 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
     : ScriptingConsoleBase(parent) {
     connect(&ScriptSettings::instance(), &ScriptSettings::consoleSettingUpdate,
             this, &ScriptingConsole::applyScriptSettings);
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            &ScriptingConsole::applyScriptSettings);
     applyScriptSettings();
     setIndentationStrategy(
         [this](const WingCodeEdit::IndentationContext &context)
@@ -337,12 +338,13 @@ void ScriptingConsole::applyScriptSettings() {
 
     auto thname = set.consoleTheme();
     if (thname.isEmpty()) {
-        switch (SkinManager::instance().currentTheme()) {
-        case SkinManager::Theme::Dark:
+        switch (ThemeManager::instance().currentTheme()) {
+        case ThemeManager::Theme::Dark:
             setTheme(syntaxRepo().defaultTheme(
                 KSyntaxHighlighting::Repository::DarkTheme));
             break;
-        case SkinManager::Theme::Light:
+        case ThemeManager::Theme::System:
+        case ThemeManager::Theme::Light:
             setTheme(syntaxRepo().defaultTheme(
                 KSyntaxHighlighting::Repository::LightTheme));
             break;
@@ -669,29 +671,32 @@ void ScriptingConsole::enableLSP() {
 void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);
 
-    auto a = menu.addAction(QIcon(QStringLiteral(":/qeditor/copy.png")),
-                            tr("Copy"), QKeySequence(QKeySequence::Copy), this,
-                            &ScriptingConsole::copy);
+    auto &theme = ThemeManager::instance();
+    auto a = menu.addAction(
+        theme.standardIcon(ThemeManager::StandardIcon::Copy), tr("Copy"),
+        QKeySequence(QKeySequence::Copy), this, &ScriptingConsole::copy);
     a->setShortcutContext(Qt::WidgetShortcut);
-    a = menu.addAction(QIcon(QStringLiteral(":/qeditor/cut.png")), tr("Cut"),
-                       QKeySequence(QKeySequence::Cut), this,
+    a = menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Cut),
+                       tr("Cut"), QKeySequence(QKeySequence::Cut), this,
                        &ScriptingConsole::cut);
     a->setShortcutContext(Qt::WidgetShortcut);
     a->setEnabled(canCut());
-    a = menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")),
+    a = menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Paste),
                        tr("Paste"), QKeySequence(QKeySequence::Paste), this,
                        &ScriptingConsole::paste);
     a->setShortcutContext(Qt::WidgetShortcut);
     a->setEnabled(mode() == Input && canPaste());
 
     if (_isTerminal) {
-        a = menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                           QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
-                           &ScriptingConsole::clearConsole);
+        a = menu.addAction(
+            theme.standardIcon(ThemeManager::StandardIcon::Delete), tr("Clear"),
+            QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+            &ScriptingConsole::clearConsole);
         a->setShortcutContext(Qt::WidgetShortcut);
         menu.addSeparator();
         a = menu.addAction(
-            ICONRES(QStringLiteral("dbgstop")), tr("Terminate script"),
+            theme.standardIcon(ThemeManager::StandardIcon::DebugStop),
+            tr("Terminate script"),
             QKeySequence(Qt::ControlModifier | Qt::Key_Q), this, [this]() {
                 auto &m = ScriptMachine::instance();
                 if (_isTerminal) {
@@ -706,9 +711,10 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
             });
         a->setShortcutContext(Qt::WidgetShortcut);
     } else {
-        a = menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                           QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
-                           &ScriptingConsole::clear);
+        a = menu.addAction(
+            theme.standardIcon(ThemeManager::StandardIcon::Delete), tr("Clear"),
+            QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+            &ScriptingConsole::clear);
         a->setShortcutContext(Qt::WidgetShortcut);
     }
 

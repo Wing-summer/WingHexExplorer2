@@ -60,7 +60,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     // 其他资源，前缀应为：/res/插件的 PUID 或 /resources/插件的 PUID
     // 如果想省劲，可以统一为 /插件的 PUID，但别一个 / 完事。
     // 这很容易发生资源文件冲突！！！
-    tb->setIcon(QIcon(QStringLiteral(":/images/TestPlugin/images/test.png")));
+    tb->setIcon(standardIcon(WingHex::StandardIcon::Plugin));
     tb->setText(tr("Test"));
     connect(tb, &QToolButton::clicked, this, [=] {
         if (_tform) {
@@ -69,7 +69,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         }
     });
 
-    QIcon btnIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+    const QIcon btnIcon = standardIcon(WingHex::StandardIcon::Settings);
 
     _rtbinfo << createRibbonToolBox(
         WingHex::WingRibbonCatagories::PLUGIN,
@@ -108,7 +108,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     _evws.append(ev);
 
     _tmenu = new QMenu(QStringLiteral("TestPlugin"));
-    auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+    auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/device.svg"));
     _tmenu->setIcon(micon);
     _tmenu->addAction(QStringLiteral("Raise Plugin View"), this, [this]() {
         if (_curContext) {

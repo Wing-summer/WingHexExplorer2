@@ -16,8 +16,10 @@
 */
 
 #include "fileinfodialog.h"
+
 #include "class/file/showinshell.h"
 #include "class/plugin/pluginsystem.h"
+#include "class/settings/thememanager.h"
 #include "control/common/compositeiconengine.h"
 #include "control/toast.h"
 #include "utilities.h"
@@ -70,7 +72,9 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     connect(_clnbtn, &QPushButton::clicked, this, [this]() {
         _editor->cleanUpPluginData();
         reloadData();
-        Toast::toast(this, NAMEICONRES(QStringLiteral("workspace")),
+        Toast::toast(this,
+                     ThemeManager::instance()
+                         .standardPixmap(ThemeManager::StandardIcon::Workspace),
                      tr("Workspace plugin data cleanup complete"));
     });
 
@@ -84,7 +88,8 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     reloadData();
 
     setWindowTitle(tr("File information"));
-    setWindowIcon(ICONRES("info"));
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Information));
     this->resize(500, 450);
 }
 
@@ -165,7 +170,8 @@ void FileInfoDialog::reloadData() {
         if (dev) {
             icon = dev->supportedFileIcon();
         } else {
-            icon = ICONRES(QStringLiteral("devext"));
+            icon = ThemeManager::instance().standardIcon(
+                ThemeManager::StandardIcon::Device);
         }
 
         _tb->append(tr("File path") + sep + url.authority() + url.path());
@@ -205,7 +211,9 @@ void FileInfoDialog::reloadData() {
             }
         }
 
-        CompositeIconEngine engine(ICONRES("pro"), icon);
+        CompositeIconEngine engine(ThemeManager::instance().standardIcon(
+                                       ThemeManager::StandardIcon::Project),
+                                   icon);
         ico = engine.pixmap({ICON_SIZE, ICON_SIZE}, QIcon::Normal,
                             QIcon::State::Off);
     } else {

@@ -22,7 +22,7 @@
 
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 #include <QLibraryInfo>
@@ -39,10 +39,11 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
         ui->cbLanguage->addItem(lang.langDisplay(l), l);
     }
 
-    ui->cbTheme->addItem(SkinManager::tr("Dark"),
-                         int(SkinManager::Theme::Dark));
-    ui->cbTheme->addItem(SkinManager::tr("Light"),
-                         int(SkinManager::Theme::Light));
+    const auto themes = QMetaEnum::fromType<ThemeManager::Theme>();
+    for (int i = 0; i < themes.keyCount(); ++i) {
+        const auto label = ThemeManager::tr(themes.key(i));
+        ui->cbTheme->addItem(label, themes.value(i));
+    }
 
     ui->cbWinState->addItems(
         {tr("Normal"), tr("Maximized"), tr("Full screen")});
@@ -54,7 +55,6 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     ui->lblPlgSDKVersion->setNum(WingHex::SDKVERSION);
 
     Utilities::addSpecialMark(ui->lblLanguage);
-    Utilities::addSpecialMark(ui->lblTheme);
     Utilities::addSpecialMark(ui->lblFont);
     Utilities::addSpecialMark(ui->lblFontSize);
     Utilities::addSpecialMark(ui->lblWinState);
@@ -62,8 +62,6 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     reload();
 
     connect(ui->cbLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &GeneralSettingDialog::optionNeedRestartChanged);
-    connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &GeneralSettingDialog::optionNeedRestartChanged);
     connect(ui->cbFont, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &GeneralSettingDialog::optionNeedRestartChanged);
@@ -82,8 +80,9 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
             &SettingManager::setAppfontSize);
     connect(ui->cbFont, &QFontComboBox::currentTextChanged, sm,
             &SettingManager::setAppFontFamily);
-    connect(ui->cbTheme, &QComboBox::currentIndexChanged, sm,
-            &SettingManager::setThemeID);
+    connect(ui->cbTheme, &QComboBox::currentIndexChanged, this, [this]() {
+        SettingManager::instance().setThemeID(ui->cbTheme->currentData().toInt());
+    });
     connect(ui->cbWinState, &QComboBox::currentIndexChanged, sm, [](int index) {
         Qt::WindowState state;
         switch (index) {
@@ -122,7 +121,7 @@ void GeneralSettingDialog::reload() {
 
     ui->sbFontSize->setValue(set.appfontSize());
     ui->cbFont->setCurrentText(set.appFontFamily());
-    ui->cbTheme->setCurrentIndex(set.themeID());
+    ui->cbTheme->setCurrentIndex(ui->cbTheme->findData(set.themeID()));
 
     int s;
     switch (set.defaultWinState()) {
@@ -144,7 +143,10 @@ void GeneralSettingDialog::reload() {
     this->blockSignals(false);
 }
 
-QIcon GeneralSettingDialog::categoryIcon() const { return ICONRES("general"); }
+QIcon GeneralSettingDialog::categoryIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Tools);
+}
 
 QString GeneralSettingDialog::name() const { return tr("General"); }
 

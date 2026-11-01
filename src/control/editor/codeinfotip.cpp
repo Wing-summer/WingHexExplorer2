@@ -17,6 +17,7 @@
 
 #include "codeinfotip.h"
 
+#include "class/settings/thememanager.h"
 #include "editorlspevent.h"
 #include "snippetprocessor.h"
 
@@ -27,6 +28,7 @@
 #include <QHash>
 #include <QMetaEnum>
 #include <QRandomGenerator>
+#include <QRegularExpression>
 #include <QTime>
 #include <QUuid>
 
@@ -57,9 +59,13 @@ bool resolveRange(const QTextDocument *document, const lsp::Range &range,
 using IconHash = QHash<lsp::CompletionItemKind, QIcon>;
 Q_GLOBAL_STATIC(IconHash, q_icon_cache)
 
-inline static QIcon getIcon(const QString &name) {
-    return QIcon(QStringLiteral(":/completion/images/completion/") + name +
-                 QStringLiteral(".svg"));
+inline static QIcon getIcon(QString name) {
+    static QRegularExpression normalize(QStringLiteral("([a-z0-9])([A-Z])"));
+    name.replace(normalize, QStringLiteral("\\1-\\2"));
+    name = name.toLower();
+    return ThemeManager::instance().resourceIcon(
+        QStringLiteral(":/completion/images/completion/") + name +
+        QStringLiteral(".svg"));
 }
 
 QIcon CodeInfoTip::getDisplayIcon(lsp::CompletionItemKind kind) {

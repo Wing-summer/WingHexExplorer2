@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" version="1.1" width="200" height="200">
+  <defs />
+  <g transform="matrix(0.85714286,0,0,0.85714286,73.142856,73.142856)">
+    <path d="m 960,512 a 448,448 0 1 1 -896,0 448,448 0 0 1 896,0" fill="#f4af3d" fill-opacity="0.6" />
+    <text x="507.25128" y="714.02454" fill="#4d3b25" fill-opacity="0.882353" stroke-width="14.8859">
+      <tspan x="507.25128" y="714.02454" fill="#4d3b25" fill-opacity="0.882353" stroke-width="14.8859">C</tspan>
+    </text>
+  </g>
+</svg>

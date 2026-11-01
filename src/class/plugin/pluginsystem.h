@@ -352,6 +352,11 @@ public slots:
     bool raiseDockWidget(const QObject *sender, QWidget *w);
 
     WingHex::AppTheme currentAppTheme(const QObject *sender);
+    QIcon standardIcon(const QObject *sender, WingHex::StandardIcon icon);
+    QPixmap appAuthorPixmap(const QObject *sender);
+    QPixmap standardPixmap(const QObject *sender, WingHex::StandardIcon icon);
+    QByteArray standardIconData(const QObject *sender,
+                                WingHex::StandardIcon icon);
     QDialog *createDialog(const QObject *sender, QWidget *content);
     QMainWindow *createMainWindow(const QObject *sender, QWidget *content);
 

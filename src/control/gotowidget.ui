@@ -107,7 +107,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../resources.qrc">
-       <normaloff>:/com.wingsummer.winghex/images/jmp.png</normaloff>:/com.wingsummer.winghex/images/jmp.png</iconset>
+       <normaloff>:/com.wingsummer.winghex/images/location.svg</normaloff>:/com.wingsummer.winghex/images/location.svg</iconset>
      </property>
     </widget>
    </item>
@@ -127,7 +127,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../resources.qrc">
-       <normaloff>:/com.wingsummer.winghex/images/closefile.svg</normaloff>:/com.wingsummer.winghex/images/closefile.svg</iconset>
+       <normaloff>:/com.wingsummer.winghex/images/close-file.svg</normaloff>:/com.wingsummer.winghex/images/close-file.svg</iconset>
      </property>
     </widget>
    </item>

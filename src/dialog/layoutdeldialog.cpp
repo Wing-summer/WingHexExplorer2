@@ -18,16 +18,19 @@
 #include "layoutdeldialog.h"
 #include "ui_layoutdeldialog.h"
 
-#include "utilities.h"
-
 #include <QListWidgetItem>
+
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 LayoutDelDialog::LayoutDelDialog(const QStringList &layouts, QWidget *parent)
     : QWidget(parent), ui(new Ui::LayoutDelDialog) {
     ui->setupUi(this);
 
     for (const auto &l : layouts) {
-        auto lw = new QListWidgetItem(ICONRES(QStringLiteral("layout")), l);
+        auto lw = new QListWidgetItem(ThemeManager::instance().standardIcon(
+                                          ThemeManager::StandardIcon::Layout),
+                                      l);
         lw->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable |
                      Qt::ItemIsSelectable);
         lw->setCheckState(Qt::Unchecked);

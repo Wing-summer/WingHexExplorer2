@@ -27,13 +27,13 @@
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
 #include "WingPlugin/wingplugincalls_p.h"
+#include "class/settings/thememanager.h"
 #include "class/util/cryptographichash.h"
 #include "control/editor/editorinfo.h"
 #include "control/editor/editorviewcontext.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/findresultmodel.h"
-#include "utilities.h"
 
 using namespace WingHex;
 
@@ -559,7 +559,7 @@ private slots:
 
 private:
     template <typename Func>
-    inline void newAction(QWidget *parent, const QString &icon,
+    inline void newAction(QWidget *parent, ThemeManager::StandardIcon icon,
                           const QString &title, Func &&slot,
                           const QKeySequence &shortcut = QKeySequence()) {
         auto a = new QAction(parent);
@@ -568,7 +568,7 @@ private:
         } else {
             a->setText(title + QStringLiteral("\t") + shortcut.toString());
         }
-        a->setIcon(ICONRES(icon));
+        a->setIcon(ThemeManager::instance().standardIcon(icon));
         connect(a, &QAction::triggered, this, slot);
         parent->addAction(a);
     }

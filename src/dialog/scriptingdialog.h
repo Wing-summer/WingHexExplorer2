@@ -18,7 +18,15 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
+#include <QKeySequence>
+#include <QMessageBox>
+#include <QShortcut>
+#include <QStatusBar>
+#include <QTableView>
+#include <QTextBrowser>
+
 #include "control/console/scriptingconsole.h"
+#include "class/settings/thememanager.h"
 #include "control/idbtreeview.h"
 #include "control/objtreewidget.h"
 #include "dialog/settingdialog.h"
@@ -33,14 +41,6 @@
 #include "control/editor/scripteditor.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/idbwatchmodel.h"
-#include "utilities.h"
-
-#include <QKeySequence>
-#include <QMessageBox>
-#include <QShortcut>
-#include <QStatusBar>
-#include <QTableView>
-#include <QTextBrowser>
 
 class ScriptingDialog : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
@@ -130,13 +130,13 @@ private:
 
     template <typename Func>
     inline QToolButton *
-    addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,
+    addPannelAction(RibbonButtonGroup *pannel, ThemeManager::StandardIcon icon,
                     const QString &title, Func &&slot,
                     const QKeySequence &shortcut = QKeySequence(),
                     QMenu *menu = nullptr,
                     const QString &description = QString()) {
-        return addPannelAction(pannel, ICONRES(iconName), title, slot, shortcut,
-                               menu, description);
+        return addPannelAction(pannel, ThemeManager::instance().standardIcon(icon),
+                               title, slot, shortcut, menu, description);
     }
 
     template <typename Func>
@@ -210,7 +210,7 @@ private:
 
 private:
     void registerMark();
-    QPixmap markFromPath(const QString &name);
+    QPixmap markFromPath(ThemeManager::StandardIcon icon);
 
     void registerEditorView(ScriptEditor *editor);
     inline ads::CDockAreaWidget *editorViewArea() const;

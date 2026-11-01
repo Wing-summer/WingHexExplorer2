@@ -61,7 +61,7 @@ QString SharedMemoryDriver::supportedFileExtDisplayName() const {
 }
 
 QIcon SharedMemoryDriver::supportedFileIcon() const {
-    return QIcon(QStringLiteral(":/images/ShareMemDrv/images/shmem.png"));
+    return QIcon(QStringLiteral(":/images/ShareMemDrv/images/shared-memory.svg"));
 }
 
 QString SharedMemoryDriver::onOpenFileBegin() {

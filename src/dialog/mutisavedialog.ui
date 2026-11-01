@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../../resources.qrc">
-    <normaloff>:/com.wingsummer.winghex/images/unsaved.png</normaloff>:/com.wingsummer.winghex/images/unsaved.png</iconset>
+    <normaloff>:/com.wingsummer.winghex/images/unsaved.svg</normaloff>:/com.wingsummer.winghex/images/unsaved.svg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">

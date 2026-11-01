@@ -16,6 +16,8 @@
 */
 
 #include "settingdialog.h"
+
+#include "class/settings/thememanager.h"
 #include "ui_settingdialog.h"
 
 #include "control/toast.h"
@@ -215,9 +217,7 @@ void SettingDialog::toastTakeEffectReboot() {
     auto page = qobject_cast<WingHex::SettingPage *>(sender());
     if (page) {
         auto icon = page->categoryIcon();
-        auto avsize = icon.availableSizes();
-        Q_ASSERT(!avsize.isEmpty());
-        Toast::toast(_dialog, icon.pixmap(avsize.first()),
+        Toast::toast(_dialog, icon.pixmap(200, 200),
                      tr("Restart the application to apply these changes."));
     }
 }
@@ -225,12 +225,12 @@ void SettingDialog::toastTakeEffectReboot() {
 void SettingDialog::toastTakeEffectReboot(WingHex::SettingPage *page) {
     if (page) {
         auto icon = page->categoryIcon();
-        auto avsize = icon.availableSizes();
-        Q_ASSERT(!avsize.isEmpty());
-        Toast::toast(_dialog, icon.pixmap(avsize.first()),
+        Toast::toast(_dialog, icon.pixmap(200, 200),
                      tr("Restart the application to apply these changes."));
     } else {
-        Toast::toast(_dialog, NAMEICONRES(QStringLiteral("setting")),
+        Toast::toast(_dialog,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Settings),
                      tr("Restart the application to apply these changes."));
     }
 }

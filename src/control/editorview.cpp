@@ -102,41 +102,41 @@ EditorView::EditorView(QWidget *parent)
     m_menu = new QMenu(m_hex);
     auto &shortcut = QKeySequences::instance();
 
-    newAction(m_menu, QStringLiteral("cut"), tr("Cut"),
+    newAction(m_menu, ThemeManager::StandardIcon::Cut, tr("Cut"),
               &EditorView::sigOnCutFile, QKeySequence::Cut);
-    newAction(m_menu, QStringLiteral("cuthex"), tr("Cut hex"),
+    newAction(m_menu, ThemeManager::StandardIcon::CutHex, tr("Cut hex"),
               &EditorView::sigOnCutHex,
               shortcut.keySequence(QKeySequences::Key::CUT_HEX));
-    newAction(m_menu, QStringLiteral("copy"), tr("Copy"),
+    newAction(m_menu, ThemeManager::StandardIcon::Copy, tr("Copy"),
               &EditorView::sigOnCopyFile, QKeySequence::Copy);
-    newAction(m_menu, QStringLiteral("copyhex"), tr("Copy hex"),
+    newAction(m_menu, ThemeManager::StandardIcon::CopyHex, tr("Copy hex"),
               &EditorView::sigOnCopyHex,
               shortcut.keySequence(QKeySequences::Key::COPY_HEX));
-    newAction(m_menu, QStringLiteral("paste"), tr("Paste"),
+    newAction(m_menu, ThemeManager::StandardIcon::Paste, tr("Paste"),
               &EditorView::sigOnPasteFile, QKeySequence::Paste);
-    newAction(m_menu, QStringLiteral("pastehex"), tr("Paste hex"),
+    newAction(m_menu, ThemeManager::StandardIcon::PasteHex, tr("Paste hex"),
               &EditorView::sigOnPasteHex,
               shortcut.keySequence(QKeySequences::Key::PASTE_HEX));
-    newAction(m_menu, QStringLiteral("del"), tr("Delete"),
+    newAction(m_menu, ThemeManager::StandardIcon::Delete, tr("Delete"),
               &EditorView::sigOnDelete, QKeySequence::Delete);
     m_menu->addSeparator();
-    newAction(m_menu, QStringLiteral("find"), tr("Find"),
+    newAction(m_menu, ThemeManager::StandardIcon::Find, tr("Find"),
               &EditorView::sigOnFindFile, QKeySequence::Find);
-    newAction(m_menu, QStringLiteral("jmp"), tr("Go to"),
+    newAction(m_menu, ThemeManager::StandardIcon::Location, tr("Go to"),
               &EditorView::sigOnGoToLine,
               shortcut.keySequence(QKeySequences::Key::GOTO));
-    newAction(m_menu, QStringLiteral("fill"), tr("Fill"),
+    newAction(m_menu, ThemeManager::StandardIcon::Fill, tr("Fill"),
               &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_menu, QStringLiteral("metadata"), tr("Add annotation"),
-              &EditorView::sigOnMetadata,
+    newAction(m_menu, ThemeManager::StandardIcon::Metadata,
+              tr("Add annotation"), &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
-    newAction(m_menu, QStringLiteral("bookmark"), tr("Bookmark"),
+    newAction(m_menu, ThemeManager::StandardIcon::Bookmark, tr("Bookmark"),
               &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
-    newAction(m_menu, QStringLiteral("encoding"), tr("Encoding"),
+    newAction(m_menu, ThemeManager::StandardIcon::Encoding, tr("Encoding"),
               &EditorView::sigOnEncoding);
-    newAction(m_menu, QStringLiteral("sum"), tr("Checksum"),
+    newAction(m_menu, ThemeManager::StandardIcon::Checksum, tr("Checksum"),
               &EditorView::sigOnCheckSum);
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_hex, &QHexView::customContextMenuRequested, this,
@@ -1196,7 +1196,8 @@ bool EditorView::checkThreadAff() {
 }
 
 void EditorView::applyWorkSpaceStyle(EditorView *view) {
-    view->generateIconBaseCache(ICONRES(QStringLiteral("pro")));
+    view->generateIconBaseCache(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Project));
     view->updateIcon();
     auto tab = view->tabWidget();
     tab->setStyleSheet(QStringLiteral("QLabel {text-decoration: underline;}"));

@@ -32,7 +32,7 @@ TestSettingPage::TestSettingPage(const QString &id, const QString &content,
 }
 
 QIcon TestSettingPage::categoryIcon() const {
-    return QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+    return QIcon(QStringLiteral(":/images/TestPlugin/images/device.svg"));
 }
 
 QString TestSettingPage::name() const { return _id; }

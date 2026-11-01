@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:ns2="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 64 64" width="200" height="200" version="1.1" ns1:docname="shmem.svg" ns2:version="1.4.4 (dcaf3e7d9e, 2026-05-05)">
+  <defs />
+  <ns1:namedview pagecolor="#ffffff" bordercolor="#000000" borderopacity="0.25" ns2:showpageshadow="2" ns2:pageopacity="0.0" ns2:pagecheckerboard="0" ns2:deskcolor="#d1d1d1" ns2:zoom="4.03" ns2:cx="99.875931" ns2:cy="100" ns2:window-width="1755" ns2:window-height="1034" ns2:window-x="0" ns2:window-y="0" ns2:window-maximized="1" ns2:current-layer="svg4" />
+  <rect width="64" height="64" rx="11" fill="#00aff5" />
+  <g fill="none" stroke="white" stroke-width="4" stroke-linejoin="round">
+    <path d="M12 44V18H52V37M12 44H40M18 24V32M26 24V32M34 24V32M42 24V32M12 39H16M20 44V49M28 44V49M36 44V49" />
+  </g>
+  <g stroke="#ffffff" stroke-width="1.5" fill="#ffffff" transform="translate(-1.0322581,-0.2382134)">
+    <path d="m 43.879112,45.067721 10.527142,-7.256497 m -10.606546,7.335901 10.288928,7.08957" fill="none" style="stroke-width:1.5" ns1:nodetypes="cccc" />
+    <circle cx="44" cy="45" r="4.5" style="stroke:#00aff5;stroke-width:0.16;stroke-dasharray:none;stroke-opacity:1" />
+    <circle cx="54" cy="38" r="3.5" style="fill:#ffffff;fill-opacity:1;stroke:#00aff5;stroke-width:0.16;stroke-dasharray:none;stroke-opacity:1" />
+    <circle cx="54" cy="52" r="3.5" style="stroke:#00aff5;stroke-width:0.16;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

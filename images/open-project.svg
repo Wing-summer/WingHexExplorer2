@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" version="1.1" width="200" height="200">
+  <path d="M932.248101 989.414007H91.751899a4.791822 4.791822 0 0 1-4.738776-4.06686L0.053046 411.424782a4.791822 4.791822 0 0 1 4.738776-5.516784h1014.416356c2.935212 0 5.180826 2.616936 4.738776 5.516784l-86.960077 573.922365a4.791822 4.791822 0 0 1-4.738776 4.06686z" fill="#f7b563" />
+  <path d="M954.828015 405.907998V136.57577a13.579776 13.579776 0 0 0-13.579776-13.579776H396.695676a13.509048 13.509048 0 0 1-11.634756-6.595386l-45.142147-75.236911a13.61514 13.61514 0 0 0-11.634756-6.595386H84.307777A13.61514 13.61514 0 0 0 70.728001 48.165769v357.742229h884.100014z" fill="#b5885b" />
+  <path d="M123.774002 335.179997h778.008012v70.728001H123.774002z" fill="#ffffff" />
+  <path d="M141.456002 282.133996h742.644012v53.046001H141.456002z" fill="#e7eced" />
+  <path d="M159.138002 229.087996h707.280012v53.046H159.138002z" fill="#c7cac7" />
+  <g transform="translate(291.957 510) scale(4.68085 4.68085)">
+    <path fill="#e6c37c" stroke="#777777" stroke-width="1.1" stroke-linejoin="round" d="M48 1.4Q50 0.4 52 1.4L97 23.9Q100 25.4 97 26.9L52 49.4Q50 50.4 48 49.4L3 26.9Q0 25.4 3 23.9Z" data-theme-fill="gold" data-theme-stroke="muted" />
+    <path fill="#e6c37c" stroke="#777777" stroke-width="1.1" stroke-linejoin="round" d="M14 38 3 43.5Q0 45 3 46.5L48 69Q50 70 52 69L97 46.5Q100 45 97 43.5L86 38 52 55Q50 56 48 55Z" transform="translate(0 0)" data-theme-fill="gold" data-theme-stroke="muted" />
+    <path fill="#e6c37c" stroke="#777777" stroke-width="1.1" stroke-linejoin="round" d="M14 38 3 43.5Q0 45 3 46.5L48 69Q50 70 52 69L97 46.5Q100 45 97 43.5L86 38 52 55Q50 56 48 55Z" transform="translate(0 22)" data-theme-fill="gold" data-theme-stroke="muted" />
+  </g>
+</svg>

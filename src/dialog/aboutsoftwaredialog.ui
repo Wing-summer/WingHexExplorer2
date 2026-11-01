@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../../resources.qrc">
-    <normaloff>:/com.wingsummer.winghex/images/soft.png</normaloff>:/com.wingsummer.winghex/images/soft.png</iconset>
+    <normaloff>:/com.wingsummer.winghex/images/software.svg</normaloff>:/com.wingsummer.winghex/images/software.svg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -38,7 +38,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../../resources.qrc">:/com.wingsummer.winghex/images/icon.png</pixmap>
+        <pixmap resource="../../resources.qrc">:/com.wingsummer.winghex/images/application.svg</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>

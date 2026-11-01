@@ -1,5 +1,7 @@
 #include "inspectqtloghelper.h"
 
+#include "class/settings/thememanager.h"
+
 #include "class/settings/settingmanager.h"
 #include "utilities.h"
 
@@ -42,7 +44,8 @@ void InspectQtLogHelper::init() {
 
     _logger->buildUpContent(_ctx);
     _logger->setWindowTitle(tr("Inspect"));
-    _logger->setWindowIcon(ICONRES("qtloginspect"));
+    _logger->setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::InspectQtLog));
     _logger->setMinimumSize(400, 350);
 
     qSetMessagePattern(QStringLiteral("%{if-debug}[Debug]%{endif}"

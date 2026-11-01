@@ -20,6 +20,8 @@
 
 #include <QShortcut>
 
+#include "class/settings/thememanager.h"
+
 Q_STATIC_ASSERT_X(
     QT_VERSION >= QT_VERSION_CHECK(6, 4, 0),
     "If you want to support Qt version lower than 6.4.0, You should "
@@ -553,6 +555,13 @@ private:
 GotoWidget::GotoWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::GotoWidget) {
     ui->setupUi(this);
+
+    auto &theme = ThemeManager::instance();
+    ui->btnGoto->setIcon(
+        theme.standardIcon(ThemeManager::StandardIcon::Location));
+    ui->btnClose->setIcon(
+        theme.standardIcon(ThemeManager::StandardIcon::CloseFile));
+
     auto sc = QKeySequence(Qt::Key_Escape);
     ui->btnClose->setShortcut(sc);
 

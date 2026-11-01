@@ -19,7 +19,7 @@
 
 #include "class/application/logger.h"
 #include "settings/settings.h"
-#include "skinmanager.h"
+#include "thememanager.h"
 
 #include "utilities.h"
 
@@ -122,8 +122,7 @@ void SettingManager::load() {
     HANDLE_CONFIG;
 
     READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
-    m_themeID = qBound(0, m_themeID,
-                       QMetaEnum::fromType<SkinManager::Theme>().keyCount());
+    m_themeID = qBound(0, m_themeID, 2);
     m_defaultLang = READ_CONFIG(APP_LANGUAGE, {}).toString();
 
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, {}).toByteArray();
@@ -658,6 +657,7 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
 void SettingManager::reset(SETTINGS cat) {
     __reset(cat);
     load();
+    ThemeManager::instance().setTheme(ThemeManager::Theme(m_themeID));
 }
 
 void SettingManager::__reset(SETTINGS cat) {
@@ -812,9 +812,13 @@ void SettingManager::setDockLayout(const QByteArray &newDockLayout) {
 int SettingManager::themeID() const { return m_themeID; }
 
 void SettingManager::setThemeID(int newThemeID) {
+    if (newThemeID < 0 || newThemeID > 2) {
+        return;
+    }
     if (m_themeID != newThemeID) {
         HANDLE_CONFIG;
         WRITE_CONFIG(SKIN_THEME, newThemeID);
         m_themeID = newThemeID;
+        ThemeManager::instance().setTheme(ThemeManager::Theme(newThemeID));
     }
 }

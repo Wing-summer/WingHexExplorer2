@@ -16,10 +16,6 @@
 */
 
 #include "scriptmanager.h"
-#include "class/settings/localizedmetadata.h"
-
-#include "DockWidgetTab.h"
-#include "dbghelper.h"
 
 #include <QApplication>
 #include <QDir>
@@ -28,9 +24,13 @@
 #include <QMenu>
 #include <QSettings>
 
+#include "DockWidgetTab.h"
+
 #include "class/settings/languagemanager.h"
+#include "class/settings/localizedmetadata.h"
 #include "class/settings/settingmanager.h"
 #include "control/common/compositeiconengine.h"
+#include "dbghelper.h"
 #include "dialog/common/wingmessagebox.h"
 #include "scriptmachine.h"
 #include "utilities.h"
@@ -89,7 +89,8 @@ QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
     auto menu = new QMenu(parent);
     for (const auto &file : files) {
         auto name = QFileInfo(file).baseName();
-        auto icon = ICONRES(QStringLiteral("script"));
+        auto icon = ThemeManager::instance().standardIcon(
+            ThemeManager::StandardIcon::Script);
         auto &md = meta.usrMeta;
 
         if (md.contains(name)) {
@@ -124,7 +125,8 @@ void ScriptManager::setIndicatorBusy(bool b) {
         return;
     }
     if (b) {
-        m_indicator->setIcon(ICONRES(QStringLiteral("dbgrun")));
+        m_indicator->setIcon(ThemeManager::instance().standardIcon(
+            ThemeManager::StandardIcon::DebugRun));
     } else {
         m_indicator->setIcon({});
     }
@@ -293,7 +295,8 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
             auto path = finfo.absoluteFilePath();
             QIcon icon(path);
             if (icon.isNull()) {
-                icon = ICONRES(QStringLiteral("script"));
+                icon = ThemeManager::instance().standardIcon(
+                    ThemeManager::StandardIcon::Script);
             }
             meta.usrMeta.insert(sec, {icon, name});
             set.endGroup();
@@ -324,9 +327,10 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
 
     auto &sm = ScriptManager::instance();
     auto &stm = SettingManager::instance();
+    auto &theme = ThemeManager::instance();
 
     auto hideCats = stm.sysHideCats();
-    auto folder = ICONRES(QStringLiteral("scriptfolder"));
+    auto folder = theme.standardIcon(ThemeManager::StandardIcon::ScriptFolder);
     const auto sysdb = sm.sysScriptsDbCats();
     for (const auto &cat : sysdb) {
         if (hideCats.contains(cat)) {
@@ -354,7 +358,7 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
     }
 
     hideCats = stm.usrHideCats();
-    folder = ICONRES(QStringLiteral("scriptfolderusr"));
+    folder = theme.standardIcon(ThemeManager::StandardIcon::UserScriptFolder);
     const auto usrdb = sm.usrScriptsDbCats();
     for (const auto &cat : usrdb) {
         if (hideCats.contains(cat)) {

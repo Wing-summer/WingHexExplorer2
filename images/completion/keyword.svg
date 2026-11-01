@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" version="1.1" width="200" height="200">
+  <defs />
+  <path d="m 128,512 a 384,383.95619 0 1 0 768,0 384,383.95619 0 1 0 -768,0 z" fill="#41c98b" stroke-width="0.827856" />
+  <text x="487.00919" y="702.32812" transform="scale(1.0035757,0.99643703)" fill="#1296db" stroke-width="13.8891">
+    <tspan x="487.00919" y="702.32812" fill="#ffffff" stroke-width="13.8891">K</tspan>
+  </text>
+</svg>

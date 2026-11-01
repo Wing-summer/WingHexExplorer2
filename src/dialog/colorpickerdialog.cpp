@@ -18,13 +18,16 @@
 #include "colorpickerdialog.h"
 #include "ui_colorpickerdialog.h"
 
-#include "utilities.h"
-
 #include <QPushButton>
+
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 ColorPickerDialog::ColorPickerDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::ColorPickerDialog) {
     ui->setupUi(this);
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::ColorPalette));
 
     ui->hueSlider->setGradientStops({{0.0 / 360.0, Qt::red},
                                      {60.0 / 360.0, Qt::yellow},

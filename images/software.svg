@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="200" height="200" version="1.1">
+  <rect x="4" y="5" width="25" height="25" rx="0" fill="#ed9134" data-theme-fill="auto" />
+  <rect x="4" y="36" width="25" height="25" rx="0" fill="#ed9134" data-theme-fill="auto" />
+  <rect x="35" y="36" width="25" height="25" rx="0" fill="#ed9134" data-theme-fill="auto" />
+  <polygon points="47,1 62,16 47,31 32,16" fill="#ed9134" data-theme-fill="auto" />
+</svg>

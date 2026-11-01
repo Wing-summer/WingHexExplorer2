@@ -17,6 +17,8 @@
 
 #include "scripteditor.h"
 
+#include "class/settings/thememanager.h"
+
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "editorlspevent.h"
 #include "luau/lsp/luaulanguageserver.h"
@@ -248,7 +250,9 @@ void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
 
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
-    this->setIcon(b ? ICONRES("lockon") : QIcon());
+    this->setIcon(b ? ThemeManager::instance().standardIcon(
+                          ThemeManager::StandardIcon::ReadOnlyLock)
+                    : QIcon());
 }
 
 void ScriptEditor::processTitle() {
@@ -448,7 +452,10 @@ QPair<qsizetype, qsizetype> ScriptEditor::cursorPosValue() const {
     return {pos.blockNumber, pos.positionInBlock};
 }
 
-QIcon ScriptEditor::editorIcon() const { return ICONRES("angellsp"); }
+QIcon ScriptEditor::editorIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Luau);
+}
 
 QString ScriptEditor::infoFileName() const { return fileName(); }
 

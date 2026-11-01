@@ -16,6 +16,8 @@
 */
 
 #include "mutisavebuttondelegate.h"
+
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 #include <QMouseEvent>
@@ -29,7 +31,8 @@ void MutiSaveButtonDelegate::paint(QPainter *p,
                                    const QModelIndex &index) const {
     QStyledItemDelegate::paint(p, option, index);
     auto btnRect = getFileIconRect(option.rect);
-    p->drawPixmap(btnRect, NAMEICONRES(QStringLiteral("file")));
+    p->drawPixmap(btnRect, ThemeManager::instance()
+                               .standardPixmap(ThemeManager::StandardIcon::File));
 }
 
 QSize MutiSaveButtonDelegate::sizeHint(const QStyleOptionViewItem &option,

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="200" height="200" version="1.1">
+  <g transform="translate(0 0) scale(0.32 0.32)">
+    <rect x="0" y="0" width="92" height="92" rx="14" fill="#f1dd5a" stroke="#f1dd5a" stroke-width="0.5" data-theme-stroke="auto" />
+    <rect x="108" y="0" width="92" height="92" rx="14" fill="#6d5af1" stroke="#6d5af1" stroke-width="0.5" data-theme-stroke="auto" />
+    <rect x="0" y="108" width="92" height="92" rx="14" fill="#5a9ef1" stroke="#5a9ef1" stroke-width="0.5" data-theme-stroke="auto" />
+    <rect x="108" y="108" width="92" height="92" rx="14" fill="#f2765a" stroke="#f2765a" stroke-width="0.5" data-theme-stroke="auto" />
+  </g>
+  <circle cx="35" cy="34" r="16" fill="#efbd25" />
+  <g transform="rotate(-38 35 34)">
+    <g transform="translate(23 22) scale(0.359375 0.359375)">
+      <path d="M7 18H57L61 26H3Z" fill="#344f57" />
+      <path d="M7 28H57V61H7Z" fill="#ffe16c" />
+      <path d="M27 18V7A5 5 0 0 1 37 7V18Z" fill="#344f57" />
+      <circle cx="32" cy="8" r="1.6" fill="#dce7e7" />
+      <path d="M17 41 15 61M29 48V61M42 39 45 61" fill="none" stroke="#ffca51" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" data-theme-stroke="auto" />
+    </g>
+  </g>
+</svg>

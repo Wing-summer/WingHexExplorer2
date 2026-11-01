@@ -30,7 +30,7 @@
 #include "ui_qeditconfig.h"
 #include "utilities.h"
 
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 
 #include <QSignalBlocker>
 #include <QVBoxLayout>
@@ -91,12 +91,13 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
             _edit, [this](int index) {
                 if (index == 0) {
-                    switch (SkinManager::instance().currentTheme()) {
-                    case SkinManager::Theme::Dark:
+                    switch (ThemeManager::instance().currentTheme()) {
+                    case ThemeManager::Theme::Dark:
                         _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
                             KSyntaxHighlighting::Repository::DarkTheme));
                         break;
-                    case SkinManager::Theme::Light:
+                    case ThemeManager::Theme::System:
+                    case ThemeManager::Theme::Light:
                         _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
                             KSyntaxHighlighting::Repository::LightTheme));
                         break;
@@ -106,6 +107,18 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                         ui->cbTheme->itemText(index)));
                 }
             });
+
+    connect(
+        &ThemeManager::instance(), &ThemeManager::themeChanged, this, [this]() {
+            if (ui->cbTheme->currentIndex() == 0) {
+                const auto type =
+                    ThemeManager::instance().currentTheme() ==
+                            ThemeManager::Theme::Dark
+                        ? KSyntaxHighlighting::Repository::DarkTheme
+                        : KSyntaxHighlighting::Repository::LightTheme;
+                _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(type));
+            }
+        });
 
     const auto &settings = ScriptSettings::instance();
     ui->cbFont->setFontFilters(QFontComboBox::MonospacedFonts);
@@ -162,6 +175,7 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     connect(ui->chkAutoIden, &QCheckBox::toggled, _edit,
             &CodeEdit::setAutoIndent);
 
+    auto &theme = ThemeManager::instance();
     if (isConsole) {
         ui->chkShowLineNumber->setEnabled(false);
         ui->chkShowFolding->setEnabled(false);
@@ -170,11 +184,11 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
 
         _name = tr("Console");
         _id = QStringLiteral("Console");
-        _icon = ICONRES("console");
+        _icon = theme.standardIcon(ThemeManager::StandardIcon::Console);
     } else {
         _name = tr("Edit");
         _id = QStringLiteral("Edit");
-        _icon = ICONRES("file");
+        _icon = theme.standardIcon(ThemeManager::StandardIcon::File);
     }
 
     reload();

@@ -16,6 +16,8 @@
 */
 
 #include "finddialog.h"
+
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 #include <QButtonGroup>
@@ -139,7 +141,8 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     buildUpContent(widget);
     setWindowTitle(tr("Find"));
-    setWindowIcon(ICONRES("find"));
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Find));
 
     m_lineeditor->setFocus();
 }
@@ -149,7 +152,10 @@ FindDialog::Result FindDialog::getResult() const { return _result; }
 void FindDialog::on_accept() {
     // check the last byte nibbles
     if (!m_lineeditor->isValid()) {
-        Toast::toast(this, NAMEICONRES("find"), tr("Invalid input sequence."));
+        Toast::toast(this,
+                     ThemeManager::instance()
+                         .standardPixmap(ThemeManager::StandardIcon::Find),
+                     tr("Invalid input sequence."));
         return;
     }
 

@@ -23,7 +23,7 @@
 #include "QConsoleWidget/commandhistorymanager.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "control/toast.h"
 #include "crashhandler.h"
 #include "dbghelper.h"
@@ -68,7 +68,7 @@ AppManager::AppManager(int &argc, char *argv[])
     QFont font(set.appFontFamily(), set.appfontSize());
     setFont(font);
 
-    SkinManager::instance();
+    ThemeManager::instance().setTheme(ThemeManager::Theme(set.themeID()));
 
     // add luau highlight support
     auto &repo = WingCodeEdit::syntaxRepo();
@@ -80,7 +80,7 @@ AppManager::AppManager(int &argc, char *argv[])
         splash = new SplashDialog;
     }
 
-    auto cmdlist = CommandHistoryManager::load();
+    const auto cmdlist = CommandHistoryManager::load();
     auto &his = QConsoleWidget::history();
     for (const auto &cmd : cmdlist) {
         his.add(cmd);
@@ -199,7 +199,9 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
             if (_w->currentEditor() == editor) {
-                Toast::toast(_w, NAMEICONRES("openapp"),
+                Toast::toast(_w,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::OpenFile),
                              tr("This file is already open."));
             } else {
                 editor->raise();
@@ -213,7 +215,9 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
     } else if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
         if (_w->currentEditor() == editor) {
-            Toast::toast(_w, NAMEICONRES("openapp"),
+            Toast::toast(_w,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::OpenFile),
                          tr("This file is already open."));
         } else {
             editor->raise();

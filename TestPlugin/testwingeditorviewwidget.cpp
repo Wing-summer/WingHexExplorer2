@@ -41,7 +41,7 @@ TestWingEditorViewWidget::~TestWingEditorViewWidget() {
 void TestWingEditorViewWidget::setEnableMeta(bool b) { m_unSaved = b; }
 
 QIcon TestWingEditorViewWidget::Creator::icon() const {
-    return QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+    return QIcon(QStringLiteral(":/images/TestPlugin/images/device.svg"));
 }
 
 QString TestWingEditorViewWidget::Creator::name() const {

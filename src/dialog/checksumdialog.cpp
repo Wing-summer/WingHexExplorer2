@@ -16,12 +16,13 @@
 */
 
 #include "checksumdialog.h"
-#include "utilities.h"
 
+#include "class/settings/thememanager.h"
 #include "class/util/cryptographichash.h"
 #include "control/toast.h"
 
 #include <QDialogButtonBox>
+#include <QHeaderView>
 #include <QLabel>
 #include <QShortcut>
 #include <QTreeWidgetItem>
@@ -89,7 +90,8 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
 
     buildUpContent(widget);
     setWindowTitle(tr("Checksum"));
-    setWindowIcon(ICONRES("sum"));
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Checksum));
 }
 
 const QVector<int> &CheckSumDialog::getResults() { return _result; }
@@ -101,7 +103,9 @@ void CheckSumDialog::on_accept() {
         collectCheckedLeaves(hashlist->topLevelItem(i), _result);
     }
     if (_result.isEmpty()) {
-        Toast::toast(this, NAMEICONRES("sum"),
+        Toast::toast(this,
+                     ThemeManager::instance()
+                         .standardPixmap(ThemeManager::StandardIcon::Checksum),
                      tr("No files available for checksum calculation."));
         return;
     }

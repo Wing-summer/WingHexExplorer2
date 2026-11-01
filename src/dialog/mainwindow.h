@@ -19,6 +19,8 @@
 #define MAINWINDOW_H
 
 #include "dialog/splashdialog.h"
+
+#include "class/settings/thememanager.h"
 #include "framelessmainwindow.h"
 
 #include <QFutureWatcher>
@@ -306,13 +308,13 @@ protected:
 private:
     template <typename Func>
     inline QToolButton *
-    addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,
+    addPannelAction(RibbonButtonGroup *pannel, ThemeManager::StandardIcon icon,
                     const QString &title, Func &&slot,
                     const QKeySequence &shortcut = QKeySequence(),
                     QMenu *menu = nullptr,
                     const QString &description = QString()) {
-        return addPannelAction(pannel, ICONRES(iconName), title, slot, shortcut,
-                               menu, description);
+        return addPannelAction(pannel, ThemeManager::instance().standardIcon(icon),
+                               title, slot, shortcut, menu, description);
     }
 
     template <typename Func>
@@ -364,13 +366,14 @@ private:
 
     template <typename Func>
     inline QToolButton *
-    addCheckablePannelAction(RibbonButtonGroup *pannel, const QString &iconName,
+    addCheckablePannelAction(RibbonButtonGroup *pannel,
+                             ThemeManager::StandardIcon icon,
                              const QString &title, Func &&slot,
                              const QKeySequence &shortcut = QKeySequence()) {
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
         a->setText(title);
-        a->setIcon(ICONRES(iconName));
+        a->setIcon(ThemeManager::instance().standardIcon(icon));
         a->setCheckable(true);
         a->setChecked(false);
 
@@ -419,10 +422,11 @@ private:
     }
 
     template <typename Func>
-    inline QAction *newAction(const QString &iconName, const QString &title,
-                              Func &&slot,
+    inline QAction *newAction(ThemeManager::StandardIcon icon,
+                              const QString &title, Func &&slot,
                               const QKeySequence &shortcut = QKeySequence()) {
-        return newAction(ICONRES(iconName), title, slot, shortcut);
+        return newAction(ThemeManager::instance().standardIcon(icon), title,
+                         slot, shortcut);
     }
 
     template <typename T>

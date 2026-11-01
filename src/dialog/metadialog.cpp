@@ -16,13 +16,14 @@
 */
 
 #include "metadialog.h"
-#include "control/toast.h"
-#include "utilities.h"
 
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QShortcut>
 #include <QVBoxLayout>
+
+#include "class/settings/thememanager.h"
+#include "control/toast.h"
 
 MetaDialog::MetaDialog(QWidget *parent)
     : FramelessDialogBase(parent), _foreground(Qt::transparent),
@@ -91,7 +92,8 @@ MetaDialog::MetaDialog(QWidget *parent)
 
     buildUpContent(widget);
     setWindowTitle(tr("Annotation"));
-    setWindowIcon(ICONRES("metadata"));
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Metadata));
 }
 
 void MetaDialog::on_accept() {
@@ -103,7 +105,8 @@ void MetaDialog::on_accept() {
          (!_background.isValid() || _background.alpha() == 0)) ||
         (ccomment->isChecked() && m_comment->text().trimmed().length() == 0)) {
         Toast::toast(this->parentWidget(),
-                     NAMEICONRES(QStringLiteral("metadata")),
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Metadata),
                      tr("Configure at least one enabled option, or disable the "
                         "option."));
         return;

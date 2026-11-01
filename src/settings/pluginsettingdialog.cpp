@@ -18,14 +18,15 @@
 #include "pluginsettingdialog.h"
 #include "ui_pluginsettingdialog.h"
 
+#include <QDesktopServices>
+
 #include "class/file/showinshell.h"
 #include "class/plugin/pluginsystem.h"
 #include "class/plugin/wingplugincert.h"
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "control/common/eventfilter.h"
 #include "utilities.h"
-
-#include <QDesktopServices>
 
 enum {
     PLUIGN_META = Qt::UserRole,
@@ -39,6 +40,16 @@ enum { CERT_CERT = Qt::UserRole };
 PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::PluginSettingDialog) {
     ui->setupUi(this);
+    auto &theme = ThemeManager::instance();
+    ui->tabWidget->setTabIcon(
+        ui->tabWidget->indexOf(ui->tabPluginInfo),
+        theme.standardIcon(ThemeManager::StandardIcon::Plugin));
+    ui->tabWidget->setTabIcon(
+        ui->tabWidget->indexOf(ui->tabDevInfo),
+        theme.standardIcon(ThemeManager::StandardIcon::Device));
+    ui->tabWidget->setTabIcon(
+        ui->tabWidget->indexOf(ui->tabCert),
+        theme.standardIcon(ThemeManager::StandardIcon::CertificateFile));
 
     Utilities::addSpecialMark(ui->cbEnablePlugin);
     Utilities::addSpecialMark(ui->cbEnablePluginRoot);
@@ -85,7 +96,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     }
 
     auto &plgsys = PluginSystem::instance();
-    auto pico = ICONRES("plugin");
+    auto pico = theme.standardIcon(ThemeManager::StandardIcon::Plugin);
     ui->plglist->clear();
 
     const auto &plugins = plgsys.plugins();
@@ -113,7 +124,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->plglist->addItem(lwi);
     }
 
-    pico = ICONRES("plugindis");
+    pico = theme.standardIcon(ThemeManager::StandardIcon::PluginDisabled);
     const auto &blkplgs = plgsys.blockedPlugins();
     const auto istart = total;
     total = blkplgs.size();
@@ -136,7 +147,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->plglist->addItem(lwi);
     }
 
-    pico = ICONRES("devext");
+    pico = theme.standardIcon(ThemeManager::StandardIcon::Device);
     ui->devlist->clear();
     for (const auto &d : plgsys.devices()) {
         auto pco = d->pluginIcon();
@@ -153,7 +164,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->devlist->addItem(lwi);
     }
 
-    pico = ICONRES("devextdis");
+    pico = theme.standardIcon(ThemeManager::StandardIcon::DeviceDisabled);
     const auto blkdevs = plgsys.blockedDevPlugins();
     for (const auto &[status, m] : blkdevs) {
         auto lwi = new QListWidgetItem(pico, m.id);
@@ -332,7 +343,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     connect(ui->txtd, &QTextBrowser::anchorClicked, this,
             &PluginSettingDialog::onAnchorClicked);
 
-    auto cicon = ICONRES(QStringLiteral("cert"));
+    auto cicon = theme.standardIcon(ThemeManager::StandardIcon::Certificate);
     auto &ct = WingPluginCert::instance();
     for (auto &&[c, loc] : ct.certificates().asKeyValueRange()) {
         auto name = c.subjectDisplayName();
@@ -411,7 +422,10 @@ void PluginSettingDialog::reload() {
     this->blockSignals(false);
 }
 
-QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }
+QIcon PluginSettingDialog::categoryIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Plugin);
+}
 
 QString PluginSettingDialog::name() const { return tr("Plugin"); }
 

@@ -18,10 +18,11 @@
 #include "scriptsettingdialog.h"
 #include "ui_scriptsettingdialog.h"
 
-#include "class/settings/settingmanager.h"
-#include "utilities.h"
-
 #include <QListWidgetItem>
+
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::ScriptSettingDialog) {
@@ -167,10 +168,13 @@ bool ScriptSettingDialog::addCatagory(const ScriptManager::ScriptDirMeta &meta,
     if (meta.isEmptyDir) {
         name.append(' ').append(tr("[Empty]"));
     }
-    auto lw =
-        new QListWidgetItem(isUser ? ICONRES(QStringLiteral("scriptfolderusr"))
-                                   : ICONRES(QStringLiteral("scriptfolder")),
-                            name, ui->listWidget);
+
+    auto &theme = ThemeManager::instance();
+    auto lw = new QListWidgetItem(
+        isUser
+            ? theme.standardIcon(ThemeManager::StandardIcon::UserScriptFolder)
+            : theme.standardIcon(ThemeManager::StandardIcon::ScriptFolder),
+        name, ui->listWidget);
     lw->setData(Qt::UserRole, QVariant::fromValue(meta));
     lw->setCheckState(hidden ? Qt::Unchecked : Qt::Checked);
     return hidden;
@@ -205,7 +209,10 @@ void ScriptSettingDialog::createPluginStandardMenu() {
                       &ScriptSettingDialog::discard);
 }
 
-QIcon ScriptSettingDialog::categoryIcon() const { return ICONRES("script"); }
+QIcon ScriptSettingDialog::categoryIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Script);
+}
 
 QString ScriptSettingDialog::name() const { return tr("Script"); }
 

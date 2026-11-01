@@ -62,62 +62,62 @@ QWidget
     border-image: none;
 
     /* QDialogButtonBox icons */
-    dialog-cancel-icon: url(:/dark/dialog_cancel.svg);
-    dialog-close-icon: url(:/dark/dialog_close.svg);
-    dialog-ok-icon: url(:/dark/dialog_ok.svg);
-    dialog-open-icon: url(:/dark/dialog_open.svg);
-    dialog-reset-icon: url(:/dark/dialog_reset.svg);
-    dialog-save-icon: url(:/dark/dialog_save.svg);
-    dialog-yes-icon: url(:/dark/dialog_ok.svg);
-    dialog-help-icon: url(:/dark/dialog_help.svg);
-    dialog-no-icon: url(:/dark/dialog_no.svg);
-    dialog-apply-icon: url(:/dark/dialog_ok.svg);
-    dialog-discard-icon: url(:/dark/dialog_discard.svg);
+    dialog-cancel-icon: url(:/dark/dialog-cancel.svg);
+    dialog-close-icon: url(:/dark/dialog-close.svg);
+    dialog-ok-icon: url(:/dark/dialog-ok.svg);
+    dialog-open-icon: url(:/dark/dialog-open.svg);
+    dialog-reset-icon: url(:/dark/dialog-reset.svg);
+    dialog-save-icon: url(:/dark/dialog-save.svg);
+    dialog-yes-icon: url(:/dark/dialog-ok.svg);
+    dialog-help-icon: url(:/dark/dialog-help.svg);
+    dialog-no-icon: url(:/dark/dialog-no.svg);
+    dialog-apply-icon: url(:/dark/dialog-ok.svg);
+    dialog-discard-icon: url(:/dark/dialog-discard.svg);
 
     /* File icons */
-    filedialog-backward-icon: url(:/dark/left_arrow.svg);
-    filedialog-contentsview-icon: url(:/dark/file_dialog_contents.svg);
-    filedialog-detailedview-icon: url(:/dark/file_dialog_detailed.svg);
-    filedialog-end-icon: url(:/dark/file_dialog_end.svg);
-    filedialog-infoview-icon: url(:/dark/file_dialog_info.svg);
-    filedialog-listview-icon: url(:/dark/file_dialog_list.svg);
+    filedialog-backward-icon: url(:/dark/left-arrow.svg);
+    filedialog-contentsview-icon: url(:/dark/file-dialog-contents.svg);
+    filedialog-detailedview-icon: url(:/dark/file-dialog-detailed.svg);
+    filedialog-end-icon: url(:/dark/file-dialog-end.svg);
+    filedialog-infoview-icon: url(:/dark/file-dialog-info.svg);
+    filedialog-listview-icon: url(:/dark/file-dialog-list.svg);
     filedialog-new-directory-icon: url(:/dark/folder.svg);
-    filedialog-parent-directory-icon: url(:/dark/up_arrow.svg);
-    filedialog-start-icon: url(:/dark/file_dialog_start.svg);
+    filedialog-parent-directory-icon: url(:/dark/up-arrow.svg);
+    filedialog-start-icon: url(:/dark/file-dialog-start.svg);
     directory-closed-icon: url(:/dark/folder.svg);
     directory-icon: url(:/dark/folder.svg);
-    directory-link-icon: url(:/dark/folder_link.svg);
-    directory-open-icon: url(:/dark/folder_open.svg);
+    directory-link-icon: url(:/dark/folder-link.svg);
+    directory-open-icon: url(:/dark/folder-open.svg);
     file-icon: url(:/dark/file.svg);
-    file-link-icon: url(:/dark/file_link.svg);
-    home-icon: url(:/dark/home_directory.svg);
+    file-link-icon: url(:/dark/file-link.svg);
+    home-icon: url(:/dark/home-directory.svg);
 
     /* QMessageBox icons */
-    messagebox-critical-icon: url(:/dark/message_critical.svg);
-    messagebox-information-icon: url(:/dark/message_information.svg);
-    messagebox-question-icon: url(:/dark/message_question.svg);
-    messagebox-warning-icon: url(:/dark/message_warning.svg);
+    messagebox-critical-icon: url(:/dark/message-critical.svg);
+    messagebox-information-icon: url(:/dark/message-information.svg);
+    messagebox-question-icon: url(:/dark/message-question.svg);
+    messagebox-warning-icon: url(:/dark/message-warning.svg);
 
     /* Computer icons */
     computer-icon: url(:/dark/computer.svg);
     desktop-icon: url(:/dark/desktop.svg);
-    cd-icon: url(:/dark/disc_drive.svg);
-    dvd-icon: url(:/dark/disc_drive.svg);
-    floppy-icon: url(:/dark/floppy_drive.svg);
-    harddisk-icon: url(:/dark/hard_drive.svg);
-    network-icon: url(:/dark/network_drive.svg);
+    cd-icon: url(:/dark/disc-drive.svg);
+    dvd-icon: url(:/dark/disc-drive.svg);
+    floppy-icon: url(:/dark/floppy-drive.svg);
+    harddisk-icon: url(:/dark/hard-drive.svg);
+    network-icon: url(:/dark/network-drive.svg);
     trash-icon: url(:/dark/trash.svg);
 
     /* Arrow icons */
-    uparrow-icon: url(:/dark/up_arrow.svg);
-    downarrow-icon: url(:/dark/down_arrow.svg);
-    leftarrow-icon: url(:/dark/left_arrow.svg);
-    rightarrow-icon: url(:/dark/right_arrow.svg);
-    backward-icon: url(:/dark/left_arrow.svg);
-    forward-icon: url(:/dark/right_arrow.svg);
+    uparrow-icon: url(:/dark/up-arrow.svg);
+    downarrow-icon: url(:/dark/down-arrow.svg);
+    leftarrow-icon: url(:/dark/left-arrow.svg);
+    rightarrow-icon: url(:/dark/right-arrow.svg);
+    backward-icon: url(:/dark/left-arrow.svg);
+    forward-icon: url(:/dark/right-arrow.svg);
 
     /* Titlebar icons */
-    titlebar-close-icon: url(:/dark/window_close.svg);
+    titlebar-close-icon: url(:/dark/window-close.svg);
     titlebar-contexthelp-icon: url(:/dark/help.svg);
     titlebar-maximize-icon: url(:/dark/maximize.svg);
     titlebar-menu-icon: url(:/dark/menu.svg);
@@ -130,7 +130,7 @@ QWidget
     dockwidget-close-icon: url(:/dark/close.svg);
     /**
      *  Only available in Qt6, and causes other issues. See #62.
-     *  lineedit-clear-button-icon: url(:/dark/clear_text.svg);
+     *  lineedit-clear-button-icon: url(:/dark/clear-text.svg);
      */
 }
 
@@ -210,7 +210,7 @@ QCheckBox::indicator:unchecked:focus,
 QTreeView::indicator:unchecked,
 QTreeView::indicator:unchecked:focus
 {
-    border-image: url(:/dark/checkbox_unchecked_disabled.svg);
+    border-image: url(:/dark/checkbox-unchecked-disabled.svg);
 }
 
 QGroupBox::indicator:unchecked,
@@ -222,14 +222,14 @@ QGroupBox::indicator:unchecked:hover,
 QGroupBox::indicator:unchecked:pressed
 {
     border: none;
-    border-image: url(:/dark/checkbox_unchecked.svg);
+    border-image: url(:/dark/checkbox-unchecked.svg);
 }
 
 QCheckBox::indicator:checked,
 QTreeView::indicator:checked,
 QGroupBox::indicator:checked
 {
-    border-image: url(:/dark/checkbox_checked.svg);
+    border-image: url(:/dark/checkbox-checked.svg);
 }
 
 QCheckBox::indicator:checked:hover,
@@ -243,13 +243,13 @@ QGroupBox::indicator:checked:focus,
 QGroupBox::indicator:checked:pressed
 {
     border: none;
-    border-image: url(:/dark/checkbox_checked.svg);
+    border-image: url(:/dark/checkbox-checked.svg);
 }
 
 QCheckBox::indicator:indeterminate,
 QTreeView::indicator:indeterminate
 {
-    border-image: url(:/dark/checkbox_indeterminate.svg);
+    border-image: url(:/dark/checkbox-indeterminate.svg);
 }
 
 QCheckBox::indicator:indeterminate:focus,
@@ -259,27 +259,27 @@ QTreeView::indicator:indeterminate:focus,
 QTreeView::indicator:indeterminate:hover,
 QTreeView::indicator:indeterminate:pressed
 {
-    border-image: url(:/dark/checkbox_indeterminate.svg);
+    border-image: url(:/dark/checkbox-indeterminate.svg);
 }
 
 QCheckBox::indicator:indeterminate:disabled,
 QTreeView::indicator:indeterminate:disabled
 {
-    border-image: url(:/dark/checkbox_indeterminate_disabled.svg);
+    border-image: url(:/dark/checkbox-indeterminate-disabled.svg);
 }
 
 QCheckBox::indicator:checked:disabled,
 QTreeView::indicator:checked:disabled,
 QGroupBox::indicator:checked:disabled
 {
-    border-image: url(:/dark/checkbox_checked_disabled.svg);
+    border-image: url(:/dark/checkbox-checked-disabled.svg);
 }
 
 QCheckBox::indicator:unchecked:disabled,
 QTreeView::indicator:unchecked:disabled,
 QGroupBox::indicator:unchecked:disabled
 {
-    border-image: url(:/dark/checkbox_unchecked_disabled.svg);
+    border-image: url(:/dark/checkbox-unchecked-disabled.svg);
 }
 
 QRadioButton
@@ -304,7 +304,7 @@ QRadioButton::indicator
 QRadioButton::indicator:unchecked,
 QRadioButton::indicator:unchecked:focus
 {
-    border-image: url(:/dark/radio_unchecked_disabled.svg);
+    border-image: url(:/dark/radio-unchecked-disabled.svg);
 }
 
 QRadioButton::indicator:unchecked:hover,
@@ -312,14 +312,14 @@ QRadioButton::indicator:unchecked:pressed
 {
     border: none;
     outline: none;
-    border-image: url(:/dark/radio_unchecked.svg);
+    border-image: url(:/dark/radio-unchecked.svg);
 }
 
 QRadioButton::indicator:checked
 {
     border: none;
     outline: none;
-    border-image: url(:/dark/radio_checked.svg);
+    border-image: url(:/dark/radio-checked.svg);
 }
 
 QRadioButton::indicator:checked:hover,
@@ -328,18 +328,18 @@ QRadioButton::indicator:checked:pressed
 {
     border: none;
     outline: none;
-    border-image: url(:/dark/radio_checked.svg);
+    border-image: url(:/dark/radio-checked.svg);
 }
 
 QRadioButton::indicator:checked:disabled
 {
     outline: none;
-    border-image: url(:/dark/radio_checked_disabled.svg);
+    border-image: url(:/dark/radio-checked-disabled.svg);
 }
 
 QRadioButton::indicator:unchecked:disabled
 {
-    border-image: url(:/dark/radio_unchecked_disabled.svg);
+    border-image: url(:/dark/radio-unchecked-disabled.svg);
 }
 
 QMenuBar
@@ -365,7 +365,8 @@ QMenuBar::item:disabled
     color: #76797c;
 }
 
-QMenuBar::item:hover                                                                                                                                                                                             {
+QMenuBar::item:hover
+{
     color: #3daee9;
 }
 
@@ -424,55 +425,55 @@ QMenu::indicator
 
 QMenu::indicator:non-exclusive:unchecked
 {
-    border-image: url(:/dark/checkbox_unchecked_disabled.svg);
+    border-image: url(:/dark/checkbox-unchecked-disabled.svg);
 }
 
 QMenu::indicator:non-exclusive:unchecked:selected
 {
-    border-image: url(:/dark/checkbox_unchecked_disabled.svg);
+    border-image: url(:/dark/checkbox-unchecked-disabled.svg);
 }
 
 QMenu::indicator:non-exclusive:checked
 {
-    border-image: url(:/dark/checkbox_checked.svg);
+    border-image: url(:/dark/checkbox-checked.svg);
 }
 
 QMenu::indicator:non-exclusive:checked:selected
 {
-    border-image: url(:/dark/checkbox_checked.svg);
+    border-image: url(:/dark/checkbox-checked.svg);
 }
 
 QMenu::indicator:exclusive:unchecked
 {
-    border-image: url(:/dark/radio_unchecked_disabled.svg);
+    border-image: url(:/dark/radio-unchecked-disabled.svg);
 }
 
 QMenu::indicator:exclusive:unchecked:selected
 {
-    border-image: url(:/dark/radio_unchecked_disabled.svg);
+    border-image: url(:/dark/radio-unchecked-disabled.svg);
 }
 
 QMenu::indicator:exclusive:checked
 {
-    border-image: url(:/dark/radio_checked.svg);
+    border-image: url(:/dark/radio-checked.svg);
 }
 
 QMenu::indicator:exclusive:checked:selected
 {
-    border-image: url(:/dark/radio_checked.svg);
+    border-image: url(:/dark/radio-checked.svg);
 }
 
 QMenu::right-arrow
 {
     margin: 0.23em;
-    border-image: url(:/dark/right_arrow.svg);
+    border-image: url(:/dark/right-arrow.svg);
     width: 0.5em;
     height: 0.8em;
 }
 
 QMenu::right-arrow:disabled
 {
-    border-image: url(:/dark/right_arrow_disabled.svg);
+    border-image: url(:/dark/right-arrow-disabled.svg);
 }
 
 QAbstractItemView
@@ -756,12 +757,12 @@ QToolBar
 
 QToolBar:horizontal
 {
-    background: 0.09em solid #1f2328;
+    background: #1f2328;
 }
 
 QToolBar:vertical
 {
-    background: 0.09em solid #1f2328;
+    background: #1f2328;
 }
 
 QToolBar::handle:horizontal
@@ -986,26 +987,26 @@ QColumnView QAbstractItemView::item
 
 QColumnView QAbstractItemView::right-arrow
 {
-    image: url(:/dark/right_arrow.svg);
+    image: url(:/dark/right-arrow.svg);
     margin: 0.2em 0.1em 0.2em 0.1em;
 }
 
 QColumnView QAbstractItemView::right-arrow:selected,
 QColumnView QAbstractItemView::right-arrow:hover
 {
-    image: url(:/dark/right_arrow_hover.svg);
+    image: url(:/dark/right-arrow-hover.svg);
 }
 
 QColumnView QAbstractItemView::left-arrow
 {
-    image: url(:/dark/left_arrow.svg);
+    image: url(:/dark/left-arrow.svg);
     margin: 0.2em 0.1em 0.2em 0.1em;
 }
 
 QColumnView QAbstractItemView::left-arrow:selected,
 QColumnView QAbstractItemView::left-arrow:hover
 {
-    image: url(:/dark/left_arrow_hover.svg);
+    image: url(:/dark/left-arrow-hover.svg);
 }
 
 QComboBox:hover:pressed:editable
@@ -1036,7 +1037,7 @@ QComboBox::drop-down
 
 QComboBox::down-arrow
 {
-    border-image: url(:/dark/down_arrow_disabled.svg);
+    border-image: url(:/dark/down-arrow-disabled.svg);
     width: 0.8em;
     height: 0.5em;
     margin-right: 0.41em;
@@ -1046,7 +1047,7 @@ QComboBox::down-arrow:on,
 QComboBox::down-arrow:hover,
 QComboBox::down-arrow:focus
 {
-    border-image: url(:/dark/down_arrow.svg);
+    border-image: url(:/dark/down-arrow.svg);
     width: 0.8em;
     height: 0.5em;
     margin-right: 0.41em;
@@ -1119,34 +1120,34 @@ QAbstractSpinBox::down-arrow:!off:!disabled:hover
 
 QAbstractSpinBox::up-arrow
 {
-    image: url(:/dark/up_arrow.svg);
+    image: url(:/dark/up-arrow.svg);
 }
 
 QAbstractSpinBox::up-arrow:disabled,
 QAbstractSpinBox::up-arrow:off
 {
-    image: url(:/dark/up_arrow_disabled.svg);
+    image: url(:/dark/up-arrow-disabled.svg);
 }
 
 QAbstractSpinBox::up-arrow:hover
 {
-    image: url(:/dark/up_arrow_hover.svg);
+    image: url(:/dark/up-arrow-hover.svg);
 }
 
 QAbstractSpinBox::down-arrow
 {
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
 }
 
 QAbstractSpinBox::down-arrow:disabled,
 QAbstractSpinBox::down-arrow:off
 {
-    image: url(:/dark/down_arrow_disabled.svg);
+    image: url(:/dark/down-arrow-disabled.svg);
 }
 
 QAbstractSpinBox::down-arrow:!off:!disabled:hover
 {
-    image: url(:/dark/down_arrow_hover.svg);
+    image: url(:/dark/down-arrow-hover.svg);
 }
 
 QDoubleSpinBox
@@ -1176,12 +1177,12 @@ QPrevNextCalButton
 
 QPrevNextCalButton#qt_calendar_nextmonth
 {
-    image: url(:/dark/calendar_next.svg);
+    image: url(:/dark/calendar-next.svg);
 }
 
 QPrevNextCalButton#qt_calendar_prevmonth
 {
-    image: url(:/dark/calendar_previous.svg);
+    image: url(:/dark/calendar-previous.svg);
 }
 
 /**
@@ -1225,7 +1226,7 @@ QCalendarWidget QToolButton::menu-indicator,
 #qt_datetimedit_calendar QCalendarWidget QToolButton::menu-indicator
 {
     border-image: none;
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
     width: 0.8em;
     height: 0.5em;
     top: -0.7ex;
@@ -1239,7 +1240,7 @@ QCalendarWidget QToolButton::menu-arrow,
 #qt_datetimedit_calendar QCalendarWidget QToolButton::menu-arrow
 {
     border-image: none;
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
     width: 0.8em;
     height: 0.5em;
     padding-right: 0.09em;
@@ -1333,12 +1334,12 @@ QTabBar::close-button
 
 QTabBar::close-button:hover
 {
-    image: url(:/dark/close_hover.svg);
+    image: url(:/dark/close-hover.svg);
 }
 
 QTabBar::close-button:pressed
 {
-    image: url(:/dark/close_pressed.svg);
+    image: url(:/dark/close-pressed.svg);
 }
 
 /* TOP TABS */
@@ -1702,13 +1703,13 @@ QDockWidget::float-button
 
 QDockWidget::float-button:hover
 {
-    image: url(:/dark/undock_hover.svg);
+    image: url(:/dark/undock-hover.svg);
 }
 
 /* The :pressed events don't register, seems to be a Qt bug. */
 QDockWidget::float-button:pressed
 {
-    image: url(:/dark/undock_hover.svg);
+    image: url(:/dark/undock-hover.svg);
 }
 
 QDockWidget::close-button
@@ -1719,13 +1720,13 @@ QDockWidget::close-button
 
 QDockWidget::close-button:hover
 {
-    image: url(:/dark/close_hover.svg);
+    image: url(:/dark/close-hover.svg);
 }
 
 /* The :pressed events don't register, seems to be a Qt bug. */
 QDockWidget::close-button:pressed
 {
-    image: url(:/dark/close_pressed.svg);
+    image: url(:/dark/close-pressed.svg);
 }
 
 QTreeView,
@@ -1758,48 +1759,48 @@ QTreeView::branch:!has-siblings
 
 QTreeView::branch:has-siblings:adjoins-item
 {
-    border-image: url(:/dark/branch_more.svg);
+    border-image: url(:/dark/branch-more.svg);
 }
 
 QTreeView::branch:!has-children:!has-siblings:adjoins-item
 {
-    border-image: url(:/dark/branch_end.svg);
+    border-image: url(:/dark/branch-end.svg);
 }
 
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings
 {
-    image: url(:/dark/branch_closed.svg);
+    image: url(:/dark/branch-closed.svg);
 }
 
 QTreeView::branch:has-children:!has-siblings:closed:hover,
 QTreeView::branch:closed:has-children:has-siblings:hover
 {
-    image: url(:/dark/branch_closed_hover.svg);
+    image: url(:/dark/branch-closed-hover.svg);
 }
 
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:open:has-children:!has-siblings
 {
-    border-image: url(:/dark/branch_end_arrow.svg);
+    border-image: url(:/dark/branch-end-arrow.svg);
 }
 
 QTreeView::branch:closed:has-children:has-siblings,
 QTreeView::branch:open:has-children:has-siblings
 {
-    border-image: url(:/dark/branch_more_arrow.svg);
+    border-image: url(:/dark/branch-more-arrow.svg);
 }
 
 QTreeView::branch:open:has-children:!has-siblings,
 QTreeView::branch:open:has-children:has-siblings
 {
-    image: url(:/dark/branch_open.svg);
+    image: url(:/dark/branch-open.svg);
 }
 
 QTreeView::branch:open:has-children:!has-siblings:hover,
 QTreeView::branch:open:has-children:has-siblings:hover
 {
-    image: url(:/dark/branch_open_hover.svg);
+    image: url(:/dark/branch-open-hover.svg);
 }
 
 QListView
@@ -2044,48 +2045,48 @@ QToolButton::down-arrow
 
 QToolButton::right-arrow:enabled
 {
-    image: url(:/dark/right_arrow.svg);
+    image: url(:/dark/right-arrow.svg);
 }
 
 QToolButton::left-arrow:enabled
 {
-    image: url(:/dark/left_arrow.svg);
+    image: url(:/dark/left-arrow.svg);
 }
 
 QToolButton::up-arrow:enabled
 {
-    image: url(:/dark/up_arrow.svg);
+    image: url(:/dark/up-arrow.svg);
 }
 
 QToolButton::down-arrow:enabled
 {
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
 }
 
 QToolButton::right-arrow:disabled
 {
-    image: url(:/dark/right_arrow_disabled.svg);
+    image: url(:/dark/right-arrow-disabled.svg);
 }
 
 QToolButton::left-arrow:disabled
 {
-    image: url(:/dark/left_arrow_disabled.svg);
+    image: url(:/dark/left-arrow-disabled.svg);
 }
 
 QToolButton::up-arrow:disabled
 {
-    image: url(:/dark/up_arrow_disabled.svg);
+    image: url(:/dark/up-arrow-disabled.svg);
 }
 
 QToolButton::down-arrow:disabled
 {
-    image: url(:/dark/down_arrow_disabled.svg);
+    image: url(:/dark/down-arrow-disabled.svg);
 }
 
 QToolButton::menu-indicator
 {
     border-image: none;
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
     width: 0.8em;
     height: 0.5em;
     left: -0.09em;
@@ -2113,7 +2114,7 @@ QDialog QToolBar QToolButton[popupMode="2"]::menu-indicator
 QToolButton::menu-arrow
 {
     border-image: none;
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
     width: 0.8em;
     height: 0.5em;
     padding-right: 0.09em;
@@ -2271,7 +2272,7 @@ QHeaderView::section::vertical::only-one:hover
 
 QHeaderView::down-arrow
 {
-    image: url(:/dark/down_arrow.svg);
+    image: url(:/dark/down-arrow.svg);
     /**
      *  Qt5 and Qt6 differ if the subcontrol-origin is set to
      *  the default, AKA, padding. Setting it to the content,
@@ -2294,7 +2295,7 @@ QHeaderView::down-arrow
 
 QHeaderView::up-arrow
 {
-    image: url(:/dark/up_arrow.svg);
+    image: url(:/dark/up-arrow.svg);
     subcontrol-origin: content;
     subcontrol-position: center right;
     width: 0.8em;
@@ -2345,7 +2346,7 @@ QToolBox::tab:hover
 QSplitter::handle
 {
     border: 0.09em solid #2c3034;
-    background: -0.5em solid #202326;
+    background: #202326;
     max-width: 0em;
     max-height: 0em;
 }
@@ -2418,21 +2419,21 @@ QDialogButtonBox
 {
     dialogbuttonbox-buttons-have-icons: true;
 
-    dialog-cancel-icon: url(:/dark/dialog_cancel.svg);
-    dialog-close-icon: url(:/dark/dialog_close.svg);
-    dialog-ok-icon: url(:/dark/dialog_ok.svg);
-    dialog-open-icon: url(:/dark/dialog_open.svg);
-    dialog-reset-icon: url(:/dark/dialog_reset.svg);
-    dialog-save-icon: url(:/dark/dialog_save.svg);
+    dialog-cancel-icon: url(:/dark/dialog-cancel.svg);
+    dialog-close-icon: url(:/dark/dialog-close.svg);
+    dialog-ok-icon: url(:/dark/dialog-ok.svg);
+    dialog-open-icon: url(:/dark/dialog-open.svg);
+    dialog-reset-icon: url(:/dark/dialog-reset.svg);
+    dialog-save-icon: url(:/dark/dialog-save.svg);
     /**
      *  No support yet for overriding saveall.
-     *  dialog-saveall-icon: url(:/dark/dialog_saveall.svg);
+     *  dialog-saveall-icon: url(:/dark/dialog-save-all.svg);
      */
-    dialog-yes-icon: url(:/dark/dialog_ok.svg);
-    dialog-help-icon: url(:/dark/dialog_help.svg);
-    dialog-no-icon: url(:/dark/dialog_no.svg);
-    dialog-apply-icon: url(:/dark/dialog_ok.svg);
-    dialog-discard-icon: url(:/dark/dialog_discard.svg);
+    dialog-yes-icon: url(:/dark/dialog-ok.svg);
+    dialog-help-icon: url(:/dark/dialog-help.svg);
+    dialog-no-icon: url(:/dark/dialog-no.svg);
+    dialog-apply-icon: url(:/dark/dialog-ok.svg);
+    dialog-discard-icon: url(:/dark/dialog-discard.svg);
 }
 
 /* Set some styles for these custom dialog buttons */
@@ -2565,36 +2566,36 @@ ads--CAutoHideDockContainer #dockAreaAutoHideButton
 #dockAreaCloseButton,
 #floatingTitleCloseButton
 {
-    image: url(:/dark/ads_close.svg);
+    image: url(:/dark/ads-close.svg);
 }
 
 #tabCloseButton:hover,
 #dockAreaCloseButton:hover,
 #floatingTitleCloseButton:hover
 {
-    image: url(:/dark/ads_close_hover.svg);
+    image: url(:/dark/ads-close-hover.svg);
 }
 
 #tabCloseButton:pressed,
 #dockAreaCloseButton:pressed,
 #floatingTitleCloseButton:pressed
 {
-    image: url(:/dark/ads_close_pressed.svg);
+    image: url(:/dark/ads-close-pressed.svg);
 }
 
 #tabsMenuButton
 {
-    image: url(:/dark/ads_menu_button.svg);
+    image: url(:/dark/ads-menu-button.svg);
 }
 
 #tabsMenuButton:hover
 {
-    image: url(:/dark/ads_menu_button_hover.svg);
+    image: url(:/dark/ads-menu-button-hover.svg);
 }
 
 #tabsMenuButton:pressed
 {
-    image: url(:/dark/ads_menu_button_pressed.svg);
+    image: url(:/dark/ads-menu-button-pressed.svg);
 }
 
 #tabsMenuButton::menu-indicator
@@ -2604,37 +2605,37 @@ ads--CAutoHideDockContainer #dockAreaAutoHideButton
 
 #detachGroupButton
 {
-    image: url(:/dark/ads_detach.svg);
+    image: url(:/dark/ads-detach.svg);
 }
 
 #detachGroupButton:hover
 {
-    image: url(:/dark/ads_detach_hover.svg);
+    image: url(:/dark/ads-detach-hover.svg);
 }
 
 #detachGroupButton:pressed
 {
-    image: url(:/dark/ads_detach_hover_pressed.svg);
+    image: url(:/dark/ads-detach-hover-pressed.svg);
 }
 
 #dockAreaAutoHideButton {
-    image: url(:/dark/ads_pin.svg);
+    image: url(:/dark/ads-pin.svg);
 }
 
 ads--CAutoHideDockContainer #dockAreaAutoHideButton {
-    image: url(:/dark/ads_unpin.svg);
+    image: url(:/dark/ads-unpin.svg);
 }
 
 ads--CAutoHideDockContainer #dockAreaAutoHideButton {
-    image: url(:/dark/ads_unpin.svg);
+    image: url(:/dark/ads-unpin.svg);
 }
 
 #dockAreaAutoHideButton:hover {
-    image: url(:/dark/ads_pin_hover.svg);
+    image: url(:/dark/ads-pin-hover.svg);
 }
 
-ads--CAutoHideDockContainer #dockAreaAutoHideButton :hover {
-    image: url(:/dark/ads_unpin_hover.svg);
+ads--CAutoHideDockContainer #dockAreaAutoHideButton:hover {
+    image: url(:/dark/ads-unpin-hover.svg);
 }
 
 #autoHideTitleLabel {
@@ -2674,17 +2675,17 @@ ads--CFloatingWidgetTitleBar
 
 #floatingTitleMaximizeButton
 {
-    image: url(:/dark/ads_maximize.svg);
+    image: url(:/dark/ads-maximize.svg);
 }
 
 #floatingTitleMaximizeButton:hover
 {
-    image: url(:/dark/ads_maximize_hover.svg);
+    image: url(:/dark/ads-maximize-hover.svg);
 }
 
 #floatingTitleMaximizeButton:pressed
 {
-    image: url(:/dark/ads_maximize_pressed.svg);
+    image: url(:/dark/ads-maximize-pressed.svg);
 }
 
 /**
@@ -2715,7 +2716,7 @@ ads--CDockWidgetTab[activeTab="true"][focused="true"]
     border-top: 0.09em solid #3de9e3;
     border-left: 0.04em solid #76797c;
     border-right: 0.04em solid #3de9e3;
-    border-bottom: 0.04em tansparent #76797c;
+    border-bottom: 0.04em transparent #76797c;
 }
 
 ads--CDockWidgetTab[activeTab="true"]
@@ -2724,7 +2725,7 @@ ads--CDockWidgetTab[activeTab="true"]
     border-top: 0.09em solid #3daee9;
     border-left: 0.04em solid #76797c;
     border-right: 0.04em solid #76797c;
-    border-bottom: 0.04em tansparent #76797c;
+    border-bottom: 0.04em transparent #76797c;
 }
 
 ads--CDockWidgetTab QLabel
@@ -2869,7 +2870,7 @@ QWK--WindowBar>QAbstractButton#max-button:pressed {
 
 QWK--WindowBar>QAbstractButton#close-button
 {
-    qproperty-iconNormal: url(":/dark/dialog_close.svg");
+    qproperty-iconNormal: url(":/dark/dialog-close.svg");
 }
 
 QWK--WindowBar>QAbstractButton#close-button:hover,
@@ -2896,49 +2897,49 @@ QTabWidget#RIBBON>QTabBar::tab {
 RibbonTabContent #btnPrev
 {
     border: none;
-    icon: url(:/dark/left_arrow.svg)
+    icon: url(:/dark/left-arrow.svg);
 }
 
 RibbonTabContent #btnPrev:disabled
 {
     border: none;
-    icon: url(:/dark/left_arrow_disabled.svg)
+    icon: url(:/dark/left-arrow-disabled.svg);
 }
 
 RibbonTabContent #btnNext
 {
     border: none;
-    icon: url(:/dark/right_arrow.svg)
+    icon: url(:/dark/right-arrow.svg);
 }
 
 RibbonTabContent #btnNext:disabled
 {
     border: none;
-    icon: url(:/dark/right_arrow_disabled.svg)
+    icon: url(:/dark/right-arrow-disabled.svg);
 }
 
 RibbonTabContent #btnPrev:hover
 {
     border: none;
-    icon: url(:/dark/left_arrow_hover.svg)
+    icon: url(:/dark/left-arrow-hover.svg);
 }
 
 RibbonTabContent #btnNext:hover
 {
     border: none;
-    icon: url(:/dark/right_arrow_hover.svg)
+    icon: url(:/dark/right-arrow-hover.svg);
 }
 
 #RIBBON_HIDE_BTN
 {
-    image: url(:/dark/ads_menu_button.svg);
+    image: url(:/dark/ads-menu-button.svg);
     border: none;
     background-color: transparent;
 }
 
 #RIBBON_HIDE_BTN:checked
 {
-    image: url(:/dark/ads_maximize.svg);
+    image: url(:/dark/ads-maximize.svg);
     border: none;
     background-color: transparent;
 }
@@ -2946,7 +2947,7 @@ RibbonTabContent #btnNext:hover
 RibbonButtonGroup QToolButton
 {
     background-color: transparent;
-    border: none;
+    border: 0.04em solid transparent;
     border-radius: 4px;
 }
 

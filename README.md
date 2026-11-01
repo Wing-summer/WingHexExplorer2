@@ -19,7 +19,7 @@
 <h1 align="center"> WingSummer.WingHexExplorer2</h1>
 
 <p align="center">
-<img alt="WingHexExplorer2" src="images/icon.png" />
+<img alt="WingHexExplorer2" src="images/application.svg" />
 <p align="center">羽云十六进制浏览器</p>
 </p>
 

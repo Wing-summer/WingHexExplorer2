@@ -17,6 +17,8 @@
 
 #include "mainwindow.h"
 
+#include "class/settings/thememanager.h"
+
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockFocusController.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
@@ -225,10 +227,13 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
+    auto &theme = ThemeManager::instance();
+
     // ok, preparing for starting...
-    this->setWindowIcon(Utilities::isRoot()
-                            ? ICONRES(QStringLiteral("iconroot"))
-                            : ICONRES(QStringLiteral("icon")));
+    this->setWindowIcon(
+        Utilities::isRoot()
+            ? theme.standardIcon(ThemeManager::StandardIcon::ApplicationRoot)
+            : theme.standardIcon(ThemeManager::StandardIcon::Application));
 
     auto &set = SettingManager::instance();
 
@@ -477,6 +482,8 @@ void MainWindow::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
 
     loadCacheIcon();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            &MainWindow::loadCacheIcon);
     m_toolBtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
 
     using RibbonCatagories = WingHex::WingRibbonCatagories;
@@ -597,15 +604,22 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     // background image that idicates whether it's
     // running under the admin/root previlige
-    QPicture backimg;
-    QPainter painter(&backimg);
-    painter.setOpacity(0.15);
-    painter.drawPixmap(0, 0,
-                       QPixmap(Utilities::isRoot()
-                                   ? NAMEICONRES(QStringLiteral("iconroot"))
-                                   : NAMEICONRES(QStringLiteral("icon"))));
+    auto refreshBackground = [label]() {
+        QPicture background;
+        QPainter painter(&background);
+        painter.setOpacity(0.15);
+        painter.drawPixmap(0, 0,
+                           ThemeManager::instance().standardPixmap(
+                               Utilities::isRoot()
+                                   ? ThemeManager::StandardIcon::ApplicationRoot
+                                   : ThemeManager::StandardIcon::Application));
+        painter.end();
+        label->setPicture(background);
+    };
+    refreshBackground();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, label,
+            refreshBackground);
 
-    label->setPicture(backimg);
     label->setAlignment(Qt::AlignCenter);
 
     CDockWidget *CentralDockWidget =
@@ -690,9 +704,10 @@ ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
     m_logbrowser->setOpenExternalLinks(true);
     m_logbrowser->setUndoRedoEnabled(false);
 
+    auto &theme = ThemeManager::instance();
     auto a = newAction(
-        ICONRES("copy"), tr("Copy"), [this]() { m_logbrowser->copy(); },
-        QKeySequence::Copy);
+        theme.standardIcon(ThemeManager::StandardIcon::Copy), tr("Copy"),
+        [this]() { m_logbrowser->copy(); }, QKeySequence::Copy);
     a->setShortcutContext(Qt::WidgetShortcut);
     m_logbrowser->addAction(a);
 
@@ -700,12 +715,12 @@ ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
     a->setSeparator(true);
     m_logbrowser->addAction(a);
 
-    m_logbrowser->addAction(newAction(ICONRES(QStringLiteral("log")),
-                                      tr("Export logs"),
-                                      &MainWindow::on_exportlog));
-    m_logbrowser->addAction(newAction(ICONRES(QStringLiteral("clearhis")),
-                                      tr("Clear logs"),
-                                      &MainWindow::on_clslog));
+    m_logbrowser->addAction(
+        newAction(theme.standardIcon(ThemeManager::StandardIcon::Log),
+                  tr("Export logs"), &MainWindow::on_exportlog));
+    m_logbrowser->addAction(
+        newAction(theme.standardIcon(ThemeManager::StandardIcon::ClearHistory),
+                  tr("Clear logs"), &MainWindow::on_clslog));
 
     m_logbrowser->setContextMenuPolicy(Qt::ActionsContextMenu);
 
@@ -737,7 +752,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     };
 
     auto menu = new QMenu(tr("Encoding"), this);
-    menu->setIcon(ICONRES(QStringLiteral("encoding")));
+    menu->setIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Encoding));
     auto aGroup = new QActionGroup(menu);
     aGroup->setParent(menu);
 
@@ -779,20 +795,22 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_menuFind->addMenu(menu);
     menu->setEnabled(false);
     m_menuFind->addAction(
-        newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
+        newAction(ThemeManager::StandardIcon::Copy, tr("Copy"), [this]() {
             auto idx = m_findresult->currentIndex();
             if (idx.isValid()) {
                 auto content = _findResultModel->copyContent(
                     m_findresult->mapToSource(idx));
                 qApp->clipboard()->setText(content);
-                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::Copy),
                              tr("Copy to clipboard"));
             }
         }));
-    m_menuFind->addAction(newAction(QStringLiteral("export"),
+    m_menuFind->addAction(newAction(ThemeManager::StandardIcon::Export,
                                     tr("Export search results"),
                                     &MainWindow::on_exportfindresult));
-    m_menuFind->addAction(newAction(QStringLiteral("del"),
+    m_menuFind->addAction(newAction(ThemeManager::StandardIcon::Delete,
                                     tr("Clear search history"),
                                     &MainWindow::on_clearfindresult));
 
@@ -862,12 +880,15 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
 
     auto a = new QAction(this);
     a->setText(tr("Copy"));
-    a->setIcon(ICONRES("copy"));
+    a->setIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Copy));
     connect(a, &QAction::triggered, this, [this] {
         auto r = m_numshowtable->currentIndex().row();
         qApp->clipboard()->setText(
             _numsitem->numData(NumShowModel::NumTableIndex(r)));
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Copy),
                      tr("Copy to clipboard"));
     });
     m_numshowtable->addAction(a);
@@ -943,15 +964,19 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
 
     m_hash->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    auto a = newAction(ICONRES(QStringLiteral("copy")), tr("Copy"), [this] {
-        auto r = m_hash->currentIndex();
-        qApp->clipboard()->setText(
-            _hashModel->checkSumData(CryptographicHash::Algorithm(r.row())));
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
-                     tr("Copy to clipboard"));
-    });
+    auto a = newAction(
+        ThemeManager::instance().standardIcon(ThemeManager::StandardIcon::Copy),
+        tr("Copy"), [this] {
+            auto r = m_hash->currentIndex();
+            qApp->clipboard()->setText(_hashModel->checkSumData(
+                CryptographicHash::Algorithm(r.row())));
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Copy),
+                         tr("Copy to clipboard"));
+        });
     m_hash->addAction(a);
-    a = newAction(QStringLiteral("del"), tr("Clear"), [this]() {
+    a = newAction(ThemeManager::StandardIcon::Delete, tr("Clear"), [this]() {
         auto cur = currentEditor();
         if (cur) {
             auto &cs = cur->checkSumResult();
@@ -1008,15 +1033,17 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
             });
 
     m_bookMark->addAction(
-        newAction(QStringLiteral("export"), tr("Export results"),
+        newAction(ThemeManager::StandardIcon::Export, tr("Export results"),
                   [this]() { saveTableContent(_bookMarkModel); }));
 
+    auto &theme = ThemeManager::instance();
     auto sep = new QAction(m_bookMark);
     sep->setSeparator(true);
     m_bookMark->addAction(sep);
 
-    m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
-                                 tr("Delete bookmark"), m_bookMark);
+    m_aDelBookMark = new QAction(
+        theme.standardIcon(ThemeManager::StandardIcon::DeleteBookmark),
+        tr("Delete bookmark"), m_bookMark);
     connect(m_aDelBookMark, &QAction::triggered, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
@@ -1041,8 +1068,9 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     m_aDelBookMark->setEnabled(false);
     m_bookMark->addAction(m_aDelBookMark);
 
-    auto a = new QAction(ICONRES(QStringLiteral("bookmarkcls")),
-                         tr("Clear bookmarks"), m_bookMark);
+    auto a = new QAction(
+        theme.standardIcon(ThemeManager::StandardIcon::ClearBookmarks),
+        tr("Clear bookmarks"), m_bookMark);
     connect(a, &QAction::triggered, this, &MainWindow::on_bookmarkcls);
     m_bookMark->addAction(a);
 
@@ -1093,8 +1121,8 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                 hexeditor->cursor()->moveTo(offset);
             });
 
-    m_metadata->addAction(
-        newAction(QStringLiteral("mLineInfo"), tr("Custom header"), [this]() {
+    m_metadata->addAction(newAction(
+        ThemeManager::StandardIcon::LineInfo, tr("Custom header"), [this]() {
             QVector<bool> ov(5);
             auto total = 5;
             auto header = m_metadata->horizontalHeader();
@@ -1116,15 +1144,18 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_metadata->addAction(sep);
 
     m_metadata->addAction(
-        newAction(QStringLiteral("export"), tr("Export results"),
+        newAction(ThemeManager::StandardIcon::Export, tr("Export results"),
                   [this]() { saveTableContent(_metadataModel); }));
+
+    auto &theme = ThemeManager::instance();
 
     sep = new QAction(m_metadata);
     sep->setSeparator(true);
     m_metadata->addAction(sep);
 
-    m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
-                                 tr("Delete annotation"), m_metadata);
+    m_aDelMetaData = new QAction(
+        theme.standardIcon(ThemeManager::StandardIcon::DeleteMetadata),
+        tr("Delete annotation"), m_metadata);
     connect(m_aDelMetaData, &QAction::triggered, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
@@ -1147,8 +1178,9 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_aDelMetaData->setEnabled(false);
     m_metadata->addAction(m_aDelMetaData);
 
-    auto a = new QAction(ICONRES(QStringLiteral("metadatacls")),
-                         tr("Clear annotations"), m_metadata);
+    auto a = new QAction(
+        theme.standardIcon(ThemeManager::StandardIcon::ClearMetadata),
+        tr("Clear annotations"), m_metadata);
     connect(a, &QAction::triggered, this, &MainWindow::on_metadatacls);
     m_metadata->addAction(a);
     m_metadata->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
@@ -1213,7 +1245,8 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                 if (m_scriptConsole->isVisible()) {
                     return;
                 }
-                m_console->setIcon(ICONRES(QStringLiteral("dbgrun")));
+                m_console->setIcon(ThemeManager::instance().standardIcon(
+                    ThemeManager::StandardIcon::DebugRun));
             });
     connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished,
             m_console, [this]() { m_console->setIcon({}); });
@@ -1234,25 +1267,31 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
 
     connect(m_bgScriptOutput, &QPlainTextEdit::customContextMenuRequested, this,
             [this](const QPoint &pos) {
+                auto &theme = ThemeManager::instance();
+
                 QMenu menu;
                 auto a = newAction(
-                    ICONRES(QStringLiteral("mStr")), tr("Select all"),
+                    theme.standardIcon(ThemeManager::StandardIcon::String),
+                    tr("Select all"),
                     [this]() { m_bgScriptOutput->selectAll(); },
                     QKeySequence::SelectAll);
                 a->setShortcutContext(Qt::WidgetShortcut);
                 menu.addAction(a);
                 a = newAction(
-                    ICONRES(QStringLiteral("copy")), tr("Copy"),
-                    [this]() { m_bgScriptOutput->copy(); }, QKeySequence::Copy);
+                    theme.standardIcon(ThemeManager::StandardIcon::Copy),
+                    tr("Copy"), [this]() { m_bgScriptOutput->copy(); },
+                    QKeySequence::Copy);
                 a->setShortcutContext(Qt::WidgetShortcut);
                 menu.addAction(a);
-                a = newAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                              [this]() { m_bgScriptOutput->clear(); });
+                a = newAction(
+                    theme.standardIcon(ThemeManager::StandardIcon::Delete),
+                    tr("Clear"), [this]() { m_bgScriptOutput->clear(); });
                 menu.addAction(a);
                 menu.addSeparator();
                 menu.addAction(a);
                 a = newAction(
-                    ICONRES(QStringLiteral("dbgstop")), tr("Terminate script"),
+                    theme.standardIcon(ThemeManager::StandardIcon::DebugStop),
+                    tr("Terminate script"),
                     []() {
                         ScriptMachine::instance().abortScript(
                             ScriptMachine::Background);
@@ -1313,55 +1352,58 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Basic"));
-        addPannelAction(pannel, QStringLiteral("new"), tr("New"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::New, tr("New"),
                         &MainWindow::on_newfile, QKeySequence::New);
 
-        addPannelAction(pannel, QStringLiteral("open"), tr("Open"),
-                        &MainWindow::on_openfile, QKeySequence::Open, nullptr,
+        addPannelAction(pannel, ThemeManager::StandardIcon::OpenProject,
+                        tr("Open"), &MainWindow::on_openfile,
+                        QKeySequence::Open, nullptr,
                         tr("Open a file for editing."));
 
         addPannelAction(
-            pannel, QStringLiteral("workspace"), tr("Open workspace"),
+            pannel, ThemeManager::StandardIcon::Workspace, tr("Open workspace"),
             &MainWindow::on_openworkspace,
             shortcuts.keySequence(QKeySequences::Key::OPEN_WORKSPACE));
 
         auto menu = new QMenu(this);
-        m_toolBtneditors[ToolButtonIndex::OPEN_EXT] = addPannelAction(
-            pannel, QStringLiteral("openother"), tr("Open device"), EMPTY_FUNC,
-            {}, menu, tr("Open a device using a device extension."));
+        m_toolBtneditors[ToolButtonIndex::OPEN_EXT] =
+            addPannelAction(pannel, ThemeManager::StandardIcon::OpenOther,
+                            tr("Open device"), EMPTY_FUNC, {}, menu,
+                            tr("Open a device using a device extension."));
 
-        addPannelAction(pannel, QStringLiteral("recent"), tr("Recent files"),
-                        EMPTY_FUNC, {}, m_recentMenu);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Recent,
+                        tr("Recent files"), EMPTY_FUNC, {}, m_recentMenu);
 
-        auto a = addPannelAction(pannel, QStringLiteral("reload"), tr("Reload"),
-                                 &MainWindow::on_reload);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Reload,
+                                 tr("Reload"), &MainWindow::on_reload);
         m_editStateWidgets << a;
     }
 
     {
         auto pannel = tab->addGroup(tr("Save"));
 
-        auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
-                                 &MainWindow::on_save, QKeySequence::Save);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Save,
+                                 tr("Save"), &MainWindow::on_save,
+                                 QKeySequence::Save);
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("saveas"), tr("Save as"),
-                            &MainWindow::on_saveas,
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::SaveAs,
+                            tr("Save as"), &MainWindow::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("export"), tr("Export"),
-                            &MainWindow::on_exportfile,
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Export,
+                            tr("Export"), &MainWindow::on_exportfile,
                             shortcuts.keySequence(QKeySequences::Key::EXPORT));
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("convpro"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::ConvertProject,
                             tr("Convert to workspace"), &MainWindow::on_convpro,
                             {}, nullptr,
                             tr("Convert the current file to a workspace."));
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("savesel"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::SaveSelection,
                             tr("Save selection"), &MainWindow::on_savesel, {},
                             nullptr, tr("Save the selected bytes to a file."));
         m_editStateWidgets << a;
@@ -1376,74 +1418,78 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
 
-        auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
-                                 &MainWindow::on_undofile, QKeySequence::Undo);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Undo,
+                                 tr("Undo"), &MainWindow::on_undofile,
+                                 QKeySequence::Undo);
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION] = a;
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
-                            &MainWindow::on_redofile,
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Redo,
+                            tr("Redo"), &MainWindow::on_redofile,
                             shortcuts.keySequence(QKeySequences::Key::REDO));
         m_toolBtneditors[ToolButtonIndex::REDO_ACTION] = a;
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Cut, tr("Cut"),
                             &MainWindow::on_cutfile, QKeySequence::Cut);
         m_editStateWidgets << a;
-        a = addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
-                            &MainWindow::on_copyfile, QKeySequence::Copy);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Copy,
+                            tr("Copy"), &MainWindow::on_copyfile,
+                            QKeySequence::Copy);
         m_editStateWidgets << a;
-        a = addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
-                            &MainWindow::on_pastefile, QKeySequence::Paste);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Paste,
+                            tr("Paste"), &MainWindow::on_pastefile,
+                            QKeySequence::Paste);
         m_editStateWidgets << a;
-        a = addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
-                            &MainWindow::on_delete);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Delete,
+                            tr("Delete"), &MainWindow::on_delete);
         m_editStateWidgets << a;
-        a = addPannelAction(pannel, QStringLiteral("clone"), tr("Clone"),
-                            &MainWindow::on_clone);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Clone,
+                            tr("Clone"), &MainWindow::on_clone);
         m_editStateWidgets << a;
     }
 
     {
         auto pannel = tab->addGroup(tr("Lookup"));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("find"), tr("Find"),
+            pannel, ThemeManager::StandardIcon::Find, tr("Find"),
             &MainWindow::on_findfile, QKeySequence::Find);
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("jmp"), tr("Go to"),
+            pannel, ThemeManager::StandardIcon::Location, tr("Go to"),
             &MainWindow::on_gotoline,
             shortcuts.keySequence(QKeySequences::Key::GOTO));
 
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("sum"),
-                                              tr("Checksum"),
-                                              &MainWindow::on_checksum);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("info"), tr("File information"),
-            &MainWindow::on_fileInfo,
+            pannel, ThemeManager::StandardIcon::Checksum, tr("Checksum"),
+            &MainWindow::on_checksum);
+        m_editStateWidgets << addPannelAction(
+            pannel, ThemeManager::StandardIcon::Information,
+            tr("File information"), &MainWindow::on_fileInfo,
             shortcuts.keySequence(QKeySequences::Key::FILE_INFO));
     }
 
     {
         auto pannel = tab->addGroup(tr("Hex"));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("cuthex"), tr("Cut hex"),
+            pannel, ThemeManager::StandardIcon::CutHex, tr("Cut hex"),
             &MainWindow::on_cuthex,
             shortcuts.keySequence(QKeySequences::Key::CUT_HEX));
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("copyhex"), tr("Copy hex"),
+            pannel, ThemeManager::StandardIcon::CopyHex, tr("Copy hex"),
             &MainWindow::on_copyhex,
             shortcuts.keySequence(QKeySequences::Key::COPY_HEX));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("pastehex"), tr("Paste hex"),
+            pannel, ThemeManager::StandardIcon::PasteHex, tr("Paste hex"),
             &MainWindow::on_pastehex,
             shortcuts.keySequence(QKeySequences::Key::PASTE_HEX));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("fill"), tr("Fill"), &MainWindow::on_fill,
+            pannel, ThemeManager::StandardIcon::Fill, tr("Fill"),
+            &MainWindow::on_fill,
             shortcuts.keySequence(QKeySequences::Key::HEX_FILL));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("fillZero"), tr("Fill with zeros"),
+            pannel, ThemeManager::StandardIcon::FillZero, tr("Fill with zeros"),
             &MainWindow::on_fillzero,
             shortcuts.keySequence(QKeySequences::Key::HEX_FILL0));
     }
@@ -1451,32 +1497,32 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Markers"));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("bookmark"), tr("Bookmark"),
+            pannel, ThemeManager::StandardIcon::Bookmark, tr("Bookmark"),
             &MainWindow::on_bookmark,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("bookmarkdel"), tr("Delete bookmark"),
-            &MainWindow::on_bookmarkdel,
+            pannel, ThemeManager::StandardIcon::DeleteBookmark,
+            tr("Delete bookmark"), &MainWindow::on_bookmarkdel,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK_DEL));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("bookmarkcls"), tr("Clear bookmarks"),
-            &MainWindow::on_bookmarkcls,
+            pannel, ThemeManager::StandardIcon::ClearBookmarks,
+            tr("Clear bookmarks"), &MainWindow::on_bookmarkcls,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK_CLS));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadata"), tr("Add annotation"),
+            pannel, ThemeManager::StandardIcon::Metadata, tr("Add annotation"),
             &MainWindow::on_metadata,
             shortcuts.keySequence(QKeySequences::Key::METADATA));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadataedit"), tr("Edit annotation"),
-            &MainWindow::on_metadataedit,
+            pannel, ThemeManager::StandardIcon::EditMetadata,
+            tr("Edit annotation"), &MainWindow::on_metadataedit,
             shortcuts.keySequence(QKeySequences::Key::METADATA_EDIT));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadatadel"), tr("Delete annotation"),
-            &MainWindow::on_metadatadel,
+            pannel, ThemeManager::StandardIcon::DeleteMetadata,
+            tr("Delete annotation"), &MainWindow::on_metadatadel,
             shortcuts.keySequence(QKeySequences::Key::METADATA_DEL));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadatacls"), tr("Clear annotations"),
-            &MainWindow::on_metadatacls,
+            pannel, ThemeManager::StandardIcon::ClearMetadata,
+            tr("Clear annotations"), &MainWindow::on_metadatacls,
             shortcuts.keySequence(QKeySequences::Key::METADATA_CLS));
     }
 
@@ -1515,10 +1561,11 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         menu->addAction(newAction(QStringLiteral("300%"), [this] {
             this->setCurrentHexEditorScale(3.0);
         }));
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("scale"),
+        m_editStateWidgets << addPannelAction(pannel,
+                                              ThemeManager::StandardIcon::Scale,
                                               tr("Zoom"), EMPTY_FUNC, {}, menu);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("scalereset"), tr("Reset zoom"),
+            pannel, ThemeManager::StandardIcon::ResetScale, tr("Reset zoom"),
             [this] { this->setCurrentHexEditorScale(1.0); });
     }
 
@@ -1540,16 +1587,16 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 shortcuts.keySequence(QKeySequences::Key::METADATA_COMMENT)));
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metadata"), tr("Annotations"), EMPTY_FUNC,
-            {}, menu);
+            pannel, ThemeManager::StandardIcon::Metadata, tr("Annotations"),
+            EMPTY_FUNC, {}, menu);
 
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metashow"), tr("Show all annotations"),
-            &MainWindow::on_metashowall,
+            pannel, ThemeManager::StandardIcon::ShowMetadata,
+            tr("Show all annotations"), &MainWindow::on_metashowall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_SHOW));
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("metahide"), tr("Hide all annotations"),
-            &MainWindow::on_metahideall,
+            pannel, ThemeManager::StandardIcon::HideMetadata,
+            tr("Hide all annotations"), &MainWindow::on_metahideall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_HIDE));
     }
 
@@ -1578,42 +1625,44 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Window"));
         m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS] =
-            addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
-                            EMPTY_FUNC, {}, new QMenu(this));
+            addPannelAction(pannel, ThemeManager::StandardIcon::File,
+                            tr("Editor"), EMPTY_FUNC, {}, new QMenu(this));
         auto edwins = new QMenu(this);
-        edwins->addAction(newAction(QStringLiteral("file"), tr("Hex"), [this] {
-            auto editor = currentEditor();
-            if (editor == nullptr) {
-                return;
-            }
-            editor->switchView({});
-        }));
-        m_toolBtneditors[ToolButtonIndex::EDITOR_WINS] = addPannelAction(
-            pannel, QStringLiteral("win"), tr("View"), EMPTY_FUNC, {}, edwins);
+        edwins->addAction(
+            newAction(ThemeManager::StandardIcon::File, tr("Hex"), [this] {
+                auto editor = currentEditor();
+                if (editor == nullptr) {
+                    return;
+                }
+                editor->switchView({});
+            }));
+        m_toolBtneditors[ToolButtonIndex::EDITOR_WINS] =
+            addPannelAction(pannel, ThemeManager::StandardIcon::Window,
+                            tr("View"), EMPTY_FUNC, {}, edwins);
         m_toolBtneditors[ToolButtonIndex::TOOL_VIEWS] =
-            addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
-                            EMPTY_FUNC, {}, new QMenu(this));
+            addPannelAction(pannel, ThemeManager::StandardIcon::Tools,
+                            tr("Tools"), EMPTY_FUNC, {}, new QMenu(this));
 
         m_toolBtneditors[ToolButtonIndex::PLUGIN_VIEWS] =
-            addPannelAction(pannel, QStringLiteral("edit"), tr("Plugin"),
-                            EMPTY_FUNC, {}, new QMenu(this));
+            addPannelAction(pannel, ThemeManager::StandardIcon::Edit,
+                            tr("Plugin"), EMPTY_FUNC, {}, new QMenu(this));
         m_editStateWidgets << m_toolBtneditors[ToolButtonIndex::EDITOR_WINS];
     }
 
     {
         auto pannel = tab->addGroup(tr("Editor layout"));
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("mAddr"),
-                                              tr("Set base address"),
-                                              &MainWindow::on_baseAddr);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("hexwidth"), tr("Bytes per line"),
+            pannel, ThemeManager::StandardIcon::Address, tr("Set base address"),
+            &MainWindow::on_baseAddr);
+        m_editStateWidgets << addPannelAction(
+            pannel, ThemeManager::StandardIcon::HexWidth, tr("Bytes per line"),
             &MainWindow::on_hexWidth);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("encoding"), tr("Encoding"),
+            pannel, ThemeManager::StandardIcon::Encoding, tr("Encoding"),
             &MainWindow::on_encoding);
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("mColInfo"), tr("Show address column"),
-            [this]() {
+            pannel, ThemeManager::StandardIcon::ColumnInfo,
+            tr("Show address column"), [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
                     return;
@@ -1621,7 +1670,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 hexeditor->setAddressVisible(!hexeditor->addressVisible());
             });
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("mLineInfo"), tr("Show headers"), [this]() {
+            pannel, ThemeManager::StandardIcon::LineInfo, tr("Show headers"),
+            [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
                     return;
@@ -1629,7 +1679,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 hexeditor->setHeaderVisible(!hexeditor->headerVisible());
             });
         m_editStateWidgets << addPannelAction(
-            pannel, QStringLiteral("mStr"), tr("Show decoded text"), [this]() {
+            pannel, ThemeManager::StandardIcon::String, tr("Show decoded text"),
+            [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
                     return;
@@ -1640,13 +1691,14 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Layout"));
-        addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Full screen"),
-                        &MainWindow::on_fullScreen);
+        addPannelAction(pannel, ThemeManager::StandardIcon::FullScreen,
+                        tr("Full screen"), &MainWindow::on_fullScreen);
 
         auto &l = LayoutManager::instance().layouts();
 
         auto menu = new QMenu(this);
-        menu->addAction(newAction(QStringLiteral("icon"), tr("Default"),
+        menu->addAction(newAction(ThemeManager::StandardIcon::Application,
+                                  tr("Default"),
                                   [this]() { restoreLayout(_defaultLayout); }));
 
         if (!l.isEmpty()) {
@@ -1656,18 +1708,18 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         for (auto p = l.constKeyValueBegin(); p != l.constKeyValueEnd(); ++p) {
             auto layout = p->second;
             menu->addAction(
-                newAction(QStringLiteral("layout"), p->first,
+                newAction(ThemeManager::StandardIcon::Layout, p->first,
                           [this, layout]() { restoreLayout(layout); }));
         }
 
         m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION] =
-            addPannelAction(pannel, QStringLiteral("layout"),
+            addPannelAction(pannel, ThemeManager::StandardIcon::Layout,
                             tr("Restore layout"), EMPTY_FUNC, {}, menu);
 
-        addPannelAction(pannel, QStringLiteral("layoutexport"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::ExportLayout,
                         tr("Save layout"), &MainWindow::on_saveLayout);
 
-        addPannelAction(pannel, QStringLiteral("layoutdel"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::DeleteLayout,
                         tr("Remove layout"), &MainWindow::on_delLayout);
     }
 
@@ -1678,8 +1730,8 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
     updateUI();
     {
         auto pannel = tab->addGroup(tr("Basic"));
-        addPannelAction(pannel, QStringLiteral("script"), tr("Script editor"),
-                        &MainWindow::on_scriptwindow);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Script,
+                        tr("Script editor"), &MainWindow::on_scriptwindow);
     }
 
     {
@@ -1700,7 +1752,7 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
-            pannel, QStringLiteral("settingplugin"), tr("Plugin"),
+            pannel, ThemeManager::StandardIcon::PluginSettings, tr("Plugin"),
             &MainWindow::on_settingPlugin,
             shortcuts.keySequence(QKeySequences::Key::SETTING_PLUGIN));
     }
@@ -1724,7 +1776,7 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
-            pannel, QStringLiteral("general"), tr("Application"),
+            pannel, ThemeManager::StandardIcon::Tools, tr("Application"),
             &MainWindow::on_settingGeneral,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL), nullptr,
             tr("Configure the application, hex editor, plugins, and script "
@@ -1732,8 +1784,8 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
 
         if (set.scriptEnabled()) {
             addPannelAction(
-                pannel, QStringLiteral("scriptset"), tr("Scripting"),
-                &MainWindow::on_settingScript, {}, nullptr,
+                pannel, ThemeManager::StandardIcon::ScriptSettings,
+                tr("Scripting"), &MainWindow::on_settingScript, {}, nullptr,
                 tr("Configure the script editor, console, and Luau tools."));
         }
     }
@@ -1753,25 +1805,25 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Information"));
-        addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
-                        &MainWindow::on_about);
-        addPannelAction(pannel, QStringLiteral("sponsor"), tr("Sponsor"),
-                        &MainWindow::on_sponsor);
-        addPannelAction(pannel, QStringLiteral("wiki"), tr("Wiki"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::Software,
+                        tr("Software"), &MainWindow::on_about);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Sponsor,
+                        tr("Sponsor"), &MainWindow::on_sponsor);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Wiki, tr("Wiki"),
                         &MainWindow::on_wiki);
-        addPannelAction(pannel, QStringLiteral("qt"), tr("About Qt"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::Qt, tr("About Qt"),
                         [this] { WingMessageBox::aboutQt(this); });
-        addPannelAction(pannel, QStringLiteral("update"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::Update,
                         tr("Check for updates"), &MainWindow::on_update);
     }
 
     {
         auto pannel = tab->addGroup(tr("Log"));
-        addPannelAction(pannel, QStringLiteral("log"), tr("Export logs"),
-                        &MainWindow::on_exportlog);
-        addPannelAction(pannel, QStringLiteral("clearhis"), tr("Clear logs"),
-                        &MainWindow::on_clslog);
-        addPannelAction(pannel, QStringLiteral("qtloginspect"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::Log,
+                        tr("Export logs"), &MainWindow::on_exportlog);
+        addPannelAction(pannel, ThemeManager::StandardIcon::ClearHistory,
+                        tr("Clear logs"), &MainWindow::on_clslog);
+        addPannelAction(pannel, ThemeManager::StandardIcon::InspectQtLog,
                         tr("Inspect Qt"), &MainWindow::on_inspectQt);
     }
 
@@ -1783,7 +1835,8 @@ void MainWindow::buildUpSettingDialog() {
     QString id;
     auto &set = SettingManager::instance();
 
-    m_setdialog = new SettingDialog(ICONRES(QStringLiteral("general")),
+    m_setdialog = new SettingDialog(ThemeManager::instance().standardIcon(
+                                        ThemeManager::StandardIcon::Tools),
                                     tr("Application settings"), this);
     updateUI();
 
@@ -1893,8 +1946,10 @@ void MainWindow::buildUpSettingDialog() {
     });
 
     // script settings
-    m_scriptsetdlg = new SettingDialog(ICONRES(QStringLiteral("scriptset")),
-                                       tr("Scripting environment"), this);
+    m_scriptsetdlg =
+        new SettingDialog(ThemeManager::instance().standardIcon(
+                              ThemeManager::StandardIcon::ScriptSettings),
+                          tr("Scripting environment"), this);
     auto edit = new QEditConfig(false, m_scriptsetdlg);
     m_scriptsetdlg->addPage(edit);
     connect(edit, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,
@@ -1943,7 +1998,8 @@ void MainWindow::installPluginEditorWidgets() {
 
             auto icon = wctor->icon();
             if (icon.isNull()) {
-                icon = ICONRES(QStringLiteral("win"));
+                icon = ThemeManager::instance().standardIcon(
+                    ThemeManager::StandardIcon::Window);
             }
             auto name = wctor->name().trimmed();
             if (name.isEmpty()) {
@@ -2093,7 +2149,9 @@ void MainWindow::on_reload() {
         return;
     }
     auto res = editor->reload();
-    reportErrFileError(res, NAMEICONRES(QStringLiteral("reload")),
+    reportErrFileError(res,
+                       ThemeManager::instance().standardPixmap(
+                           ThemeManager::StandardIcon::Reload),
                        tr("File reloaded."), tr("Could not reload the file."));
     updateEditModeEnabled();
 }
@@ -2116,15 +2174,20 @@ void MainWindow::on_convpro() {
         return;
     }
 
+    auto &theme = ThemeManager::instance();
+
     if (editor->isNewFile()) {
-        Toast::toast(this, NAMEICONRES("convpro"),
-                     tr("Please save the newly created file first."));
+        Toast::toast(
+            this,
+            theme.standardPixmap(ThemeManager::StandardIcon::ConvertProject),
+            tr("Please save the newly created file first."));
         return;
     }
 
     if (editor->isWorkSpace()) {
         Toast::toast(
-            this, NAMEICONRES("convpro"),
+            this,
+            theme.standardPixmap(ThemeManager::StandardIcon::ConvertProject),
             tr("This is already a workspace; no conversion is needed"));
         return;
     }
@@ -2135,7 +2198,9 @@ void MainWindow::on_convpro() {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Failed to convert to workspace"));
     } else {
-        if (reportErrFileError(ret, NAMEICONRES("convpro"),
+        if (reportErrFileError(ret,
+                               theme.standardPixmap(
+                                   ThemeManager::StandardIcon::ConvertProject),
                                tr("Conversion to workspace successful"),
                                tr("Failed to convert to workspace"))) {
             bindWorkSpaceEditorView(editor);
@@ -2182,7 +2247,9 @@ void MainWindow::on_exportfile() {
 
     bool isWorkspace = editor->isWorkSpace();
     auto res = saveEditor(editor, filename, true, isWorkspace);
-    reportErrFileError(res, NAMEICONRES(QStringLiteral("export")),
+    reportErrFileError(res,
+                       ThemeManager::instance().standardPixmap(
+                           ThemeManager::StandardIcon::Export),
                        tr("Export complete."), tr("Export failed."));
 }
 
@@ -2221,7 +2288,9 @@ void MainWindow::on_savesel() {
         auto buffer = hexeditor->selectedBytes().join();
         qfile.write(buffer);
         qfile.close();
-        Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::SaveSelection),
                      tr("Selection saved."));
     } else {
         WingMessageBox::critical(
@@ -2252,11 +2321,14 @@ void MainWindow::on_cutfile() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     if (Q_LIKELY(hexeditor->Cut())) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Data cut to clipboard."));
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Could not cut data to the clipboard because it "
                         "exceeds the size limit."));
     }
@@ -2267,11 +2339,14 @@ void MainWindow::on_copyfile() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     if (Q_LIKELY(hexeditor->copy())) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Copy),
                      tr("Copy to clipboard"));
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Copy),
                      tr("Could not copy data to the clipboard because it "
                         "exceeds the size limit."));
     }
@@ -2284,7 +2359,9 @@ void MainWindow::on_pastefile() {
     }
     if (!hexeditor->Paste()) {
         Toast::toast(
-            this, NAMEICONRES(QStringLiteral("paste")),
+            this,
+            ThemeManager::instance().standardPixmap(
+                ThemeManager::StandardIcon::Paste),
             tr("Paste failed. Please check permissions or content length."));
     }
 }
@@ -2296,7 +2373,9 @@ void MainWindow::on_delete() {
     }
 
     if (!hexeditor->RemoveSelection()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("del")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Delete),
                      tr("Deletion failed"));
     }
 }
@@ -2309,7 +2388,9 @@ void MainWindow::on_clone() {
     auto hexeditor = editor->clone();
     if (hexeditor == nullptr) {
         Toast::toast(
-            this, NAMEICONRES(QStringLiteral("clone")),
+            this,
+            ThemeManager::instance().standardPixmap(
+                ThemeManager::StandardIcon::Clone),
             tr("Cloning has reached its limit and cannot proceed further!"));
         return;
     }
@@ -2342,20 +2423,27 @@ void MainWindow::on_findfile() {
                 return editor->find(r);
             },
             [this, editor](EditorView::FindError err) {
+                auto &theme = ThemeManager::instance();
                 switch (err) {
                 case EditorView::FindError::Success:
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                                 tr("Search complete."));
+                    Toast::toast(
+                        this,
+                        theme.standardPixmap(ThemeManager::StandardIcon::Find),
+                        tr("Search complete."));
                     break;
                 case EditorView::FindError::Busy:
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                                 tr("A search is already running."));
+                    Toast::toast(
+                        this,
+                        theme.standardPixmap(ThemeManager::StandardIcon::Find),
+                        tr("A search is already running."));
                     break;
                 case EditorView::FindError::MayOutOfRange:
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                                 tr("The search volume has reached its limit. "
-                                    "Results may be incomplete. We recommend "
-                                    "searching by segment."));
+                    Toast::toast(
+                        this,
+                        theme.standardPixmap(ThemeManager::StandardIcon::Find),
+                        tr("The search volume has reached its limit. "
+                           "Results may be incomplete. We recommend "
+                           "searching by segment."));
                     break;
                 }
 
@@ -2398,7 +2486,9 @@ void MainWindow::on_checksum() {
     }
 
     if (editor->isFindBusy()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("sum")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Checksum),
                      tr("A search is already running."));
         return;
     }
@@ -2455,13 +2545,17 @@ void MainWindow::on_baseAddr() {
         if (b) {
             auto r = qnum + quintptr(hexeditor->documentBytes());
             if (qnum > r || quintptr(hexeditor->documentBytes()) > r) {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("mAddr")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::Address),
                              tr("The base address is too large, and the "
                                 "address you obtain will be incorrect!"));
             }
             hexeditor->setAddressBase(qnum);
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("mAddr")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Address),
                          tr("Invalid base address."));
         }
     }
@@ -2489,11 +2583,14 @@ void MainWindow::on_cuthex() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     if (hexeditor->Cut(true)) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Data cut to clipboard."));
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Could not cut data to the clipboard because it "
                         "exceeds the size limit."));
     }
@@ -2504,11 +2601,14 @@ void MainWindow::on_copyhex() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     if (hexeditor->copy(true)) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copyhex")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::CopyHex),
                      tr("Copy to clipboard"));
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copyhex")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::CopyHex),
                      tr("Could not copy data to the clipboard because it "
                         "exceeds the size limit."));
     }
@@ -2521,7 +2621,9 @@ void MainWindow::on_pastehex() {
     }
     if (!hexeditor->Paste(true)) {
         Toast::toast(
-            this, NAMEICONRES(QStringLiteral("copyhex")),
+            this,
+            ThemeManager::instance().standardPixmap(
+                ThemeManager::StandardIcon::CopyHex),
             tr("Paste failed. Please check permissions or content length."));
     }
 }
@@ -2540,7 +2642,9 @@ void MainWindow::on_fill() {
         auto limit = std::numeric_limits<uchar>().max();
         if (v > limit) {
             Toast::toast(
-                this, NAMEICONRES(QStringLiteral("fill")),
+                this,
+                ThemeManager::instance().standardPixmap(
+                    ThemeManager::StandardIcon::Fill),
                 tr("The input value is too large and it will be truncated."));
         }
         auto ch = uchar(v);
@@ -2560,7 +2664,9 @@ void MainWindow::on_fill() {
             }
             doc->endMarco();
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("fill")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Fill),
                          tr("Invalid fill byte."));
         }
     }
@@ -2593,7 +2699,9 @@ void MainWindow::on_bookmark() {
     }
     auto doc = hexeditor->document();
     if (doc->bookMarksCount() >= QHEXVIEW_BOOKMARK_LIMIT) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("bookmark")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Bookmark),
                      tr("The bookmark limit has been reached."));
         return;
     }
@@ -2626,6 +2734,7 @@ void MainWindow::on_bookmarkdel() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     auto doc = hexeditor->document();
     auto cursor = hexeditor->cursor();
     if (cursor->hasSelection()) {
@@ -2643,7 +2752,9 @@ void MainWindow::on_bookmarkdel() {
                 doc->RemoveBookMark(pos);
             }
             doc->endMarco();
-            Toast::toast(this, NAMEICONRES("bookmarkdel"),
+            Toast::toast(this,
+                         theme.standardPixmap(
+                             ThemeManager::StandardIcon::DeleteBookmark),
                          tr("Bookmark deleted successfully"));
             return;
         }
@@ -2651,15 +2762,18 @@ void MainWindow::on_bookmarkdel() {
         auto pos = cursor->position().offset();
         if (doc->bookMarkExists(pos)) {
             if (doc->RemoveBookMark(pos)) {
-                Toast::toast(this, NAMEICONRES("bookmarkdel"),
+                Toast::toast(this,
+                             theme.standardPixmap(
+                                 ThemeManager::StandardIcon::DeleteBookmark),
                              tr("Bookmark deleted successfully"));
                 return;
             }
         }
     }
 
-    Toast::toast(this, NAMEICONRES("bookmarkdel"),
-                 tr("No bookmarks to delete"));
+    Toast::toast(
+        this, theme.standardPixmap(ThemeManager::StandardIcon::DeleteBookmark),
+        tr("No bookmarks to delete"));
 }
 
 void MainWindow::on_bookmarkcls() {
@@ -2669,7 +2783,10 @@ void MainWindow::on_bookmarkcls() {
     }
     auto doc = hexeditor->document();
     doc->ClearBookMark();
-    Toast::toast(this, NAMEICONRES("bookmarkdel"), tr("Bookmarks cleared"));
+    Toast::toast(this,
+                 ThemeManager::instance().standardPixmap(
+                     ThemeManager::StandardIcon::DeleteBookmark),
+                 tr("Bookmarks cleared"));
 }
 
 void MainWindow::on_metadata() {
@@ -2681,7 +2798,9 @@ void MainWindow::on_metadata() {
     auto meta = doc->metadata();
 
     if (meta->size() >= QHEXVIEW_METADATA_LIMIT) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Metadata),
                      tr("The annotation limit has been reached."));
         return;
     }
@@ -2711,7 +2830,9 @@ void MainWindow::on_metadata() {
                 cur->clearSelection();
             }
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Metadata),
                          tr("Select some bytes first."));
         }
     }
@@ -2748,7 +2869,9 @@ void MainWindow::on_metadataedit() {
                 mi->ModifyMetadata(meta, o);
             }
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Metadata),
                          tr("There is no annotation to edit."));
         }
     }
@@ -2759,21 +2882,28 @@ void MainWindow::on_metadatadel() {
     if (hexeditor == nullptr) {
         return;
     }
+    auto &theme = ThemeManager::instance();
     auto doc = hexeditor->document();
     auto meta = doc->metadata();
     auto cursor = hexeditor->cursor();
     if (cursor->hasSelection()) {
-        Toast::toast(this, NAMEICONRES("metadatadel"),
-                     tr("Please clear your selection."));
+        Toast::toast(
+            this,
+            theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
+            tr("Please clear your selection."));
         return;
     }
     auto pos = cursor->position().offset();
     if (meta->RemoveMetadata(pos)) {
-        Toast::toast(this, NAMEICONRES("metadatadel"),
-                     tr("Annotation deleted."));
+        Toast::toast(
+            this,
+            theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
+            tr("Annotation deleted."));
     } else {
-        Toast::toast(this, NAMEICONRES("metadatadel"),
-                     tr("No annotations to delete."));
+        Toast::toast(
+            this,
+            theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
+            tr("No annotations to delete."));
     }
 }
 
@@ -2784,7 +2914,10 @@ void MainWindow::on_metadatacls() {
     }
     auto doc = hexeditor->document();
     doc->metadata()->Clear();
-    Toast::toast(this, NAMEICONRES("metadatacls"), tr("Annotations cleared."));
+    Toast::toast(this,
+                 ThemeManager::instance().standardPixmap(
+                     ThemeManager::StandardIcon::ClearMetadata),
+                 tr("Annotations cleared."));
 }
 
 void MainWindow::on_metadatafg(bool checked) {
@@ -2873,9 +3006,11 @@ void MainWindow::on_exportfindresult() {
     showStatus(tr("Search results are being exported..."));
     QScopeGuard g([this]() { showStatus({}); });
 
+    auto &theme = ThemeManager::instance();
     auto editor = currentEditor();
     if (editor == nullptr) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Export),
                      tr("There are no search results to export."));
         return;
     }
@@ -2884,7 +3019,8 @@ void MainWindow::on_exportfindresult() {
 
     auto c = findresitem.results.size();
     if (c == 0) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Export),
                      tr("There are no search results to export."));
         return;
     }
@@ -2922,11 +3058,13 @@ void MainWindow::on_exportfindresult() {
         QJsonDocument doc(fobj);
         if (f.write(doc.toJson(QJsonDocument::JsonFormat::Indented)) >= 0) {
             f.close();
-            Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
-                         tr("Search results exported successfully!"));
+            Toast::toast(
+                this, theme.standardPixmap(ThemeManager::StandardIcon::Export),
+                tr("Search results exported successfully!"));
         }
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Export),
                      tr("Export failed."));
     }
 }
@@ -3010,18 +3148,23 @@ void MainWindow::on_saveLayout() {
                     menu->addSeparator();
                 }
 
-                menu->addAction(newAction(
-                    QStringLiteral("layout"), fileID, [this, layout]() {
-                        showStatus(tr("Restoring layout..."));
-                        updateUI();
-                        restoreLayout(layout);
-                        showStatus({});
-                    }));
+                menu->addAction(newAction(ThemeManager::StandardIcon::Layout,
+                                          fileID, [this, layout]() {
+                                              showStatus(
+                                                  tr("Restoring layout..."));
+                                              updateUI();
+                                              restoreLayout(layout);
+                                              showStatus({});
+                                          }));
 
-                Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::ExportLayout),
                              tr("Layout saved successfully"));
             } else {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::ExportLayout),
                              tr("Could not save the layout."));
             }
         }
@@ -3030,9 +3173,11 @@ void MainWindow::on_saveLayout() {
 }
 
 void MainWindow::on_delLayout() {
+    auto &theme = ThemeManager::instance();
     auto &lm = LayoutManager::instance();
     if (lm.layoutCount() == 0) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+        Toast::toast(this,
+                     theme.standardPixmap(ThemeManager::StandardIcon::Save),
                      tr("No entry to remove"));
         return;
     }
@@ -3060,11 +3205,15 @@ void MainWindow::on_delLayout() {
             ok &= r;
         }
         if (ok) {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutdel")),
-                         tr("Layout removed successfully"));
+            Toast::toast(
+                this,
+                theme.standardPixmap(ThemeManager::StandardIcon::DeleteLayout),
+                tr("Layout removed successfully"));
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutdel")),
-                         tr("Could not remove the layout."));
+            Toast::toast(
+                this,
+                theme.standardPixmap(ThemeManager::StandardIcon::DeleteLayout),
+                tr("Could not remove the layout."));
         }
     }
 }
@@ -3077,15 +3226,18 @@ void MainWindow::on_exportlog() {
         this, tr("Export logs"), m_lastusedpath, tr("Logs (*.log)"));
     if (!fileName.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(fileName);
+        auto &theme = ThemeManager::instance();
         QFile lfile(fileName);
         if (lfile.open(QFile::WriteOnly | QFile::NewOnly | QFile::Text)) {
             auto data = m_logbrowser->toPlainText();
             lfile.write(data.toUtf8());
             lfile.close();
-            Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
+            Toast::toast(this,
+                         theme.standardPixmap(ThemeManager::StandardIcon::Log),
                          tr("Log export successful"));
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
+            Toast::toast(this,
+                         theme.standardPixmap(ThemeManager::StandardIcon::Log),
                          tr("Log export failed!"));
         }
     }
@@ -3094,7 +3246,9 @@ void MainWindow::on_exportlog() {
 void MainWindow::on_clslog() {
     Q_ASSERT(m_logbrowser);
     m_logbrowser->clear();
-    Toast::toast(this, NAMEICONRES(QStringLiteral("clearhis")),
+    Toast::toast(this,
+                 ThemeManager::instance().standardPixmap(
+                     ThemeManager::StandardIcon::ClearHistory),
                  tr("Logs successfully cleared!"));
 }
 
@@ -3115,11 +3269,7 @@ void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 void MainWindow::on_sponsor() {
     // Github is not easy to access for Chinese people,
     // Gitee mirror instead
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
     if (LanguageManager::instance().defaultLocale().territory() ==
-#else
-    if (LanguageManager::instance().defaultLocale().country() ==
-#endif
         QLocale::China) {
         QDesktopServices::openUrl(
             QUrl(QStringLiteral("https://gitee.com/wing-cloud/"
@@ -3267,7 +3417,9 @@ void MainWindow::bindWorkSpaceEditorView(EditorView *editor) {
     connect(editor, &EditorView::workspaceCorrupted, this, [this]() {
         QTimer::singleShot(0, this, [this]() {
             Toast::toast(
-                this, NAMEICONRES("workspace"),
+                this,
+                ThemeManager::instance().standardPixmap(
+                    ThemeManager::StandardIcon::Workspace),
                 tr("Workspace data anomaly, please see the log for details."));
         });
     });
@@ -3289,7 +3441,8 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             auto id = w->id();
             auto icon = w->icon();
             if (icon.isNull()) {
-                icon = ICONRES(QStringLiteral("win"));
+                icon = ThemeManager::instance().standardIcon(
+                    ThemeManager::StandardIcon::Window);
             }
             editor->registerView(id, v, icon);
         }
@@ -3511,7 +3664,9 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                         mi->ModifyMetadata(o, meta);
                     }
                 } else {
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+                    Toast::toast(this,
+                                 ThemeManager::instance().standardPixmap(
+                                     ThemeManager::StandardIcon::Metadata),
                                  tr("Select some bytes first."));
                 }
             }
@@ -3571,14 +3726,18 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
     m_curConnections << connect(
         hexeditor, &QHexView::copyLimitRaised, this, [this] {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Copy),
                          tr("The copy limit has been reached."));
         });
     m_curConnections << connect(
         hexeditor, &QHexView::scaleRateChanged, this, [this] {
             auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
             Q_ASSERT(hexeditor);
-            Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Scale),
                          QString::number(hexeditor->scaleRate() * 100) +
                              QStringLiteral("%"));
         });
@@ -4072,7 +4231,9 @@ QString MainWindow::getWorkSpaceFileName(const QString &curFile) {
 
 void MainWindow::saveTableContent(QAbstractItemModel *model) {
     if (!model || model->rowCount() == 0) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Save),
                      tr("There is nothing to save."));
         return;
     }
@@ -4155,7 +4316,10 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
         file.close();
     }
 
-    Toast::toast(this, NAMEICONRES(QStringLiteral("save")), tr("File saved."));
+    Toast::toast(this,
+                 ThemeManager::instance().standardPixmap(
+                     ThemeManager::StandardIcon::Save),
+                 tr("File saved."));
 }
 
 void MainWindow::updateNumberTable(bool force) {
@@ -4399,23 +4563,28 @@ QHexView *MainWindow::currentHexView() {
 }
 
 void MainWindow::loadCacheIcon() {
-    _infoSaved = ICONRES(QStringLiteral("saved"));
+    auto &theme = ThemeManager::instance();
+    _infoSaved = theme.standardIcon(ThemeManager::StandardIcon::Saved);
+    _infoUnsaved = theme.standardIcon(ThemeManager::StandardIcon::Unsaved);
 
-    _infoUnsaved = ICONRES(QStringLiteral("unsaved"));
+    _infoWriteable = theme.standardIcon(ThemeManager::StandardIcon::Writable);
+    _infoReadonly = theme.standardIcon(ThemeManager::StandardIcon::ReadOnly);
 
-    _infoWriteable = ICONRES(QStringLiteral("writable"));
-    _infoReadonly = ICONRES(QStringLiteral("readonly"));
+    _infoUnLock = theme.standardIcon(ThemeManager::StandardIcon::Unlocked);
+    _infoLock = theme.standardIcon(ThemeManager::StandardIcon::Locked);
 
-    _infoUnLock = ICONRES(QStringLiteral("unlock"));
-    _infoLock = ICONRES(QStringLiteral("lock"));
+    _infoCanOver =
+        theme.standardIcon(ThemeManager::StandardIcon::OverwriteAllowed);
+    _infoCannotOver =
+        theme.standardIcon(ThemeManager::StandardIcon::OverwriteForbidden);
 
-    _infoCanOver = ICONRES(QStringLiteral("canover"));
-    _infoCannotOver = ICONRES(QStringLiteral("unover"));
+    _pixLock = theme.standardPixmap(ThemeManager::StandardIcon::Locked);
+    _pixReadonly = theme.standardPixmap(ThemeManager::StandardIcon::ReadOnly);
 
-    _pixLock = QPixmap(NAMEICONRES("lock"));
-    _pixReadonly = QPixmap(NAMEICONRES("readonly"));
-    _pixCanOver = QPixmap(NAMEICONRES("canover"));
-    _pixCannotOver = QPixmap(NAMEICONRES("unover"));
+    _pixCanOver =
+        theme.standardPixmap(ThemeManager::StandardIcon::OverwriteAllowed);
+    _pixCannotOver =
+        theme.standardPixmap(ThemeManager::StandardIcon::OverwriteForbidden);
 }
 
 QMessageBox::StandardButton MainWindow::saveRequest() {
@@ -4441,7 +4610,9 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         return true;
     } break;
     case WingHex::AlreadyOpened: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::File),
                      tr("This file is already open."));
         return true;
     } break;
@@ -4765,7 +4936,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             if (watched == m_scriptConsole) {
                 if (ScriptMachine::instance().isRunning(
                         ScriptMachine::Interactive)) {
-                    m_console->setIcon(ICONRES(QStringLiteral("dbgrun")));
+                    m_console->setIcon(ThemeManager::instance().standardIcon(
+                        ThemeManager::StandardIcon::DebugRun));
                 }
             }
         } break;
@@ -4815,7 +4987,9 @@ bool MainWindow::__save(EditorView *editor) {
     auto changedTo = editor->change2WorkSpace();
     QString ws;
     auto res = saveEditor(editor, {}, false, false, &ws);
-    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("save")),
+    if (reportErrFileError(res,
+                           ThemeManager::instance().standardPixmap(
+                               ThemeManager::StandardIcon::Save),
                            tr("File saved."), tr("Could not save the file."))) {
         if (changedTo) {
             addRecentFile(editor, ws, true);
@@ -4843,7 +5017,9 @@ bool MainWindow::__saveas(EditorView *editor) {
     bool isWorkspace = editor->isWorkSpace();
     QString ws;
     auto res = saveEditor(editor, filename, false, isWorkspace, &ws);
-    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
+    if (reportErrFileError(res,
+                           ThemeManager::instance().standardPixmap(
+                               ThemeManager::StandardIcon::SaveAs),
                            tr("File saved."), tr("Could not save the file."))) {
         if (ws.isEmpty()) {
             addRecentFile(editor, filename, false);

@@ -4,169 +4,186 @@
         <file alias="devs.md">lang/builtin/devs.md</file>
     </qresource>
     <qresource prefix="/com.wingsummer.winghex">
+        <file alias="images/dark/close.svg">theme/dark/dialog-close.svg</file>
+        <file alias="images/light/close.svg">theme/light/dialog-close.svg</file>
+        <file alias="images/dark/menu.svg">theme/dark/menu.svg</file>
+        <file alias="images/light/menu.svg">theme/light/menu.svg</file>
+        <file alias="images/dark/arrow-right.svg">theme/dark/right-arrow.svg</file>
+        <file alias="images/light/arrow-right.svg">theme/light/right-arrow.svg</file>
+        <file alias="images/dark/arrow-left.svg">theme/dark/left-arrow.svg</file>
+        <file alias="images/light/arrow-left.svg">theme/light/left-arrow.svg</file>
+        <file alias="images/dark/apply.svg">theme/dark/dialog-apply.svg</file>
+        <file alias="images/light/apply.svg">theme/light/dialog-apply.svg</file>
+        <file alias="images/dark/apply-all.svg">theme/dark/dialog-yes-to-all.svg</file>
+        <file alias="images/light/apply-all.svg">theme/light/dialog-yes-to-all.svg</file>
+        <file alias="images/dark/arrow-up.svg">theme/dark/up-arrow.svg</file>
+        <file alias="images/light/arrow-up.svg">theme/light/up-arrow.svg</file>
+        <file alias="images/dark/arrow-down.svg">theme/dark/down-arrow.svg</file>
+        <file alias="images/light/arrow-down.svg">theme/light/down-arrow.svg</file>
         <file>images/author.jpg</file>
-        <file>images/author.png</file>
-        <file>images/bookmark.png</file>
-        <file>images/bookmarkcls.png</file>
-        <file>images/bookmarkdel.png</file>
-        <file>images/canover.png</file>
-        <file>images/cert.svg</file>
-        <file>images/certfile.svg</file>
-        <file>images/clearhis.png</file>
-        <file>images/clone.png</file>
-        <file>images/closefile.svg</file>
-        <file>images/codefmt.png</file>
-        <file>images/console.png</file>
-        <file>images/convpro.png</file>
-        <file>images/copy.png</file>
-        <file>images/copyhex.png</file>
-        <file>images/crashicon.png</file>
-        <file>images/cut.png</file>
-        <file>images/cuthex.png</file>
-        <file>images/dbgcontinue.png</file>
-        <file>images/dbgdebug.png</file>
-        <file>images/dbgpause.png</file>
-        <file>images/dbgrestart.png</file>
-        <file>images/dbgrun.png</file>
-        <file>images/dbgstepinto.png</file>
-        <file>images/dbgstepout.png</file>
-        <file>images/dbgstepover.png</file>
-        <file>images/dbgstop.png</file>
-        <file>images/defines.png</file>
-        <file>images/del.png</file>
-        <file>images/devext.png</file>
-        <file>images/devextdis.png</file>
-        <file>images/edit.png</file>
-        <file>images/encoding.png</file>
-        <file>images/exit.png</file>
-        <file>images/export.png</file>
-        <file>images/file.png</file>
-        <file>images/fill.png</file>
-        <file>images/fillZero.png</file>
-        <file>images/find.png</file>
-        <file>images/fullscreen.png</file>
-        <file>images/general.png</file>
-        <file>images/goto.png</file>
-        <file>images/hexwidth.png</file>
-        <file>images/icon.png</file>
-        <file>images/iconroot.png</file>
-        <file>images/info.png</file>
-        <file>images/jmp.png</file>
-        <file>images/layout.png</file>
-        <file>images/layoutdel.png</file>
-        <file>images/layoutexport.png</file>
-        <file>images/lock.png</file>
-        <file>images/lockon.png</file>
-        <file>images/log.png</file>
+        <file>images/author.svg</file>
+        <file>images/search.svg</file>
+        <file>images/bookmark.svg</file>
+        <file>images/clear-bookmarks.svg</file>
+        <file>images/delete-bookmark.svg</file>
+        <file>images/overwrite-allowed.svg</file>
+        <file>images/certificate.svg</file>
+        <file>images/certificate-file.svg</file>
+        <file>images/clear-history.svg</file>
+        <file>images/clone.svg</file>
+        <file>images/close-file.svg</file>
+        <file>images/format-code.svg</file>
+        <file>images/console.svg</file>
+        <file>images/convert-project.svg</file>
+        <file>images/copy.svg</file>
+        <file>images/copy-hex.svg</file>
+        <file>images/crash.svg</file>
+        <file>images/cut.svg</file>
+        <file>images/cut-hex.svg</file>
+        <file>images/debug-continue.svg</file>
+        <file>images/debug.svg</file>
+        <file>images/debug-pause.svg</file>
+        <file>images/debug-restart.svg</file>
+        <file>images/debug-run.svg</file>
+        <file>images/debug-step-into.svg</file>
+        <file>images/debug-step-out.svg</file>
+        <file>images/debug-step-over.svg</file>
+        <file>images/debug-stop.svg</file>
+        <file>images/color-palette.svg</file>
+        <file>images/delete.svg</file>
+        <file>images/device.svg</file>
+        <file>images/device-disabled.svg</file>
+        <file>images/edit.svg</file>
+        <file>images/encoding.svg</file>
+        <file>images/exit.svg</file>
+        <file>images/export.svg</file>
+        <file>images/file.svg</file>
+        <file>images/fill.svg</file>
+        <file>images/fill-zero.svg</file>
+        <file>images/find.svg</file>
+        <file>images/full-screen.svg</file>
+        <file>images/tools.svg</file>
+        <file>images/go-to.svg</file>
+        <file>images/hex-width.svg</file>
+        <file>images/application.svg</file>
+        <file>images/application-root.svg</file>
+        <file>images/information.svg</file>
+        <file>images/location.svg</file>
+        <file>images/layout.svg</file>
+        <file>images/delete-layout.svg</file>
+        <file>images/export-layout.svg</file>
+        <file>images/locked.svg</file>
+        <file>images/read-only-lock.svg</file>
+        <file>images/log.svg</file>
         <file>images/luau.svg</file>
-        <file>images/mAddr.png</file>
-        <file>images/mColInfo.png</file>
-        <file>images/mLineInfo.png</file>
-        <file>images/mStr.png</file>
-        <file>images/mark.png</file>
-        <file>images/metadata.png</file>
-        <file>images/metadatacls.png</file>
-        <file>images/metadatadel.png</file>
-        <file>images/metadataedit.png</file>
-        <file>images/metadatah.png</file>
-        <file>images/metahide.png</file>
-        <file>images/metashow.png</file>
-        <file>images/new.png</file>
-        <file>images/open.png</file>
-        <file>images/openapp.png</file>
-        <file>images/openother.png</file>
-        <file>images/other.png</file>
-        <file>images/paste.png</file>
-        <file>images/pastehex.png</file>
-        <file>images/plugin.png</file>
-        <file>images/plugindis.png</file>
-        <file>images/pro.png</file>
-        <file>images/qt.png</file>
-        <file>images/qtloginspect.png</file>
-        <file>images/readonly.png</file>
-        <file>images/recent.png</file>
-        <file>images/redo.png</file>
-        <file>images/refresh.png</file>
-        <file>images/reload.png</file>
-        <file>images/replace.png</file>
-        <file>images/save.png</file>
-        <file>images/saveas.png</file>
-        <file>images/saved.png</file>
-        <file>images/savesel.png</file>
-        <file>images/scale.png</file>
-        <file>images/scalereset.png</file>
-        <file>images/script.png</file>
-        <file>images/scriptdbg/bp.png</file>
-        <file>images/scriptdbg/delbp.png</file>
-        <file>images/scriptdbg/error.png</file>
-        <file>images/scriptdbg/hitbp.png</file>
-        <file>images/scriptdbg/hitcur.png</file>
-        <file>images/scriptdbg/tbp.png</file>
-        <file>images/scriptdbg/warn.png</file>
-        <file>images/scriptfolder.png</file>
-        <file>images/scriptfolderusr.png</file>
-        <file>images/scriptset.png</file>
-        <file>images/setting.png</file>
-        <file>images/settingplugin.png</file>
-        <file>images/shell.png</file>
-        <file>images/soft.png</file>
-        <file>images/sponsor.png</file>
-        <file>images/structure.png</file>
-        <file>images/sum.png</file>
-        <file>images/undo.png</file>
-        <file>images/unlock.png</file>
-        <file>images/unover.png</file>
-        <file>images/unsaved.png</file>
-        <file>images/update.png</file>
-        <file>images/watch.png</file>
-        <file>images/wiki.png</file>
-        <file>images/win.png</file>
-        <file>images/workspace.png</file>
-        <file>images/writable.png</file>
+        <file>images/address.svg</file>
+        <file>images/column-info.svg</file>
+        <file>images/line-info.svg</file>
+        <file>images/string.svg</file>
+        <file>images/mark.svg</file>
+        <file>images/metadata.svg</file>
+        <file>images/clear-metadata.svg</file>
+        <file>images/delete-metadata.svg</file>
+        <file>images/edit-metadata.svg</file>
+        <file>images/metadata-hidden.svg</file>
+        <file>images/hide-metadata.svg</file>
+        <file>images/show-metadata.svg</file>
+        <file>images/new.svg</file>
+        <file>images/open-project.svg</file>
+        <file>images/open-file.svg</file>
+        <file>images/open-other.svg</file>
+        <file>images/other.svg</file>
+        <file>images/paste.svg</file>
+        <file>images/paste-hex.svg</file>
+        <file>images/plugin.svg</file>
+        <file>images/plugin-disabled.svg</file>
+        <file>images/project.svg</file>
+        <file>images/qt.svg</file>
+        <file>images/inspect-qt-log.svg</file>
+        <file>images/read-only.svg</file>
+        <file>images/recent.svg</file>
+        <file>images/redo.svg</file>
+        <file>images/refresh.svg</file>
+        <file>images/reload.svg</file>
+        <file>images/replace.svg</file>
+        <file>images/save.svg</file>
+        <file>images/save-as.svg</file>
+        <file>images/saved.svg</file>
+        <file>images/save-selection.svg</file>
+        <file>images/scale.svg</file>
+        <file>images/reset-scale.svg</file>
+        <file>images/script.svg</file>
+        <file>images/breakpoint.svg</file>
+        <file>images/delete-breakpoints.svg</file>
+        <file>images/error.svg</file>
+        <file>images/breakpoint-hit.svg</file>
+        <file>images/current-line.svg</file>
+        <file>images/toggle-breakpoint.svg</file>
+        <file>images/warning.svg</file>
+        <file>images/script-folder.svg</file>
+        <file>images/user-script-folder.svg</file>
+        <file>images/script-settings.svg</file>
+        <file>images/settings.svg</file>
+        <file>images/plugin-settings.svg</file>
+        <file>images/file-manager.svg</file>
+        <file>images/software.svg</file>
+        <file>images/sponsor.svg</file>
+        <file>images/structure.svg</file>
+        <file>images/checksum.svg</file>
+        <file>images/undo.svg</file>
+        <file>images/unlocked.svg</file>
+        <file>images/overwrite-forbidden.svg</file>
+        <file>images/unsaved.svg</file>
+        <file>images/update.svg</file>
+        <file>images/watch.svg</file>
+        <file>images/wiki.svg</file>
+        <file>images/window.svg</file>
+        <file>images/workspace.svg</file>
+        <file>images/writable.svg</file>
         <file>src/LICENSE.md</file>
         <file>src/TESTCODE.luau</file>
         <file>src/WingCloudStudio.crt</file>
         <file>src/components.md</file>
     </qresource>
     <qresource prefix="/qeditor">
-        <file alias="copy.png">images/copy.png</file>
-        <file alias="cut.png">images/cut.png</file>
-        <file alias="find.png">images/find.png</file>
-        <file alias="goto.png">images/goto.png</file>
-        <file alias="paste.png">images/paste.png</file>
-        <file alias="redo.png">images/redo.png</file>
-        <file alias="replace.png">images/replace.png</file>
-        <file>images/search.png</file>
-        <file alias="undo.png">images/undo.png</file>
+        <file alias="copy.svg">images/copy.svg</file>
+        <file alias="cut.svg">images/cut.svg</file>
+        <file alias="find.svg">images/find.svg</file>
+        <file alias="goto.svg">images/go-to.svg</file>
+        <file alias="paste.svg">images/paste.svg</file>
+        <file alias="redo.svg">images/redo.svg</file>
+        <file alias="replace.svg">images/replace.svg</file>
+        <file>images/search.svg</file>
+        <file alias="undo.svg">images/undo.svg</file>
     </qresource>
     <qresource prefix="/completion">
-        <file>images/completion/Class.svg</file>
-        <file>images/completion/Color.svg</file>
-        <file>images/completion/Constant.svg</file>
-        <file>images/completion/Constructor.svg</file>
-        <file>images/completion/Enum.svg</file>
-        <file>images/completion/EnumMember.svg</file>
-        <file>images/completion/Event.svg</file>
-        <file>images/completion/Field.svg</file>
-        <file>images/completion/File.svg</file>
-        <file>images/completion/Folder.svg</file>
-        <file>images/completion/Function.svg</file>
-        <file>images/completion/Information.svg</file>
-        <file>images/completion/Interface.svg</file>
-        <file>images/completion/Keyword.svg</file>
-        <file>images/completion/Method.svg</file>
-        <file>images/completion/Missing.svg</file>
-        <file>images/completion/Module.svg</file>
-        <file>images/completion/Operator.svg</file>
-        <file>images/completion/Property.svg</file>
-        <file>images/completion/Reference.svg</file>
-        <file>images/completion/Snippet.svg</file>
-        <file>images/completion/Struct.svg</file>
-        <file>images/completion/Text.svg</file>
-        <file>images/completion/TypeParameter.svg</file>
-        <file>images/completion/Unit.svg</file>
-        <file>images/completion/Value.svg</file>
-        <file>images/completion/Variable.svg</file>
+        <file>images/completion/class.svg</file>
+        <file>images/completion/color.svg</file>
+        <file>images/completion/constant.svg</file>
+        <file>images/completion/constructor.svg</file>
+        <file>images/completion/enum.svg</file>
+        <file>images/completion/enum-member.svg</file>
+        <file>images/completion/event.svg</file>
+        <file>images/completion/field.svg</file>
+        <file>images/completion/file.svg</file>
+        <file>images/completion/folder.svg</file>
+        <file>images/completion/function.svg</file>
+        <file>images/completion/information.svg</file>
+        <file>images/completion/interface.svg</file>
+        <file>images/completion/keyword.svg</file>
+        <file>images/completion/method.svg</file>
+        <file>images/completion/missing.svg</file>
+        <file>images/completion/module.svg</file>
+        <file>images/completion/operator.svg</file>
+        <file>images/completion/property.svg</file>
+        <file>images/completion/reference.svg</file>
+        <file>images/completion/snippet.svg</file>
+        <file>images/completion/struct.svg</file>
+        <file>images/completion/text.svg</file>
+        <file>images/completion/type-parameter.svg</file>
+        <file>images/completion/unit.svg</file>
+        <file>images/completion/value.svg</file>
+        <file>images/completion/variable.svg</file>
         <file>images/completion/error.svg</file>
         <file>images/completion/hint.svg</file>
         <file>images/completion/warn.svg</file>

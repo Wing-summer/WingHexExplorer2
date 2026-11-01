@@ -16,14 +16,19 @@
 */
 
 #include "aboutsoftwaredialog.h"
+
 #include "ui_aboutsoftwaredialog.h"
 
 #include "class/settings/languagemanager.h"
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::AboutSoftwareDialog) {
     ui->setupUi(this);
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Software));
+
     auto data = LanguageManager::instance().data();
     ui->tbAbout->setMarkdown(data.about);
     ui->tbBaseObj->setMarkdown(readContent(

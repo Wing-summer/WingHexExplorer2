@@ -81,7 +81,7 @@
      <widget class="QWidget" name="tabPluginInfo">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
-        <normaloff>:/com.wingsummer.winghex/images/plugin.png</normaloff>:/com.wingsummer.winghex/images/plugin.png</iconset>
+        <normaloff>:/com.wingsummer.winghex/images/plugin.svg</normaloff>:/com.wingsummer.winghex/images/plugin.svg</iconset>
       </attribute>
       <attribute name="title">
        <string>Plugin information</string>
@@ -152,7 +152,7 @@
      <widget class="QWidget" name="tabDevInfo">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
-        <normaloff>:/com.wingsummer.winghex/images/devext.png</normaloff>:/com.wingsummer.winghex/images/devext.png</iconset>
+        <normaloff>:/com.wingsummer.winghex/images/device.svg</normaloff>:/com.wingsummer.winghex/images/device.svg</iconset>
       </attribute>
       <attribute name="title">
        <string>Device extension information</string>
@@ -217,7 +217,7 @@
      <widget class="QWidget" name="tabCert">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
-        <normaloff>:/com.wingsummer.winghex/images/certfile.svg</normaloff>:/com.wingsummer.winghex/images/certfile.svg</iconset>
+        <normaloff>:/com.wingsummer.winghex/images/certificate-file.svg</normaloff>:/com.wingsummer.winghex/images/certificate-file.svg</iconset>
       </attribute>
       <attribute name="title">
        <string>Certificate</string>

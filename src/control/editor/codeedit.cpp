@@ -16,7 +16,7 @@
 */
 
 #include "codeedit.h"
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "class/util/qkeysequences.h"
 #include "luau/runtime/scriptsettings.h"
 #include "model/codecompletionmodel.h"
@@ -43,6 +43,8 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
 
     connect(&ScriptSettings::instance(), &ScriptSettings::editorSettingsUpdate,
             this, &CodeEdit::applyEditorSetStyle);
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            &CodeEdit::applyEditorSetStyle);
     applyEditorSetStyle();
     setShowSymbolMark(true);
 
@@ -151,12 +153,13 @@ void CodeEdit::applyEditorSetStyle() {
 
     auto thname = set.editorTheme();
     if (thname.isEmpty()) {
-        switch (SkinManager::instance().currentTheme()) {
-        case SkinManager::Theme::Dark:
+        switch (ThemeManager::instance().currentTheme()) {
+        case ThemeManager::Theme::Dark:
             this->setTheme(syntaxRepo().defaultTheme(
                 KSyntaxHighlighting::Repository::DarkTheme));
             break;
-        case SkinManager::Theme::Light:
+        case ThemeManager::Theme::System:
+        case ThemeManager::Theme::Light:
             this->setTheme(syntaxRepo().defaultTheme(
                 KSyntaxHighlighting::Repository::LightTheme));
             break;
@@ -317,22 +320,26 @@ void CodeEdit::keyPressEvent(QKeyEvent *event) {
 void CodeEdit::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);
 
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/copy.png")), tr("Copy"),
-                   QKeySequence(QKeySequence::Copy), this, &CodeEdit::copy);
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/cut.png")), tr("Cut"),
-                   QKeySequence(QKeySequence::Cut), this, &CodeEdit::cut);
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")), tr("Paste"),
-                   QKeySequence(QKeySequence::Paste), this, &CodeEdit::paste);
+    auto &theme = ThemeManager::instance();
+    menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Copy),
+                   tr("Copy"), QKeySequence(QKeySequence::Copy), this,
+                   &CodeEdit::copy);
+    menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Cut),
+                   tr("Cut"), QKeySequence(QKeySequence::Cut), this,
+                   &CodeEdit::cut);
+    menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Paste),
+                   tr("Paste"), QKeySequence(QKeySequence::Paste), this,
+                   &CodeEdit::paste);
     menu.addSeparator();
 
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/find.png")), tr("Find"),
-                   QKeySequence(QKeySequence::Find), this,
+    menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Find),
+                   tr("Find"), QKeySequence(QKeySequence::Find), this,
                    [this]() { showSearchReplaceBar(true, false); });
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/replace.png")),
+    menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Replace),
                    tr("Replace"), QKeySequence(QKeySequence::Replace), this,
                    [this]() { showSearchReplaceBar(true, true); });
     menu.addAction(
-        QIcon(QStringLiteral(":/qeditor/goto.png")), tr("Go to"),
+        theme.standardIcon(ThemeManager::StandardIcon::GoTo), tr("Go to"),
         QKeySequences::instance().keySequence(QKeySequences::Key::GOTO), this,
         [this]() { showGotoBar(true); });
     menu.addSeparator();

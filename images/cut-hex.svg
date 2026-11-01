@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="200" height="200" version="1.1">
+  <defs />
+  <g transform="translate(0 0) scale(0.0625 0.0625)">
+    <path d="M569.7 388.3L743.2 143c16-27.7 6.5-63-21.2-79L512 318.3 302 64c-27.8 16-37.3 51.3-21.2 79l173.5 245.3L273 607.9l95.9 60.1 61.5-82.7L512 469.9l81.6 115.4 61.5 82.7 95.9-60.1-181.3-219.6z" fill="#7f8080" data-theme-fill="muted" />
+    <path d="M273 606c-97.6 0-177 79.4-177 177s79.4 177 177 177 177-79.4 177-177-79.4-177-177-177z m1 290c-62.3 0-113-50.7-113-113s50.7-113 113-113 113 50.7 113 113-50.7 113-113 113zM751 606c-97.6 0-177 79.4-177 177s79.4 177 177 177 177-79.4 177-177-79.4-177-177-177z m0 290c-62.3 0-113-50.7-113-113s50.7-113 113-113 113 50.7 113 113-50.7 113-113 113z" fill="#497cad" data-theme-fill="accent" />
+  </g>
+  <g transform="matrix(0.37248188,0,0,0.37925428,25.667808,29.022854)">
+    <g>
+      <path d="m 3,1 h 20 l 8,8 V 39 H 3 Z" fill="#1296db" data-theme-fill="accent" />
+      <path d="m 23,1 v 8 h 8" fill="#b4e7fa" />
+      <path d="m 8,15 v 7 h 4 v -7 z m 9,0 v 7 m 6,-7 v 7 h 4 V 15 Z M 8,27 v 7 m 5,-7 v 7 h 4 v -7 z m 9,0 v 7" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

@@ -17,7 +17,7 @@
 
 #include "gotolinewidget.h"
 
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -25,10 +25,10 @@
 
 GotoLineWidget::GotoLineWidget(QWidget *parent)
     : CodeEditControlWidget(parent) {
-    auto &skin = SkinManager::instance();
+    auto &skin = ThemeManager::instance();
 
     auto closeBtn = new QToolButton(this);
-    closeBtn->setIcon(skin.themeIcon(QStringLiteral("dialog_close")));
+    closeBtn->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Close));
     closeBtn->setToolTip(tr("Close"));
     closeBtn->setIconSize(QSize(12, 12));
     closeBtn->setStyleSheet(QStringLiteral("border:none;"));
@@ -43,7 +43,7 @@ GotoLineWidget::GotoLineWidget(QWidget *parent)
 
     auto tbGoto = new QToolButton(this);
     tbGoto->setAutoRaise(true);
-    tbGoto->setIcon(skin.themeIcon(QStringLiteral("right_arrow")));
+    tbGoto->setIcon(skin.standardIcon(ThemeManager::StandardIcon::ArrowRight));
     connect(tbGoto, &QToolButton::clicked, this, [this]() {
         Q_EMIT onGotoLine(m_sbline->value());
         close();

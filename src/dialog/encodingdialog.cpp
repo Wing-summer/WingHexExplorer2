@@ -17,13 +17,15 @@
 
 #include "encodingdialog.h"
 
-#include "utilities.h"
 #include <QAction>
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QShortcut>
 #include <QVBoxLayout>
+
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
     : FramelessDialogBase(parent) {
@@ -52,7 +54,8 @@ EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setWindowIcon(ICONRES(QStringLiteral("encoding")));
+    this->setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Encoding));
     this->setWindowTitle(tr("Encoding"));
 }
 

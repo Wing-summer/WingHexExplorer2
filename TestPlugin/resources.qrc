@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/images/TestPlugin">
-        <file>images/btn.png</file>
-        <file>images/test.png</file>
+        <file>images/device.svg</file>
+        <file>images/test-bug.svg</file>
     </qresource>
     <qresource prefix="/resources/TestPlugin">
         <file>script/testplugin.d.luau</file>

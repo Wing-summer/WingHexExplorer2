@@ -17,7 +17,7 @@
 
 #include "searchreplacewidget.h"
 
-#include "class/settings/skinmanager.h"
+#include "class/settings/thememanager.h"
 #include "dialog/common/wingmessagebox.h"
 #include "utilities.h"
 
@@ -36,17 +36,12 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-#include <QGuiApplication>
-#include <QStyleHints>
-#endif
-
 SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     : CodeEditControlWidget(editor), m_editor(editor) {
-    auto &skin = SkinManager::instance();
+    auto &skin = ThemeManager::instance();
 
     auto closeBtn = new QToolButton(this);
-    closeBtn->setIcon(skin.themeIcon(QStringLiteral("dialog_close")));
+    closeBtn->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Close));
     closeBtn->setToolTip(tr("Close"));
     closeBtn->setIconSize(QSize(12, 12));
     closeBtn->setStyleSheet(QStringLiteral("border:none;"));
@@ -55,7 +50,7 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
 
     auto tbMenu = new QToolButton(this);
     tbMenu->setAutoRaise(true);
-    tbMenu->setIcon(skin.themeIcon(QStringLiteral("menu")));
+    tbMenu->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Menu));
     tbMenu->setToolTip(tr("Search settings"));
     tbMenu->setStyleSheet(
         QStringLiteral("QToolButton::menu-indicator { image: none; }"));
@@ -94,12 +89,12 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
 
     auto tbNext = new QToolButton(this);
     tbNext->setAutoRaise(true);
-    tbNext->setIcon(skin.themeIcon(QStringLiteral("right_arrow")));
+    tbNext->setIcon(skin.standardIcon(ThemeManager::StandardIcon::ArrowRight));
     tbNext->setToolTip(tr("Find next"));
 
     auto tbPrev = new QToolButton(this);
     tbPrev->setAutoRaise(true);
-    tbPrev->setIcon(skin.themeIcon(QStringLiteral("left_arrow")));
+    tbPrev->setIcon(skin.standardIcon(ThemeManager::StandardIcon::ArrowLeft));
     tbPrev->setToolTip(tr("Find previous"));
 
     auto mlayout = new QVBoxLayout(this);
@@ -111,12 +106,13 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
 
     auto tbReplaceCur = new QToolButton(this);
     tbReplaceCur->setAutoRaise(true);
-    tbReplaceCur->setIcon(skin.themeIcon(QStringLiteral("dialog_apply")));
+    tbReplaceCur->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Apply));
     tbReplaceCur->setToolTip(tr("Replace current"));
 
     auto tbReplaceAll = new QToolButton(this);
     tbReplaceAll->setAutoRaise(true);
-    tbReplaceAll->setIcon(skin.themeIcon(QStringLiteral("dialog_yes_to_all")));
+    tbReplaceAll->setIcon(
+        skin.standardIcon(ThemeManager::StandardIcon::ApplyAll));
     tbReplaceAll->setToolTip(tr("Replace all"));
 
     auto layout = new QHBoxLayout;

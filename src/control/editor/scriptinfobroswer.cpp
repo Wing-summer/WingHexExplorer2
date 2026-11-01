@@ -60,19 +60,13 @@ QVariant ScriptInfoBroswer::loadResource(int type, const QUrl &name) {
 
         constexpr auto wh = 48;
         if (_icon.isNull()) {
-            return QPixmap(NAMEICONRES(_isSys
-                                           ? QStringLiteral("scriptfolder")
-                                           : QStringLiteral("scriptfolderusr")))
-                .scaled(wh, wh, Qt::KeepAspectRatio);
+            return ThemeManager::instance()
+                .standardIcon(
+                    _isSys ? ThemeManager::StandardIcon::ScriptFolder
+                           : ThemeManager::StandardIcon::UserScriptFolder)
+                .pixmap(wh, wh);
         } else {
-            auto av = _icon.availableSizes();
-            return _icon
-                .pixmap(*std::max_element(
-                    av.begin(), av.end(),
-                    [](const QSize &a, const QSize &b) -> bool {
-                        return a.width() < b.width();
-                    }))
-                .scaled(wh, wh, Qt::KeepAspectRatio);
+            return _icon.pixmap(wh, wh);
         }
     }
 

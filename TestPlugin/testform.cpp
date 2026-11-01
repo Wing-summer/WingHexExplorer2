@@ -51,8 +51,7 @@ TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
     initMsgBoxIconCombo();
     initFileDialogOps();
 
-    ui->lblauthor->setPixmap(
-        WingHex::HOSTRESPIMG(QStringLiteral("author"), QStringLiteral(".jpg")));
+    ui->lblauthor->setPixmap(appAuthorPixmap());
 }
 
 TestForm::~TestForm() { delete ui; }

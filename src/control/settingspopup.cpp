@@ -27,17 +27,15 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-#include <QStyleHints>
-#endif
-
 #include <KSyntaxHighlighting/Repository>
 
 #include "3rdparty/WingCodeEdit/wingcodeedit.h"
+#include "class/settings/thememanager.h"
 #include "utilities.h"
 
 TreeFilterEdit::TreeFilterEdit(QWidget *parent) : QLineEdit(parent) {
-    m_searchIcon = QIcon(QStringLiteral(":/qeditor/images/search.png"));
+    m_searchIcon = ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Search);
 
     setClearButtonEnabled(true);
     recomputeIconPos();

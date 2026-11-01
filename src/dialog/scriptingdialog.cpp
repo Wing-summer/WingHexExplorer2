@@ -16,6 +16,7 @@
 */
 
 #include "scriptingdialog.h"
+
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
@@ -24,9 +25,10 @@
 #include "aboutsoftwaredialog.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "class/util/qkeysequences.h"
-#include "control/editor/scripteditor.h"
 #include "control/delegate/wrappingitemdelegate.h"
+#include "control/editor/scripteditor.h"
 #include "control/qtableviewext.h"
 #include "control/tablecolumnwidthcontroller.h"
 #include "control/toast.h"
@@ -40,6 +42,7 @@
 #include "luau/runtime/scriptsettings.h"
 #include "model/idbtreemodel.h"
 #include "model/idbwatchmodel.h"
+#include "utilities.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -117,13 +120,17 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
 
     registerMark();
 
+    auto &theme = ThemeManager::instance();
+    connect(&theme, &ThemeManager::themeChanged, this,
+            &ScriptingDialog::registerMark);
+
     updateEditModeEnabled();
 
     m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
     // ok, preparing for starting...
     updateWindowTitle();
-    this->setWindowIcon(ICONRES(QStringLiteral("script")));
+    this->setWindowIcon(theme.standardIcon(ThemeManager::StandardIcon::Script));
     this->setMinimumSize(800, 600);
 
     // load saved docking layout
@@ -300,7 +307,9 @@ void ScriptingDialog::buildUpRibbonBar() {
                         m_lastusedpath = Utilities::getAbsoluteDirPath(file);
                     }
                 } else {
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("script")),
+                    Toast::toast(this,
+                                 ThemeManager::instance().standardPixmap(
+                                     ThemeManager::StandardIcon::Script),
                                  tr("Unsupported script file."));
                 }
             }
@@ -312,33 +321,35 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Basic"));
-        addPannelAction(pannel, QStringLiteral("new"), tr("New"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::New, tr("New"),
                         &ScriptingDialog::on_newfile, QKeySequence::New);
 
-        addPannelAction(pannel, QStringLiteral("open"), tr("Open"),
-                        &ScriptingDialog::on_openfile, QKeySequence::Open);
+        addPannelAction(pannel, ThemeManager::StandardIcon::OpenProject,
+                        tr("Open"), &ScriptingDialog::on_openfile,
+                        QKeySequence::Open);
 
-        addPannelAction(pannel, QStringLiteral("recent"), tr("Recent files"),
-                        EMPTY_FUNC, {}, m_recentMenu);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Recent,
+                        tr("Recent files"), EMPTY_FUNC, {}, m_recentMenu);
 
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
-                                              tr("Reload"),
-                                              &ScriptingDialog::on_reload);
+        m_editStateWidgets << addPannelAction(
+            pannel, ThemeManager::StandardIcon::Reload, tr("Reload"),
+            &ScriptingDialog::on_reload);
 
-        addPannelAction(pannel, QStringLiteral("exit"), tr("Exit"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::Exit, tr("Exit"),
                         &ScriptingDialog::on_exit);
     }
 
     {
         auto pannel = tab->addGroup(tr("Save"));
 
-        auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
-                                 &ScriptingDialog::on_save, QKeySequence::Save);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Save,
+                                 tr("Save"), &ScriptingDialog::on_save,
+                                 QKeySequence::Save);
         m_Tbtneditors[ToolButtonIndex::SAVE_ACTION] = a;
         m_editStateWidgets << a;
 
-        a = addPannelAction(pannel, QStringLiteral("saveas"), tr("Save as"),
-                            &ScriptingDialog::on_saveas,
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::SaveAs,
+                            tr("Save as"), &ScriptingDialog::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
         m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION] = a;
         m_editStateWidgets << a;
@@ -352,56 +363,56 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
 
-        auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
-                                 &ScriptingDialog::on_undofile);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Undo,
+                                 tr("Undo"), &ScriptingDialog::on_undofile);
         m_Tbtneditors[ToolButtonIndex::UNDO_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Undo);
 
-        a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
-                            &ScriptingDialog::on_redofile);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Redo,
+                            tr("Redo"), &ScriptingDialog::on_redofile);
         m_Tbtneditors[ToolButtonIndex::REDO_ACTION] = a;
         setPannelActionToolTip(a,
                                shortcuts.keySequence(QKeySequences::Key::REDO));
 
-        a = addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Cut, tr("Cut"),
                             &ScriptingDialog::on_cutfile);
         setPannelActionToolTip(a, QKeySequence::Cut);
 
-        a = addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
-                            &ScriptingDialog::on_copyfile);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Copy,
+                            tr("Copy"), &ScriptingDialog::on_copyfile);
         m_Tbtneditors[ToolButtonIndex::COPY_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Copy);
 
-        a = addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
-                            &ScriptingDialog::on_pastefile);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Paste,
+                            tr("Paste"), &ScriptingDialog::on_pastefile);
         setPannelActionToolTip(a, QKeySequence::Paste);
 
-        a = addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
-                            &ScriptingDialog::on_delete);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Delete,
+                            tr("Delete"), &ScriptingDialog::on_delete);
         setPannelActionToolTip(a, QKeySequence::Delete);
     }
 
     {
         auto pannel = tab->addGroup(tr("Lookup"));
-        auto a = addPannelAction(pannel, QStringLiteral("find"), tr("Find"),
-                                 &ScriptingDialog::on_findfile);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Find,
+                                 tr("Find"), &ScriptingDialog::on_findfile);
         setPannelActionToolTip(a, QKeySequence::Find);
 
-        a = addPannelAction(pannel, QStringLiteral("replace"), tr("Replace"),
-                            &ScriptingDialog::on_replace);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Replace,
+                            tr("Replace"), &ScriptingDialog::on_replace);
         setPannelActionToolTip(
             a, shortcuts.keySequence(QKeySequences::Key::REPLACE));
 
-        a = addPannelAction(pannel, QStringLiteral("jmp"), tr("Go to"),
-                            &ScriptingDialog::on_gotoline);
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Location,
+                            tr("Go to"), &ScriptingDialog::on_gotoline);
         setPannelActionToolTip(a,
                                shortcuts.keySequence(QKeySequences::Key::GOTO));
     }
 
     {
         auto pannel = tab->addGroup(tr("Format"));
-        addPannelAction(pannel, QStringLiteral("codefmt"), tr("Format code"),
-                        &ScriptingDialog::on_codefmt);
+        addPannelAction(pannel, ThemeManager::StandardIcon::FormatCode,
+                        tr("Format code"), &ScriptingDialog::on_codefmt);
     }
 
     return tab;
@@ -412,18 +423,19 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Window"));
         m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS] =
-            addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
-                            EMPTY_FUNC, {}, new QMenu(this));
+            addPannelAction(pannel, ThemeManager::StandardIcon::File,
+                            tr("Editor"), EMPTY_FUNC, {}, new QMenu(this));
         m_Tbtneditors[ToolButtonIndex::TOOL_VIEWS] =
-            addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
-                            EMPTY_FUNC, {}, new QMenu(this));
+            addPannelAction(pannel, ThemeManager::StandardIcon::Tools,
+                            tr("Tools"), EMPTY_FUNC, {}, new QMenu(this));
     }
 
     {
         auto pannel = tab->addGroup(tr("Layout"));
-        addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Full screen"),
-                        &ScriptingDialog::on_fullScreen);
-        addPannelAction(pannel, QStringLiteral("layout"), tr("Restore layout"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::FullScreen,
+                        tr("Full screen"), &ScriptingDialog::on_fullScreen);
+        addPannelAction(pannel, ThemeManager::StandardIcon::Layout,
+                        tr("Restore layout"),
                         &ScriptingDialog::on_restoreLayout);
     }
 
@@ -437,47 +449,48 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Debug"));
 
-        auto a = addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
-                                 &ScriptingDialog::on_runscript);
+        auto a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugRun,
+                                 tr("Run"), &ScriptingDialog::on_runscript);
         addPerformClickShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_F5));
         m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION] = a;
 
-        a = addPannelAction(pannel, QStringLiteral("dbgdebug"), tr("Debug"),
-                            &ScriptingDialog::on_rundbgscript, {}, nullptr,
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::Debug,
+                            tr("Debug"), &ScriptingDialog::on_rundbgscript, {},
+                            nullptr,
                             tr("Run the current script in the debugger."));
         setPannelActionToolTip(a, dbgkey);
         m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
 
         m_Tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION] =
-            addPannelAction(pannel, QStringLiteral("dbgpause"), tr("Pause"),
-                            &ScriptingDialog::on_pausescript);
+            addPannelAction(pannel, ThemeManager::StandardIcon::DebugPause,
+                            tr("Pause"), &ScriptingDialog::on_pausescript);
 
-        a = addPannelAction(pannel, QStringLiteral("dbgcontinue"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugContinue,
                             tr("Continue"),
                             &ScriptingDialog::on_continuescript);
         setPannelActionToolTip(a, dbgkey);
         m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION] = a;
 
         m_Tbtneditors[ToolButtonIndex::DBG_STOP_ACTION] =
-            addPannelAction(pannel, QStringLiteral("dbgstop"), tr("Stop"),
-                            &ScriptingDialog::on_stopscript);
+            addPannelAction(pannel, ThemeManager::StandardIcon::DebugStop,
+                            tr("Stop"), &ScriptingDialog::on_stopscript);
 
         m_Tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION] =
-            addPannelAction(pannel, QStringLiteral("dbgrestart"), tr("Restart"),
-                            &ScriptingDialog::on_restartscript);
+            addPannelAction(pannel, ThemeManager::StandardIcon::DebugRestart,
+                            tr("Restart"), &ScriptingDialog::on_restartscript);
 
-        a = addPannelAction(pannel, QStringLiteral("dbgstepinto"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepInto,
                             tr("Step into"), &ScriptingDialog::on_stepinscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F11));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION] = a;
 
-        a = addPannelAction(pannel, QStringLiteral("dbgstepover"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepOver,
                             tr("Step over"),
                             &ScriptingDialog::on_stepoverscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F10));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION] = a;
 
-        a = addPannelAction(pannel, QStringLiteral("dbgstepout"),
+        a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepOut,
                             tr("Step out"), &ScriptingDialog::on_stepoutscript);
         addPerformClickShortcut(a, QKeySequence(Qt::SHIFT | Qt::Key_F11));
         m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION] = a;
@@ -487,13 +500,14 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Breakpoint"));
-        addPannelAction(
-            pannel, QStringLiteral("scriptdbg/tbp"), tr("Toggle breakpoint"),
-            &ScriptingDialog::on_togglebreakpoint, QKeySequence(Qt::Key_F9));
-        addPannelAction(pannel, QStringLiteral("scriptdbg/bp"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::ToggleBreakpoint,
+                        tr("Toggle breakpoint"),
+                        &ScriptingDialog::on_togglebreakpoint,
+                        QKeySequence(Qt::Key_F9));
+        addPannelAction(pannel, ThemeManager::StandardIcon::Breakpoint,
                         tr("Add breakpoint"),
                         &ScriptingDialog::on_addbreakpoint);
-        addPannelAction(pannel, QStringLiteral("scriptdbg/delbp"),
+        addPannelAction(pannel, ThemeManager::StandardIcon::DeleteBreakpoints,
                         tr("Remove breakpoint"),
                         &ScriptingDialog::on_removebreakpoint);
     }
@@ -525,14 +539,14 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     updateUI();
     auto pannel = tab->addGroup(tr("Settings"));
 
-    addPannelAction(pannel, QStringLiteral("file"), tr("Editor"), [this] {
-        m_setdialog->showConfig(QStringLiteral("Edit"));
-    });
-    addPannelAction(pannel, QStringLiteral("console"), tr("Console"), [this] {
-        m_setdialog->showConfig(QStringLiteral("Console"));
-    });
     addPannelAction(
-        pannel, QStringLiteral("luau"), QStringLiteral("Luau"),
+        pannel, ThemeManager::StandardIcon::File, tr("Editor"),
+        [this] { m_setdialog->showConfig(QStringLiteral("Edit")); });
+    addPannelAction(
+        pannel, ThemeManager::StandardIcon::Console, tr("Console"),
+        [this] { m_setdialog->showConfig(QStringLiteral("Console")); });
+    addPannelAction(
+        pannel, ThemeManager::StandardIcon::Luau, QStringLiteral("Luau"),
         [this] { m_setdialog->showConfig(QStringLiteral("Luau")); });
     return tab;
 }
@@ -541,16 +555,16 @@ RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
     updateUI();
     auto pannel = tab->addGroup(tr("Information"));
 
-    addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
-                    &ScriptingDialog::on_about);
+    addPannelAction(pannel, ThemeManager::StandardIcon::Software,
+                    tr("Software"), &ScriptingDialog::on_about);
 
-    addPannelAction(pannel, QStringLiteral("sponsor"), tr("Sponsor"),
+    addPannelAction(pannel, ThemeManager::StandardIcon::Sponsor, tr("Sponsor"),
                     &ScriptingDialog::on_sponsor);
 
-    addPannelAction(pannel, QStringLiteral("wiki"), tr("Wiki"),
+    addPannelAction(pannel, ThemeManager::StandardIcon::Wiki, tr("Wiki"),
                     &ScriptingDialog::on_wiki);
 
-    addPannelAction(pannel, QStringLiteral("qt"), tr("About Qt"),
+    addPannelAction(pannel, ThemeManager::StandardIcon::Qt, tr("About Qt"),
                     [this] { WingMessageBox::aboutQt(this); });
     return tab;
 }
@@ -622,7 +636,9 @@ ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
             if (sel) {
                 auto idx = sel->currentIndex();
                 if (idx.parent().isValid()) {
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("watch")),
+                    Toast::toast(this,
+                                 ThemeManager::instance().standardPixmap(
+                                     ThemeManager::StandardIcon::Watch),
                                  tr("Cannot edit child nodes"));
                     return;
                 }
@@ -733,19 +749,23 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
                                     ads::CDockAreaWidget *areaw) {
     auto dview = new QListView(this);
     _squinfoModel = new WingSquiggleInfoModel(this);
+    auto &theme = ThemeManager::instance();
     _squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Error,
-        QIcon(QStringLiteral(":/completion/images/completion/error.svg")));
+        theme.resourceIcon(
+            QStringLiteral(":/completion/images/completion/error.svg")));
     _squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Hint,
-        QIcon(QStringLiteral(":/completion/images/completion/hint.svg")));
+        theme.resourceIcon(
+            QStringLiteral(":/completion/images/completion/hint.svg")));
     _squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Information,
         QIcon(
-            QStringLiteral(":/completion/images/completion/Information.svg")));
+            QStringLiteral(":/completion/images/completion/information.svg")));
     _squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Warning,
-        QIcon(QStringLiteral(":/completion/images/completion/warn.svg")));
+        theme.resourceIcon(
+            QStringLiteral(":/completion/images/completion/warn.svg")));
     dview->setModel(_squinfoModel);
     dview->setItemDelegate(new WrappingItemDelegate(dview));
     dview->setWordWrap(true);
@@ -772,12 +792,14 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
             if (r >= 0) {
                 auto clip = qApp->clipboard();
                 clip->setText(_squinfoModel->squiggleInfoText(r));
-                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::Copy),
                              tr("Copy to clipboard"));
             }
         },
         QKeySequence::Copy);
-    a->setIcon(ICONRES("copy"));
+    a->setIcon(theme.standardIcon(ThemeManager::StandardIcon::Copy));
     dview->addAction(a);
     a = newAction(tr("Copy JSON"), [this, dview]() {
         auto idx = dview->currentIndex();
@@ -807,11 +829,13 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
             QJsonDocument doc(json);
             auto clip = qApp->clipboard();
             clip->setText(QString::fromUtf8(doc.toJson()));
-            Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::Copy),
                          tr("Copy to clipboard"));
         }
     });
-    a->setIcon(ICONRES("copy"));
+    a->setIcon(theme.standardIcon(ThemeManager::StandardIcon::Copy));
     dview->addAction(a);
 
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
@@ -851,15 +875,22 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
 
     // background image that idicates whether it's
     // running under the admin/root previlige
-    QPicture backimg;
-    QPainter painter(&backimg);
-    painter.setOpacity(0.15);
-    painter.drawPixmap(0, 0,
-                       QPixmap(Utilities::isRoot()
-                                   ? NAMEICONRES(QStringLiteral("iconroot"))
-                                   : NAMEICONRES(QStringLiteral("icon"))));
+    auto refreshBackground = [label]() {
+        QPicture background;
+        QPainter painter(&background);
+        painter.setOpacity(0.15);
+        painter.drawPixmap(0, 0,
+                           ThemeManager::instance().standardPixmap(
+                               Utilities::isRoot()
+                                   ? ThemeManager::StandardIcon::ApplicationRoot
+                                   : ThemeManager::StandardIcon::Application));
+        painter.end();
+        label->setPicture(background);
+    };
+    refreshBackground();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, label,
+            refreshBackground);
 
-    label->setPicture(backimg);
     label->setAlignment(Qt::AlignCenter);
     CDockWidget *CentralDockWidget =
         m_dock->createDockWidget(QStringLiteral("CentralWidget"));
@@ -939,9 +970,12 @@ QMessageBox::StandardButton ScriptingDialog::saveRequest() {
 
 void ScriptingDialog::registerMark() {
     auto &sc = WingSymbolCenter::instance();
-    sc.regsiterSymbol(QStringLiteral("bp"), markFromPath("bp"));
-    sc.regsiterSymbol(QStringLiteral("cur"), markFromPath("hitcur"));
-    sc.regsiterSymbol(QStringLiteral("curbp"), markFromPath("hitbp"));
+    sc.regsiterSymbol(QStringLiteral("bp"),
+                      markFromPath(ThemeManager::StandardIcon::Breakpoint));
+    sc.regsiterSymbol(QStringLiteral("cur"),
+                      markFromPath(ThemeManager::StandardIcon::CurrentLine));
+    sc.regsiterSymbol(QStringLiteral("curbp"),
+                      markFromPath(ThemeManager::StandardIcon::BreakpointHit));
 }
 
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
@@ -1200,7 +1234,9 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
             *opened = true;
         }
         e->raise();
-        Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::File),
                      tr("This file is already open."));
         return e;
     } else {
@@ -1588,7 +1624,9 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
             this, tr("Reload"), tr("The file has changed. Reload it?"));
         if (ret == QMessageBox::Yes) {
             if (editor->reload()) {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
+                Toast::toast(this,
+                             ThemeManager::instance().standardPixmap(
+                                 ThemeManager::StandardIcon::Reload),
                              tr("File reloaded."));
             } else {
                 WingMessageBox::critical(this, tr("Error"),
@@ -1706,7 +1744,9 @@ void ScriptingDialog::on_reload() {
         return;
     }
     if (editor->reload()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Reload),
                      tr("File reloaded."));
     } else {
         WingMessageBox::critical(this, tr("Error"),
@@ -1735,7 +1775,9 @@ void ScriptingDialog::on_save() {
     if (res) {
         setWindowFilePath(editor->fileName());
         updateWindowTitle();
-        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Save),
                      tr("File saved."));
     } else {
         WingMessageBox::critical(
@@ -1764,7 +1806,9 @@ void ScriptingDialog::on_saveas() {
         setWindowFilePath(filename);
         updateWindowTitle();
         addRecentFile(editor, filename);
-        Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::SaveAs),
                      tr("File saved."));
     } else {
         WingMessageBox::critical(this, tr("Error"),
@@ -1839,7 +1883,9 @@ void ScriptingDialog::on_codefmt() {
     auto e = currentEditor();
     if (e) {
         if (!e->formatCode()) {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("codefmt")),
+            Toast::toast(this,
+                         ThemeManager::instance().standardPixmap(
+                             ThemeManager::StandardIcon::FormatCode),
                          tr("Code formatting failed"));
         }
     }
@@ -2217,10 +2263,8 @@ void ScriptingDialog::reportBusyScriptRun() {
                              tr("A script is already running."));
 }
 
-QPixmap ScriptingDialog::markFromPath(const QString &name) {
-    return QPixmap(
-        QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +
-        QStringLiteral(".png"));
+QPixmap ScriptingDialog::markFromPath(ThemeManager::StandardIcon icon) {
+    return ThemeManager::instance().standardPixmap(icon);
 }
 
 bool ScriptingDialog::save(EditorInfo *info) {

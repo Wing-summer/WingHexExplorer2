@@ -16,7 +16,9 @@
 */
 
 #include "recentfilemanager.h"
+
 #include "class/plugin/pluginsystem.h"
+#include "class/settings/thememanager.h"
 #include "control/toast.h"
 #include "dialog/historydeldialog.h"
 #include "luau/runtime/scriptmanager.h"
@@ -36,20 +38,25 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
     this->setParent(parent);
     m_parent = parent;
 
+    auto &skin = ThemeManager::instance();
+
     QAction *a;
     a = new QAction(m_menu);
     a->setText(tr("Clear history"));
-    a->setIcon(ICONRES("clearhis"));
+    a->setIcon(skin.standardIcon(ThemeManager::StandardIcon::ClearHistory));
     connect(a, &QAction::triggered, this, &RecentFileManager::clearFile);
     m_menu->addAction(a);
 
     a = new QAction(m_menu);
     a->setText(tr("Remove item"));
-    a->setIcon(ICONRES("del"));
+    a->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Delete));
     connect(a, &QAction::triggered, this, [this] {
+        auto &skin = ThemeManager::instance();
         if (hitems.count() == 0) {
-            Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                         tr("No history entries to remove."));
+            Toast::toast(
+                m_parent,
+                skin.standardPixmap(ThemeManager::StandardIcon::ClearHistory),
+                tr("No history entries to remove."));
             return;
         }
 
@@ -58,7 +65,9 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
             auto idxs = hisdlg.getResult();
 
             if (idxs.isEmpty()) {
-                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                Toast::toast(m_parent,
+                             skin.standardPixmap(
+                                 ThemeManager::StandardIcon::ClearHistory),
                              tr("No history entries to remove."));
             } else {
                 // indices are already ordered
@@ -70,7 +79,9 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                     action->deleteLater();
                     _dirty = true;
                 }
-                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                Toast::toast(m_parent,
+                             skin.standardPixmap(
+                                 ThemeManager::StandardIcon::ClearHistory),
                              tr("History entries removed."));
             }
         }
@@ -190,7 +201,8 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             } else {
                 if (info.isWorkSpace) {
                     a->setText(title);
-                    a->setIcon(ICONRES(QStringLiteral("pro")));
+                    a->setIcon(ThemeManager::instance().standardIcon(
+                        ThemeManager::StandardIcon::Project));
                     auto font = a->font();
                     font.setUnderline(true);
                     a->setFont(font);
@@ -210,7 +222,8 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             if (r) {
                 a->setIcon(r->supportedFileIcon());
             } else {
-                a->setIcon(ICONRES(QStringLiteral("devext")));
+                a->setIcon(ThemeManager::instance().standardIcon(
+                    ThemeManager::StandardIcon::Device));
             }
         }
         connect(a, &QAction::triggered, this, [this, a] {
@@ -239,10 +252,12 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                         send->deleteLater();
                         m_recents.removeAt(index);
                         _dirty = true;
-                        Toast::toast(m_parent,
-                                     NAMEICONRES(QStringLiteral("clearhis")),
-                                     tr("The file does not exist; this entry "
-                                        "has been removed!"));
+                        Toast::toast(
+                            m_parent,
+                            ThemeManager::instance().standardPixmap(
+                                ThemeManager::StandardIcon::ClearHistory),
+                            tr("The file does not exist; this entry "
+                               "has been removed!"));
                     }
                 }
             }
@@ -281,7 +296,9 @@ void RecentFileManager::updateRecentFile(const RecentInfo &info) {
 
 void RecentFileManager::clearFile() {
     if (hitems.count() == 0) {
-        Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+        Toast::toast(m_parent,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::ClearHistory),
                      tr("No history entries to remove."));
         return;
     }
@@ -292,6 +309,8 @@ void RecentFileManager::clearFile() {
     m_recents.clear();
     hitems.clear();
     _dirty = true;
-    Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+    Toast::toast(m_parent,
+                 ThemeManager::instance().standardPixmap(
+                     ThemeManager::StandardIcon::ClearHistory),
                  tr("History cleared."));
 }

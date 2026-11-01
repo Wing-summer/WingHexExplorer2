@@ -16,18 +16,21 @@
 */
 
 #include "mutisavedialog.h"
-#include "control/delegate/mutisavebuttondelegate.h"
 #include "ui_mutisavedialog.h"
 
-#include "utilities.h"
-
 #include <QPushButton>
+
+#include "class/settings/thememanager.h"
+#include "control/delegate/mutisavebuttondelegate.h"
+#include "utilities.h"
 
 MutiSaveDialog::MutiSaveDialog(const QVector<EditorInfo *> &editors,
                                EditorsCtl *edctl, QWidget *parent)
     : QWidget(parent), ui(new Ui::MutiSaveDialog), _editors(editors),
       _esctl(edctl) {
     ui->setupUi(this);
+    setWindowIcon(ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Unsaved));
 
     connect(ui->buttonBox, &QDialogButtonBox::clicked, this,
             [this](QAbstractButton *button) {
@@ -70,7 +73,9 @@ int MutiSaveDialog::exec() { return _dialog->exec(); }
 
 void MutiSaveDialog::onClickFileButton(const QModelIndex &index) {
     QMenu menu;
-    auto a = menu.addAction(ICONRES(QStringLiteral("saved")), tr("Save"));
+    auto &theme = ThemeManager::instance();
+    auto a = menu.addAction(
+        theme.standardIcon(ThemeManager::StandardIcon::Saved), tr("Save"));
     auto row = index.row();
     connect(a, &QAction::triggered, this, [this, row]() {
         auto e = _editors.at(row);
@@ -87,7 +92,8 @@ void MutiSaveDialog::onClickFileButton(const QModelIndex &index) {
             _dialog->done(SAVE_NOOP);
         }
     });
-    a = menu.addAction(ICONRES(QStringLiteral("unsaved")), tr("Discard"));
+    a = menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Unsaved),
+                       tr("Discard"));
     connect(a, &QAction::triggered, this, [this, row]() {
         auto e = _editors.at(row);
         Q_ASSERT(_esctl);

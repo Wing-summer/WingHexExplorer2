@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../../resources.qrc">
-    <normaloff>:/images/icon.png</normaloff>:/images/icon.png</iconset>
+    <normaloff>:/com.wingsummer.winghex/images/application.svg</normaloff>:/com.wingsummer.winghex/images/application.svg</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true"/>

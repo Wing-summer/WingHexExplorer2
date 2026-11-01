@@ -16,8 +16,10 @@
 */
 
 #include "othersettingsdialog.h"
+
 #include "class/application/logger.h"
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "ui_othersettingsdialog.h"
 #include "utilities.h"
 
@@ -119,7 +121,10 @@ void OtherSettingsDialog::reload() {
     this->blockSignals(false);
 }
 
-QIcon OtherSettingsDialog::categoryIcon() const { return ICONRES("other"); }
+QIcon OtherSettingsDialog::categoryIcon() const {
+    return ThemeManager::instance().standardIcon(
+        ThemeManager::StandardIcon::Other);
+}
 
 QString OtherSettingsDialog::name() const { return tr("Other"); }
 

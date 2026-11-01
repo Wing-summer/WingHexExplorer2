@@ -18,12 +18,14 @@
 #ifndef SCRIPTMANAGER_H
 #define SCRIPTMANAGER_H
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileSystemWatcher>
 #include <QHash>
 
 #include "QWingRibbon/ribbonbuttongroup.h"
-#include "utilities.h"
+
+#include "class/settings/thememanager.h"
 
 namespace ads {
 class CDockWidgetTab;
@@ -82,10 +84,11 @@ private:
 
 private:
     static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
-                                        const QString &iconName,
+                                        ThemeManager::StandardIcon icon,
                                         const QString &title,
                                         QMenu *menu = nullptr) {
-        return addPannelAction(pannel, ICONRES(iconName), title, menu);
+        return addPannelAction(
+            pannel, ThemeManager::instance().standardIcon(icon), title, menu);
     }
 
     static QToolButton *addPannelAction(RibbonButtonGroup *pannel,

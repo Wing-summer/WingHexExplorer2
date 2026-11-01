@@ -23,7 +23,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
-                                     Xml LinguistTools)
+                                     Xml Svg LinguistTools)
 
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
     set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
@@ -315,8 +315,8 @@ set(CLASS_SRC
     src/class/settings/languagemanager.h
     src/class/settings/settingmanager.cpp
     src/class/settings/settingmanager.h
-    src/class/settings/skinmanager.cpp
-    src/class/settings/skinmanager.h
+    src/class/settings/thememanager.cpp
+    src/class/settings/thememanager.h
     src/class/util/changedstringlist.cpp
     src/class/util/changedstringlist.h
     src/class/util/cryptographichash.cpp
@@ -560,6 +560,7 @@ target_link_libraries(
             Qt6::Concurrent
             Qt6::PrintSupport
             Qt6::Xml
+            Qt6::Svg
             Qt6::GuiPrivate
             Qt6::CorePrivate
             OpenSSL::SSL

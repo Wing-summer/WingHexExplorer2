@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/images/ShareMemDrv">
-        <file>images/shmem.png</file>
+        <file>images/shared-memory.svg</file>
     </qresource>
 </RCC>
