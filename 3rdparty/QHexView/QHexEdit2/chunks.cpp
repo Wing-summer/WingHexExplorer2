@@ -21,6 +21,8 @@
 #include <limits.h>
 
 #include <QBuffer>
+#include <QFile>
+#include <QFileInfo>
 #include <QReadLocker>
 #include <QWriteLocker>
 
@@ -363,3 +365,96 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
 }
 
 QIODevice *Chunks::ioDevice() const { return _ioDevice; }
+
+QHexReadSessionResult Chunks::readSession(quint64 budget) const {
+    QReadLocker locker(&_mutex);
+    if (!_ioDevice || !_ioDevice->isReadable() || _ioDevice->isSequential()) {
+        return readSessionError(budget, QHexReadError::InvalidDevice);
+    }
+    auto result = std::make_shared<QHexReadSession>();
+    result->length = _size;
+    if (auto file = qobject_cast<QFile *>(_ioDevice)) {
+        const QFileInfo info(file->fileName());
+        if (!info.isFile()) {
+            return readSessionError(budget, QHexReadError::OwnerThreadRequired);
+        }
+        result->fileName = info.absoluteFilePath();
+        result->sourceSize = info.size();
+        result->modified = info.lastModified();
+    } else if (auto memory = qobject_cast<QBuffer *>(_ioDevice)) {
+        result->memory = memory->data();
+        result->sourceSize = result->memory.size();
+    } else {
+        return readSessionError(budget, QHexReadError::OwnerThreadRequired);
+    }
+    // Sharing is initially cheap, but a concurrent editor mutation can detach
+    // the retained allocation. Reserve for that cost instead of pinning an
+    // arbitrarily large edited QByteArray throughout a comparison.
+    quint64 retained = quint64(result->memory.capacity());
+    if (retained > budget) {
+        return readSessionError(budget, QHexReadError::BudgetExceeded);
+    }
+    for (const auto &chunk : std::as_const(_chunks)) {
+        const auto bytes = quint64(chunk.data.capacity());
+        if (bytes > budget - retained) {
+            return readSessionError(budget, QHexReadError::BudgetExceeded);
+        }
+        retained += bytes;
+    }
+    const quint64 capacity = quint64(_chunks.size()) * 2 + 1;
+    if (capacity > (budget - retained) / sizeof(QHexReadSession::Piece)) {
+        return readSessionError(budget, QHexReadError::BudgetExceeded);
+    }
+    result->pieces.reserve(size_t(capacity));
+    qint64 logical = 0;
+    qint64 source = 0;
+    for (const auto &chunk : std::as_const(_chunks)) {
+        const auto gap = chunk.absPos - logical;
+        if (gap < 0) {
+            return readSessionError(budget, QHexReadError::InvalidMapping);
+        }
+        if (gap) {
+            result->pieces.push_back({logical, gap, source, {}, false});
+            logical += gap;
+            source += gap;
+        }
+        if (!chunk.data.isEmpty()) {
+            result->pieces.push_back(
+                {logical, chunk.data.size(), 0, chunk.data, true});
+            logical += chunk.data.size();
+        }
+        source += CHUNK_SIZE;
+    }
+    if (logical < _size) {
+        result->pieces.push_back({logical, _size - logical, source, {}, false});
+    }
+    return {result, QHexReadError::None};
+}
+
+QHexReadSessionResult Chunks::readSessionError(quint64 budget,
+                                               QHexReadError error) const {
+    const auto file = qobject_cast<QFile *>(_ioDevice);
+    const auto name = file ? file->fileName() : QString();
+    switch (error) {
+    case QHexReadError::BudgetExceeded:
+        qCDebug(lcQHexRead) << "The read session exceeds the memory budget."
+                            << name << "budget" << budget;
+        break;
+    case QHexReadError::OwnerThreadRequired:
+        qCDebug(lcQHexRead) << "The device needs reads on its owning thread."
+                            << name << "budget" << budget;
+        break;
+    case QHexReadError::InvalidDevice:
+        qCWarning(lcQHexRead)
+            << "The device is not readable and seekable." << name;
+        break;
+    case QHexReadError::InvalidMapping:
+        qCWarning(lcQHexRead) << "Invalid document mapping." << name;
+        break;
+    default:
+        qCWarning(lcQHexRead)
+            << "Cannot create read session" << name << "error" << int(error);
+        break;
+    }
+    return {{}, error};
+}

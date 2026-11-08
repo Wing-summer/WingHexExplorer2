@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -14,9 +14,11 @@
 ** along with this program. If not, see <https://www.gnu.org/licenses/>.
 ** =============================================================================
 */
+
 #ifndef QFILEBUFFER_H
 #define QFILEBUFFER_H
 
+#include "qhexreadsession.h"
 #include <QBuffer>
 #include <QIODevice>
 
@@ -39,6 +41,8 @@ public:
     // if iodevice != nullptr, you should keep iodevice un-opened
     // or it will be closed
     bool save(QIODevice *iodevice);
+
+    QHexReadSessionResult readSession(quint64 budget) const;
 
 public:
     uchar at(qsizetype idx) const;

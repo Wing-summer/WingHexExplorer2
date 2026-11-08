@@ -31,6 +31,14 @@
         <file>images/certificate-file.svg</file>
         <file>images/clear-history.svg</file>
         <file>images/clone.svg</file>
+        <file>images/compare.svg</file>
+        <file>images/compare-swap.svg</file>
+        <file>images/compare-horizontal.svg</file>
+        <file>images/compare-vertical.svg</file>
+        <file>images/first-difference.svg</file>
+        <file>images/last-difference.svg</file>
+        <file>images/sync-scroll.svg</file>
+        <file>images/compare-stop.svg</file>
         <file>images/close-file.svg</file>
         <file>images/format-code.svg</file>
         <file>images/console.svg</file>

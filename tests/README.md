@@ -13,6 +13,7 @@ Each suite builds independently against production code in this repository, with
 | [toast](toast/README.md) | Toast 浮层、输入、生命周期与 Wayland / Toast overlays, input, lifetime, and Wayland | CTest / Qt Test |
 | [qtableviewext](qtableviewext/README.md) | 表格搜索、异步排序及列宽 / Table search, async sorting, and column widths | CTest |
 | [workspace](workspace/README.md) | 工作区二进制读写与 JSON 迁移 / Binary workspaces and JSON migration | Qt Test / CTest |
+| [diff](diff/README.md) | 二进制比较、读取会话、预算和宿主 UI / Binary diff, read sessions, budgets and host UI | CTest / Python |
 | [qhexview](qhexview/README.md) | 十六进制视图、选区、剪贴板与撤销 / Hex view, selections, clipboard, and undo | CTest |
 | [luaulsp](luaulsp/README.md) | Luau 诊断、补全、类型与模块解析 / Luau diagnostics, completion, types, and module resolution | CTest |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |

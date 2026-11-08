@@ -18,6 +18,7 @@
 #include "mutisavedialog.h"
 #include "ui_mutisavedialog.h"
 
+#include <QMenu>
 #include <QPushButton>
 
 #include "class/settings/thememanager.h"

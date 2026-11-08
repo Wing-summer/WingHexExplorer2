@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -17,6 +17,8 @@
 
 #ifndef SETTINGMANAGER_H
 #define SETTINGMANAGER_H
+
+#include "class/diff/diffconstants.h"
 
 #include <QByteArray>
 #include <QFont>
@@ -37,7 +39,8 @@ public:
         EDITOR = 4,
         SCRIPT = 8,
         OTHER = 16,
-        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER
+        DIFF = 32,
+        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER | DIFF
     };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)
 
@@ -45,6 +48,10 @@ public:
     static SettingManager &instance();
     virtual ~SettingManager();
 
+public:
+    void reset(SETTINGS cat);
+
+public:
     QByteArray dockLayout() const;
     int themeID() const;
     QString defaultLang() const;
@@ -57,9 +64,6 @@ public:
     qsizetype copylimit() const;
     qsizetype decodeStrlimit() const;
     Qt::WindowState defaultWinState() const;
-
-    void reset(SETTINGS cat);
-    void __reset(SETTINGS cat);
 
     QList<RecentFileManager::RecentInfo> recentHexFiles() const;
     bool enablePlugin() const;
@@ -89,6 +93,13 @@ public:
 
     QStringList enabledExtPlugins() const;
     QStringList enabledDevPlugins() const;
+
+    quint64 diffFileLimit() const;
+    quint64 diffMemoryLimit() const;
+    quint64 diffDetailLimit() const;
+    bool diffPrecise() const;
+    bool diffVertical() const;
+    bool diffSyncScroll() const;
 
     QByteArray settingsLayout() const;
     QByteArray settingsScriptLayout() const;
@@ -136,6 +147,13 @@ public slots:
     void setEnabledExtPlugins(const QStringList &newEnabledPlugins);
     void setEnabledDevPlugins(const QStringList &newEnabledDevPlugins);
 
+    void setDiffFileLimit(quint64 value);
+    void setDiffMemoryLimit(quint64 value);
+    void setDiffDetailLimit(quint64 value);
+    void setDiffPrecise(bool value);
+    void setDiffVertical(bool value);
+    void setDiffSyncScroll(bool value);
+
     void setSettingsLayout(const QByteArray &newSetLayout);
     void setSettingsScriptLayout(const QByteArray &newSetScriptLayout);
     void setWatchExpressions(const QStringList &newWatchExpressions);
@@ -153,6 +171,7 @@ public:
     QByteArray savePluginRule(const QStringList &rules);
 
 signals:
+    void sigDiffSettingsChanged();
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
     void sigCopylimitChanged(int v);
@@ -164,6 +183,7 @@ private:
     SettingManager();
 
     void load();
+    void __reset(SETTINGS cat);
 
     QList<RecentFileManager::RecentInfo>
     getDataFromVarList(const QVariantList &varlist) const;
@@ -172,6 +192,14 @@ private:
 
     Q_DISABLE_COPY_MOVE(SettingManager)
 private:
+    quint64 m_diffFileLimit = WingDiff::Limits::DefaultFileSize;
+    quint64 m_diffMemoryLimit = WingDiff::Limits::DefaultMemoryBudget;
+    quint64 m_diffDetailLimit = WingDiff::Limits::DefaultDetailedRanges;
+    bool m_diffPrecise = false;
+    bool m_diffPreviews = true;
+    bool m_diffVertical = false;
+    bool m_diffSyncScroll = true;
+
     int m_themeID = 0;
     int m_appfontSize = 18;
     int m_editorfontSize = 18;

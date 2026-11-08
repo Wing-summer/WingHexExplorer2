@@ -495,6 +495,7 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
     if (m_buffer->insert(offset, data)) {
+        Q_EMIT contentsChanged();
         Q_EMIT documentChanged();
         return true;
     }
@@ -507,6 +508,7 @@ bool QHexDocument::_replace(qsizetype offset, uchar b) {
 
 bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
     if (m_buffer->replace(offset, data)) {
+        Q_EMIT contentsChanged();
         Q_EMIT documentChanged();
         return true;
     }
@@ -515,6 +517,7 @@ bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
 
 bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     if (m_buffer->remove(offset, len)) {
+        Q_EMIT contentsChanged();
         Q_EMIT documentChanged();
         return true;
     }

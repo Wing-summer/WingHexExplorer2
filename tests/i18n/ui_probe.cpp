@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
         QStringLiteral("src/control/gotowidget.ui"),
         QStringLiteral("src/settings/generalsettingdialog.ui"),
         QStringLiteral("src/settings/editorsettingdialog.ui"),
+        QStringLiteral("src/settings/diffsettingdialog.ui"),
         QStringLiteral("src/settings/lspsettingdialog.ui"),
         QStringLiteral("src/settings/qeditconfig.ui"),
         QStringLiteral("src/settings/othersettingsdialog.ui"),

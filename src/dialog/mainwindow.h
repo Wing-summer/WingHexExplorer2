@@ -18,9 +18,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "dialog/splashdialog.h"
-
 #include "class/settings/thememanager.h"
+#include "control/searchabletextbrowser.h"
+#include "dialog/diffdialog.h"
+#include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
 #include <QFutureWatcher>
@@ -56,8 +57,6 @@
 #include "utilities.h"
 
 class PluginSystem;
-
-class SearchableTextBrowser;
 
 class MainWindow : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
@@ -215,6 +214,8 @@ private slots:
     void on_inspectQt();
 
     void on_scriptwindow();
+    void on_compare();
+    void on_settingCompare();
     void on_settingGeneral();
     void on_settingScript();
     void on_settingPlugin();
@@ -549,6 +550,7 @@ private:
     QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
         m_findEncoding;
 
+    QPointer<DiffDialog> m_diffDialog;
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
     QPlainTextEdit *m_bgScriptOutput = nullptr;

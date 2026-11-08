@@ -1227,10 +1227,18 @@ QCalendarWidget QToolButton:hover
     border: 0.04em solid #3daee9;
 }
 
-QCalendarWidget QToolButton:checked,
+QCalendarWidget QToolButton:checked
+{
+    background-color: #d8eaf5;
+    padding: 0.23em;
+    padding-right: 1.2em;
+    min-height: 1.3em;
+    outline: none;
+}
+
 QCalendarWidget QToolButton:pressed
 {
-    background-color: #3daee9;
+    background-color: #c5e3f3;
     padding: 0.23em;
     padding-right: 1.2em;
     min-height: 1.3em;
@@ -2041,11 +2049,17 @@ QToolButton:hover
     border: 0.04em solid #3daee9;
 }
 
-QToolButton:checked,
+/* State surfaces stay readable for every icon role; see docs/icons.md. */
+QToolButton:checked
+{
+    border: 0.04em solid #3daee9;
+    background-color: #d8eaf5;
+}
+
 QToolButton:pressed
 {
     border: 0.04em solid #3daee9;
-    background-color: #3daee9;
+    background-color: #c5e3f3;
 }
 
 QToolButton::right-arrow,
@@ -3003,7 +3017,7 @@ RibbonButtonGroup QToolButton:pressed
 {
     border: 0.04em solid #3daee9;
     border-radius: 4px;
-    background-color: #d8eaf5;
+    background-color: #c5e3f3;
 }
 
 RibbonTabContent QFrame[frameShape="4"]:hover,

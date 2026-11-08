@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -25,8 +25,8 @@
 #include <QTableView>
 #include <QTextBrowser>
 
-#include "control/console/scriptingconsole.h"
 #include "class/settings/thememanager.h"
+#include "control/console/scriptingconsole.h"
 #include "control/idbtreeview.h"
 #include "control/objtreewidget.h"
 #include "dialog/settingdialog.h"
@@ -124,7 +124,7 @@ private:
         auto shortCut = new QShortcut(shortcut, this);
         shortCut->setContext(Qt::WindowShortcut);
         connect(shortCut, &QShortcut::activated, btn,
-                [btn]() { btn->animateClick(); });
+                &QToolButton::animateClick);
         setPannelActionToolTip(btn, shortcut);
     }
 
@@ -135,7 +135,8 @@ private:
                     const QKeySequence &shortcut = QKeySequence(),
                     QMenu *menu = nullptr,
                     const QString &description = QString()) {
-        return addPannelAction(pannel, ThemeManager::instance().standardIcon(icon),
+        return addPannelAction(pannel,
+                               ThemeManager::instance().standardIcon(icon),
                                title, slot, shortcut, menu, description);
     }
 
@@ -144,7 +145,6 @@ private:
         RibbonButtonGroup *pannel, const QIcon &icon, const QString &title,
         Func &&slot, const QKeySequence &shortcut = QKeySequence(),
         QMenu *menu = nullptr, const QString &description = QString()) {
-        Q_ASSERT(pannel);
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)

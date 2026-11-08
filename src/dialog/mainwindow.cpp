@@ -16,6 +16,7 @@
  */
 
 #include "mainwindow.h"
+#include "settings/diffsettingdialog.h"
 
 #include "class/settings/thememanager.h"
 
@@ -1482,6 +1483,10 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
             shortcuts.keySequence(QKeySequences::Key::GOTO));
 
         m_editStateWidgets << addPannelAction(
+            pannel, ThemeManager::StandardIcon::Compare, tr("Compare"),
+            &MainWindow::on_compare);
+
+        m_editStateWidgets << addPannelAction(
             pannel, ThemeManager::StandardIcon::Checksum, tr("Checksum"),
             &MainWindow::on_checksum);
         m_editStateWidgets << addPannelAction(
@@ -1917,7 +1922,7 @@ void MainWindow::ensureSettingsDialog() {
     auto &set = SettingManager::instance();
 
     m_setdialog = new SettingDialog(ThemeManager::instance().standardIcon(
-                                        ThemeManager::StandardIcon::Tools),
+                                        ThemeManager::StandardIcon::Settings),
                                     tr("Application settings"), this);
 
     auto generalPage = new GeneralSettingDialog(m_setdialog);
@@ -1939,6 +1944,9 @@ void MainWindow::ensureSettingsDialog() {
     connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
     m_setdialog->addPage(scriptPage);
+
+    auto diffPage = new DiffSettingDialog(m_setdialog);
+    m_setdialog->addPage(diffPage);
 
     auto otherPage = new OtherSettingsDialog(m_setdialog);
 
@@ -3281,6 +3289,22 @@ void MainWindow::on_inspectQt() {
 }
 
 void MainWindow::on_scriptwindow() { createScriptDialog(nullptr); }
+
+void MainWindow::on_compare() {
+    if (!m_diffDialog) {
+        m_diffDialog = new DiffDialog(currentEditor(), this);
+        connect(m_diffDialog.data(), &DiffDialog::settingsRequested, this,
+                &MainWindow::on_settingCompare);
+    }
+    m_diffDialog->show();
+    m_diffDialog->raise();
+    m_diffDialog->activateWindow();
+}
+
+void MainWindow::on_settingCompare() {
+    ensureSettingsDialog();
+    m_setdialog->showConfig(QStringLiteral("Diff"));
+}
 
 void MainWindow::on_settingGeneral() {
     ensureSettingsDialog();

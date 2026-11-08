@@ -35,6 +35,8 @@
 #include <QStringConverter>
 #include <QVector>
 
+#include <functional>
+
 class QHexRenderer : public QObject {
     Q_OBJECT
 
@@ -70,6 +72,7 @@ public:
 
 public:
     void blinkCursor();
+    void setCursorVisible(bool visible);
     bool hitTest(const QPoint &pt, QHexPosition *position, qsizetype firstline,
                  qsizetype lastline) const;
     Areas hitTestArea(const QPoint &pt) const;
@@ -146,6 +149,7 @@ private:
         QString text;
     };
 
+protected:
     struct CellFormat {
         QColor foreground;
         QColor background;
@@ -157,6 +161,17 @@ private:
         bool italic = false;
         bool strikeOut = false;
     };
+
+    // One extension point for visible-row formatting. Selection and contrast
+    // are finalized by the base renderer after the extension has run.
+    virtual void applyLineFormats(qsizetype line,
+                                  QVector<CellFormat> &formats) const;
+
+private:
+    friend class QHexView;
+    void copyVisualState(const QHexRenderer &other);
+    void finalizeCellFormat(CellFormat &format, qsizetype line, int column,
+                            bool hasMetadata) const;
 
 private:
     void drawAddress(QPainter *painter, const QRectF &linerect, qsizetype line);

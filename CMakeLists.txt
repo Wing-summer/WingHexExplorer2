@@ -181,6 +181,8 @@ set(DIALOG_SRC
     src/dialog/crashreport.cpp
     src/dialog/crashreport.h
     src/dialog/crashreport.ui
+    src/dialog/diffdialog.cpp
+    src/dialog/diffdialog.h
     src/dialog/encodingdialog.cpp
     src/dialog/encodingdialog.h
     src/dialog/fileinfodialog.cpp
@@ -262,6 +264,10 @@ set(CONTROL_SRC
     src/control/editor/searchreplacewidget.h
     src/control/editor/snippetprocessor.cpp
     src/control/editor/snippetprocessor.h
+    src/control/diffrenderer.cpp
+    src/control/diffrenderer.h
+    src/control/documentchoice.cpp
+    src/control/documentchoice.h
     src/control/editorview.cpp
     src/control/editorview.h
     src/control/gotolinewidget.cpp
@@ -307,6 +313,11 @@ set(CLASS_SRC
     src/class/application/startuptrace.h
     src/class/application/wingupdater.cpp
     src/class/application/wingupdater.h
+    src/class/diff/binarydiff.cpp
+    src/class/diff/binarydiff.h
+    src/class/diff/diffconstants.h
+    src/class/diff/diffsource.cpp
+    src/class/diff/diffsource.h
     src/class/file/fileaccesscheck.cpp
     src/class/file/fileaccesscheck.h
     src/class/file/recentfilemanager.cpp
@@ -426,6 +437,8 @@ set(MODEL_SRC
     src/model/codecompletionmodel.h
     src/model/dbgcallstackmodel.cpp
     src/model/dbgcallstackmodel.h
+    src/model/diffresultmodel.cpp
+    src/model/diffresultmodel.h
     src/model/findresultmodel.cpp
     src/model/findresultmodel.h
     src/model/metadatamodel.cpp
@@ -434,6 +447,9 @@ set(MODEL_SRC
     src/model/numshowmodel.h)
 
 set(SETTING_SRC
+    src/settings/diffsettingdialog.cpp
+    src/settings/diffsettingdialog.h
+    src/settings/diffsettingdialog.ui
     src/settings/editorsettingdialog.cpp
     src/settings/editorsettingdialog.h
     src/settings/editorsettingdialog.ui

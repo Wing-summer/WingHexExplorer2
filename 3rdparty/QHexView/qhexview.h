@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -59,10 +59,13 @@ public:
 public:
     QSharedPointer<QHexDocument> document();
     QHexRenderer *renderer();
+    bool setRenderer(QHexRenderer *renderer);
 
     bool lockKeepSize() const;
 
     bool isReadOnly();
+    void setReadOnly(bool readOnly);
+    bool viewReadOnly() const;
     bool isKeepSize();
     bool isLocked();
     qsizetype documentLines();
@@ -242,6 +245,7 @@ private:
     QPoint absolutePosition(const QPoint &pos) const;
 
 private:
+    bool m_viewReadOnly = false;
     QSharedPointer<QHexDocument> m_document;
     QHexCursor *m_cursor = nullptr;
     QHexRenderer *m_renderer;

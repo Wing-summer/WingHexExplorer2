@@ -266,6 +266,7 @@ signals:
     void canRedoChanged(bool canRedo);
     void documentChanged();
     void metaDataChanged();
+    void contentsChanged();
 
 private:
     QFileBuffer *m_buffer;

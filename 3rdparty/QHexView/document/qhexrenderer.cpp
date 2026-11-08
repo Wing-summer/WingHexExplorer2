@@ -357,7 +357,15 @@ QByteArray QHexRenderer::getLine(qsizetype line) const {
     return m_document->read(line * width, width);
 }
 
-void QHexRenderer::blinkCursor() { m_cursorenabled = !m_cursorenabled; }
+void QHexRenderer::blinkCursor() {
+    m_cursorenabled = !m_cursorenabled;
+    Q_EMIT repaintRequested();
+}
+
+void QHexRenderer::setCursorVisible(bool visible) {
+    m_cursorenabled = visible;
+    Q_EMIT repaintRequested();
+}
 
 qsizetype QHexRenderer::rendererLength() const {
     return m_document->length() + 1;
@@ -735,6 +743,11 @@ QHexRenderer::buildUpLineFormats(qsizetype line) const {
         }
         lineFormats.append(cellFormat(line, column, meta));
     }
+    applyLineFormats(line, lineFormats);
+    for (int column = 0; column < width; ++column) {
+        const auto index = metadata->getIndex(line * width + column);
+        finalizeCellFormat(lineFormats[column], line, column, index >= 0);
+    }
     return lineFormats;
 }
 
@@ -765,6 +778,12 @@ QHexRenderer::cellFormat(qsizetype line, int column,
         }
     }
 
+    return fmt;
+}
+
+void QHexRenderer::finalizeCellFormat(CellFormat &fmt, qsizetype line,
+                                      int column, bool hasMetadata) const {
+    const auto base = line % 2 ? m_bytesBackground : m_bytesAlterBackground;
     bool strikeOut = false;
     bool hasSelection = false;
     if (isStrByteSelected(line, column, &strikeOut, &hasSelection)) {
@@ -776,7 +795,7 @@ QHexRenderer::cellFormat(qsizetype line, int column,
             strikeOut ? m_selectionColor.darker() : m_selectionColor;
         fmt.fillBackground = true;
         fmt.strikeOut = strikeOut;
-        fmt.italic = meta || strikeOut;
+        fmt.italic = hasMetadata || strikeOut;
     }
 
     const auto bg =
@@ -785,8 +804,6 @@ QHexRenderer::cellFormat(qsizetype line, int column,
         fmt.bold = true;
         fmt.outline = QHexMetadata::generateContrastingColor(bg);
     }
-
-    return fmt;
 }
 
 void QHexRenderer::drawAddress(QPainter *painter, const QRectF &linerect,
@@ -1464,4 +1481,25 @@ QColor QHexRenderer::headerColor() const { return m_headerColor; }
 
 void QHexRenderer::setHeaderColor(const QColor &newHeaderColor) {
     m_headerColor = newHeaderColor;
+}
+
+void QHexRenderer::applyLineFormats(qsizetype, QVector<CellFormat> &) const {}
+
+void QHexRenderer::copyVisualState(const QHexRenderer &other) {
+    m_selectedarea = other.m_selectedarea;
+    m_cursorenabled = other.m_cursorenabled;
+    m_asciiVisible = other.m_asciiVisible;
+    m_addressVisible = other.m_addressVisible;
+    m_headerVisible = other.m_headerVisible;
+    m_cursorSync = other.m_cursorSync;
+    m_stringEncoding = other.m_stringEncoding;
+    m_headerColor = other.m_headerColor;
+    m_addressColor = other.m_addressColor;
+    m_bytesBackground = other.m_bytesBackground;
+    m_bytesAlterBackground = other.m_bytesAlterBackground;
+    m_bytesColor = other.m_bytesColor;
+    m_selectionColor = other.m_selectionColor;
+    m_selBackgroundColor = other.m_selBackgroundColor;
+    m_borderColor = other.m_borderColor;
+    m_lineCaches.setMaxCost(other.m_lineCaches.maxCost());
 }

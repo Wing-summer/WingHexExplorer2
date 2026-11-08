@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -85,6 +85,13 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_SET_LAYOUT, ("set.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_SET_SCRIPT_LAYOUT,
                           ("set.script.layout"))
 
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_FILE_LIMIT, ("diff.fileLimit"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_MEMORY_LIMIT, ("diff.memoryLimit"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_DETAIL_LIMIT, ("diff.detailLimit"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_PRECISE, ("diff.precise"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_VERTICAL, ("diff.vertical"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_SYNC_SCROLL, ("diff.syncScroll"))
+
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
     qRegisterMetaType<RecentFileManager::RecentInfo>();
@@ -123,6 +130,8 @@ void SettingManager::load() {
 
     READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
     m_themeID = qBound(0, m_themeID, 2);
+    ThemeManager::instance().setTheme(ThemeManager::Theme(m_themeID));
+
     m_defaultLang = READ_CONFIG(APP_LANGUAGE, {}).toString();
 
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, {}).toByteArray();
@@ -251,9 +260,28 @@ void SettingManager::load() {
         }
     }
 
+    READ_CONFIG_SAFE(m_diffFileLimit, DIFF_FILE_LIMIT,
+                     WingDiff::Limits::DefaultFileSize, toULongLong);
+    READ_CONFIG_SAFE(m_diffMemoryLimit, DIFF_MEMORY_LIMIT,
+                     WingDiff::Limits::DefaultMemoryBudget, toULongLong);
+    READ_CONFIG_SAFE(m_diffDetailLimit, DIFF_DETAIL_LIMIT,
+                     WingDiff::Limits::DefaultDetailedRanges, toULongLong);
+    READ_CONFIG_BOOL(m_diffPrecise, DIFF_PRECISE, false);
+    READ_CONFIG_BOOL(m_diffVertical, DIFF_VERTICAL, false);
+    READ_CONFIG_BOOL(m_diffSyncScroll, DIFF_SYNC_SCROLL, true);
+    m_diffFileLimit = qBound(WingDiff::Limits::MinimumFileSize, m_diffFileLimit,
+                             WingDiff::Limits::MaximumFileSize);
+    if (!WingDiff::Limits::isMemoryBudget(m_diffMemoryLimit)) {
+        m_diffMemoryLimit = WingDiff::Limits::DefaultMemoryBudget;
+    }
+    m_diffDetailLimit =
+        qBound(WingDiff::Limits::MinimumDetailedRanges, m_diffDetailLimit,
+               WingDiff::Limits::MaximumDetailedRanges);
+
     Q_EMIT sigEditorfontSizeChanged(m_editorfontSize);
     Q_EMIT sigCopylimitChanged(m_copylimit);
     Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
+    Q_EMIT sigDiffSettingsChanged();
 }
 
 QList<RecentFileManager::RecentInfo>
@@ -657,7 +685,6 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
 void SettingManager::reset(SETTINGS cat) {
     __reset(cat);
     load();
-    ThemeManager::instance().setTheme(ThemeManager::Theme(m_themeID));
 }
 
 void SettingManager::__reset(SETTINGS cat) {
@@ -674,6 +701,15 @@ void SettingManager::__reset(SETTINGS cat) {
         WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
+    }
+    if (cat.testFlag(SETTING::DIFF)) {
+        WRITE_CONFIG(DIFF_FILE_LIMIT, WingDiff::Limits::DefaultFileSize);
+        WRITE_CONFIG(DIFF_MEMORY_LIMIT, WingDiff::Limits::DefaultMemoryBudget);
+        WRITE_CONFIG(DIFF_DETAIL_LIMIT,
+                     WingDiff::Limits::DefaultDetailedRanges);
+        WRITE_CONFIG(DIFF_PRECISE, false);
+        WRITE_CONFIG(DIFF_VERTICAL, false);
+        WRITE_CONFIG(DIFF_SYNC_SCROLL, true);
     }
     if (cat.testFlag(SETTING::EDITOR)) {
         WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());
@@ -820,5 +856,78 @@ void SettingManager::setThemeID(int newThemeID) {
         WRITE_CONFIG(SKIN_THEME, newThemeID);
         m_themeID = newThemeID;
         ThemeManager::instance().setTheme(ThemeManager::Theme(newThemeID));
+    }
+}
+
+quint64 SettingManager::diffFileLimit() const { return m_diffFileLimit; }
+
+void SettingManager::setDiffFileLimit(quint64 value) {
+    value = qBound(WingDiff::Limits::MinimumFileSize, value,
+                   WingDiff::Limits::MaximumFileSize);
+    if (m_diffFileLimit != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_FILE_LIMIT, value);
+        m_diffFileLimit = value;
+        Q_EMIT sigDiffSettingsChanged();
+    }
+}
+
+quint64 SettingManager::diffMemoryLimit() const { return m_diffMemoryLimit; }
+
+void SettingManager::setDiffMemoryLimit(quint64 value) {
+    if (!WingDiff::Limits::isMemoryBudget(value)) {
+        value = WingDiff::Limits::DefaultMemoryBudget;
+    }
+    if (m_diffMemoryLimit != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_MEMORY_LIMIT, value);
+        m_diffMemoryLimit = value;
+        Q_EMIT sigDiffSettingsChanged();
+    }
+}
+
+quint64 SettingManager::diffDetailLimit() const { return m_diffDetailLimit; }
+
+void SettingManager::setDiffDetailLimit(quint64 value) {
+    value = qBound(WingDiff::Limits::MinimumDetailedRanges, value,
+                   WingDiff::Limits::MaximumDetailedRanges);
+    if (m_diffDetailLimit != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_DETAIL_LIMIT, value);
+        m_diffDetailLimit = value;
+        Q_EMIT sigDiffSettingsChanged();
+    }
+}
+
+bool SettingManager::diffPrecise() const { return m_diffPrecise; }
+
+void SettingManager::setDiffPrecise(bool value) {
+    if (m_diffPrecise != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_PRECISE, value);
+        m_diffPrecise = value;
+        Q_EMIT sigDiffSettingsChanged();
+    }
+}
+
+bool SettingManager::diffVertical() const { return m_diffVertical; }
+
+void SettingManager::setDiffVertical(bool value) {
+    if (m_diffVertical != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_VERTICAL, value);
+        m_diffVertical = value;
+        Q_EMIT sigDiffSettingsChanged();
+    }
+}
+
+bool SettingManager::diffSyncScroll() const { return m_diffSyncScroll; }
+
+void SettingManager::setDiffSyncScroll(bool value) {
+    if (m_diffSyncScroll != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_SYNC_SCROLL, value);
+        m_diffSyncScroll = value;
+        Q_EMIT sigDiffSettingsChanged();
     }
 }

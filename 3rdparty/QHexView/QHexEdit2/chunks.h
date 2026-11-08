@@ -40,6 +40,7 @@
 
 // I (wingsummer) made some modifications, great thanks for Simsys's effort!
 
+#include "document/buffer/qhexreadsession.h"
 #include <QByteArray>
 #include <QList>
 #include <QReadWriteLock>
@@ -59,6 +60,8 @@ public:
     QIODevice *ioDevice() const;
     bool setIODevice(QIODevice *ioDevice);
     void resetIODevice();
+
+    QHexReadSessionResult readSession(quint64 budget) const;
 
     // Getting data out of Chunks
     QByteArray data(qint64 pos = 0, qint64 count = -1) const;
@@ -84,6 +87,8 @@ public:
     qint64 size() const;
 
 private:
+    QHexReadSessionResult readSessionError(quint64 budget,
+                                           QHexReadError error) const;
     qsizetype getChunkIndex(qint64 absPos) const;
 
     bool __overwrite(qint64 pos, const QByteArray &ba);

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -14,6 +14,7 @@
 ** along with this program. If not, see <https://www.gnu.org/licenses/>.
 ** =============================================================================
 */
+
 #include "qfilebuffer.h"
 #include "QHexEdit2/chunks.h"
 
@@ -267,4 +268,12 @@ bool QFileBuffer::isReadyInsert(qsizetype offset) const {
         }
     }
     return false;
+}
+
+QHexReadSessionResult QFileBuffer::readSession(quint64 budget) const {
+    if (!_chunks) {
+        qCWarning(lcQHexRead) << "Cannot capture a closed buffer";
+        return {{}, QHexReadError::InvalidDevice};
+    }
+    return _chunks->readSession(budget);
 }

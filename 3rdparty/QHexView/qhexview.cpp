@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -40,7 +40,11 @@
 /*======================*/
 // added by wingsummer
 
-bool QHexView::isReadOnly() { return m_document->isReadOnly(); }
+bool QHexView::isReadOnly() {
+    return m_viewReadOnly || m_document->isReadOnly();
+}
+void QHexView::setReadOnly(bool readOnly) { m_viewReadOnly = readOnly; }
+bool QHexView::viewReadOnly() const { return m_viewReadOnly; }
 bool QHexView::isKeepSize() { return m_document->isKeepSize(); }
 bool QHexView::isLocked() { return m_document->isLocked(); }
 bool QHexView::setLockedFile(bool b) { return m_document->setLockedFile(b); }
@@ -191,6 +195,37 @@ QSharedPointer<QHexDocument> QHexView::document() { return m_document; }
 
 QHexRenderer *QHexView::renderer() { return m_renderer; }
 
+bool QHexView::setRenderer(QHexRenderer *renderer) {
+    if (!renderer || renderer->thread() != thread() ||
+        (renderer->parent() && renderer->parent() != this)) {
+        qWarning("QHexView: invalid renderer ownership or thread");
+        return false;
+    }
+    if (renderer == m_renderer) {
+        return true;
+    }
+    auto previous = m_renderer;
+    if (previous) {
+        renderer->copyVisualState(*previous);
+        disconnect(previous, nullptr, this, nullptr);
+    }
+    renderer->setParent(this);
+    renderer->switchDoc(m_document.data());
+    renderer->setCursor(m_cursor);
+    renderer->updateMetrics(QFontMetricsF(font()));
+    m_renderer = renderer;
+    connect(renderer, &QHexRenderer::layoutChanged, this, &QHexView::refresh);
+    connect(renderer, &QHexRenderer::repaintRequested, this,
+            [this] { viewport()->update(); });
+
+    if (previous) {
+        previous->deleteLater();
+    }
+
+    refresh();
+    return true;
+}
+
 // modified by wingsummer
 void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
                            QHexCursor *cursor) {
@@ -217,12 +252,8 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
         m_renderer->switchDoc(m_document.data());
         m_renderer->setCursor(m_cursor);
     } else {
-        m_renderer = new QHexRenderer(m_document.data(), m_cursor,
-                                      QFontMetricsF(font()), this);
-        connect(m_renderer, &QHexRenderer::layoutChanged, this,
-                &QHexView::refresh);
-        connect(m_renderer, &QHexRenderer::repaintRequested, this,
-                [this] { viewport()->update(); });
+        setRenderer(new QHexRenderer(m_document.data(), m_cursor,
+                                     QFontMetricsF(font()), this));
     }
 
     establishSignal(m_document.data());
@@ -421,6 +452,9 @@ bool QHexView::RemoveSelection(int nibbleindex) {
 }
 
 bool QHexView::removeSelection() {
+    if (isReadOnly()) {
+        return false;
+    }
     if (!m_cursor->hasSelection()) {
         return true;
     }
@@ -477,6 +511,9 @@ QByteArray QHexView::clipboardBytes(bool hex) {
 }
 
 bool QHexView::paste(bool hex) {
+    if (isReadOnly()) {
+        return false;
+    }
     const auto data = clipboardBytes(hex);
 
     if (data.isEmpty()) {
@@ -501,6 +538,9 @@ bool QHexView::paste(bool hex) {
 }
 
 bool QHexView::Cut(bool hex, int nibbleindex) {
+    if (isReadOnly()) {
+        return false;
+    }
     if (!m_cursor->hasSelection()) {
         return true;
     }
@@ -517,6 +557,9 @@ bool QHexView::Cut(bool hex, int nibbleindex) {
 }
 
 bool QHexView::Paste(bool hex, int nibbleindex) {
+    if (isReadOnly()) {
+        return false;
+    }
     const auto data = clipboardBytes(hex);
 
     if (data.isEmpty()) {
@@ -541,15 +584,24 @@ bool QHexView::Paste(bool hex, int nibbleindex) {
 }
 
 void QHexView::Replace(qsizetype offset, uchar b, int nibbleindex) {
+    if (isReadOnly()) {
+        return;
+    }
     m_document->Replace(m_cursor, offset, b, nibbleindex);
 }
 
 void QHexView::Replace(qsizetype offset, const QByteArray &data,
                        int nibbleindex) {
+    if (isReadOnly()) {
+        return;
+    }
     m_document->Replace(m_cursor, offset, data, nibbleindex);
 }
 
 bool QHexView::cut(bool hex) {
+    if (isReadOnly()) {
+        return false;
+    }
     if (!m_cursor->hasSelection() || m_document->isKeepSize()) {
         return false;
     }
@@ -1035,6 +1087,10 @@ void QHexView::processPosChanged() {
 bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
     auto canFlag = !(isReadOnly() || isLocked());
 
+    if (e->matches(QKeySequence::Copy)) {
+        copy(m_renderer->selectedArea() == QHexRenderer::Areas::HexArea);
+        return true;
+    }
     if (e->modifiers() != Qt::NoModifier) {
         if (e->matches(QKeySequence::SelectAll)) {
             m_cursor->moveTo(0, 0);

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DiffSettingDialog</class>
+ <widget class="QWidget" name="DiffSettingDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>337</width>
+    <height>454</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="resourceGroup">
+     <property name="title">
+      <string>Resources</string>
+     </property>
+     <layout class="QFormLayout" name="resourceLayout">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+      </property>
+      <property name="rowWrapPolicy">
+       <enum>QFormLayout::RowWrapPolicy::WrapAllRows</enum>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="fileLabel">
+        <property name="text">
+         <string>Maximum file size per side</string>
+        </property>
+        <property name="buddy">
+         <cstring>sbFileLimit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="sbFileLimit">
+        <property name="suffix">
+         <string notr="true"> MiB</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="memoryLabel">
+        <property name="text">
+         <string>Working memory budget</string>
+        </property>
+        <property name="buddy">
+         <cstring>cbMemory</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="cbMemory"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="detailsLabel">
+        <property name="text">
+         <string>Detailed difference limit</string>
+        </property>
+        <property name="buddy">
+         <cstring>sbDetails</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="sbDetails">
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="behaviorGroup">
+     <property name="title">
+      <string>Defaults</string>
+     </property>
+     <layout class="QVBoxLayout" name="behaviorLayout">
+      <item>
+       <widget class="QCheckBox" name="cbPrecise">
+        <property name="text">
+         <string>Precise mode</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="spacer">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

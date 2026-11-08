@@ -11,6 +11,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
 add_library(
     QHexView STATIC
+    document/buffer/qhexreadsession.cpp
+    document/buffer/qhexreadsession.h
     document/buffer/qfilebuffer.cpp
     document/buffer/qfilebuffer.h
     document/commands/hex/hexcommand.cpp
