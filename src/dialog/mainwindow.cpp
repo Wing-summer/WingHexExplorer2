@@ -2228,7 +2228,6 @@ void MainWindow::on_convpro() {
                                    ThemeManager::StandardIcon::ConvertProject),
                                tr("Conversion to workspace successful"),
                                tr("Failed to convert to workspace"))) {
-            bindWorkSpaceEditorView(editor);
             // add to history
             addRecentFile(editor, workspace, true);
         }
@@ -3447,18 +3446,6 @@ bool MainWindow::newOpenFileSafeCheck() {
     return true;
 }
 
-void MainWindow::bindWorkSpaceEditorView(EditorView *editor) {
-    connect(editor, &EditorView::workspaceCorrupted, this, [this]() {
-        QTimer::singleShot(0, this, [this]() {
-            Toast::toast(
-                this,
-                ThemeManager::instance().standardPixmap(
-                    ThemeManager::StandardIcon::Workspace),
-                tr("Workspace data anomaly, please see the log for details"));
-        });
-    });
-}
-
 void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
          p != m_editorViewWidgets.constKeyValueEnd(); p++) {
@@ -4014,11 +4001,13 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
 
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     // different from other common files
-    auto wsDoc = WorkSpaceManager::loadWorkSpace(file);
-    if (wsDoc.isEmpty()) {
+    WorkSpaceData workspace;
+    QString error;
+    if (!WorkSpaceManager::loadWorkSpace(file, workspace, &error)) {
+        Logger::warning(error);
         return ErrFile::InvalidFormat;
     }
-    auto fName = WorkSpaceManager::loadWorkSpaceDocFile(file, wsDoc);
+    const auto fName = workspace.file;
     if (!fName.isValid()) {
         return ErrFile::InvalidFormat;
     }
@@ -4038,10 +4027,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     auto filename = finfo.absoluteFilePath();
 
     auto ev = std::make_unique<EditorView>(this);
-    // we connect first
-    bindWorkSpaceEditorView(ev.get());
-
-    auto res = ev->openWorkSpace(filename, wsDoc);
+    auto res = ev->openWorkSpace(filename, workspace);
 
     bool failed = (res != ErrFile::Success && res != ErrFile::WorkSpaceUnSaved);
     if (failed) {

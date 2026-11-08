@@ -398,6 +398,7 @@ ErrFile EditorView::newFile(size_t index) {
     m_isNewFile = true;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
+    _pluginData.clear();
     auto p = QHexDocument::fromInternalBuffer(false);
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
@@ -455,6 +456,7 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     m_isNewFile = false;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
+    _pluginData.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
@@ -535,6 +537,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     m_isNewFile = false;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
+    _pluginData.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
@@ -547,8 +550,24 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     return ErrFile::Success;
 }
 
+ErrFile EditorView::openWorkSpace(const QString &filename) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
+    if (!QFileInfo::exists(filename)) {
+        return ErrFile::NotExist;
+    }
+    WorkSpaceData data;
+    QString error;
+    if (!WorkSpaceManager::loadWorkSpace(filename, data, &error)) {
+        Logger::warning(error);
+        return ErrFile::InvalidFormat;
+    }
+    return openWorkSpace(filename, data);
+}
+
 ErrFile EditorView::openWorkSpace(const QString &filename,
-                                  const QJsonDocument &doc) {
+                                  const WorkSpaceData &workspace) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -559,9 +578,9 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         return ErrFile::NotExist;
     }
 
-    WorkSpaceData data;
+    WorkSpaceData data = workspace;
 
-    if (WorkSpaceManager::loadWorkSpace(filename, data, doc)) {
+    if (WorkSpaceManager::validateWorkSpace(data)) {
         // it's a workspace project
         // we should check the type of "file"
 
@@ -598,7 +617,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         doc->applyBookMarks(data.bookmarks);
         doc->setBaseAddress(data.infos.base);
         doc->metadata()->applyMetas(data.metas);
-        _pluginData = data.infos.pluginData;
+        _pluginData = WorkSpaceManager::pluginData(data);
         doc->setDocSaved();
 
         // checksum valid
@@ -620,10 +639,6 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         // It will be empty after openFile or openExtFile
         m_workSpaceName = finfo.absoluteFilePath();
         applyWorkSpaceStyle(this);
-
-        if (data.corrupted) {
-            Q_EMIT workspaceCorrupted();
-        }
 
         return ret;
     }
@@ -680,7 +695,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         auto buffer = doc->buffer();
         infos.checkSum = computeFileFingerprint(buffer->ioDevice());
         savePluginData();
-        infos.pluginData = _pluginData;
+        WorkSpaceManager::setPluginData(data, _pluginData);
         data.infos = infos;
 
         auto b = WorkSpaceManager::saveWorkSpace(workSpaceName, data);

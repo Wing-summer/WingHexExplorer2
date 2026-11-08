@@ -40,6 +40,8 @@ message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
 option(WINGHEX_USE_FRAMELESS "Enable custom titlebar support" ON)
+option(WINGHEX_BUILD_WORKSPACE_MIGRATOR
+       "Build the legacy JSON workspace migration tool" OFF)
 option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
 option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
@@ -108,6 +110,10 @@ option(BUILD_STATIC "Build the static library" TRUE)
 
 add_subdirectory(3rdparty/cpptrace)
 add_subdirectory(3rdparty/QHexView)
+
+if(WINGHEX_BUILD_WORKSPACE_MIGRATOR)
+    add_subdirectory(tools/wingpro-migrate)
+endif()
 add_subdirectory(3rdparty/WingCodeEdit)
 
 set(LUABRIDGE_TESTING OFF)
@@ -309,6 +315,7 @@ set(CLASS_SRC
     src/class/file/showinshell.h
     src/class/file/workspacemanager.cpp
     src/class/file/workspacemanager.h
+    src/class/file/workspaceformat.h
     src/class/layout/layoutmanager.cpp
     src/class/layout/layoutmanager.h
     src/class/plugin/pluginsystem.cpp

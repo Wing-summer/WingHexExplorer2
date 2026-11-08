@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -17,481 +17,280 @@
 
 #include "workspacemanager.h"
 
-#include "class/application/logger.h"
+#include "workspaceformat.h"
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QMap>
+#include <QSaveFile>
 
-constexpr qsizetype MAX_BYTES = std::numeric_limits<qsizetype>::max();
+#include <limits>
 
-bool WorkSpaceManager::loadWorkSpace(const QString &filename,
-                                     WorkSpaceData &data, QJsonDocument doc) {
-    if (doc.isEmpty()) {
-        doc = loadWorkSpace(filename);
+namespace {
+
+bool fail(QString *error, const QString &message) {
+    if (error) {
+        *error = message;
     }
-
-    if (doc.isEmpty()) {
-        return false;
-    }
-
-    auto file = loadWorkSpaceDocFile(filename, doc);
-    if (file.isValid()) {
-        data.file = file;
-        auto jobj = doc.object();
-        auto values = jobj.value(QLatin1String("base"));
-        if (!values.isUndefined()) {
-            auto base = readUInt64(values);
-            if (base) {
-                data.infos.base = base.value();
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    file, values, QStringLiteral("Invalid address base")));
-            }
-        }
-
-        values = jobj.value(QLatin1String("checksum"));
-        if (!values.isUndefined()) {
-            if (values.isString()) {
-                auto cs = values.toString();
-                data.infos.checkSum = QByteArray::fromHex(cs.toUtf8());
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    file, values, QStringLiteral("Invalid checksum")));
-            }
-        }
-
-        values = jobj.value(QLatin1String("metas"));
-        readMetas(data, values);
-
-        values = jobj.value(QLatin1String("bookmarks"));
-        readBookmarks(data, values);
-
-        values = jobj.value(QLatin1String("plugindata"));
-        loadPluginData(data, values);
-
-        return true;
-    }
-
     return false;
 }
 
-QJsonDocument WorkSpaceManager::loadWorkSpace(const QString &filename) {
-    bool b = false;
-    QFile f(filename);
-    if (f.exists()) {
-        QJsonParseError err;
-        if (!f.open(QFile::ReadOnly)) {
-            return {};
-        }
-        QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
-        f.close();
-        if (err.error == QJsonParseError::NoError) {
-            auto jobj = doc.object();
-            auto t = jobj.value(QLatin1String("type"));
-            if (t.isString()) {
-                auto type = t.toString();
-                if (!QString::compare(type, QLatin1String("workspace"),
-                                      Qt::CaseInsensitive)) {
-                    return doc;
-                }
-            }
-        }
-    }
-    return {};
+bool validPosition(quint64 pos) {
+    return pos < quint64(std::numeric_limits<qsizetype>::max());
 }
 
-QUrl WorkSpaceManager::loadWorkSpaceDocFile(const QString &filename,
-                                            const QJsonDocument &doc) {
-    auto jobj = doc.object();
-    auto ff = jobj.value(QLatin1String("file"));
-    QUrl file;
-    if (ff.isString()) {
-        auto fi = ff.toString();
-        auto curDir = QFileInfo(filename).absolutePath();
-        auto url = QUrl::fromUserInput(fi, curDir, QUrl::AssumeLocalFile);
-        if (url.isLocalFile()) {
-            auto fi = url.toLocalFile();
-            QFileInfo finfo(url.toLocalFile());
-            auto path =
-                finfo.isAbsolute() ? fi : curDir + QDir::separator() + fi;
-            finfo.setFile(path);
-            file = QUrl::fromLocalFile(QDir::cleanPath(path));
-        } else {
-            file = url;
-        }
-    }
-    return file;
+void configure(QDataStream &stream) {
+    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setByteOrder(QDataStream::BigEndian);
 }
 
-QString WorkSpaceManager::getColorString(const QColor &color) {
-    if (color.isValid()) {
-        return color.name();
+// Qt reserves the declared list size before reading elements. Check the count
+// first, while retaining Qt's native QList wire format and stream operators.
+template <typename T>
+bool readList(QDataStream &stream, QList<T> &items, quint32 limit) {
+    stream.startTransaction();
+    quint32 count = 0;
+    stream >> count;
+    const auto status = stream.status();
+    stream.rollbackTransaction();
+    stream.resetStatus();
+    if (status != QDataStream::Ok || count > limit) {
+        stream.setStatus(QDataStream::ReadCorruptData);
+        return false;
     }
-    return {};
+    stream >> items;
+    return stream.status() == QDataStream::Ok;
 }
 
-std::optional<quint64> WorkSpaceManager::readUInt64(const QJsonValue &value) {
-    if (value.isString()) {
-        auto v = value.toString();
-        bool b;
-        auto rv = v.toULongLong(&b, 0);
-        if (rv < 0) {
-            return -1;
-        }
-        return rv;
-    }
+} // namespace
 
-    return std::nullopt;
+namespace WorkspaceFormat {
+
+QDataStream &operator<<(QDataStream &stream, const BookMark &item) {
+    return stream << item.pos << item.comment;
 }
 
-std::optional<QColor> WorkSpaceManager::readColor(const QJsonValue &value) {
-    if (value.isUndefined()) {
-        return QColor{};
+QDataStream &operator>>(QDataStream &stream, BookMark &item) {
+    BookMark value;
+    stream >> value.pos >> value.comment;
+    if (stream.status() == QDataStream::Ok) {
+        item = std::move(value);
     }
-
-    if (value.isString()) {
-        auto v = value.toString();
-        if (v.isEmpty()) {
-            return QColor{};
-        }
-        QColor c(v);
-        if (c.isValid()) {
-            return c;
-        }
-    }
-    return std::nullopt;
+    return stream;
 }
 
-void WorkSpaceManager::readMetas(WorkSpaceData &data,
-                                 const QJsonValue &values) {
-    if (values.isUndefined()) {
-        return;
-    }
-
-    if (values.isArray()) {
-        const auto metaitems = values.toArray();
-        qsizetype counter = 0;
-        for (auto p = metaitems.begin(); p != metaitems.end(); ++p, ++counter) {
-            auto item = *p;
-
-            if (counter > QHEXVIEW_METADATA_LIMIT) {
-                data.corrupted = true;
-                Logger::warning(
-                    packupMessage(data.file, item,
-                                  QStringLiteral("Too many metadata to load")));
-                break;
-            }
-
-            if (!item.isObject()) {
-                data.corrupted = true;
-                Logger::warning(
-                    packupMessage(data.file, item,
-                                  QStringLiteral("Invalid metadata object")));
-                continue;
-            }
-
-            auto linem = item.toObject();
-            QHexMetadataItem metaitem;
-            auto begin = readUInt64(linem.value(QLatin1String("begin")));
-            if (begin) {
-                auto v = begin.value();
-                if (v >= MAX_BYTES) {
-                    data.corrupted = true;
-                    Logger::warning(packupMessage(
-                        data.file, item,
-                        QStringLiteral("Invalid metadata 'begin' tag")));
-                    continue;
-                }
-                metaitem.begin = v;
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid metadata 'begin' tag")));
-                continue;
-            }
-
-            auto end = readUInt64(linem.value(QLatin1String("end")));
-            if (end) {
-                auto v = end.value();
-                if (v >= MAX_BYTES) {
-                    data.corrupted = true;
-                    Logger::warning(packupMessage(
-                        data.file, item,
-                        QStringLiteral("Invalid metadata 'end' tag")));
-                    continue;
-                }
-                if (begin > end) {
-                    data.corrupted = true;
-                    Logger::warning(packupMessage(
-                        data.file, item,
-                        QStringLiteral(
-                            "Invalid metadata 'end' tag for 'begin > end'")));
-                    continue;
-                }
-                metaitem.end = v;
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid metadata 'end' tag")));
-                continue;
-            }
-
-            auto fg = readColor(linem.value(QLatin1String("fgcolor")));
-            if (fg) {
-                metaitem.foreground = fg.value();
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid metadata 'fgcolor' tag")));
-                continue;
-            }
-
-            auto bg = readColor(linem.value(QLatin1String("bgcolor")));
-            if (bg) {
-                metaitem.background = bg.value();
-            } else {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid metadata 'bgcolor' tag")));
-                continue;
-            }
-
-            auto comment = linem.value(QLatin1String("comment"));
-            if (!comment.isUndefined()) {
-                if (comment.isString()) {
-                    auto cmt = comment.toString();
-                    if (cmt.length() > QHEXVIEW_COMMENT_LIMIT) {
-                        cmt.slice(QHEXVIEW_COMMENT_LIMIT);
-                        data.corrupted = true;
-                        Logger::warning(packupMessage(
-                            data.file, item,
-                            QStringLiteral("Length is too long for metadata "
-                                           "'comment' tag")));
-                    }
-                    metaitem.comment = cmt;
-                } else {
-                    data.corrupted = true;
-                    Logger::warning(packupMessage(
-                        data.file, item,
-                        QStringLiteral("Invalid metadata 'comment' tag")));
-                    continue;
-                }
-            }
-            data.metas.append(metaitem);
-        }
-    } else {
-        data.corrupted = true;
-        Logger::warning(packupMessage(data.file, values,
-                                      QStringLiteral("Invalid metadata")));
-    }
+QDataStream &operator<<(QDataStream &stream, const MetaData &item) {
+    return stream << item.begin << item.end << item.foreground
+                  << item.background << item.comment;
 }
 
-void WorkSpaceManager::readBookmarks(WorkSpaceData &data,
-                                     const QJsonValue &values) {
-    if (values.isUndefined()) {
-        return;
+QDataStream &operator>>(QDataStream &stream, MetaData &item) {
+    MetaData value;
+    stream >> value.begin >> value.end >> value.foreground >>
+        value.background >> value.comment;
+    if (stream.status() == QDataStream::Ok) {
+        item = std::move(value);
     }
-
-    if (values.isArray()) {
-        const auto array = values.toArray();
-        qsizetype counter = 0;
-        for (auto p = array.begin(); p != array.end(); ++p, counter++) {
-            auto item = *p;
-            if (counter > QHEXVIEW_BOOKMARK_LIMIT) {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Too many bookmarks to load")));
-                break;
-            }
-
-            if (!p->isObject()) {
-                data.corrupted = true;
-                Logger::warning(
-                    packupMessage(data.file, item,
-                                  QStringLiteral("Invalid bookmark object")));
-                continue;
-            }
-
-            auto sitem = p->toObject();
-            auto pos = readUInt64(sitem.value(QLatin1String("pos")));
-            if (!pos) {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid bookmark 'pos' tag")));
-                continue;
-            }
-
-            auto ipos = pos.value();
-            if (ipos >= MAX_BYTES) {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid bookmark 'pos' tag")));
-                continue;
-            }
-
-            auto comment = sitem.value(QLatin1String("comment"));
-            if (!comment.isString()) {
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Invalid bookmark 'comment' tag")));
-                continue;
-            }
-
-            auto cmt = comment.toString();
-            if (cmt.length() > QHEXVIEW_COMMENT_LIMIT) {
-                cmt.slice(QHEXVIEW_COMMENT_LIMIT);
-                data.corrupted = true;
-                Logger::warning(packupMessage(
-                    data.file, item,
-                    QStringLiteral("Length is too long for bookmark "
-                                   "'comment' tag")));
-            }
-
-            data.bookmarks.insert(ipos, cmt);
-        }
-    } else {
-        data.corrupted = true;
-        Logger::warning(packupMessage(data.file, values,
-                                      QStringLiteral("Invalid bookmarks")));
-    }
+    return stream;
 }
 
-void WorkSpaceManager::loadPluginData(WorkSpaceData &data,
-                                      const QJsonValue &values) {
-    if (values.isUndefined()) {
-        return;
-    }
-    if (values.isArray()) {
-        const auto array = values.toArray();
-        for (const auto &&item : array) {
-            if (!item.isObject()) {
-                data.corrupted = true;
-                Logger::warning(
-                    packupMessage(data.file, item,
-                                  QStringLiteral("Invalid plugindata object")));
-                continue;
-            }
-            auto sitem = item.toObject();
-            auto plgobj = sitem.value(QLatin1String("key"));
-            auto valueobj = sitem.value(QLatin1String("value"));
-            if (plgobj.isString() && valueobj.isString()) {
-                auto plg = plgobj.toString();
-                auto value =
-                    QByteArray::fromBase64(valueobj.toString().toLatin1());
-                if (plg.isEmpty()) {
-                    data.corrupted = true;
-                    Logger::warning(packupMessage(
-                        data.file, item,
-                        QStringLiteral("Invalid plugindata 'key' tag")));
-                    continue;
-                }
-                data.infos.pluginData.insert(plg, value);
-            } else {
-                data.corrupted = true;
-                Logger::warning(
-                    packupMessage(data.file, item,
-                                  QStringLiteral("Invalid plugindata object")));
-                continue;
-            }
-        }
-    } else {
-        data.corrupted = true;
-        Logger::warning(packupMessage(data.file, values,
-                                      QStringLiteral("Invalid plugindata")));
-    }
+} // namespace WorkspaceFormat
+
+QDataStream &operator<<(QDataStream &stream, const WorkSpaceInfo &info) {
+    return stream << info.base << info.checkSum;
 }
 
-QString WorkSpaceManager::packupMessage(const QUrl &file,
-                                        const QJsonValue &values,
-                                        const QString &reason) {
-    auto json = QString::fromUtf8(values.toJson(QJsonDocument::Compact));
-    return QStringLiteral("[%1] %2 -> %3")
-        .arg(file.fileName(), reason, json.left(80));
+QDataStream &operator>>(QDataStream &stream, WorkSpaceInfo &info) {
+    WorkSpaceInfo value;
+    stream >> value.base >> value.checkSum;
+    if (stream.status() == QDataStream::Ok) {
+        info = std::move(value);
+    }
+    return stream;
+}
+
+bool WorkSpaceManager::validateWorkSpace(const WorkSpaceData &data,
+                                         QString *error) {
+    if (error) {
+        error->clear();
+    }
+    if (!data.file.isValid() || data.file.isEmpty() || data.file.isRelative() ||
+        (data.file.isLocalFile() &&
+         !QDir::isAbsolutePath(data.file.toLocalFile()))) {
+        return fail(error, QStringLiteral("Invalid source file URL"));
+    }
+    if (!data.file.isLocalFile() &&
+        (data.file.scheme().compare(QStringLiteral("wdrv"),
+                                    Qt::CaseInsensitive) != 0 ||
+         data.file.authority().isEmpty() ||
+         !data.file.path().startsWith(QLatin1Char('/')) ||
+         data.file.path().size() <= 1)) {
+        return fail(error, QStringLiteral("Source must be a local file or wdrv "
+                                          "device, not a workspace URL"));
+    }
+    if (data.bookmarks.size() > QHEXVIEW_BOOKMARK_LIMIT ||
+        data.metas.size() > QHEXVIEW_METADATA_LIMIT) {
+        return fail(error, QStringLiteral("Too many bookmarks or metadata"));
+    }
+    for (auto it = data.bookmarks.cbegin(); it != data.bookmarks.cend(); ++it) {
+        if (!validPosition(quint64(it.key())) ||
+            it.value().size() > QHEXVIEW_COMMENT_LIMIT) {
+            return fail(error,
+                        QStringLiteral("Invalid bookmark at %1").arg(it.key()));
+        }
+    }
+    for (qsizetype i = 0; i < data.metas.size(); ++i) {
+        const auto &item = data.metas.at(i);
+        if (!validPosition(quint64(item.begin)) ||
+            !validPosition(quint64(item.end)) || item.begin > item.end ||
+            item.comment.size() > QHEXVIEW_COMMENT_LIMIT) {
+            return fail(error, QStringLiteral("Invalid metadata at %1").arg(i));
+        }
+    }
+    for (auto it = data.plugindata.cbegin(); it != data.plugindata.cend();
+         ++it) {
+        if (it.key().isEmpty() ||
+            it->metaType() != QMetaType::fromType<QByteArray>()) {
+            return fail(
+                error,
+                QStringLiteral("Invalid plugindata entry: %1").arg(it.key()));
+        }
+    }
+    return true;
+}
+
+QMap<QString, QByteArray>
+WorkSpaceManager::pluginData(const WorkSpaceData &data) {
+    QMap<QString, QByteArray> result;
+    const auto &values = data.plugindata;
+    for (auto it = values.cbegin(); it != values.cend(); ++it) {
+        result.insert(it.key(), it->toByteArray());
+    }
+    return result;
+}
+
+void WorkSpaceManager::setPluginData(WorkSpaceData &data,
+                                     const QMap<QString, QByteArray> &values) {
+    QVariantMap plugins;
+    for (auto it = values.cbegin(); it != values.cend(); ++it) {
+        plugins.insert(it.key(), it.value());
+    }
+    data.plugindata = std::move(plugins);
+}
+
+void WorkSpaceManager::setPluginData(WorkSpaceData &data, const QString &id,
+                                     const QByteArray &value) {
+    data.plugindata.insert(id, value);
 }
 
 bool WorkSpaceManager::saveWorkSpace(const QString &filename,
-                                     const WorkSpaceData &data) {
-    QFile f(filename);
-    if (f.open(QFile::WriteOnly)) {
-        QJsonObject jobj;
-        jobj.insert(QLatin1String("type"), QLatin1String("workspace"));
-
-        QString ff;
-        auto file = data.file;
-        if (file.isLocalFile()) {
-            ff = file.toLocalFile();
-            QFileInfo fileInfo(ff);
-            if (fileInfo.isAbsolute()) {
-                QDir dir(QFileInfo(f).absoluteDir());
-                QFileInfo fi(ff);
-                ff = dir.relativeFilePath(fi.absoluteFilePath());
-            }
-        } else {
-            ff = file.url();
-        }
-
-        jobj.insert(QLatin1String("file"), ff);
-        jobj.insert(QLatin1String("base"),
-                    QString(QStringLiteral("0x") +
-                            QString::number(data.infos.base, 16)));
-        jobj.insert(QLatin1String("checksum"),
-                    QString::fromUtf8(data.infos.checkSum.toHex()));
-
-        QJsonArray metas;
-        for (const auto &meta : data.metas) {
-            QJsonObject obj;
-            obj.insert(QLatin1String("begin"), QString::number(meta.begin));
-            obj.insert(QLatin1String("end"), QString::number(meta.end));
-            obj.insert(QLatin1String("comment"), meta.comment);
-            obj.insert(QLatin1String("fgcolor"),
-                       getColorString(meta.foreground));
-            obj.insert(QLatin1String("bgcolor"),
-                       getColorString(meta.background));
-            metas.append(obj);
-        }
-        jobj.insert("metas", metas);
-
-        QJsonArray bookmarks;
-        const auto &bookmarklist = data.bookmarks;
-        for (auto p = bookmarklist.cbegin(); p != bookmarklist.cend(); ++p) {
-            QJsonObject i;
-            i.insert(QLatin1String("pos"), QString::number(p.key()));
-            i.insert(QLatin1String("comment"), p.value());
-            bookmarks.append(i);
-        }
-
-        jobj.insert(QLatin1String("bookmarks"), bookmarks);
-
-        // plugin data
-        QJsonArray plugindata;
-        const auto &plgdata = data.infos.pluginData;
-        for (auto p = plgdata.begin(); p != plgdata.end(); p++) {
-            QJsonObject i;
-            i.insert(QLatin1String("key"), p.key());
-            i.insert(QLatin1String("value"),
-                     QString::fromLatin1(p.value().toBase64()));
-            plugindata.append(i);
-        }
-
-        jobj.insert(QLatin1String("plugindata"), plugindata);
-
-        QJsonDocument jdoc(jobj);
-        if (f.write(jdoc.toJson(QJsonDocument::JsonFormat::Indented)) >= 0) {
-            f.close();
-            return true;
-        }
+                                     const WorkSpaceData &data,
+                                     QString *error) {
+    if (!validateWorkSpace(data, error)) {
+        return false;
     }
-    return false;
+    QString file = data.file.toString(QUrl::FullyEncoded);
+    if (data.file.isLocalFile()) {
+        file = QFileInfo(filename).absoluteDir().relativeFilePath(
+            data.file.toLocalFile());
+    }
+    QList<WorkspaceFormat::BookMark> bookmarks;
+    bookmarks.reserve(data.bookmarks.size());
+    for (auto it = data.bookmarks.cbegin(); it != data.bookmarks.cend(); ++it) {
+        bookmarks.append({quint64(it.key()), it.value()});
+    }
+    QList<WorkspaceFormat::MetaData> metas;
+    metas.reserve(data.metas.size());
+    for (const auto &item : data.metas) {
+        metas.append({quint64(item.begin), quint64(item.end), item.foreground,
+                      item.background, item.comment});
+    }
+    QSaveFile output(filename);
+    if (!output.open(QIODevice::WriteOnly)) {
+        return fail(error, output.errorString());
+    }
+    QDataStream stream(&output);
+    configure(stream);
+    stream.writeRawData(WorkspaceFormat::Magic, 7);
+    stream << WorkspaceFormat::Version;
+    stream << file << data.infos << bookmarks << metas << data.plugindata;
+    if (stream.status() != QDataStream::Ok) {
+        output.cancelWriting();
+        return fail(error, QStringLiteral("Failed to serialize workspace"));
+    }
+    if (!output.commit()) {
+        return fail(error, output.errorString());
+    }
+    return true;
+}
+
+bool WorkSpaceManager::loadWorkSpace(const QString &filename,
+                                     WorkSpaceData &data, QString *error) {
+    if (error) {
+        error->clear();
+    }
+    QFile input(filename);
+    if (!input.open(QIODevice::ReadOnly)) {
+        return fail(error, input.errorString());
+    }
+    QDataStream stream(&input);
+    configure(stream);
+    char magic[7] = {};
+    quint16 version = 0;
+    if (stream.readRawData(magic, 7) != 7 ||
+        QByteArray(magic, 7) != QByteArray(WorkspaceFormat::Magic, 7)) {
+        return fail(error, QStringLiteral("Invalid workspace magic; migrate "
+                                          "legacy JSON workspaces first"));
+    }
+    stream >> version;
+    if (stream.status() != QDataStream::Ok ||
+        version != WorkspaceFormat::Version) {
+        return fail(error, QStringLiteral("Unsupported workspace version"));
+    }
+    WorkSpaceData value;
+    QString file;
+    QList<WorkspaceFormat::BookMark> bookmarks;
+    QList<WorkspaceFormat::MetaData> metas;
+    stream >> file >> value.infos;
+    if (stream.status() != QDataStream::Ok ||
+        !readList(stream, bookmarks, QHEXVIEW_BOOKMARK_LIMIT) ||
+        !readList(stream, metas, QHEXVIEW_METADATA_LIMIT)) {
+        return fail(error,
+                    QStringLiteral("Invalid workspace contents or list size"));
+    }
+    stream >> value.plugindata;
+    if (stream.status() != QDataStream::Ok || !input.atEnd()) {
+        return fail(error,
+                    QStringLiteral("Truncated workspace or trailing data"));
+    }
+    if (file.isEmpty()) {
+        return fail(error, QStringLiteral("Missing source file"));
+    }
+    value.file = QUrl::fromUserInput(file, QFileInfo(filename).absolutePath(),
+                                     QUrl::AssumeLocalFile);
+    if (value.file.isLocalFile()) {
+        value.file =
+            QUrl::fromLocalFile(QDir::cleanPath(value.file.toLocalFile()));
+    }
+    for (const auto &item : bookmarks) {
+        if (!validPosition(item.pos) ||
+            value.bookmarks.contains(qsizetype(item.pos))) {
+            return fail(error, QStringLiteral(
+                                   "Invalid or duplicate bookmark position"));
+        }
+        value.bookmarks.insert(qsizetype(item.pos), item.comment);
+    }
+    for (const auto &item : metas) {
+        if (!validPosition(item.begin) || !validPosition(item.end)) {
+            return fail(error, QStringLiteral("Invalid metadata position"));
+        }
+        value.metas.append(
+            QHexMetadataItem(qsizetype(item.begin), qsizetype(item.end),
+                             item.foreground, item.background, item.comment));
+    }
+    if (!validateWorkSpace(value, error)) {
+        return false;
+    }
+    data = std::move(value);
+    return true;
 }

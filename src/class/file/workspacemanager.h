@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -20,19 +20,15 @@
 
 #include "QHexView/document/qhexmetadata.h"
 
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
+#include <QByteArray>
 #include <QMap>
-#include <QObject>
-#include <QStringList>
+#include <QUrl>
+#include <QVariantMap>
 #include <QVector>
 
 struct WorkSpaceInfo {
     quint64 base = 0;
     QByteArray checkSum;
-    QMap<QString, QByteArray> pluginData;
 };
 
 struct WorkSpaceData {
@@ -40,7 +36,7 @@ struct WorkSpaceData {
     QMap<qsizetype, QString> bookmarks;
     QVector<QHexMetadataItem> metas;
     WorkSpaceInfo infos;
-    bool corrupted = false;
+    QVariantMap plugindata;
 };
 
 class WorkSpaceManager {
@@ -48,26 +44,18 @@ class WorkSpaceManager {
 
 public:
     static bool saveWorkSpace(const QString &filename,
-                              const WorkSpaceData &data);
+                              const WorkSpaceData &data,
+                              QString *error = nullptr);
     static bool loadWorkSpace(const QString &filename, WorkSpaceData &data,
-                              QJsonDocument doc = {});
+                              QString *error = nullptr);
+    static bool validateWorkSpace(const WorkSpaceData &data,
+                                  QString *error = nullptr);
 
-    static QJsonDocument loadWorkSpace(const QString &filename);
-    static QUrl loadWorkSpaceDocFile(const QString &filename,
-                                     const QJsonDocument &doc);
-
-private:
-    static QString getColorString(const QColor &color);
-
-    static std::optional<quint64> readUInt64(const QJsonValue &value);
-    static std::optional<QColor> readColor(const QJsonValue &value);
-
-    static void readMetas(WorkSpaceData &data, const QJsonValue &values);
-    static void readBookmarks(WorkSpaceData &data, const QJsonValue &values);
-    static void loadPluginData(WorkSpaceData &data, const QJsonValue &values);
-
-    static QString packupMessage(const QUrl &file, const QJsonValue &values,
-                                 const QString &reason);
+    static QMap<QString, QByteArray> pluginData(const WorkSpaceData &data);
+    static void setPluginData(WorkSpaceData &data,
+                              const QMap<QString, QByteArray> &values);
+    static void setPluginData(WorkSpaceData &data, const QString &id,
+                              const QByteArray &value);
 };
 
 #endif // WORKSPACEMANAGER_H

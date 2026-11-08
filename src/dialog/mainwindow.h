@@ -274,7 +274,6 @@ private:
     EditorView *findEditorView(const QUrl &filename);
 
     bool newOpenFileSafeCheck();
-    void bindWorkSpaceEditorView(EditorView *editor);
     void registerEditorView(EditorView *editor, const QString &ws = {});
     void registerClonedEditorView(EditorView *editor);
 

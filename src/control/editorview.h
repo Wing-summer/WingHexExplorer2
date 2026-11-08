@@ -18,7 +18,6 @@
 #ifndef EDITORVIEW_H
 #define EDITORVIEW_H
 
-#include <QJsonDocument>
 #include <QReadWriteLock>
 #include <QStackedWidget>
 
@@ -34,6 +33,8 @@
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/findresultmodel.h"
+
+struct WorkSpaceData;
 
 using namespace WingHex;
 
@@ -247,8 +248,9 @@ public:
     ErrFile openExtFile(const QString &ext, const QString &file,
                         bool generateCache = true);
     ErrFile openExtFile(const QUrl &fileName);
+    ErrFile openWorkSpace(const QString &filename);
     ErrFile openWorkSpace(const QString &filename,
-                          const QJsonDocument &doc = {});
+                          const WorkSpaceData &workspace);
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
          bool isExport = false,
@@ -596,8 +598,6 @@ signals:
     void sigOnCheckSum();
     void sigOnHexWidth();
     void sigOnAddress();
-
-    void workspaceCorrupted();
 
 public:
     bool isStateSaveEnabled() const override;
