@@ -78,13 +78,29 @@ when background contrast is insufficient. Retain internal white space and
 multicolor layers. Application and Qt brand artwork keep their colors. Raw
 resource paths contain original artwork; use manager APIs for themed colors.
 
+## 按钮状态背景 / Button state surfaces
+
+图标角色同时用于普通、悬停、按下和选中状态。按钮状态背景不能直接复用图标角色色
+（例如 `accent`）作为填充，否则同色图标会消失。主题为按下和选中状态使用独立的
+表面色：深色 `#233e50`/`#1f3545`，浅色 `#d8eaf5`/`#c5e3f3`，保证所有图标角色和
+按钮文字至少保持 3:1 对比度。新增或修改按钮状态样式时，应同时检查图标和文本的
+对比度。
+
+Icon roles are shared across normal, hover, pressed, and checked states. A
+button state surface must not reuse an icon role color such as `accent` as its
+fill, or icons in the same color disappear. The themes use dedicated surfaces,
+`#233e50`/`#1f3545` for dark and `#d8eaf5`/`#c5e3f3` for light, so every icon role
+and button label keeps at least 3:1 contrast. Check both icon and text contrast
+when adding button state styles.
+
 ## 验证 / Validation
 
 独立测试见 [主题测试](../tests/theme/README.md)，覆盖枚举资源、状态、尺寸、DPI、
-系统主题通知、缓存失效、SDK 调用及关键透明区域。测试和导出的 Qt 对照图不能
-替代完整宿主、动态菜单、Ribbon 和平台原生控件的运行检查。
+系统主题通知、缓存失效、SDK 调用、按钮状态对比度及关键透明区域。测试和导出的 Qt
+对照图不能替代完整宿主、动态菜单、Ribbon 和平台原生控件的运行检查。
 
 See [theme tests](../tests/theme/README.md) for enum resources, icon modes, sizes,
-DPI, system notifications, cache invalidation, SDK calls, and transparent regions.
-Standalone tests and exported Qt previews do not replace full-host checks of
-dynamic menus, Ribbon controls, and platform-native widgets.
+DPI, system notifications, cache invalidation, SDK calls, button state contrast,
+and transparent regions. Standalone tests and exported Qt previews do not
+replace full-host checks of dynamic menus, Ribbon controls, and platform-native
+widgets.

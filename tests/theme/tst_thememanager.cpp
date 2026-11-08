@@ -27,11 +27,28 @@
 #include <QStyleFactory>
 #include <QStyleHints>
 #include <QSvgRenderer>
+#include <QToolButton>
 #include <QtTest>
 #include <cmath>
 #include <memory>
 
 using Icon = WingHex::StandardIcon;
+
+namespace {
+double relativeLuminance(const QColor &color) {
+    const auto linear = [](double c) {
+        return c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(color.redF()) + 0.7152 * linear(color.greenF()) +
+           0.0722 * linear(color.blueF());
+}
+
+double contrastRatio(const QColor &first, const QColor &second) {
+    const auto a = relativeLuminance(first);
+    const auto b = relativeLuminance(second);
+    return (qMax(a, b) + 0.05) / (qMin(a, b) + 0.05);
+}
+} // namespace
 
 class FormProbePlugin final : public WingHex::IWingPlugin {
 public:
@@ -778,15 +795,6 @@ private slots:
     }
 
     void primaryColorsHaveContrast() {
-        const auto luminance = [](QColor color) {
-            auto linear = [](double c) {
-                return c <= 0.04045 ? c / 12.92
-                                    : std::pow((c + 0.055) / 1.055, 2.4);
-            };
-            return 0.2126 * linear(color.redF()) +
-                   0.7152 * linear(color.greenF()) +
-                   0.0722 * linear(color.blueF());
-        };
         auto &theme = ThemeManager::instance();
         for (auto scheme :
              {ThemeManager::Theme::Dark, ThemeManager::Theme::Light}) {
@@ -810,15 +818,72 @@ private slots:
                             value == QStringLiteral("none")) {
                             continue;
                         }
-                        const double a = luminance(color),
-                                     b = luminance(background);
                         const double contrast =
-                            (qMax(a, b) + 0.05) / (qMin(a, b) + 0.05);
+                            contrastRatio(color, background);
                         QVERIFY2(contrast >= 3.0, qPrintable(value));
                         checked = true;
                     }
                 }
                 QVERIFY(checked);
+            }
+        }
+    }
+
+    void buttonStateIconsKeepContrast() {
+        auto &theme = ThemeManager::instance();
+        for (auto scheme :
+             {ThemeManager::Theme::Dark, ThemeManager::Theme::Light}) {
+            theme.setTheme(scheme == ThemeManager::Theme::Dark
+                               ? ThemeManager::Theme::Light
+                               : ThemeManager::Theme::Dark);
+            theme.setTheme(scheme);
+            for (auto checked : {true, false}) {
+                QToolButton plain;
+                QToolButton withIcon;
+                for (auto *button : {&plain, &withIcon}) {
+                    button->setToolButtonStyle(Qt::ToolButtonIconOnly);
+                    button->setCheckable(true);
+                    button->setFocusPolicy(Qt::NoFocus);
+                    button->resize(40, 40);
+                    button->show();
+                }
+                if (checked) {
+                    plain.setChecked(true);
+                    withIcon.setChecked(true);
+                } else {
+                    plain.setDown(true);
+                    withIcon.setDown(true);
+                }
+                withIcon.setIcon(theme.standardIcon(Icon::CompareHorizontal));
+                QApplication::processEvents();
+
+                const auto background = plain.grab().toImage();
+                const auto foreground = withIcon.grab().toImage();
+                QCOMPARE(foreground.size(), background.size());
+
+                bool iconPainted = false;
+                double maximumContrast = 0.0;
+                for (int y = 0; y < foreground.height(); ++y) {
+                    for (int x = 0; x < foreground.width(); ++x) {
+                        const auto before = background.pixelColor(x, y);
+                        const auto after = foreground.pixelColor(x, y);
+                        if (before == after) {
+                            continue;
+                        }
+                        iconPainted = true;
+                        maximumContrast =
+                            qMax(maximumContrast, contrastRatio(before, after));
+                    }
+                }
+                QVERIFY(iconPainted);
+                QVERIFY2(
+                    maximumContrast >= 3.0,
+                    qPrintable(QStringLiteral("%1 contrast on %2")
+                                   .arg(maximumContrast)
+                                   .arg(checked ? QStringLiteral("checked")
+                                                : QStringLiteral("pressed"))));
+                plain.close();
+                withIcon.close();
             }
         }
     }

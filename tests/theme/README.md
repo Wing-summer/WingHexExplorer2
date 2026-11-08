@@ -2,13 +2,14 @@
 
 测试直接编译 ThemeManager、SDK 调用桥和实际应用资源，不依赖完整宿主或
 Luau 生成器。覆盖标准图标目录、SVG 结构、深浅主题、四种图标状态、五种尺寸、
-四档 DPI、已有 QIcon 的主题切换、主要前景色对比度、系统主题通知、位图缓存失效及 SDK 图标/主题调用。
+四档 DPI、已有 QIcon 的主题切换、主要前景色及按钮状态对比度、系统主题通知、
+位图缓存失效及 SDK 图标/主题调用。
 
 These tests compile ThemeManager, the SDK call bridge, and actual application
 resources without the full host or Luau generator. They cover the standard icon
 catalog, SVG structure, both themes, four icon modes, five sizes, four DPI ratios,
-theme changes on existing QIcons, primary-color contrast, system appearance
-notifications, pixmap-cache invalidation, and SDK icon/theme calls.
+theme changes on existing QIcons, primary-color and button state contrast, system
+appearance notifications, pixmap-cache invalidation, and SDK icon/theme calls.
 
 ```sh
 cmake -S tests/theme -B build/theme-tests -G Ninja -DCMAKE_BUILD_TYPE=Debug
