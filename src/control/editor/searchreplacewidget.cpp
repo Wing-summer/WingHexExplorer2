@@ -129,7 +129,7 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     layout = new QHBoxLayout(m_replaceWidgets);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(5);
-    layout->addWidget(new QLabel(tr("Replace:"), this));
+    layout->addWidget(new QLabel(tr("Replace"), this));
     layout->addWidget(m_replaceText);
     layout->addWidget(tbReplaceCur);
     layout->addWidget(tbReplaceAll);

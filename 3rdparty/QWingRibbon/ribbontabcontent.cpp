@@ -42,6 +42,8 @@ RibbonTabContent::RibbonTabContent(QWidget *parent)
             });
     connect(hb, &QScrollBar::valueChanged, this,
             &RibbonTabContent::updateButtonIndicator);
+    connect(hb, &QScrollBar::rangeChanged, this,
+            &RibbonTabContent::updateButtonIndicator);
 
     constexpr auto delta = 10;
     connect(ui->btnNext, &QPushButton::clicked, this,
@@ -105,6 +107,9 @@ void RibbonTabContent::resizeEvent(QResizeEvent *event) {
 }
 
 void RibbonTabContent::updateButtonIndicator() {
+    if (!isVisible()) {
+        return;
+    }
     if (groupCount() == 0) {
         ui->btnPrev->setVisible(false);
         ui->btnNext->setVisible(false);

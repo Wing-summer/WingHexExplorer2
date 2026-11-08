@@ -71,6 +71,8 @@ void TestForm::initStyleCombo() {
         auto icon = style->standardIcon(ee);
         if (!icon.isNull()) {
             ui->cbToastIcon->addItem(icon, e.key(i), style->standardPixmap(ee));
+        } else {
+            qWarning("cbToastIcon: standardIcon(%s, %d) is null", e.key(i), i);
         }
     }
 }

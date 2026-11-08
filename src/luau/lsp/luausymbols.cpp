@@ -230,6 +230,11 @@ LuauLanguageServer::Symbol catalogSymbol(const QJsonObject &object) {
     symbol.moduleRoot = object.value(QStringLiteral("module_root")).toBool();
     symbol.membersFile = object.value(QStringLiteral("members")).toString();
     symbol.requiresImport = object.value(QStringLiteral("require")).toBool();
+    symbol.importPath = object.value(QStringLiteral("import_path")).toString();
+    if (symbol.requiresImport && symbol.importPath.isEmpty()) {
+        symbol.importPath =
+            QLatin1Char('@') + object.value(QStringLiteral("label")).toString();
+    }
     symbol.hasChildren = !symbol.membersFile.isEmpty();
     symbol.item.label = object.value(QStringLiteral("label")).toString();
     symbol.item.detail = object.value(QStringLiteral("detail")).toString();

@@ -7,7 +7,8 @@
     "codegen/*.json",
     "tools/generate_luau_bindings.py",
     "WingPlugin/*.h",
-    "3rdparty/cffi-luau/src/*.cc"
+    "3rdparty/cffi-luau/src/*.cc",
+    "tools/hexdoc_codegen.py"
   ],
   "cmake": {
     "native_sources": {

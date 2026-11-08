@@ -74,4 +74,7 @@ if(WING_GENERATED_BINDINGS_DIR)
     add_test(NAME wing_luau_lsp_bindings COMMAND wing_luau_lsp_tests bindings)
     set_tests_properties(wing_luau_lsp_bindings PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;WING_BINDINGS_DIR=${WING_GENERATED_BINDINGS_DIR}")
+    add_test(NAME wing_luau_lsp_hexdoc COMMAND wing_luau_lsp_tests hexdoc)
+    set_tests_properties(wing_luau_lsp_hexdoc PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;WING_BINDINGS_DIR=${WING_GENERATED_BINDINGS_DIR};WING_SOURCE_DIR=${WING_SOURCE_ROOT}")
 endif()

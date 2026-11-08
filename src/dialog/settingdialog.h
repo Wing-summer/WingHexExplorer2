@@ -38,6 +38,7 @@ public:
     void addPage(WingHex::SettingPage *page);
     void build(); // you can only call once
     void showConfig(int index = -1);
+    void showConfig(WingHex::SettingPage *page);
     void showConfig(const QString &id);
 
 public slots:

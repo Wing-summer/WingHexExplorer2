@@ -9,9 +9,11 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 from string import Template
 
-from qtluau_codegen.extensions import write
+from hexdoc_codegen import generate_hexdoc
+from qtluau_codegen.extensions import identifier, write
 from qtluau_codegen.models import (
     JsonObject,
     object_field,
@@ -19,6 +21,7 @@ from qtluau_codegen.models import (
     string_list_field,
 )
 from qtluau_codegen.project import export_project
+from qtluau_codegen.type_mapping import mapped_type
 
 
 def text(parent: JsonObject, key: str, default: str = "") -> str:
@@ -27,6 +30,67 @@ def text(parent: JsonObject, key: str, default: str = "") -> str:
     if not isinstance(value, str):
         raise ValueError(f"{key} must be a string")
     return value
+
+
+def emit_private_helpers(policy: JsonObject) -> list[str]:
+    """Generate private helper registration using the framework's Qt codecs.
+
+    Typed helpers name a native function or a per-caller context method.
+    Raw callbacks retain their C API stack contract and cannot be converted
+    into ordinary single-result calls. Helpers do not enter public definitions.
+    """
+    lines: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    for group in object_list_field(policy, "private_helpers"):
+        namespace = identifier(text(group, "namespace"))
+        lines.extend([
+            "{", "using qtluau::QtArgument;", "using qtluau::qtToLua;",
+            f'auto scope = luabridge::getGlobalNamespace(L).beginNamespace("{namespace}");',
+        ])
+        for function in object_list_field(group, "functions"):
+            name = identifier(text(function, "name"))
+            if (namespace, name) in seen:
+                raise ValueError("Duplicate private helper: " + namespace + "." + name)
+            seen.add((namespace, name))
+            native = text(function, "native")
+            method = text(function, "context_method")
+            raw = function.get("raw", False)
+            if not isinstance(raw, bool):
+                raise ValueError("Private helper raw must be a boolean")
+            if bool(native) == bool(method):
+                raise ValueError("Private helper needs one native function or context method")
+            if native and not re.fullmatch(r"[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*", native):
+                raise ValueError("Invalid private helper native symbol")
+            if raw:
+                if method or "parameters" in function or "result" in function:
+                    raise ValueError("Raw private helpers must preserve their C API signature")
+                lines.append(f'scope.addFunction("{name}", &{native});')
+                continue
+            parameters: list[str] = []
+            arguments: list[str] = []
+            for index, spelling in enumerate(string_list_field(function, "parameters")):
+                converted = mapped_type(spelling)
+                if converted is None:
+                    raise ValueError("Unsupported private helper argument: " + spelling)
+                parameters.append(f"{converted[0]} arg{index}")
+                arguments.append(converted[2].format(expr=f"arg{index}"))
+            result = text(function, "result")
+            if not re.fullmatch(r"[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*", result):
+                raise ValueError("Invalid private helper result type")
+            captures = "scriptContexts" if method else ""
+            target = f"scriptContexts->forCaller(L)->{identifier(method)}" if method else native
+            call = target + "(" + ", ".join(arguments) + ")"
+            if method or result != "void":
+                parameters.append("lua_State *L")
+            body = (
+                call + ";" if result == "void"
+                else f"{result} result = {call}; return qtToLua(L, result);"
+            )
+            lines.append(
+                f'scope.addFunction("{name}", [{captures}]({", ".join(parameters)}) {{ {body} }});'
+            )
+        lines.append("}")
+    return lines
 
 
 def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathlib.Path) -> None:
@@ -59,6 +123,9 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
             seen.add(callback)
             types = string_list_field(method, "native_arguments")
             params = ", ".join(f"{typ} arg{i}" for i, typ in enumerate(types))
+            caller = bool(group.get("pass_lua_state", False))
+            if caller:
+                params += (", " if params else "") + "lua_State *caller"
             native = text(method, "native_name")
             override = object_field(rules, native)
             args = string_list_field(override, "arguments", [f"arg{i}" for i in range(len(types))])
@@ -72,10 +139,13 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
                 "fallback": text(fallbacks, native, result + "{}"),
             }
             body = Template(text(override, "body", text(group_policy, "body", text(policy, "default_body")))).substitute(substitutions)
+            if caller:
+                body = "auto *scriptContext = scriptContexts->forCaller(caller); " + body
             lines.append(f"{namespace}Callbacks.{callback} = [{captures}]({params}) -> {result} {{ {body} }};")
         module = text(group, "module")
         lines.append(f"{binding_namespace}::bind_{module or 'public'}_{namespace}(L, {namespace}Callbacks);")
         lines.append("}")
+    lines.extend(emit_private_helpers(policy))
     lines.extend(string_list_field(policy, "assignments"))
     destination = pathlib.Path(text(policy, "output"))
     if destination.is_absolute() or ".." in destination.parts:
@@ -105,8 +175,11 @@ def main() -> int:
         parser.error("generated output must not overwrite the host or codegen configuration directory")
     config: JsonObject = json.loads(config_path.read_text())
     forwarding: JsonObject = json.loads((project_path.parent / text(project, "forwarding")).read_text())
-    manifest = export_project(config, output, host,
-                              postprocess=lambda manifest, staging: emit_host_forwarders(manifest, forwarding, staging))
+    def postprocess(manifest: JsonObject, staging: pathlib.Path) -> None:
+        emit_host_forwarders(manifest, forwarding, staging)
+        generate_hexdoc(manifest, config, staging)
+
+    manifest = export_project(config, output, host, postprocess=postprocess)
     print(f"Generated {manifest['name']} in {output}")
     return 0
 

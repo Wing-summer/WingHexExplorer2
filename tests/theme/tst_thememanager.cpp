@@ -1,23 +1,58 @@
+#include "class/application/startupfeedback.h"
 #include "class/settings/thememanager.h"
+#include "class/settings/themestylesheet.h"
+#include "dialog/splashdialog.h"
 
+#include "TestPlugin/testform.h"
+#include "WingPlugin/iwingplugin.h"
 #include "WingPlugin/iwingpluginbasecalls.h"
 #include "WingPlugin/wingcore.h"
+#include "WingPlugin/wingplugincalls.h"
+#include "WingPlugin/wingplugincalls_p.h"
 
+#include <QComboBox>
+#include <QDialogButtonBox>
 #include <QDir>
+#include <QDockWidget>
 #include <QDomDocument>
 #include <QFile>
+#include <QLabel>
 #include <QPainter>
+#include <QPixmapCache>
+#include <QPointer>
+#include <QProgressBar>
+#include <QProxyStyle>
+#include <QPushButton>
 #include <QSignalSpy>
+#include <QStyleFactory>
 #include <QStyleHints>
 #include <QSvgRenderer>
 #include <QtTest>
 #include <cmath>
+#include <memory>
 
 using Icon = WingHex::StandardIcon;
+
+class FormProbePlugin final : public WingHex::IWingPlugin {
+public:
+    bool init(const std::unique_ptr<QSettings> &) override { return true; }
+    void unload(std::unique_ptr<QSettings> &) override {}
+    const QString pluginName() const override {
+        return QStringLiteral("style-probe");
+    }
+    const QString pluginComment() const override { return {}; }
+};
 
 class ThemeEndpoint : public QObject {
     Q_OBJECT
 public slots:
+    QPixmap appAuthorPixmap(const QObject *sender) {
+        Q_UNUSED(sender);
+        QPixmap image(1, 1);
+        image.fill(Qt::transparent);
+        return image;
+    }
+
     QIcon standardIcon(const QObject *sender, WingHex::StandardIcon icon) {
         Q_UNUSED(sender);
         return ThemeManager::instance().standardIcon(icon);
@@ -205,6 +240,478 @@ private slots:
         theme.setTheme(ThemeManager::Theme::Light);
         QVERIFY(dark != icon.pixmap(32, 32).toImage());
         QVERIFY(theme.resourceIcon(QStringLiteral(":/missing.svg")).isNull());
+    }
+
+    void actualTestFormStyleCombo() {
+        ThemeEndpoint endpoint;
+        FormProbePlugin plugin;
+        WingHex::WingPluginCallsCorePrivate calls;
+        calls._fnCaller = &endpoint;
+        const auto index = endpoint.metaObject()->indexOfSlot(
+            "appAuthorPixmap(const QObject*)");
+        QVERIFY(index >= 0);
+        calls._fnTable.insert(
+            WingHex::getFunctionSig(
+                &WingHex::IWingPluginBaseCalls::appAuthorPixmap,
+                "appAuthorPixmap"),
+            endpoint.metaObject()->method(index));
+        WingHex::CallTableEvent event(&calls);
+        QCoreApplication::sendEvent(&plugin, &event);
+        const auto roles = QMetaEnum::fromType<QStyle::StandardPixmap>();
+        int expectedCount = 0;
+        for (int i = 0; i < roles.keyCount(); ++i) {
+            if (roles.value(i) >= 0 &&
+                qstrcmp(roles.key(i), "NStandardPixmap") != 0) {
+                ++expectedCount;
+            }
+        }
+        QTest::failOnWarning(
+            QRegularExpression(QStringLiteral("^cbToastIcon")));
+        for (auto scheme :
+             {ThemeManager::Theme::Light, ThemeManager::Theme::Dark}) {
+            ThemeManager::instance().setTheme(scheme);
+            TestForm form(&plugin);
+            auto combo =
+                form.findChild<QComboBox *>(QStringLiteral("cbToastIcon"));
+            QVERIFY(combo);
+            QCOMPARE(combo->count(), expectedCount);
+            for (int row = 0; row < combo->count(); ++row) {
+                QVERIFY2(!combo->itemIcon(row).isNull(),
+                         qPrintable(combo->itemText(row)));
+                QVERIFY2(!combo->itemData(row).value<QPixmap>().isNull(),
+                         qPrintable(combo->itemText(row)));
+            }
+        }
+    }
+
+    void testFormStyleComboIcons() {
+        auto &theme = ThemeManager::instance();
+        const auto roles = QMetaEnum::fromType<QStyle::StandardPixmap>();
+        QList<int> values;
+        for (int i = 0; i < roles.keyCount(); ++i) {
+            if (roles.value(i) >= 0 &&
+                QByteArray(roles.key(i)) != "NStandardPixmap") {
+                values.append(roles.value(i));
+            }
+        }
+        auto missingIcons = [&](QStyle *style) {
+            QStringList missing;
+            for (const auto value : values) {
+                // Match TestForm::initStyleCombo: no option or widget argument.
+                if (style->standardIcon(QStyle::StandardPixmap(value))
+                        .isNull()) {
+                    missing.append(
+                        QString::fromLatin1(roles.valueToKey(value)));
+                }
+            }
+            return missing;
+        };
+        QWidget widget;
+        for (const auto scheme :
+             {ThemeManager::Theme::Light, ThemeManager::Theme::Dark}) {
+            theme.setTheme(scheme);
+#ifdef Q_OS_WIN
+            const auto styleName = QStringLiteral("windowsvista");
+#else
+            const auto styleName = QStringLiteral("fusion");
+#endif
+            const std::unique_ptr<QStyle> native(
+                QStyleFactory::create(styleName));
+            QVERIFY(native);
+            QWidget reference;
+            reference.setStyle(native.get());
+            const auto prefix = scheme == ThemeManager::Theme::Dark
+                                    ? QStringLiteral(":/dark/")
+                                    : QStringLiteral(":/light/");
+            QFile source(prefix + QStringLiteral("stylesheet.qss"));
+            QVERIFY(source.open(QFile::ReadOnly));
+            reference.setStyleSheet(QString::fromUtf8(source.readAll()));
+            const auto nativeMissing = missingIcons(reference.style());
+            const auto themedMissing = missingIcons(widget.style());
+            qInfo() << "original QSS missing:" << nativeMissing;
+            qInfo() << "ThemeProxyStyle missing:" << themedMissing;
+            QVERIFY2(themedMissing.isEmpty(),
+                     qPrintable(themedMissing.join(QStringLiteral(", "))));
+            auto style = widget.style();
+            for (const auto value : values) {
+                QVERIFY2(!style->standardPixmap(QStyle::StandardPixmap(value))
+                              .isNull(),
+                         roles.valueToKey(value));
+            }
+        }
+    }
+
+    void qtStandardIcons_data() {
+        QTest::addColumn<int>("role");
+        const auto roles = QMetaEnum::fromType<QStyle::StandardPixmap>();
+        for (int i = 0; i < roles.keyCount(); ++i) {
+            const auto value = roles.value(i);
+            if (value < 0 || QByteArray(roles.key(i)) == "NStandardPixmap") {
+                continue;
+            }
+            QTest::newRow(roles.key(i)) << value;
+        }
+    }
+
+    void qtStandardIcons() {
+        QFETCH(int, role);
+        auto &theme = ThemeManager::instance();
+        QWidget widget;
+        for (auto scheme :
+             {ThemeManager::Theme::Light, ThemeManager::Theme::Dark}) {
+            theme.setTheme(scheme);
+            const auto optimized = theme.currentStyleSheet();
+            const auto prefix = scheme == ThemeManager::Theme::Dark
+                                    ? QStringLiteral(":/dark/")
+                                    : QStringLiteral(":/light/");
+            QFile source(prefix + QStringLiteral("stylesheet.qss"));
+            QVERIFY(source.open(QFile::ReadOnly));
+            qApp->setStyleSheet(QString::fromUtf8(source.readAll()));
+            const auto expectedIcon =
+                widget.style()
+                    ->standardIcon(QStyle::StandardPixmap(role), nullptr,
+                                   &widget)
+                    .pixmap(24, 24)
+                    .toImage();
+            const auto expectedPixmap =
+                widget.style()
+                    ->standardPixmap(QStyle::StandardPixmap(role), nullptr,
+                                     &widget)
+                    .toImage();
+            qApp->setStyleSheet(optimized);
+            QCOMPARE(widget.style()
+                         ->standardIcon(QStyle::StandardPixmap(role), nullptr,
+                                        &widget)
+                         .pixmap(24, 24)
+                         .toImage(),
+                     expectedIcon);
+            QCOMPARE(widget.style()
+                         ->standardPixmap(QStyle::StandardPixmap(role), nullptr,
+                                          &widget)
+                         .toImage(),
+                     expectedPixmap);
+        }
+    }
+
+    void resourceStandardIcons_data() {
+        QTest::addColumn<int>("role");
+        QFile source(QStringLiteral(":/light/stylesheet.qss"));
+        QVERIFY(source.open(QFile::ReadOnly));
+        auto sheet = QString::fromUtf8(source.readAll());
+        const auto paths = ThemeStyleSheet::extractStandardIcons(sheet);
+        const auto roles = QMetaEnum::fromType<QStyle::StandardPixmap>();
+        for (int i = 0; i < roles.keyCount(); ++i) {
+            const auto value = roles.value(i);
+            if (value < 0 || QByteArray(roles.key(i)) == "NStandardPixmap" ||
+                paths.contains(value)) {
+                continue;
+            }
+            QTest::newRow(roles.key(i)) << value;
+        }
+    }
+
+    void resourceStandardIcons() {
+        QFETCH(int, role);
+        auto &theme = ThemeManager::instance();
+        QWidget widget;
+        for (auto scheme :
+             {ThemeManager::Theme::Light, ThemeManager::Theme::Dark}) {
+            theme.setTheme(scheme);
+            const auto prefix = scheme == ThemeManager::Theme::Dark
+                                    ? QStringLiteral(":/dark/standard-icons/")
+                                    : QStringLiteral(":/light/standard-icons/");
+            const auto key =
+                QMetaEnum::fromType<QStyle::StandardPixmap>().valueToKey(role);
+            const auto path =
+                prefix + QString::fromLatin1(key) + QStringLiteral(".svg");
+            QVERIFY2(QFile::exists(path), qPrintable(path));
+            const QIcon expected(path);
+            const auto image = expected.pixmap(24, 24).toImage();
+            QVERIFY(!image.isNull());
+            QCOMPARE(widget.style()
+                         ->standardIcon(QStyle::StandardPixmap(role))
+                         .pixmap(24, 24)
+                         .toImage(),
+                     image);
+            const auto size =
+                widget.style()->pixelMetric(QStyle::PM_SmallIconSize);
+            QCOMPARE(widget.style()
+                         ->standardPixmap(QStyle::StandardPixmap(role))
+                         .toImage(),
+                     expected.pixmap(size, size).toImage());
+        }
+    }
+
+    void standardIconExtractionPreservesOtherRules() {
+        const auto commented = QStringLiteral(
+            "/* QWidget { dialog-ok-icon: url(:/light/stop.svg); } */");
+        const auto scoped = QStringLiteral(
+            "QWidget:hover { dialog-ok-icon: url(:/light/pause.svg); }");
+        const auto grouped = QStringLiteral(
+            "QWidget, QDialog { dialog-ok-icon: url(:/light/stop.svg); }");
+        const auto unknown =
+            QStringLiteral(" unknown-icon: url(:/light/play.svg);"
+                           " dialog-cancel-icon: url(:/missing.svg);"
+                           " dialog-help-icon: none;"
+                           " qproperty-text: \"} QWidget { ignored; }\";");
+        auto sheet =
+            commented +
+            QStringLiteral(" QWidget { color: red; dialog-ok-icon: "
+                           "url(:/light/dialog-ok.svg); }") +
+            scoped + grouped +
+            QStringLiteral(
+                " QWidget { dialog-ok-icon: url(\":/light/play.svg\");") +
+            unknown + QLatin1Char('}');
+        const auto icons = ThemeStyleSheet::extractStandardIcons(sheet);
+        QCOMPARE(icons.size(), 1);
+        QCOMPARE(icons.value(QStyle::SP_DialogOkButton),
+                 QStringLiteral(":/light/play.svg"));
+        QVERIFY(sheet.contains(commented));
+        QVERIFY(sheet.contains(scoped));
+        QVERIFY(sheet.contains(grouped));
+        QVERIFY(sheet.contains(unknown));
+        QVERIFY(sheet.contains(QStringLiteral("color: red;")));
+    }
+
+    void standardIconQssCascade() {
+        auto &theme = ThemeManager::instance();
+        for (auto scheme :
+             {ThemeManager::Theme::Light, ThemeManager::Theme::Dark}) {
+            theme.setTheme(scheme);
+            const auto prefix = scheme == ThemeManager::Theme::Dark
+                                    ? QStringLiteral(":/dark/")
+                                    : QStringLiteral(":/light/");
+            QFile source(prefix + QStringLiteral("stylesheet.qss"));
+            QVERIFY(source.open(QFile::ReadOnly));
+            const auto original = QString::fromUtf8(source.readAll());
+            auto optimized = original;
+            const auto paths = ThemeStyleSheet::extractStandardIcons(optimized);
+            QCOMPARE(paths.size(), 54);
+            QCOMPARE(optimized, theme.currentStyleSheet());
+            QVERIFY(optimized.contains(
+                QStringLiteral("titlebar-close-icon: url(") + prefix +
+                QStringLiteral("transparent.svg)")));
+            QWidget generic;
+            generic.setStyleSheet(
+                QStringLiteral("QWidget { icon-size: 32px; }"));
+            QDockWidget dock;
+            QWidget custom;
+            custom.setStyleSheet(
+                QStringLiteral("QWidget { dialog-ok-icon: url(") + prefix +
+                QStringLiteral("play.svg); }"));
+            QDialogButtonBox box(QDialogButtonBox::Ok |
+                                 QDialogButtonBox::Cancel);
+            auto capture = [&] {
+                QList<QImage> images;
+                for (auto widget : {&generic, static_cast<QWidget *>(&dock),
+                                    &custom, static_cast<QWidget *>(&box)}) {
+                    for (auto role : {QStyle::SP_DialogOkButton,
+                                      QStyle::SP_TitleBarCloseButton,
+                                      QStyle::SP_DockWidgetCloseButton}) {
+                        images.append(widget->style()
+                                          ->standardIcon(role, nullptr, widget)
+                                          .pixmap(24, 24)
+                                          .toImage());
+                        images.append(
+                            widget->style()
+                                ->standardPixmap(role, nullptr, widget)
+                                .toImage());
+                    }
+                }
+                box.ensurePolished();
+                images.append(box.button(QDialogButtonBox::Ok)
+                                  ->icon()
+                                  .pixmap(24, 24)
+                                  .toImage());
+                return images;
+            };
+            qApp->setStyleSheet(original);
+            const auto before = capture();
+            qApp->setStyleSheet(optimized);
+            QCOMPARE(capture(), before);
+            QCOMPARE(
+                custom.style()
+                    ->standardIcon(QStyle::SP_DialogOkButton, nullptr, &custom)
+                    .pixmap(24, 24)
+                    .toImage(),
+                QIcon(prefix + QStringLiteral("play.svg"))
+                    .pixmap(24, 24)
+                    .toImage());
+        }
+    }
+
+    void startupDurationHistory() {
+        using namespace StartupFeedback;
+        QCOMPARE(estimate({}), UnknownDurationMs);
+        QCOMPARE(estimate({-1, 0, QStringLiteral("invalid"), 60001}),
+                 UnknownDurationMs);
+        QCOMPARE(estimate({400, 390, 410, 20000, 380}), qint64(400));
+        QCOMPARE(estimate({100, 200}), qint64(150));
+        const auto history = remember({10, 20, 30, 40, 50}, 60);
+        QCOMPARE(history.size(), HistoryLimit);
+        QCOMPARE(history.first().toLongLong(), qint64(20));
+        QCOMPARE(history.last().toLongLong(), qint64(60));
+        QCOMPARE(remember(history, -1), history);
+    }
+
+    void automaticSplashFastStartupStaysHidden() {
+        auto splash =
+            new SplashDialog(SplashDialog::DisplayMode::Automatic, 70);
+        QPointer<SplashDialog> alive(splash);
+        QVERIFY(!splash->isVisible());
+        QVERIFY(splash->styleSheet().isEmpty());
+        splash->setInfoText(QStringLiteral("Fast startup"));
+        splash->prepareForBlockingPhase();
+        QVERIFY(!splash->isVisible());
+        splash->finish();
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QVERIFY(alive.isNull());
+        QTest::qWait(StartupFeedback::ShowDelayMs + 30);
+        // No queued timer may resurrect a completed startup splash.
+        for (auto widget : QApplication::topLevelWidgets()) {
+            QVERIFY(!qobject_cast<SplashDialog *>(widget));
+        }
+    }
+
+    void automaticSplashShowsOnDeadline() {
+        auto splash =
+            new SplashDialog(SplashDialog::DisplayMode::Automatic, 70);
+        QVERIFY(!splash->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(splash->isVisible(), 1000);
+        QVERIFY(!splash->styleSheet().isEmpty());
+        splash->finish();
+        QVERIFY(!splash->isVisible());
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    void automaticSplashShowsBeforePredictedSlowPhase() {
+        auto splash =
+            new SplashDialog(SplashDialog::DisplayMode::Automatic, 400);
+        QVERIFY(!splash->isVisible());
+        splash->prepareForBlockingPhase();
+        QVERIFY(splash->isVisible());
+        splash->finish();
+        // Completion must not add any artificial minimum display duration.
+        QVERIFY(!splash->isVisible());
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    void automaticSplashCloseCancelsPendingShow() {
+        auto splash =
+            new SplashDialog(SplashDialog::DisplayMode::Automatic, 70);
+        QPointer<SplashDialog> alive(splash);
+        splash->close();
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QVERIFY(alive.isNull());
+        QTest::qWait(StartupFeedback::ShowDelayMs + 30);
+    }
+
+    void splashBeforeGlobalStyleSheet_data() {
+        QTest::addColumn<bool>("dark");
+        QTest::newRow("light") << false;
+        QTest::newRow("dark") << true;
+    }
+
+    void splashBeforeGlobalStyleSheet() {
+        QFETCH(bool, dark);
+        auto &theme = ThemeManager::instance();
+        theme.setStyleSheetDeferred(false);
+        theme.setTheme(dark ? ThemeManager::Theme::Light
+                            : ThemeManager::Theme::Dark);
+        qApp->setStyleSheet(QString());
+        theme.setStyleSheetDeferred(true);
+        theme.setTheme(dark ? ThemeManager::Theme::Dark
+                            : ThemeManager::Theme::Light);
+        QVERIFY(qApp->styleSheet().isEmpty());
+        const auto pending = theme.currentStyleSheet();
+        QVERIFY(!pending.isEmpty());
+        auto splash = new SplashDialog;
+        QPointer<SplashDialog> alive(splash);
+        auto progress =
+            splash->findChild<QProgressBar *>(QStringLiteral("progressBar"));
+        QVERIFY(progress);
+        // Stabilize the busy animation for pixel-for-pixel comparison.
+        progress->setRange(0, 100);
+        progress->setValue(50);
+        splash->setInfoText(QStringLiteral("Initializing interface"));
+        QCOMPARE(splash->styleSheet(), pending);
+        QVERIFY(splash->isVisible());
+        auto label = splash->findChild<QLabel *>(QStringLiteral("lblinfo"));
+        QVERIFY(label);
+        QCOMPARE(label->text(), QStringLiteral("Initializing interface..."));
+        QApplication::processEvents();
+        const auto early = splash->grab().toImage();
+        QVERIFY(!early.isNull());
+        if (qEnvironmentVariableIsSet("WING_SPLASH_PREVIEWS")) {
+            QDir output(qEnvironmentVariable("WING_SPLASH_PREVIEWS"));
+            QVERIFY(QDir().mkpath(output.absolutePath()));
+            QVERIFY(early.save(
+                output.filePath(dark ? QStringLiteral("dark.png")
+                                     : QStringLiteral("light.png"))));
+        }
+        theme.setStyleSheetDeferred(false);
+        QApplication::processEvents();
+        QCOMPARE(qApp->styleSheet(), pending);
+        QCOMPARE(splash->grab().toImage(), early);
+        // Existing splash windows must also follow subsequent theme changes.
+        theme.setStyleSheetDeferred(true);
+        theme.setTheme(dark ? ThemeManager::Theme::Light
+                            : ThemeManager::Theme::Dark);
+        QCOMPARE(splash->styleSheet(), theme.currentStyleSheet());
+        QVERIFY(splash->styleSheet() != pending);
+        theme.setStyleSheetDeferred(false);
+        splash->close();
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QVERIFY(alive.isNull());
+    }
+
+    void startupStyleSheetBatch() {
+        auto &theme = ThemeManager::instance();
+        theme.setStyleSheetDeferred(false);
+        theme.setTheme(ThemeManager::Theme::Light);
+        const auto before = qApp->styleSheet();
+        const auto icon = theme.standardIcon(Icon::Undo);
+        theme.setStyleSheetDeferred(true);
+        theme.setTheme(ThemeManager::Theme::Dark);
+        QCOMPARE(theme.currentTheme(), ThemeManager::Theme::Dark);
+        QCOMPARE(qApp->styleSheet(), before);
+        const auto beforeFlush = icon.pixmap(24, 24);
+        const auto revision = theme.iconCacheRevision();
+        theme.setStyleSheetDeferred(false);
+        QVERIFY(qApp->styleSheet() != before);
+        QVERIFY(theme.iconCacheRevision() > revision);
+        const auto afterFlush = icon.pixmap(24, 24);
+        QVERIFY(beforeFlush.cacheKey() != afterFlush.cacheKey());
+        QCOMPARE(beforeFlush.toImage(), afterFlush.toImage());
+        const auto flushedRevision = theme.iconCacheRevision();
+        theme.setStyleSheetDeferred(false);
+        QCOMPARE(theme.iconCacheRevision(), flushedRevision);
+    }
+
+    void repeatedRasterizationAndEviction() {
+        auto &theme = ThemeManager::instance();
+        const auto icon = theme.standardIcon(Icon::Undo);
+        QPixmapCache::clear();
+        const auto first = icon.pixmap(24, 24);
+        const auto repeated = icon.pixmap(24, 24);
+        QCOMPARE(first.cacheKey(), repeated.cacheKey());
+        const auto otherSize = icon.pixmap(32, 32);
+        QVERIFY(otherSize.cacheKey() != first.cacheKey());
+        QCOMPARE(icon.pixmap(24, 24).cacheKey(), first.cacheKey());
+        const QIcon copied = icon;
+        QCOMPARE(copied.pixmap(24, 24).cacheKey(), first.cacheKey());
+        QPixmapCache::clear();
+        const auto regenerated = icon.pixmap(24, 24);
+        QVERIFY(regenerated.cacheKey() != first.cacheKey());
+        QCOMPARE(regenerated.toImage(), first.toImage());
+        const auto originalPalette = QApplication::palette();
+        auto changed = originalPalette;
+        changed.setColor(QPalette::Disabled, QPalette::WindowText, Qt::red);
+        const auto disabled = icon.pixmap(24, 24, QIcon::Disabled);
+        QApplication::setPalette(changed);
+        const auto recolored = icon.pixmap(24, 24, QIcon::Disabled);
+        QVERIFY(recolored.cacheKey() != disabled.cacheKey());
+        QApplication::setPalette(originalPalette);
     }
 
     void catalogAndModes() {

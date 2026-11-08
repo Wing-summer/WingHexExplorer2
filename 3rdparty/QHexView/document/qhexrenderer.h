@@ -29,7 +29,9 @@
 
 #include "qhexdocument.h"
 #include <QCache>
+#include <QHash>
 #include <QPainter>
+#include <QRawFont>
 #include <QStringConverter>
 #include <QVector>
 
@@ -223,6 +225,7 @@ private:
                        const QColor &fallbackColor) const;
     void drawText(QPainter *painter, const QRectF &rect, const QString &text,
                   const CellFormat &fmt) const;
+    QRawFont cellFont(const QFont &font, char32_t codepoint) const;
     void drawBackgrounds(QPainter *painter, const QVector<CellFormat> &formats,
                          const std::function<QRectF(int)> &rectAt) const;
     void drawUnderLine(
@@ -235,9 +238,17 @@ private:
     QHexCursor *m_cursor;
     QFontMetricsF m_fontmetrics;
 
+    // caches
+    struct CellFonts {
+        QHash<QString, QRawFont> families;
+        QCache<quint32, QRawFont> characters{1024};
+    };
+    mutable QCache<QString, CellFonts> m_cellFonts{8};
+    mutable QHash<int, QStringList> m_scriptFamilies;
     mutable QCache<qsizetype,
                    QPair<QByteArray, QVector<QHexRenderer::AsciiCell>>>
         m_lineCaches{30};
+
     Areas m_selectedarea = Areas::HexArea;
     bool m_cursorenabled = false;
 

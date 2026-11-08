@@ -139,6 +139,8 @@ private:
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
 
     void buildUpSettingDialog();
+    void ensureSettingsDialog();
+    void ensureScriptSettingsDialog();
     void installPluginEditorWidgets();
     void registerGlobalSwitchViewLoop();
 
@@ -567,6 +569,7 @@ private:
     QByteArray _defaultLayout;
     QString m_lastusedpath;
 
+    bool m_initializing = true;
     SettingDialog *m_setdialog = nullptr;
     SettingDialog *m_scriptsetdlg = nullptr;
     RecentFileManager *m_recentmanager = nullptr;

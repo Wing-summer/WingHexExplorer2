@@ -104,11 +104,11 @@ void MetaDialog::on_accept() {
         (cbackground->isChecked() &&
          (!_background.isValid() || _background.alpha() == 0)) ||
         (ccomment->isChecked() && m_comment->text().trimmed().length() == 0)) {
-        Toast::toast(this->parentWidget(),
-                     ThemeManager::instance().standardPixmap(
-                         ThemeManager::StandardIcon::Metadata),
-                     tr("Configure at least one enabled option, or disable the "
-                        "option."));
+        Toast::toast(
+            this->parentWidget(),
+            ThemeManager::instance().standardPixmap(
+                ThemeManager::StandardIcon::Metadata),
+            tr("Configure at least one enabled option, or disable the option"));
         return;
     }
 

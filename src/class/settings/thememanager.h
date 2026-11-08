@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -26,6 +26,10 @@
 #include <QList>
 #include <QObject>
 #include <QPixmap>
+#include <QPointer>
+#include <QString>
+
+class QStyle;
 
 class ThemeManager : public QObject {
     Q_OBJECT
@@ -42,6 +46,10 @@ public:
     // Resolved appearance; System is exposed by requestedTheme().
     Theme currentTheme() const;
     Theme requestedTheme() const;
+    QString currentStyleSheet() const;
+    // Batch initial widget construction before applying the application QSS.
+    void setStyleSheetDeferred(bool deferred);
+    quint64 iconCacheRevision() const;
 
     QIcon standardIcon(StandardIcon icon) const;
     QIcon resourceIcon(const QString &path) const;
@@ -65,6 +73,11 @@ private:
     Theme m_requestedTheme = Theme::System;
     Theme m_theme = Theme::Light;
     bool m_initialized = false;
+    bool m_styleSheetDeferred = false;
+    bool m_styleSheetPending = false;
+    quint64 m_iconCacheRevision = 0;
+    QString m_pendingStyleSheet;
+    QPointer<QStyle> m_themeStyle;
 
 private:
     mutable QHash<int, QIcon> m_icons;

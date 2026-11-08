@@ -3241,15 +3241,6 @@ void LuauLanguageServer::registerTypes() {
         const auto uri = QUrl::fromLocalFile(resolvedFilePath);
         if (result.success) {
             publishDiagnostics(uri, {});
-
-            // Update the text document URI to point to the actual file on
-            // disk
-            if (auto it = definitionsFileState.find(definitionName);
-                it != definitionsFileState.end()) {
-                it->second.textDocument->setPlainText(QString::fromUtf8(
-                    definitionsContents.data(),
-                    static_cast<qsizetype>(definitionsContents.size())));
-            }
         } else {
             qCritical("[LuauLanguageServer] Failed to load definitions '%s'",
                       qPrintable(resolvedFilePath));

@@ -24,12 +24,16 @@
 #include <QMenu>
 #include <QMutex>
 #include <QObject>
+#include <QPointer>
 #include <QQueue>
 #include <QReadWriteLock>
+#include <QSet>
+#include <QSharedPointer>
 #include <QTimer>
 #include <QTimerEvent>
 #include <QToolButton>
 #include <QVariant>
+#include <memory>
 
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/iwingplugin.h"
@@ -40,6 +44,7 @@ using namespace WingHex;
 
 class MainWindow;
 class QPluginLoader;
+class ScriptDocumentRegistry;
 
 class lua_State;
 
@@ -75,64 +80,7 @@ private:
 
 class PluginSystem : public QObject {
     Q_OBJECT
-private:
-    class UniqueIdGenerator {
-    public:
-        class UniqueId : public QSharedData {
-        public:
-            UniqueId() : _id(-1), _gen(nullptr) {}
-
-            UniqueId(UniqueIdGenerator *gen, int id) : _id(id), _gen(gen) {
-                Q_ASSERT(gen);
-                Q_ASSERT(id >= 0);
-#ifdef QT_DEBUG
-                qDebug() << "[UniqueId] alloced: " << id;
-#endif
-            }
-
-            ~UniqueId() {
-                if (_gen) {
-                    _gen->release(_id);
-                }
-#ifdef QT_DEBUG
-                qDebug() << "[UniqueId] freed: " << _id;
-#endif
-            }
-
-            operator int() { return _id; }
-
-        private:
-            int _id;
-            UniqueIdGenerator *_gen;
-        };
-
-    public:
-        UniqueIdGenerator() : currentId(0) {}
-
-        QExplicitlySharedDataPointer<UniqueId> get() {
-            if (!releasedIds.isEmpty()) {
-                int id = releasedIds.dequeue();
-                return QExplicitlySharedDataPointer<UniqueId>(
-                    new UniqueId(this, id));
-            } else {
-                return QExplicitlySharedDataPointer<UniqueId>(
-                    new UniqueId(this, currentId++));
-            }
-        }
-
-        void release(int id) {
-            if (id < currentId && !releasedIds.contains(id)) {
-                releasedIds.enqueue(id);
-            }
-        }
-
-    private:
-        int currentId;
-        QQueue<int> releasedIds;
-    };
-
-    using SharedUniqueId =
-        QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
+    friend class PluginDocumentHostProbe;
 
 public:
     enum class PluginStatus : int {
@@ -160,10 +108,28 @@ public:
     };
 
 private:
+    class DocumentHandlePool {
+        friend class PluginDocumentHostProbe;
+
+    public:
+        int acquire();
+        void release(int handle);
+
+    private:
+        int nextId = 0;
+        QQueue<int> releasedIds;
+    };
+
     struct PluginFileContext {
-        SharedUniqueId fid;
-        EditorView *view = nullptr;
-        IWingPlugin *linkedplg = nullptr;
+        explicit PluginFileContext(QSharedPointer<DocumentHandlePool> pool);
+        ~PluginFileContext();
+
+        const int fid;
+        QPointer<EditorView> view;
+
+    private:
+        QSharedPointer<DocumentHandlePool> m_handlePool;
+        Q_DISABLE_COPY_MOVE(PluginFileContext)
     };
 
     struct PluginFile {
@@ -234,8 +200,9 @@ public:
                                          HexEditorContext *palette);
 
 public:
-    QSet<int> scriptHandles() const;
-    void cleanScriptHandles(const QSet<int> &handles);
+    // Snapshot and release access in the caller's live Lua context only.
+    QSet<int> scriptHandles(lua_State *L) const;
+    void cleanScriptHandles(lua_State *L, const QSet<int> &handles);
 
     qsizetype pluginAPICount() const;
 
@@ -264,6 +231,10 @@ private:
 
     EditorView *closeHandle(IWingPlugin *plg, int handle);
 
+    void bindPluginView(IWingPlugin *plg, EditorView *view);
+    void releasePluginView(IWingPlugin *plg, EditorView *view);
+    QList<IWingPlugin *> boundPluginsForView(EditorView *view) const;
+
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
     int checkIDPluginAlreadyOpened(IWingPlugin *plg, EditorView *view);
@@ -272,11 +243,8 @@ private:
 
     EditorView *handle2EditorView(IWingPlugin *plg, int handle);
 
-    int assginHandleForOpenPluginView(IWingPlugin *plg, EditorView *view);
-
-    static bool equalCompareHandle(const SharedUniqueId &id, int handle);
-
-    static int getUIDHandle(const SharedUniqueId &id);
+    int assginHandleForOpenPluginView(IWingPlugin *plg, EditorView *view,
+                                      bool select = true);
 
 private:
     PluginInfo parsePluginMetadata(const QJsonObject &meta);
@@ -293,6 +261,7 @@ private:
     void registerHexContextMenu(IWingPlugin *plg);
 
     void applyFunctionTables(QObject *plg);
+    void cleanUpPluginHandles(IWingPlugin *plg);
 
     bool isPluginLoaded(const WingDependency &d);
 
@@ -666,12 +635,17 @@ public slots:
 public slots:
     // mainwindow
     int openFile(const QObject *sender, const QUrl &file);
-
-    WingHex::ErrFile closeFile(const QObject *sender, int handle);
+    int closeFile(const QObject *sender, int handle, bool force);
+    int closeFileHandle(const QObject *sender, int handle);
 
     int openCurrent(const QObject *sender);
+    int closeCurrent(const QObject *sender);
 
-    WingHex::ErrFile closeCurrent(const QObject *sender);
+    WingHex::DocumentInfo documentInfo(const QObject *sender, int handle);
+
+    bool isFileOpened(const QObject *sender, int handle);
+    QList<QUrl> openedFiles(const QObject *sender);
+    QList<QUrl> allOpenedFiles(const QObject *sender);
 
 public slots:
     // bookmark
@@ -685,9 +659,15 @@ public slots:
 
     bool clearBookMark(const QObject *sender);
 
-private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
+
+private:
+    enum class DocumentUrlType { Invalid, File, Workspace, Device };
+    static DocumentUrlType documentUrlType(const QUrl &file);
+
+    int openDocument(const QUrl &file, EditorView **editor);
+    int closeDocument(EditorView *view, bool force);
 
 private:
     WingPluginCallsCorePrivate _api;
@@ -710,10 +690,14 @@ private:
     QHash<IWingPlugin *, PluginFile> m_plgviewMap;
     QHash<EditorView *, ViewBind> m_viewBindings;
 
-    UniqueIdGenerator m_idGen;
+    // Contexts keep the pool alive and return IDs after their last reference.
+    QSharedPointer<DocumentHandlePool> m_documentHandlePool =
+        QSharedPointer<DocumentHandlePool>::create();
 
     QString preLoadedPlg;
-    bool _handleDirty = false;
+    // Weak VM index for snapshots and cleanup of callback-local handles.
+    QHash<lua_State *, std::weak_ptr<ScriptDocumentRegistry>>
+        m_scriptDocumentRegistries;
     bool _unloading = false;
     bool _switchingContext = false;
 

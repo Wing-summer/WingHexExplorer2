@@ -136,7 +136,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     // load saved docking layout
     auto &set = SettingManager::instance();
     m_dock->restoreState(set.scriptDockLayout());
-    _savedLayout = set.scriptDockLayout();
+    _savedLayout = m_dock->saveState();
     m_lastusedpath = set.lastUsedScriptPath();
     m_watchModel->reloadExpressionList(set.watchExpressions());
 
@@ -310,7 +310,7 @@ void ScriptingDialog::buildUpRibbonBar() {
                     Toast::toast(this,
                                  ThemeManager::instance().standardPixmap(
                                      ThemeManager::StandardIcon::Script),
-                                 tr("Unsupported script file."));
+                                 tr("Unsupported script file"));
                 }
             }
         });
@@ -457,7 +457,7 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         a = addPannelAction(pannel, ThemeManager::StandardIcon::Debug,
                             tr("Debug"), &ScriptingDialog::on_rundbgscript, {},
                             nullptr,
-                            tr("Run the current script in the debugger."));
+                            tr("Run the current script in the debugger"));
         setPannelActionToolTip(a, dbgkey);
         m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
 
@@ -1237,7 +1237,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::File),
-                     tr("This file is already open."));
+                     tr("This file is already open"));
         return e;
     } else {
         if (opened) {
@@ -1627,7 +1627,7 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
                 Toast::toast(this,
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::Reload),
-                             tr("File reloaded."));
+                             tr("File reloaded"));
             } else {
                 WingMessageBox::critical(this, tr("Error"),
                                          tr("Could not reload the file."));
@@ -1747,7 +1747,7 @@ void ScriptingDialog::on_reload() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Reload),
-                     tr("File reloaded."));
+                     tr("File reloaded"));
     } else {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Could not reload the file."));
@@ -1778,7 +1778,7 @@ void ScriptingDialog::on_save() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Save),
-                     tr("File saved."));
+                     tr("File saved"));
     } else {
         WingMessageBox::critical(
             this, tr("Error"),
@@ -1794,7 +1794,7 @@ void ScriptingDialog::on_saveas() {
     }
 
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the file save location:"), m_lastusedpath,
+        this, tr("Please select the file save location"), m_lastusedpath,
         QStringLiteral("Luau (*.luau *.lua)"));
     if (filename.isEmpty()) {
         return;
@@ -1809,7 +1809,7 @@ void ScriptingDialog::on_saveas() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::SaveAs),
-                     tr("File saved."));
+                     tr("File saved"));
     } else {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Could not save the file."));

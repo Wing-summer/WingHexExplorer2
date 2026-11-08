@@ -35,7 +35,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
-    layout->addWidget(new QLabel(tr("Mode:"), this));
+    layout->addWidget(new QLabel(tr("Mode"), this));
     m_findMode = new QComboBox(this);
     m_findMode->addItem(tr("Hexadecimal"));
     m_findMode->addItems(Utilities::getEncodings());
@@ -44,7 +44,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     layout->addWidget(m_findMode);
     layout->addSpacing(3);
 
-    layout->addWidget(new QLabel(tr("Content:"), this));
+    layout->addWidget(new QLabel(tr("Content"), this));
     m_lineeditor = new HexLineEdit(this);
     m_lineeditor->setFixedHeight(m_findMode->height());
     layout->addWidget(m_lineeditor);
@@ -153,9 +153,9 @@ void FindDialog::on_accept() {
     // check the last byte nibbles
     if (!m_lineeditor->isValid()) {
         Toast::toast(this,
-                     ThemeManager::instance()
-                         .standardPixmap(ThemeManager::StandardIcon::Find),
-                     tr("Invalid input sequence."));
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Find),
+                     tr("Invalid input sequence"));
         return;
     }
 

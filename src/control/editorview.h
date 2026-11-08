@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -53,7 +53,7 @@ class EditorView final : public ads::CDockWidget, public EditorInfo {
     friend class PluginSystem;
 
 public:
-    enum class DocumentType { InValid, File, Extension, Cloned };
+    using DocumentType = WingHex::DocumentType;
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
@@ -164,6 +164,7 @@ public:
     virtual ~EditorView() override;
 
     QUrl fileNameUrl() const;
+    QUrl openedFileUrl() const;
 
     bool isWorkSpace() const;
     bool isNewFile() const;
@@ -599,7 +600,7 @@ signals:
     void workspaceCorrupted();
 
 public:
-    virtual void saveState(QXmlStreamWriter &Stream) const override;
+    bool isStateSaveEnabled() const override;
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;

@@ -141,10 +141,11 @@ void ObjTreeWidget::createObjNodes(
         auto item = new QTreeWidgetItem(
             parent,
             {symbol.label,
-             root ? (node.requiresImport
-                         ? QStringLiteral("require(\"@%1\")").arg(symbol.label)
-                         : tr("Global"))
-                  : detail});
+             root
+                 ? (node.requiresImport
+                        ? QStringLiteral("require(\"%1\")").arg(node.importPath)
+                        : tr("Global"))
+                 : detail});
         item->setData(0, Qt::UserRole, node.id);
         _symbols.entries.insert(node.id, node);
         if (node.hasChildren) {

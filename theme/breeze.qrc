@@ -255,4 +255,66 @@
         <file>light/vseptoolbar.svg</file>
         <file>light/window-close.svg</file>
     </qresource>
+    <qresource prefix="/dark/standard-icons">
+        <file alias="SP_DirLinkOpenIcon.svg">dark/folder-open-link.svg</file>
+        <file alias="SP_ToolBarHorizontalExtensionButton.svg">dark/horizontal-extension.svg</file>
+        <file alias="SP_ToolBarVerticalExtensionButton.svg">dark/vertical-extension.svg</file>
+        <file alias="SP_CommandLink.svg">dark/right-arrow.svg</file>
+        <file alias="SP_VistaShield.svg">dark/vista-shield.svg</file>
+        <file alias="SP_BrowserReload.svg">dark/browser-refresh.svg</file>
+        <file alias="SP_BrowserStop.svg">dark/browser-refresh-stop.svg</file>
+        <file alias="SP_MediaPlay.svg">dark/play.svg</file>
+        <file alias="SP_MediaStop.svg">dark/stop.svg</file>
+        <file alias="SP_MediaPause.svg">dark/pause.svg</file>
+        <file alias="SP_MediaSkipForward.svg">dark/skip-forward.svg</file>
+        <file alias="SP_MediaSkipBackward.svg">dark/skip-backward.svg</file>
+        <file alias="SP_MediaSeekForward.svg">dark/seek-forward.svg</file>
+        <file alias="SP_MediaSeekBackward.svg">dark/seek-backward.svg</file>
+        <file alias="SP_MediaVolume.svg">dark/volume.svg</file>
+        <file alias="SP_MediaVolumeMuted.svg">dark/volume-muted.svg</file>
+        <file alias="SP_LineEditClearButton.svg">dark/clear-text.svg</file>
+        <file alias="SP_DialogYesToAllButton.svg">dark/dialog-yes-to-all.svg</file>
+        <file alias="SP_DialogNoToAllButton.svg">dark/dialog-no.svg</file>
+        <file alias="SP_DialogSaveAllButton.svg">dark/dialog-save-all.svg</file>
+        <file alias="SP_DialogAbortButton.svg">dark/dialog-cancel.svg</file>
+        <file alias="SP_DialogRetryButton.svg">dark/dialog-retry.svg</file>
+        <file alias="SP_DialogIgnoreButton.svg">dark/dialog-ignore.svg</file>
+        <file alias="SP_RestoreDefaultsButton.svg">dark/restore-defaults.svg</file>
+        <file alias="SP_TabCloseButton.svg">dark/tab-close.svg</file>
+        <file alias="SP_TabScrollLeftButton.svg">dark/left-arrow.svg</file>
+        <file alias="SP_TabScrollRightButton.svg">dark/right-arrow.svg</file>
+        <file alias="SP_TabScrollUpButton.svg">dark/up-arrow.svg</file>
+        <file alias="SP_TabScrollDownButton.svg">dark/down-arrow.svg</file>
+    </qresource>
+    <qresource prefix="/light/standard-icons">
+        <file alias="SP_DirLinkOpenIcon.svg">light/folder-open-link.svg</file>
+        <file alias="SP_ToolBarHorizontalExtensionButton.svg">light/horizontal-extension.svg</file>
+        <file alias="SP_ToolBarVerticalExtensionButton.svg">light/vertical-extension.svg</file>
+        <file alias="SP_CommandLink.svg">light/right-arrow.svg</file>
+        <file alias="SP_VistaShield.svg">light/vista-shield.svg</file>
+        <file alias="SP_BrowserReload.svg">light/browser-refresh.svg</file>
+        <file alias="SP_BrowserStop.svg">light/browser-refresh-stop.svg</file>
+        <file alias="SP_MediaPlay.svg">light/play.svg</file>
+        <file alias="SP_MediaStop.svg">light/stop.svg</file>
+        <file alias="SP_MediaPause.svg">light/pause.svg</file>
+        <file alias="SP_MediaSkipForward.svg">light/skip-forward.svg</file>
+        <file alias="SP_MediaSkipBackward.svg">light/skip-backward.svg</file>
+        <file alias="SP_MediaSeekForward.svg">light/seek-forward.svg</file>
+        <file alias="SP_MediaSeekBackward.svg">light/seek-backward.svg</file>
+        <file alias="SP_MediaVolume.svg">light/volume.svg</file>
+        <file alias="SP_MediaVolumeMuted.svg">light/volume-muted.svg</file>
+        <file alias="SP_LineEditClearButton.svg">light/clear-text.svg</file>
+        <file alias="SP_DialogYesToAllButton.svg">light/dialog-yes-to-all.svg</file>
+        <file alias="SP_DialogNoToAllButton.svg">light/dialog-no.svg</file>
+        <file alias="SP_DialogSaveAllButton.svg">light/dialog-save-all.svg</file>
+        <file alias="SP_DialogAbortButton.svg">light/dialog-cancel.svg</file>
+        <file alias="SP_DialogRetryButton.svg">light/dialog-retry.svg</file>
+        <file alias="SP_DialogIgnoreButton.svg">light/dialog-ignore.svg</file>
+        <file alias="SP_RestoreDefaultsButton.svg">light/restore-defaults.svg</file>
+        <file alias="SP_TabCloseButton.svg">light/tab-close.svg</file>
+        <file alias="SP_TabScrollLeftButton.svg">light/left-arrow.svg</file>
+        <file alias="SP_TabScrollRightButton.svg">light/right-arrow.svg</file>
+        <file alias="SP_TabScrollUpButton.svg">light/up-arrow.svg</file>
+        <file alias="SP_TabScrollDownButton.svg">light/down-arrow.svg</file>
+    </qresource>
 </RCC>

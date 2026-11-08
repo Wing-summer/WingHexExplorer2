@@ -269,10 +269,7 @@ void ScriptEditor::syncDocChange() {
                                                     m_editor->document());
 }
 
-void ScriptEditor::saveState(QXmlStreamWriter &Stream) const {
-    Q_UNUSED(Stream);
-    // do nothing
-}
+bool ScriptEditor::isStateSaveEnabled() const { return false; }
 
 void ScriptEditor::syncSemanticTokens() {
     applySemanticTokens();

@@ -33,7 +33,7 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
-    auto l = new QLabel(tr("Select columns to show:"), this);
+    auto l = new QLabel(tr("Select columns to show"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     headerlist = new QListWidget(this);

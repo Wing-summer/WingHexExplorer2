@@ -18,7 +18,8 @@
 
 # Function: add_wing_plugin
 # Parameters:
-#> NAME <string> - Plugin name (required)
+#> NAME <string> - Target name (required); metadata is <NAME>.json in the
+#  current source directory
 #> TYPE <PLUGIN/DEVDRV> - Plugin Type (required)
 #> SOURCES <list> - Source file list (required)
 #> RESOURCES <list> - .qrc resource file list (optional, default empty)
@@ -139,6 +140,41 @@ function(add_wing_plugin)
         message(FATAL_ERROR "add_wing_plugin: SOURCES is required")
     endif()
 
+    # Metadata is always <target name>.json, never inferred from SOURCES.
+    set(_metadata_path "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_NAME}.json")
+    if(NOT EXISTS "${_metadata_path}")
+        message(
+            FATAL_ERROR
+                "add_wing_plugin: Metadata file '${ARG_NAME}.json' is required in '${CMAKE_CURRENT_SOURCE_DIR}'"
+        )
+    endif()
+    file(READ "${_metadata_path}" _metadata)
+    string(
+        JSON
+        _metadata_type
+        ERROR_VARIABLE
+        _metadata_error
+        TYPE
+        "${_metadata}"
+        Id)
+    if(_metadata_error OR NOT _metadata_type STREQUAL "STRING")
+        message(
+            FATAL_ERROR
+                "add_wing_plugin: Metadata '${_metadata_path}' must contain a non-empty string Id"
+        )
+    endif()
+    string(JSON _metadata_id GET "${_metadata}" Id)
+    if(_metadata_id STREQUAL "")
+        message(
+            FATAL_ERROR
+                "add_wing_plugin: Metadata '${_metadata_path}' must contain a non-empty string Id"
+        )
+    endif()
+    set_property(
+        DIRECTORY
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS "${_metadata_path}")
+
     if(NOT ARG_TYPE)
         set(ARG_TYPE PLUGIN)
     endif()
@@ -237,7 +273,8 @@ function(add_wing_plugin)
 
         set(QM_FILES ${_qm_from_this})
 
-        add_plugin_translations_resource(QM_RES ${ARG_NAME} ${QM_FILES})
+        # Match the metadata ID used by LanguageManager, not the CMake target.
+        add_plugin_translations_resource(QM_RES "${_metadata_id}" ${QM_FILES})
     endif()
 
     # --- Library ---

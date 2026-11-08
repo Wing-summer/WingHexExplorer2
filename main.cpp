@@ -16,6 +16,7 @@
 */
 
 #include "class/application/appmanager.h"
+#include "class/application/startuptrace.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
 #include "dialog/common/wingmessagebox.h"
@@ -151,8 +152,11 @@ void loadEnvConfig(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    StartupTrace::start();
+    StartupTrace::PhaseTimer startupPhases;
     loadEnvConfig(argc, argv);
 
+    startupPhases.checkpoint("process.environment");
     QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication::setApplicationName(QStringLiteral(APP_NAME));
     QApplication::setOrganizationName(QStringLiteral(APP_ORG));
@@ -167,7 +171,9 @@ int main(int argc, char *argv[]) {
 
     try {
         AppManager a(argc, argv);
+        startupPhases.checkpoint("process.application");
         auto w = a.mainWindow();
+        StartupTrace::watchWindow(w);
 
         auto &set = SettingManager::instance();
         switch (set.defaultWinState()) {
@@ -187,6 +193,7 @@ int main(int argc, char *argv[]) {
             break;
         }
 
+        startupPhases.checkpoint("process.show");
         return a.exec();
     } catch (CrashCode errCode) {
         return int(errCode);

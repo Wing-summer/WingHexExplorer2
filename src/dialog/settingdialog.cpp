@@ -154,6 +154,10 @@ void SettingDialog::showConfig(int index) {
     _dialog->exec();
 }
 
+void SettingDialog::showConfig(WingHex::SettingPage *page) {
+    showConfig(m_pages.indexOf(page));
+}
+
 void SettingDialog::showConfig(const QString &id) {
     if (id.isEmpty()) {
         ui->listWidget->setCurrentRow(0);
@@ -218,7 +222,7 @@ void SettingDialog::toastTakeEffectReboot() {
     if (page) {
         auto icon = page->categoryIcon();
         Toast::toast(_dialog, icon.pixmap(200, 200),
-                     tr("Restart the application to apply these changes."));
+                     tr("Restart the application to apply these changes"));
     }
 }
 
@@ -226,11 +230,11 @@ void SettingDialog::toastTakeEffectReboot(WingHex::SettingPage *page) {
     if (page) {
         auto icon = page->categoryIcon();
         Toast::toast(_dialog, icon.pixmap(200, 200),
-                     tr("Restart the application to apply these changes."));
+                     tr("Restart the application to apply these changes"));
     } else {
         Toast::toast(_dialog,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Settings),
-                     tr("Restart the application to apply these changes."));
+                     tr("Restart the application to apply these changes"));
     }
 }

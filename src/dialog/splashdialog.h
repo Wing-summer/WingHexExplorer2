@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -19,6 +19,8 @@
 #define SPLASHDIALOG_H
 
 #include <QDialog>
+#include <QElapsedTimer>
+#include <QTimer>
 
 namespace Ui {
 class SplashDialog;
@@ -28,15 +30,38 @@ class SplashDialog : public QDialog {
     Q_OBJECT
 
 public:
+    enum class DisplayMode { Immediate, Automatic };
     explicit SplashDialog(QWidget *parent = nullptr);
+    explicit SplashDialog(DisplayMode mode, qint64 expectedDurationMs = 0,
+                          QWidget *parent = nullptr);
     virtual ~SplashDialog() override;
+
+    qint64 elapsedTime() const;
+    void prepareForBlockingPhase();
 
 public slots:
     void setInfoText(const QString &text);
     void cancel();
+    void finish();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+#ifdef WINGHEX_ENABLE_STARTUP_PROFILE
+    void paintEvent(QPaintEvent *event) override;
+#endif
 
 private:
     Ui::SplashDialog *ui;
+    QElapsedTimer m_elapsed;
+    QTimer m_showTimer;
+    qint64 m_expectedDurationMs;
+    bool m_shown = false;
+    bool m_finished = false;
+#ifdef WINGHEX_ENABLE_STARTUP_PROFILE
+    bool m_paintRecorded = false;
+#endif
+
+    void showSplash();
 };
 
 #endif // SPLASHDIALOG_H

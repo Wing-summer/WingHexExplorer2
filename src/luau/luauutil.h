@@ -23,6 +23,7 @@
 #include <QString>
 
 #include <lua.h>
+#include <lualib.h>
 #include <optional>
 
 namespace LuauUtil {
@@ -59,6 +60,15 @@ private:
     using DebugStep = void (*)(lua_State *, lua_Debug *);
     DebugStep old_debug_step_;
 };
+
+// A non-yieldable C boundary; return the protected status and all Lua results.
+inline int callSync(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    const auto status = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
+    lua_pushboolean(L, status == LUA_OK);
+    lua_insert(L, 1);
+    return lua_gettop(L);
+}
 
 int callMetaProtected(lua_State *L, int obj, const char *event);
 

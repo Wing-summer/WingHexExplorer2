@@ -18,12 +18,16 @@
 #ifndef TOAST_H
 #define TOAST_H
 
+#include <QBasicTimer>
+#include <QColor>
 #include <QDialog>
+#include <QElapsedTimer>
 #include <QFont>
-#include <QGraphicsOpacityEffect>
-#include <QIcon>
+#include <QPixmap>
+#include <QPointer>
 #include <QSize>
 #include <QString>
+#include <QTextLayout>
 
 class Toast : public QDialog {
     Q_OBJECT
@@ -37,7 +41,7 @@ public:
     static void toast(QWidget *parent, const QPixmap &icon,
                       const QString &strContent);
 
-    virtual ~Toast();
+    virtual ~Toast() override;
 
     void setToastPos(TOAST_POS pos);
     TOAST_POS lastToastPos() const;
@@ -56,6 +60,7 @@ protected:
     QSize calculateTextSize();
     void init();
 
+    virtual void changeEvent(QEvent *event) override;
     virtual void paintEvent(QPaintEvent *event) override;
     virtual void showEvent(QShowEvent *event) override;
     virtual void timerEvent(QTimerEvent *event) override;
@@ -67,19 +72,22 @@ public:
 
 private:
     QString m_strContent;
-    int m_nCurrentWindowOpacity;
-    int m_nCurrentStayTime;
-    int m_nStatus;
-    int m_nFadeStep;
+    QTextLayout m_textLayout;
+    QBasicTimer m_timer;
+    QElapsedTimer m_elapsed;
+    qint64 m_activeTime = 0;
+    qreal m_opacity = 1.0;
     QColor m_textColor = Qt::white;
     QColor m_backColor = Qt::black;
     QPixmap m_icon;
 
-    QWidget *_parent = nullptr;
-    QGraphicsOpacityEffect *_oe = nullptr;
+    QPointer<QWidget> _parent;
 
     TOAST_POS m_pos = TOAST_POS::BOTTOM;
     bool _pauseTimer = false;
+    bool m_dismissing = false;
+
+    void dismiss();
 
     Toast(const QString &strContent, const QPixmap &icon, QWidget *parent);
 };

@@ -33,11 +33,11 @@ void SharedMemoryDriver::unload(std::unique_ptr<QSettings> &set) {
 }
 
 const QString SharedMemoryDriver::pluginName() const {
-    return tr("SharedMemoryDriver");
+    return tr("Shared memory driver");
 }
 
 const QString SharedMemoryDriver::pluginComment() const {
-    return tr("An extension for opening sshared memory in WingHexExplorer2.");
+    return tr("Open shared memory in WingHexExplorer2.");
 }
 
 WingHex::WingIODevice *SharedMemoryDriver::onOpenFile(const QString &path) {
@@ -57,7 +57,7 @@ bool SharedMemoryDriver::isShareMemUsed(const WingHex::SenderInfo &) {
 }
 
 QString SharedMemoryDriver::supportedFileExtDisplayName() const {
-    return tr("ShareMemory");
+    return tr("Shared memory");
 }
 
 QIcon SharedMemoryDriver::supportedFileIcon() const {
@@ -66,7 +66,8 @@ QIcon SharedMemoryDriver::supportedFileIcon() const {
 
 QString SharedMemoryDriver::onOpenFileBegin() {
     bool ok;
-    auto id = dlgGetText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
+    auto id = dlgGetText(nullptr, tr("Shared memory"),
+                         tr("Enter the shared memory identifier:"),
                          QLineEdit::Normal, {}, &ok);
     if (!ok) {
         return {};

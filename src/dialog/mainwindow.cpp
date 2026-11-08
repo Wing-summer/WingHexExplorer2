@@ -26,6 +26,7 @@
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
 #include "class/application/appmanager.h"
+#include "class/application/startuptrace.h"
 #include "class/application/inspectqtloghelper.h"
 #include "class/application/logger.h"
 #include "class/application/wingupdater.h"
@@ -73,6 +74,7 @@
 #include <QPainter>
 #include <QPicture>
 #include <QPushButton>
+#include <QPointer>
 #include <QRadioButton>
 #include <QScopeGuard>
 #include <QScrollBar>
@@ -105,12 +107,14 @@ void configureTableColumns(QTableViewExt *view,
 }
 } // namespace
 
-MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
+MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
+    QPointer<SplashDialog> splash(splashDialog);
+    StartupTrace::PhaseTimer startupPhases;
     this->setUpdatesEnabled(false);
     this->setMinimumSize(900, 800);
 
     if (splash) {
-        splash->setInfoText(tr("Initializing interface..."));
+        splash->setInfoText(tr("Initializing interface"));
     }
 
     m_editStateWidgets.reserve(52);
@@ -119,6 +123,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     // build up UI
     m_recentMenu = new QMenu(this); // used in buildUpRibbonBar
     buildUpRibbonBar();
+    startupPhases.checkpoint("mainwindow.ribbon");
 
     auto cw = new QWidget(this);
     cw->setSizePolicy(
@@ -129,9 +134,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     layout->addWidget(q_check_ptr(m_ribbon));
 
     if (splash) {
-        splash->setInfoText(tr("Initializing docking..."));
+        splash->setInfoText(tr("Initializing docking"));
     }
     buildUpDockSystem(cw);
+    startupPhases.checkpoint("mainwindow.docks");
 
     layout->addWidget(m_dock, 1);
 
@@ -224,6 +230,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     layout->addWidget(m_status);
 
     buildUpContent(cw);
+    startupPhases.checkpoint("mainwindow.status_and_content");
 
     m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
@@ -239,7 +246,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     // launch logging system
     if (splash) {
-        splash->setInfoText(tr("Starting logging..."));
+        splash->setInfoText(tr("Starting logging"));
     }
     auto &log = Logger::instance();
     log.setLogLevel(Logger::Level(set.logLevel()));
@@ -250,22 +257,29 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     // launch plugin system
     if (splash) {
-        splash->setInfoText(tr("Initializing plugins..."));
+        splash->setInfoText(tr("Initializing plugins"));
     }
     auto &plg = PluginSystem::instance();
     connect(&plg, &PluginSystem::pluginLoading, this,
             [=](const QString &plgName) {
+                // Plugin init may inspect or extend the application QSS.
+                // Finish the initial batch before handing control to it.
                 if (splash) {
-                    splash->setInfoText(tr("Loading plugin:") + plgName);
+                    splash->prepareForBlockingPhase();
+                }
+                ThemeManager::instance().setStyleSheetDeferred(false);
+                if (splash) {
+                    splash->setInfoText(tr("Loading plugin %1").arg(plgName));
                 }
             });
 
     plg.setMainWindow(this);
     plg.loadAllPlugins();
+    startupPhases.checkpoint("mainwindow.plugins");
 
     // recent file manager init
     if (splash) {
-        splash->setInfoText(tr("Initializing recent files..."));
+        splash->setInfoText(tr("Initializing recent files"));
     }
 
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
@@ -313,6 +327,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 }
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
+    startupPhases.checkpoint("mainwindow.recent_files");
 
     // Don't setup it too early, because the plugin can register script
     // functions. Code completions of them will be not worked out.
@@ -367,16 +382,16 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             sm.registerCallBack(ScriptMachine::Background, backgroundCallbacks);
 
             if (splash) {
-                splash->setInfoText(tr("Initializing script console..."));
+                splash->setInfoText(tr("Initializing script console"));
             }
 
             m_scriptConsole->init();
             if (splash) {
-                splash->setInfoText(tr("Initializing script manager..."));
+                splash->setInfoText(tr("Initializing script manager"));
             }
 
             if (splash) {
-                splash->setInfoText(tr("Initializing script service..."));
+                splash->setInfoText(tr("Initializing script service"));
             }
 
             m_scriptConsole->initOutput();
@@ -398,6 +413,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             throw CrashCode::ScriptInitFailed;
         }
     }
+
+    startupPhases.checkpoint("mainwindow.scripting");
 
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
@@ -427,23 +444,25 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     // ok, build up the dialog of setting
     if (splash) {
-        splash->setInfoText(tr("Initializing settings..."));
+        splash->setInfoText(tr("Initializing settings"));
     }
     buildUpSettingDialog();
+    startupPhases.checkpoint("mainwindow.settings_pages");
 
     // we start to installing plugin widgets
     if (splash) {
-        splash->setInfoText(tr("Initializing plugin widgets..."));
+        splash->setInfoText(tr("Initializing plugin widgets"));
     }
     installPluginEditorWidgets();
     auto plgview = m_toolBtneditors[PLUGIN_VIEWS];
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
     finishBuildDockSystem();
+    startupPhases.checkpoint("mainwindow.plugin_widgets_and_dock_finalization");
 
     // load saved docking layout
     if (splash) {
-        splash->setInfoText(tr("Restoring layout..."));
+        splash->setInfoText(tr("Restoring layout"));
     }
 
     _defaultLayout = m_dock->saveState();
@@ -453,11 +472,12 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     m_topViewArea = nullptr;
     m_bottomViewArea = nullptr;
     m_dock->restoreState(set.dockLayout());
+    startupPhases.checkpoint("mainwindow.restore_layout");
 
     m_lastusedpath = set.lastUsedPath();
 
     if (splash) {
-        splash->setInfoText(tr("Finishing startup..."));
+        splash->setInfoText(tr("Finishing startup"));
     }
 
     registerGlobalSwitchViewLoop();
@@ -471,6 +491,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash) {
         splash->setInfoText(tr("Startup complete"));
     }
+    startupPhases.checkpoint("mainwindow.finish");
+    m_initializing = false;
 }
 
 MainWindow::~MainWindow() {
@@ -1358,7 +1380,7 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         addPannelAction(pannel, ThemeManager::StandardIcon::OpenProject,
                         tr("Open"), &MainWindow::on_openfile,
                         QKeySequence::Open, nullptr,
-                        tr("Open a file for editing."));
+                        tr("Open a file for editing"));
 
         addPannelAction(
             pannel, ThemeManager::StandardIcon::Workspace, tr("Open workspace"),
@@ -1366,10 +1388,9 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
             shortcuts.keySequence(QKeySequences::Key::OPEN_WORKSPACE));
 
         auto menu = new QMenu(this);
-        m_toolBtneditors[ToolButtonIndex::OPEN_EXT] =
-            addPannelAction(pannel, ThemeManager::StandardIcon::OpenOther,
-                            tr("Open device"), EMPTY_FUNC, {}, menu,
-                            tr("Open a device using a device extension."));
+        m_toolBtneditors[ToolButtonIndex::OPEN_EXT] = addPannelAction(
+            pannel, ThemeManager::StandardIcon::OpenOther, tr("Open device"),
+            EMPTY_FUNC, {}, menu, tr("Open a device using a device extension"));
 
         addPannelAction(pannel, ThemeManager::StandardIcon::Recent,
                         tr("Recent files"), EMPTY_FUNC, {}, m_recentMenu);
@@ -1400,12 +1421,12 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         a = addPannelAction(pannel, ThemeManager::StandardIcon::ConvertProject,
                             tr("Convert to workspace"), &MainWindow::on_convpro,
                             {}, nullptr,
-                            tr("Convert the current file to a workspace."));
+                            tr("Convert the current file to a workspace"));
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::SaveSelection,
                             tr("Save selection"), &MainWindow::on_savesel, {},
-                            nullptr, tr("Save the selected bytes to a file."));
+                            nullptr, tr("Save the selected bytes to a file"));
         m_editStateWidgets << a;
     }
 
@@ -1780,13 +1801,13 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
             &MainWindow::on_settingGeneral,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL), nullptr,
             tr("Configure the application, hex editor, plugins, and script "
-               "permissions."));
+               "permissions"));
 
         if (set.scriptEnabled()) {
             addPannelAction(
                 pannel, ThemeManager::StandardIcon::ScriptSettings,
                 tr("Scripting"), &MainWindow::on_settingScript, {}, nullptr,
-                tr("Configure the script editor, console, and Luau tools."));
+                tr("Configure the script editor, console, and Luau tools"));
         }
     }
 
@@ -1831,65 +1852,11 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 }
 
 void MainWindow::buildUpSettingDialog() {
-    QStringList usedIDs;
-    QString id;
-    auto &set = SettingManager::instance();
-
-    m_setdialog = new SettingDialog(ThemeManager::instance().standardIcon(
-                                        ThemeManager::StandardIcon::Tools),
-                                    tr("Application settings"), this);
-    updateUI();
-
-    auto generalPage = new GeneralSettingDialog(m_setdialog);
-    connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    m_setdialog->addPage(generalPage);
-    id = generalPage->id();
-    Q_ASSERT(!id.isEmpty());
-    Q_ASSERT(usedIDs.indexOf(id) < 0);
-    usedIDs.append(id);
-    updateUI();
-
-    auto editorPage = new EditorSettingDialog(m_setdialog);
-    connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    m_setdialog->addPage(editorPage);
-    id = editorPage->id();
-    Q_ASSERT(!id.isEmpty());
-    Q_ASSERT(usedIDs.indexOf(id) < 0);
-    usedIDs.append(id);
-    updateUI();
-
-    auto plgPage = new PluginSettingDialog(m_setdialog);
-    connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    m_setdialog->addPage(plgPage);
-    id = plgPage->id();
-    Q_ASSERT(!id.isEmpty());
-    Q_ASSERT(usedIDs.indexOf(id) < 0);
-    usedIDs.append(id);
-    updateUI();
-
-    auto scriptPage = new ScriptSettingDialog(m_setdialog);
-    connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    m_setdialog->addPage(scriptPage);
-    id = scriptPage->id();
-    Q_ASSERT(!id.isEmpty());
-    Q_ASSERT(usedIDs.indexOf(id) < 0);
-    usedIDs.append(id);
-    updateUI();
-
-    auto otherPage = new OtherSettingsDialog(m_setdialog);
-    id = otherPage->id();
-    Q_ASSERT(!id.isEmpty());
-    Q_ASSERT(usedIDs.indexOf(id) < 0);
-    usedIDs.append(id);
-    updateUI();
-
+    // Plugin registration is complete here. Freeze page order and Ribbon
+    // actions now; construct the host settings tree only on first use.
+    QStringList usedIDs{"General", "Editor", "Plugin", "Script", "Others"};
+    QList<SettingPage *> acceptedPages;
     for (const auto &page : std::as_const(m_settingPages)) {
-        updateUI();
-
         auto name = page->name();
         auto id = page->id();
 
@@ -1918,15 +1885,65 @@ void MainWindow::buildUpSettingDialog() {
             continue;
         }
 
-        connect(page, &SettingPage::optionNeedRestartChanged, m_setdialog,
-                QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-        m_setdialog->addPage(page);
+        // Retain ownership until the deferred settings stack adopts it.
+        page->setParent(this);
+        page->hide();
+        // Registration-time notifications must also work before the lazy
+        // dialog exists. Keep the existing translation context and toast.
+        connect(page, &SettingPage::optionNeedRestartChanged, this,
+                [this, page] {
+                    Toast::toast(m_setdialog ? m_setdialog->window() : this,
+                                 page->categoryIcon().pixmap(200, 200),
+                                 SettingDialog::tr("Restart the application to "
+                                                   "apply these changes"));
+                });
+        acceptedPages.append(page);
         if (page->showInRibbon()) {
             auto icon = page->categoryIcon();
-            addPannelAction(m_pluginSettingsGroup, icon, name,
-                            [this, id] { m_setdialog->showConfig(id); });
+            addPannelAction(m_pluginSettingsGroup, icon, name, [this, page] {
+                ensureSettingsDialog();
+                m_setdialog->showConfig(page);
+            });
         }
         usedIDs.append(id);
+    }
+    m_settingPages = acceptedPages;
+}
+
+void MainWindow::ensureSettingsDialog() {
+    if (m_setdialog) {
+        return;
+    }
+    auto &set = SettingManager::instance();
+
+    m_setdialog = new SettingDialog(ThemeManager::instance().standardIcon(
+                                        ThemeManager::StandardIcon::Tools),
+                                    tr("Application settings"), this);
+
+    auto generalPage = new GeneralSettingDialog(m_setdialog);
+    connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
+    m_setdialog->addPage(generalPage);
+
+    auto editorPage = new EditorSettingDialog(m_setdialog);
+    connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
+    m_setdialog->addPage(editorPage);
+
+    auto plgPage = new PluginSettingDialog(m_setdialog);
+    connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
+    m_setdialog->addPage(plgPage);
+
+    auto scriptPage = new ScriptSettingDialog(m_setdialog);
+    connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
+    m_setdialog->addPage(scriptPage);
+
+    auto otherPage = new OtherSettingsDialog(m_setdialog);
+
+    for (const auto &page : std::as_const(m_settingPages)) {
+        m_setdialog->addPage(page);
     }
     m_settingPages.clear();
     m_settingPages.squeeze();
@@ -1934,7 +1951,6 @@ void MainWindow::buildUpSettingDialog() {
     connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
     m_setdialog->addPage(otherPage);
-    updateUI();
 
     m_setdialog->build();
     auto ge = set.settingsLayout();
@@ -1945,6 +1961,15 @@ void MainWindow::buildUpSettingDialog() {
         SettingManager::instance().setSettingsLayout(m_setdialog->saveLayout());
     });
 
+    // Script settings contain two complete editor previews. Construct them
+    // only when the scripting window or its settings are actually requested.
+}
+
+void MainWindow::ensureScriptSettingsDialog() {
+    if (m_scriptsetdlg) {
+        return;
+    }
+    auto &set = SettingManager::instance();
     // script settings
     m_scriptsetdlg =
         new SettingDialog(ThemeManager::instance().standardIcon(
@@ -1964,7 +1989,7 @@ void MainWindow::buildUpSettingDialog() {
             QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
     m_scriptsetdlg->build();
 
-    ge = set.settingsScriptLayout();
+    const auto ge = set.settingsScriptLayout();
     if (!ge.isEmpty()) {
         m_scriptsetdlg->restoreLayout(ge);
     }
@@ -2180,7 +2205,7 @@ void MainWindow::on_convpro() {
         Toast::toast(
             this,
             theme.standardPixmap(ThemeManager::StandardIcon::ConvertProject),
-            tr("Please save the newly created file first."));
+            tr("Please save the newly created file first"));
         return;
     }
 
@@ -2239,7 +2264,7 @@ void MainWindow::on_exportfile() {
     }
 
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the export file path:"), lastpath);
+        this, tr("Please select the export file path"), lastpath);
     if (filename.isEmpty()) {
         return;
     }
@@ -2278,7 +2303,7 @@ void MainWindow::on_savesel() {
     }
 
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the file save location:"), lastpath);
+        this, tr("Please select the file save location"), lastpath);
     if (filename.isEmpty()) {
         return;
     }
@@ -2291,7 +2316,7 @@ void MainWindow::on_savesel() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::SaveSelection),
-                     tr("Selection saved."));
+                     tr("Selection saved"));
     } else {
         WingMessageBox::critical(
             this, tr("Error"),
@@ -2325,12 +2350,12 @@ void MainWindow::on_cutfile() {
     if (Q_LIKELY(hexeditor->Cut())) {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Cut),
-                     tr("Data cut to clipboard."));
+                     tr("Data cut to clipboard"));
     } else {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Could not cut data to the clipboard because it "
-                        "exceeds the size limit."));
+                        "exceeds the size limit"));
     }
 }
 
@@ -2348,7 +2373,7 @@ void MainWindow::on_copyfile() {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Copy),
                      tr("Could not copy data to the clipboard because it "
-                        "exceeds the size limit."));
+                        "exceeds the size limit"));
     }
 }
 
@@ -2362,7 +2387,7 @@ void MainWindow::on_pastefile() {
             this,
             ThemeManager::instance().standardPixmap(
                 ThemeManager::StandardIcon::Paste),
-            tr("Paste failed. Please check permissions or content length."));
+            tr("Paste failed. Please check permissions or content length"));
     }
 }
 
@@ -2429,21 +2454,21 @@ void MainWindow::on_findfile() {
                     Toast::toast(
                         this,
                         theme.standardPixmap(ThemeManager::StandardIcon::Find),
-                        tr("Search complete."));
+                        tr("Search complete"));
                     break;
                 case EditorView::FindError::Busy:
                     Toast::toast(
                         this,
                         theme.standardPixmap(ThemeManager::StandardIcon::Find),
-                        tr("A search is already running."));
+                        tr("A search is already running"));
                     break;
                 case EditorView::FindError::MayOutOfRange:
                     Toast::toast(
                         this,
                         theme.standardPixmap(ThemeManager::StandardIcon::Find),
-                        tr("The search volume has reached its limit. "
-                           "Results may be incomplete. We recommend "
-                           "searching by segment."));
+                        tr("The search volume has reached its limit. Results "
+                           "may be incomplete. We recommend searching by "
+                           "segment"));
                     break;
                 }
 
@@ -2489,7 +2514,7 @@ void MainWindow::on_checksum() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Checksum),
-                     tr("A search is already running."));
+                     tr("A search is already running"));
         return;
     }
 
@@ -2549,14 +2574,14 @@ void MainWindow::on_baseAddr() {
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::Address),
                              tr("The base address is too large, and the "
-                                "address you obtain will be incorrect!"));
+                                "address you obtain will be incorrect"));
             }
             hexeditor->setAddressBase(qnum);
         } else {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Address),
-                         tr("Invalid base address."));
+                         tr("Invalid base address"));
         }
     }
 }
@@ -2587,12 +2612,12 @@ void MainWindow::on_cuthex() {
     if (hexeditor->Cut(true)) {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Cut),
-                     tr("Data cut to clipboard."));
+                     tr("Data cut to clipboard"));
     } else {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Cut),
                      tr("Could not cut data to the clipboard because it "
-                        "exceeds the size limit."));
+                        "exceeds the size limit"));
     }
 }
 
@@ -2610,7 +2635,7 @@ void MainWindow::on_copyhex() {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::CopyHex),
                      tr("Could not copy data to the clipboard because it "
-                        "exceeds the size limit."));
+                        "exceeds the size limit"));
     }
 }
 
@@ -2624,7 +2649,7 @@ void MainWindow::on_pastehex() {
             this,
             ThemeManager::instance().standardPixmap(
                 ThemeManager::StandardIcon::CopyHex),
-            tr("Paste failed. Please check permissions or content length."));
+            tr("Paste failed. Please check permissions or content length"));
     }
 }
 
@@ -2645,7 +2670,7 @@ void MainWindow::on_fill() {
                 this,
                 ThemeManager::instance().standardPixmap(
                     ThemeManager::StandardIcon::Fill),
-                tr("The input value is too large and it will be truncated."));
+                tr("The input value is too large and it will be truncated"));
         }
         auto ch = uchar(v);
         if (b) {
@@ -2667,7 +2692,7 @@ void MainWindow::on_fill() {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Fill),
-                         tr("Invalid fill byte."));
+                         tr("Invalid fill byte"));
         }
     }
 }
@@ -2702,7 +2727,7 @@ void MainWindow::on_bookmark() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Bookmark),
-                     tr("The bookmark limit has been reached."));
+                     tr("The bookmark limit has been reached"));
         return;
     }
 
@@ -2801,7 +2826,7 @@ void MainWindow::on_metadata() {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Metadata),
-                     tr("The annotation limit has been reached."));
+                     tr("The annotation limit has been reached"));
         return;
     }
 
@@ -2833,7 +2858,7 @@ void MainWindow::on_metadata() {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Metadata),
-                         tr("Select some bytes first."));
+                         tr("Select some bytes first"));
         }
     }
 }
@@ -2872,7 +2897,7 @@ void MainWindow::on_metadataedit() {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Metadata),
-                         tr("There is no annotation to edit."));
+                         tr("There is no annotation to edit"));
         }
     }
 }
@@ -2890,7 +2915,7 @@ void MainWindow::on_metadatadel() {
         Toast::toast(
             this,
             theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
-            tr("Please clear your selection."));
+            tr("Please clear your selection"));
         return;
     }
     auto pos = cursor->position().offset();
@@ -2898,12 +2923,12 @@ void MainWindow::on_metadatadel() {
         Toast::toast(
             this,
             theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
-            tr("Annotation deleted."));
+            tr("Annotation deleted"));
     } else {
         Toast::toast(
             this,
             theme.standardPixmap(ThemeManager::StandardIcon::DeleteMetadata),
-            tr("No annotations to delete."));
+            tr("No annotations to delete"));
     }
 }
 
@@ -2917,7 +2942,7 @@ void MainWindow::on_metadatacls() {
     Toast::toast(this,
                  ThemeManager::instance().standardPixmap(
                      ThemeManager::StandardIcon::ClearMetadata),
-                 tr("Annotations cleared."));
+                 tr("Annotations cleared"));
 }
 
 void MainWindow::on_metadatafg(bool checked) {
@@ -2980,7 +3005,7 @@ void MainWindow::on_togglelocked() {
         return;
     }
     if (!hexeditor->setLockedFile(!hexeditor->isLocked())) {
-        Toast::toast(this, _pixLock, tr("Could not lock editing."));
+        Toast::toast(this, _pixLock, tr("Could not lock editing"));
     }
 }
 
@@ -2990,7 +3015,7 @@ void MainWindow::on_toggleover() {
         return;
     }
     if (!hexeditor->setKeepSize(!hexeditor->isKeepSize())) {
-        Toast::toast(this, _pixCannotOver, tr("Could not lock the file size."));
+        Toast::toast(this, _pixCannotOver, tr("Could not lock the file size"));
     }
 }
 
@@ -3011,7 +3036,7 @@ void MainWindow::on_exportfindresult() {
     if (editor == nullptr) {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Export),
-                     tr("There are no search results to export."));
+                     tr("There are no search results to export"));
         return;
     }
 
@@ -3021,11 +3046,11 @@ void MainWindow::on_exportfindresult() {
     if (c == 0) {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Export),
-                     tr("There are no search results to export."));
+                     tr("There are no search results to export"));
         return;
     }
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the file save location:"), m_lastusedpath,
+        this, tr("Please select the file save location"), m_lastusedpath,
         {"Json (*.json)"});
     if (filename.isEmpty()) {
         return;
@@ -3060,12 +3085,12 @@ void MainWindow::on_exportfindresult() {
             f.close();
             Toast::toast(
                 this, theme.standardPixmap(ThemeManager::StandardIcon::Export),
-                tr("Search results exported successfully!"));
+                tr("Search results exported successfully"));
         }
     } else {
         Toast::toast(this,
                      theme.standardPixmap(ThemeManager::StandardIcon::Export),
-                     tr("Export failed."));
+                     tr("Export failed"));
     }
 }
 
@@ -3165,7 +3190,7 @@ void MainWindow::on_saveLayout() {
                 Toast::toast(this,
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::ExportLayout),
-                             tr("Could not save the layout."));
+                             tr("Could not save the layout"));
             }
         }
         break;
@@ -3213,7 +3238,7 @@ void MainWindow::on_delLayout() {
             Toast::toast(
                 this,
                 theme.standardPixmap(ThemeManager::StandardIcon::DeleteLayout),
-                tr("Could not remove the layout."));
+                tr("Could not remove the layout"));
         }
     }
 }
@@ -3238,7 +3263,7 @@ void MainWindow::on_exportlog() {
         } else {
             Toast::toast(this,
                          theme.standardPixmap(ThemeManager::StandardIcon::Log),
-                         tr("Log export failed!"));
+                         tr("Log export failed"));
         }
     }
 }
@@ -3249,7 +3274,7 @@ void MainWindow::on_clslog() {
     Toast::toast(this,
                  ThemeManager::instance().standardPixmap(
                      ThemeManager::StandardIcon::ClearHistory),
-                 tr("Logs successfully cleared!"));
+                 tr("Logs successfully cleared"));
 }
 
 void MainWindow::on_inspectQt() {
@@ -3258,11 +3283,20 @@ void MainWindow::on_inspectQt() {
 
 void MainWindow::on_scriptwindow() { createScriptDialog(nullptr); }
 
-void MainWindow::on_settingGeneral() { m_setdialog->showConfig(0); }
+void MainWindow::on_settingGeneral() {
+    ensureSettingsDialog();
+    m_setdialog->showConfig(0);
+}
 
-void MainWindow::on_settingScript() { m_scriptsetdlg->showConfig(); }
+void MainWindow::on_settingScript() {
+    ensureScriptSettingsDialog();
+    m_scriptsetdlg->showConfig();
+}
 
-void MainWindow::on_settingPlugin() { m_setdialog->showConfig(2); }
+void MainWindow::on_settingPlugin() {
+    ensureSettingsDialog();
+    m_setdialog->showConfig(2);
+}
 
 void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 
@@ -3396,7 +3430,7 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 EditorView *MainWindow::findEditorView(const QUrl &filename) {
     const auto &views = EditorView::instances();
     for (const auto &p : views) {
-        if (p->fileNameUrl() == filename) {
+        if (!p->isClosed() && p->fileNameUrl() == filename) {
             return p;
         }
     }
@@ -3420,7 +3454,7 @@ void MainWindow::bindWorkSpaceEditorView(EditorView *editor) {
                 this,
                 ThemeManager::instance().standardPixmap(
                     ThemeManager::StandardIcon::Workspace),
-                tr("Workspace data anomaly, please see the log for details."));
+                tr("Workspace data anomaly, please see the log for details"));
         });
     });
 }
@@ -3667,7 +3701,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                     Toast::toast(this,
                                  ThemeManager::instance().standardPixmap(
                                      ThemeManager::StandardIcon::Metadata),
-                                 tr("Select some bytes first."));
+                                 tr("Select some bytes first"));
                 }
             }
         }
@@ -3729,7 +3763,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Copy),
-                         tr("The copy limit has been reached."));
+                         tr("The copy limit has been reached"));
         });
     m_curConnections << connect(
         hexeditor, &QHexView::scaleRateChanged, this, [this] {
@@ -3764,7 +3798,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
             QTimer::singleShot(0, this, [icon, this]() {
                 Toast::toast(this, icon,
-                             tr("Permission restricted. Please adjust."));
+                             tr("Permission restricted. Please adjust"));
             });
         });
 
@@ -3952,7 +3986,7 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
 
 ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
                                 EditorView **editor) {
-    auto e = findEditorView(Utilities::getDeviceFileName(ext, file));
+    auto e = findEditorView(WingHex::deviceUrl(ext, file));
     if (e) {
         if (editor) {
             *editor = e;
@@ -4234,13 +4268,13 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Save),
-                     tr("There is nothing to save."));
+                     tr("There is nothing to save"));
         return;
     }
 
     QString selFilter;
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the file save location:"), m_lastusedpath,
+        this, tr("Please select the file save location"), m_lastusedpath,
         QStringLiteral("Json (*.json);;CSV (*.csv)"), &selFilter);
     if (filename.isEmpty()) {
         return;
@@ -4319,7 +4353,7 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
     Toast::toast(this,
                  ThemeManager::instance().standardPixmap(
                      ThemeManager::StandardIcon::Save),
-                 tr("File saved."));
+                 tr("File saved"));
 }
 
 void MainWindow::updateNumberTable(bool force) {
@@ -4518,26 +4552,37 @@ QPair<QByteArrayList, bool> MainWindow::updateStringDec() {
         } else {
             m_txtDecode->insertHtml(
                 QStringLiteral("<font color=\"red\">%1</font><br />")
-                    .arg(tr("Exceeding the decoding byte limit...")));
+                    .arg(tr("Decode limit reached")));
         }
     }
 
     return qMakePair(buffer, isPreview);
 }
 
-void MainWindow::updateUI() { QApplication::processEvents(); }
+void MainWindow::updateUI() {
+    // SplashDialog pumps progress between startup phases. Pumping the whole
+    // queue for each hidden control/page repeatedly polishes partial layouts.
+    if (!m_initializing) {
+        QApplication::processEvents();
+    }
+}
 
 void MainWindow::createScriptDialog(SplashDialog *d) {
     if (m_scriptDialog == nullptr) {
-        auto splash = d ? d : new SplashDialog(this);
-        splash->setInfoText(tr("Initializing script editor..."));
+        QPointer<SplashDialog> splash(d ? d : new SplashDialog(this));
+        splash->setInfoText(tr("Initializing script editor"));
 
+        ensureScriptSettingsDialog();
         m_scriptDialog = new ScriptingDialog(m_scriptsetdlg, this);
         connect(m_scriptDialog, &ScriptingDialog::destroyed, this,
                 [this]() { m_scriptDialog = nullptr; });
         m_scriptDialog->initConsole();
 
-        splash->close();
+        // A caller-supplied startup splash belongs to AppManager. Closing it
+        // here would lose progress/lifetime tracking while more files open.
+        if (!d && splash) {
+            splash->finish();
+        }
     }
     m_scriptDialog->show();
     m_scriptDialog->raise();
@@ -4613,7 +4658,7 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::File),
-                     tr("This file is already open."));
+                     tr("This file is already open"));
         return true;
     } break;
     case WingHex::DevNotFound: {
@@ -5008,7 +5053,7 @@ bool MainWindow::__saveas(EditorView *editor) {
     }
 
     auto filename = WingFileDialog::getSaveFileName(
-        this, tr("Please select the file save location:"), lastpath);
+        this, tr("Please select the file save location"), lastpath);
     if (filename.isEmpty()) {
         return false;
     }

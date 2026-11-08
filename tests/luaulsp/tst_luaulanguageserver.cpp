@@ -671,10 +671,157 @@ static void testGeneratedBindings() {
     server.onCloseDocument(uri);
 }
 
+static void testHexdocModule() {
+    FFlag::LuauIntegerType2.value = true;
+    const QDir output(qEnvironmentVariable("WING_BINDINGS_DIR"));
+    QFile manifest(output.filePath("manifest.json"));
+    require(manifest.open(QIODevice::ReadOnly),
+            "generated manifest unavailable");
+    const auto model = QJsonDocument::fromJson(manifest.readAll()).object();
+    LuauLanguageServer::InitializationOptions options;
+    const QDir definitions(output.filePath("definitions"));
+    int index = 0;
+    for (const auto &name : model.value("definition_preload").toArray()) {
+        options.definitionsFiles.insert(
+            QString::number(index++).rightJustified(5, '0'),
+            definitions.filePath(name.toString()));
+    }
+    QTemporaryDir modules;
+    require(modules.isValid(), "temporary directory unavailable");
+    const QDir source(qEnvironmentVariable("WING_SOURCE_DIR"));
+    require(QFile::copy(source.filePath("src/luau/modules/hexdoc.luau"),
+                        modules.filePath("hexdoc.luau")),
+            "cannot copy module");
+    require(QFile::copy(output.filePath("generated/hexdoc_api.luau"),
+                        modules.filePath("hexdoc_api.luau")),
+            "cannot copy operations");
+    options.systemModuleRoot = modules.path();
+    options.symbolCatalogFile =
+        definitions.filePath(model.value("symbol_catalog").toString());
+    LuauLanguageServer server;
+    QVector<lsp::Diagnostic> diagnostics;
+    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+                     [&](const lsp::DocumentUri &diagnosticUri,
+                         const QVector<lsp::Diagnostic> &items) {
+                         diagnostics = items;
+                         for (const auto &item : items) {
+                             std::cerr << diagnosticUri.toString().toStdString()
+                                       << ":" << item.range.start.line << ": "
+                                       << item.message.toStdString() << '\n';
+                         }
+                     });
+    server.initialize(options);
+    require(diagnostics.isEmpty(), "hexdoc definitions failed");
+    bool foundModule = false;
+    bool foundDocument = false;
+    bool foundOperation = false;
+    for (const auto &root : server.builtinSymbols()) {
+        if (root.item.label != QLatin1String("hexdoc")) {
+            continue;
+        }
+        foundModule =
+            root.moduleRoot && root.requiresImport &&
+            root.importPath == QLatin1String("@s/hexdoc") &&
+            root.category == LuauLanguageServer::SymbolCategory::Document;
+        for (const auto &child : server.symbolChildren(root)) {
+            if (child.item.label != QLatin1String("Document")) {
+                continue;
+            }
+            foundDocument = child.hasChildren;
+            for (const auto &method : server.symbolChildren(child)) {
+                if (method.item.label == QLatin1String("read_bytes")) {
+                    foundOperation = !method.fullDeclaration.isEmpty();
+                }
+            }
+        }
+    }
+    require(foundModule && foundDocument && foundOperation,
+            "hexdoc module or exported type missing from the object catalog");
+    const auto uri = QUrl::fromLocalFile(modules.filePath("probe.luau"));
+    const QString valid = QStringLiteral(
+        "--!strict\nlocal hexdoc = require(\"@s/hexdoc\")\n"
+        "local doc = hexdoc.new()\nlocal code: number = "
+        "doc:open_file(\"test.bin\")\n"
+        "local closed: number = doc:close()\n"
+        "local isValid: boolean = doc:is_valid()\n"
+        "local own = reader.opened_files()\n"
+        "local all = reader.all_opened_files()\n"
+        "local rawValid: boolean = reader.is_file_opened(0)\n"
+        "for _, url in own do local scheme: string = url:scheme(); "
+        "print(scheme) end\n"
+        "print(isValid, rawValid, all)\n"
+        "local bytes: string = doc:use(function(d: hexdoc.Document)\n"
+        "    d:move_to(1)\n    d:move_to(0, 1, 0, true)\n"
+        "    d:select(0, 1)\n    return d:read_bytes(0, 16)\nend)\n"
+        "local first: string, missing: nil, last: boolean = doc:use(\n"
+        "    function(d: hexdoc.Document, value: string): (string, nil, "
+        "boolean)\n"
+        "        d:use(function(inner: hexdoc.Document) inner:select(0, 1) "
+        "end)\n"
+        "        return value, nil, true\n    end, \"value\")\n"
+        "print(code, closed, bytes, first, missing, last)\n");
+    QTextDocument document(valid);
+    server.onOpenDocument(uri, &document);
+    require(diagnostics.isEmpty(), "valid hexdoc program failed type checking");
+    document.setPlainText(valid + "\ndoc.\n");
+    server.onUpdateDocument(uri, &document);
+    const auto completion = server.completion(
+        {uri, positionOf(document.toPlainText(), "doc.\n", 4), std::nullopt},
+        nullptr);
+    require(hasCompletion(completion, "read_bytes") &&
+                hasCompletion(completion, "close_handle") &&
+                hasCompletion(completion, "is_valid"),
+            "hexdoc require lost typed completion");
+    const QString callbackSource = QStringLiteral(
+        "--!strict\nlocal hexdoc = require(\"@s/hexdoc\")\n"
+        "local doc = hexdoc.new()\ndoc:use(function(d: hexdoc.Document)\n"
+        "    d.\nend)\n");
+    document.setPlainText(callbackSource);
+    server.onUpdateDocument(uri, &document);
+    const auto callbackCompletion = server.completion(
+        {uri, positionOf(callbackSource, "d.\n", 2), std::nullopt}, nullptr);
+    require(hasCompletion(callbackCompletion, "select") &&
+                hasCompletion(callbackCompletion, "metadata"),
+            "hexdoc callback lost operation completion");
+    document.setPlainText(valid + "\ndoc:move_to(0, 1)\n");
+    server.onUpdateDocument(uri, &document);
+    const auto signatures = server.signatureHelp(
+        {uri, positionOf(document.toPlainText(), "doc:move_to(0, 1)", 15)},
+        nullptr);
+    require(signatures && signatures->signatures.size() >= 2,
+            "hexdoc operation overloads were lost");
+    for (const QString &invalid :
+         {QStringLiteral("reader.is_file_opened(\"bad\")"),
+          QStringLiteral("local invalid: boolean = reader.opened_files()[1]"),
+          QStringLiteral("doc:is_valid(1)"),
+          QStringLiteral("doc:read_bytes(\"bad\", 1)"),
+          QStringLiteral("local invalid: boolean = doc:read_bytes(0, 1)"),
+          QStringLiteral("doc:missing_member()"),
+          QStringLiteral("doc:move_to()")}) {
+        document.setPlainText(valid + invalid + '\n');
+        server.onUpdateDocument(uri, &document);
+        require(!diagnostics.isEmpty(),
+                "hexdoc invalid API use escaped type checking");
+    }
+    server.onCloseDocument(uri);
+    QFile moduleSource(modules.filePath("hexdoc.luau"));
+    require(moduleSource.open(QIODevice::ReadOnly),
+            "cannot read module source");
+    QTextDocument moduleDocument(QString::fromUtf8(moduleSource.readAll()));
+    const auto moduleUri = QUrl::fromLocalFile(moduleSource.fileName());
+    server.onOpenDocument(moduleUri, &moduleDocument);
+    require(diagnostics.isEmpty(),
+            "hexdoc source module failed strict checking");
+    server.onCloseDocument(moduleUri);
+}
+
 int main(int argc, char **argv) {
     QGuiApplication application(argc, argv);
     try {
         const auto scenario = application.arguments().value(1);
+        if (scenario == QLatin1String("hexdoc")) {
+            testHexdocModule();
+        }
         if (scenario == QLatin1String("bindings")) {
             testGeneratedBindings();
         }

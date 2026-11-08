@@ -37,6 +37,12 @@ The project directory structure is classified in detail as follows:
   - `widgetframe`: 无边框窗口和标题栏支持。/ Frameless window and title bar support.
 - `theme`: 软件主题文件，里面每个文件夹以主题名命名（必须英文）。/ Software theme files, each folder in it is named with the theme name (must be in English).
 
+### 插件构建约定 / Plugin build conventions
+
+使用 `add_wing_plugin(NAME TargetName ...)` 时，插件元数据必须放在当前源码目录的 `TargetName.json` 中，并在 `Q_PLUGIN_METADATA` 中引用同一文件。该规则同时适用于普通插件和设备插件，无论是否提供翻译；元数据须包含非空字符串 `Id`，缺失或无效时 CMake 配置失败。`SOURCES` 可以包含其他 JSON 文件，它们不参与元数据选择。翻译资源前缀使用元数据中的 `Id`（`/PLGLANG/<Id>`），不要求 `Id` 与目标名相同。
+
+When using `add_wing_plugin(NAME TargetName ...)`, place plugin metadata in `TargetName.json` in the current source directory and reference that same file in `Q_PLUGIN_METADATA`. This applies to ordinary and device plugins, with or without translations. Metadata must contain a non-empty string `Id`; missing or invalid metadata fails CMake configuration. Other JSON files may appear in `SOURCES` and do not affect metadata selection. Translation resources use the metadata `Id` (`/PLGLANG/<Id>`), which may differ from the target name.
+
 ### 控制语句规范 / Control Statement Style
 
 本项目维护的 C++ 代码（包括 WingPlugin）中，`if`、`else`、`if constexpr`、`for`、范围 `for`、`while` 和 `do ... while` 的语句体必须使用 `{}` 块，即使只有一条语句或没有语句。`else if` 链中的每个条件分支也遵循此规范，避免后续新增语句时因遗漏花括号而改变执行逻辑。

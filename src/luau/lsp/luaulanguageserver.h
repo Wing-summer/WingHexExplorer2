@@ -131,6 +131,7 @@ public:
         bool moduleRoot = false;
         QString membersFile;
         bool requiresImport = false;
+        QString importPath;
         bool hasChildren = false;
     };
 

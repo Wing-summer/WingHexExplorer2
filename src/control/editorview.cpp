@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -526,7 +526,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
                                           ? QHexCursor::OverwriteMode
                                           : QHexCursor::InsertMode);
 
-    auto fileName = Utilities::getDeviceFileName(ext, file);
+    auto fileName = WingHex::deviceUrl(ext, file);
 
     // store the additional info to reload
     _dev = d;
@@ -953,10 +953,7 @@ void EditorView::updateIcon() {
     this->setIcon(m_iconCaches.value(cur, m_iconCaches.value(m_hexContainer)));
 }
 
-void EditorView::saveState(QXmlStreamWriter &Stream) const {
-    Q_UNUSED(Stream);
-    // do nothing
-}
+bool EditorView::isStateSaveEnabled() const { return false; }
 
 bool EditorView::hasCloneChildren() const {
     for (const auto &c : m_cloneChildren) {
@@ -3104,6 +3101,12 @@ QUrl EditorView::fileNameUrl() const {
         return this->cloneParent()->fileNameUrl();
     }
     return m_fileName;
+}
+
+QUrl EditorView::openedFileUrl() const {
+    const auto *view = isCloneFile() ? cloneParent() : this;
+    return view->isWorkSpace() ? WingHex::workspaceUrl(view->workSpaceName())
+                               : view->fileNameUrl();
 }
 
 QStringConverter::Encoding EditorView::stringEncoding() const {

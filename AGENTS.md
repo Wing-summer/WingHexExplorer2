@@ -45,6 +45,8 @@
 
 - 遵循[文案与翻译规范](docs/i18n.md)。使用自然英文原文及适当翻译上下文，维护简繁中文目录，不重新引入英文语言包。
   Follow the [UI text guide](docs/i18n.md). Use natural English source text and appropriate translation contexts, maintain the Chinese catalogs, and do not reintroduce an English package.
+- 短 tooltip、按钮和标签避免多余的句末句号；信息框、文本框和长说明可保留结尾标点。按语义保留疑问或强调的 `?`、`!`（含中文形式），以及表示进行中或后续操作的 `...`。
+  Avoid unnecessary final periods in short tooltips, buttons, and labels. Message boxes, text boxes, and extended explanations may retain punctuation. Preserve meaningful question/exclamation marks, including Chinese forms, and `...` for progress or further actions.
 - 显示文案不改变内部名称、配置键或脚本 API。编辑 `.ui`、`.qrc` 源文件而非生成代码，并检查布局及无障碍影响。
   Display-text changes must preserve internal names, settings keys, and script APIs. Edit `.ui` and `.qrc` sources, not generated code, and check layout and accessibility.
 

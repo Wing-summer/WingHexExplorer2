@@ -1,11 +1,11 @@
 {
     "Id" : "shmem",
-    "SDK": 21,
+    "SDK": 22,
     "Version" : "0.0.1",
     "Vendor" : "WingCloudStudio",
     "Author" : "wingsummer",
     "License" : "AGPL-3.0",
-    "Description" : "An extension for opening sshared memory in WingHexExplorer2.",
+    "Description" : "Open shared memory in WingHexExplorer2.",
     "Url" : "https://github.com/Wing-summer/WingHexExplorer2",
     "CertID": "A8C53DFFDE14AD26AD44AE4AEF449274D4D5F848F09B7E8DA683490498AC3890"
 }

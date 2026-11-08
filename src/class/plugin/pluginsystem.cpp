@@ -16,8 +16,10 @@
 */
 
 #include "pluginsystem.h"
+
 #include "class/application/logger.h"
 #include "class/file/fileaccesscheck.h"
+#include "class/file/workspacemanager.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
@@ -29,7 +31,9 @@
 #include "dialog/common/wingmessagebox.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
-#include "luau/runtime/scriptdocumentbindings.h"
+#include "generated_bindings.hpp"
+#include "luau/luauutil.h"
+#include "luau/runtime/scriptdocumentregistry.h"
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptserviceapi.h"
 #include "wingplugincert.h"
@@ -42,10 +46,36 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QPluginLoader>
-#include <QScopeGuard>
 #include <QStringListModel>
+#include <limits>
+#include <utility>
 
 #include <private/qmetaobject_p.h>
+
+int PluginSystem::DocumentHandlePool::acquire() {
+    if (!releasedIds.isEmpty()) {
+        return releasedIds.dequeue();
+    }
+    if (nextId == std::numeric_limits<int>::max()) {
+        return -1;
+    }
+    return nextId++;
+}
+
+void PluginSystem::DocumentHandlePool::release(int handle) {
+    if (handle >= 0) {
+        Q_ASSERT(handle < nextId);
+        releasedIds.enqueue(handle);
+    }
+}
+
+PluginSystem::PluginFileContext::PluginFileContext(
+    QSharedPointer<DocumentHandlePool> pool)
+    : fid(pool->acquire()), m_handlePool(std::move(pool)) {}
+
+PluginSystem::PluginFileContext::~PluginFileContext() {
+    m_handlePool->release(fid);
+}
 
 PluginSystem::PluginSystem() : QObject() {
     auto mobj = PluginSystem::metaObject();
@@ -2362,7 +2392,7 @@ IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
     return p;
 }
 
-ErrFile PluginSystem::closeCurrent(const QObject *sender) {
+int PluginSystem::closeCurrent(const QObject *sender) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2383,6 +2413,58 @@ ErrFile PluginSystem::closeCurrent(const QObject *sender) {
     return ErrFile::Error;
 }
 
+bool PluginSystem::isFileOpened(const QObject *sender, int handle) {
+    auto *plugin = checkPluginAndReport(sender, __func__);
+    if (!plugin || handle < 0) {
+        return false;
+    }
+    const auto owner = m_plgviewMap.constFind(plugin);
+    if (owner == m_plgviewMap.cend()) {
+        return false;
+    }
+    return std::any_of(owner->contexts.cbegin(), owner->contexts.cend(),
+                       [handle](const auto &context) {
+                           return context->fid == handle && context->view &&
+                                  !context->view->isClosed();
+                       });
+}
+
+QList<QUrl> PluginSystem::openedFiles(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
+
+    auto r = m_plgviewMap.constFind(plg);
+    if (r == m_plgviewMap.cend()) {
+        return {};
+    }
+
+    QList<QUrl> files;
+    for (const auto &context : r->contexts) {
+        auto view = context->view.data();
+        if (view->isClosed() || view->documentType() == DocumentType::InValid) {
+            continue;
+        }
+        files.append(view->openedFileUrl());
+    }
+    return files;
+}
+
+QList<QUrl> PluginSystem::allOpenedFiles(const QObject *sender) {
+    Q_UNUSED(sender);
+
+    QList<QUrl> files;
+    for (auto view : EditorView::instances()) {
+        if (view->isClosed() || view->isCloneFile() ||
+            view->documentType() == DocumentType::InValid) {
+            continue;
+        }
+        files.append(view->openedFileUrl());
+    }
+    return files;
+}
+
 int PluginSystem::openCurrent(const QObject *sender) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
@@ -2398,6 +2480,9 @@ int PluginSystem::openCurrent(const QObject *sender) {
         auto id = checkIDPluginAlreadyOpened(plg, view);
         if (id < 0) {
             id = assginHandleForOpenPluginView(plg, view);
+            if (id < 0) {
+                return id;
+            }
             PluginSystem::instance().dispatchPluginFileOpenedEvent(
                 plg, _win->getEditorViewFileType(view), view->fileNameUrl(),
                 id);
@@ -2407,52 +2492,99 @@ int PluginSystem::openCurrent(const QObject *sender) {
     return ErrFile::Error;
 }
 
-ErrFile PluginSystem::closeFile(const QObject *sender, int handle) {
+int PluginSystem::closeDocument(EditorView *view, bool force) {
+    if (!view || view->isClosed()) {
+        return ErrFile::NotExist;
+    }
+    if (!view->processWingEditorViewClosing()) {
+        return ErrFile::Permission;
+    }
+    return _win->closeEditor(view, force);
+}
+
+int PluginSystem::closeFile(const QObject *sender, int handle, bool force) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
-
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
         return ErrFile::Error;
     }
 
-    auto view = closeHandle(plg, handle);
-    if (view) {
-        PluginSystem::instance().dispatchPluginFileClosedEvent(
-            plg, _win->getEditorViewFileType(view), view->fileNameUrl(),
-            handle);
-        return WingHex::ErrFile::Success;
+    auto context = pluginContextById(plg, handle);
+    if (context == nullptr) {
+        return ErrFile::NotExist;
     }
-    return WingHex::ErrFile::NotExist;
+    return closeDocument(context->view, force);
+}
+
+PluginSystem::DocumentUrlType PluginSystem::documentUrlType(const QUrl &file) {
+    if (!file.isValid()) {
+        return DocumentUrlType::Invalid;
+    }
+    auto scheme = file.scheme();
+    if (scheme == QLatin1String("wdrv")) {
+        return DocumentUrlType::Device;
+    }
+    if (scheme == QLatin1String("file")) {
+        return DocumentUrlType::File;
+    }
+    if (scheme == QLatin1String("wingpro")) {
+        return DocumentUrlType::Workspace;
+    }
+    return DocumentUrlType::Invalid;
+}
+
+int PluginSystem::openDocument(const QUrl &file, EditorView **editor) {
+    Q_ASSERT(editor);
+    *editor = nullptr;
+    switch (documentUrlType(file)) {
+    case DocumentUrlType::File:
+        return _win->openFile(file.toLocalFile(), editor);
+    case DocumentUrlType::Device:
+        return _win->openExtFile(file.host(), file.path().sliced(1), editor);
+    case DocumentUrlType::Workspace: {
+        auto local = file;
+        local.setScheme(QStringLiteral("file"));
+        auto path = local.toLocalFile();
+        return _win->openWorkSpace(path, editor);
+    }
+    case DocumentUrlType::Invalid:
+        return ErrFile::InvalidFormat;
+    }
+    Q_UNREACHABLE();
 }
 
 int PluginSystem::openFile(const QObject *sender, const QUrl &file) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
-
     auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
+    if (!plg) {
         return ErrFile::Error;
     }
-
-    if (!checkPluginCanOpenedFile(plg)) {
-        return ErrFile::TooManyOpenedFile;
+    EditorView *view = nullptr;
+    const auto result = openDocument(file, &view);
+    if (result != ErrFile::Success && result != ErrFile::AlreadyOpened) {
+        return result;
     }
-
-    auto view = _win->findEditorView(file);
-    if (view) {
-        auto id = checkIDPluginAlreadyOpened(plg, view);
-        if (id < 0) {
-            id = assginHandleForOpenPluginView(plg, view);
-            PluginSystem::instance().dispatchPluginFileOpenedEvent(
-                plg, _win->getEditorViewFileType(view), file, id);
-        }
+    if (!view) {
+        return result == ErrFile::AlreadyOpened ? result : ErrFile::Error;
+    }
+    auto id = checkIDPluginAlreadyOpened(plg, view);
+    if (id >= 0) {
         return id;
-    } else {
-        return ErrFile::Error;
     }
+    const auto handle = assginHandleForOpenPluginView(plg, view, false);
+    if (handle < 0) {
+        if (result == ErrFile::Success) {
+            _win->closeEditor(view, true);
+        }
+        return handle;
+    }
+    dispatchPluginFileOpenedEvent(plg, _win->getEditorViewFileType(view),
+                                  view->fileNameUrl(), handle);
+    return handle;
 }
 
 HexPosition PluginSystem::selectionEnd(const QObject *sender, qsizetype index) {
@@ -2539,23 +2671,28 @@ void PluginSystem::logWarn(const QObject *sender, const QString &message) {
 
 QString PluginSystem::currentLoadingPlugin() const { return _curLoadingPlg; }
 
-QSet<int> PluginSystem::scriptHandles() const {
-    static QSet<int> ret;
-    if (_handleDirty) {
-        ret.clear();
-        // TODO
-        // for (const auto &ctx : m_plgviewMap[_angelplg].contexts) {
-        //     ret.insert(getUIDHandle(ctx->fid));
-        // }
+QSet<int> PluginSystem::scriptHandles(lua_State *L) const {
+    if (L) {
+        const auto registry =
+            m_scriptDocumentRegistries.value(lua_mainthread(L)).lock();
+        if (registry) {
+            if (const auto context = registry->findCaller(L)) {
+                return context->handles();
+            }
+        }
     }
-    return ret;
+    return {};
 }
 
-void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
-    const auto diff = scriptHandles() - handles;
-    for (const auto &h : diff) {
-        // TODO
-        // closeHandle(_angelplg, h);
+void PluginSystem::cleanScriptHandles(lua_State *L, const QSet<int> &handles) {
+    if (L) {
+        const auto registry =
+            m_scriptDocumentRegistries.value(lua_mainthread(L)).lock();
+        if (registry) {
+            if (const auto context = registry->findCaller(L)) {
+                context->cleanHandles(handles);
+            }
+        }
     }
 }
 
@@ -2585,7 +2722,7 @@ EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
     auto fid = m_plgviewMap[plg].currentFID;
     auto ctx = pluginContextById(plg, fid);
     if (ctx) {
-        return ctx->view;
+        return ctx->view.data();
     }
     return _win->m_curEditor;
 }
@@ -2597,19 +2734,10 @@ EditorView *PluginSystem::handle2EditorView(IWingPlugin *plg, int handle) {
 
     auto ctx = pluginContextById(plg, handle);
     if (ctx) {
-        return ctx->view;
+        return ctx->view.data();
     }
 
     return nullptr;
-}
-
-bool PluginSystem::equalCompareHandle(const SharedUniqueId &id, int handle) {
-    return (*id) == handle;
-}
-
-int PluginSystem::getUIDHandle(const SharedUniqueId &id) {
-    Q_ASSERT(id.data());
-    return int(*id);
 }
 
 void PluginSystem::retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta) {
@@ -2632,28 +2760,38 @@ void PluginSystem::printErrorSummary(const QList<BlockInfo> &info) {
 }
 
 int PluginSystem::assginHandleForOpenPluginView(IWingPlugin *plg,
-                                                EditorView *view) {
-    if (plg == nullptr || view == nullptr) {
-        return {};
+                                                EditorView *view, bool select) {
+    if (view && view->isCloneFile()) {
+        view = view->cloneParent();
+    }
+    if (plg == nullptr || view == nullptr || view->isClosed()) {
+        return ErrFile::NotExist;
     }
 
-    auto id = m_idGen.get();
-
-    auto context = QSharedPointer<PluginFileContext>::create();
-    context->fid = id;
-    context->linkedplg = plg;
+    auto id = checkIDPluginAlreadyOpened(plg, view);
+    if (id >= 0) {
+        if (select) {
+            m_plgviewMap[plg].currentFID = id;
+        }
+        return id;
+    }
+    if (!checkPluginCanOpenedFile(plg)) {
+        return ErrFile::TooManyOpenedFile;
+    }
+    auto context =
+        QSharedPointer<PluginFileContext>::create(m_documentHandlePool);
+    const int handle = context->fid;
+    if (handle < 0) {
+        return ErrFile::TooManyOpenedFile;
+    }
     context->view = view;
 
-    auto handle = getUIDHandle(id);
-
-    m_plgviewMap[plg].currentFID = handle;
-    m_plgviewMap[plg].contexts.append(context);
-    m_viewBindings[view].linkedplg.append(plg);
-
-    // TODO
-    // if (plg == _angelplg) {
-    //     _handleDirty = true;
-    // }
+    auto &file = m_plgviewMap[plg];
+    file.contexts.append(context);
+    if (select) {
+        file.currentFID = handle;
+    }
+    bindPluginView(plg, view);
 
     return handle;
 }
@@ -2739,6 +2877,9 @@ bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
 
 int PluginSystem::checkIDPluginAlreadyOpened(IWingPlugin *plg,
                                              EditorView *view) {
+    if (view && view->isCloneFile()) {
+        view = view->cloneParent();
+    }
     auto &maps = m_plgviewMap[plg].contexts;
     auto r =
         std::find_if(maps.begin(), maps.end(),
@@ -2746,68 +2887,93 @@ int PluginSystem::checkIDPluginAlreadyOpened(IWingPlugin *plg,
                          return content->view == view;
                      });
     if (r != maps.end()) {
-        return getUIDHandle((*r)->fid);
+        return (*r)->fid;
     }
     return -1;
 }
 
-void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
-    if (m_viewBindings.contains(view)) {
-        auto v = m_viewBindings[view];
-
-        // clean up
-        for (const auto &plg : std::as_const(v.linkedplg)) {
-            auto &handles = m_plgviewMap[plg];
-            auto id = handles.currentFID;
-            handles.contexts.removeIf(
-                [view, this, id,
-                 plg](const QSharedPointer<PluginFileContext> &v) {
-                    if (v->view == view) {
-                        if (equalCompareHandle(v->fid, id)) {
-                            m_plgviewMap[plg].currentFID = -1;
-                        }
-                        dispatchPluginFileClosedEvent(
-                            v->linkedplg, _win->getEditorViewFileType(view),
-                            v->view->fileNameUrl(), getUIDHandle(v->fid));
-                        return true;
-                    }
-                    return false;
-                });
-        }
-        m_viewBindings.remove(view);
+QList<IWingPlugin *> PluginSystem::boundPluginsForView(EditorView *view) const {
+    auto r = m_viewBindings.constFind(view);
+    if (r == m_viewBindings.cend()) {
+        return {};
     }
+    return r->linkedplg;
+}
+
+void PluginSystem::bindPluginView(IWingPlugin *plg, EditorView *view) {
+    auto &plugins = m_viewBindings[view].linkedplg;
+    if (!plugins.contains(plg)) {
+        plugins.append(plg);
+    }
+}
+
+void PluginSystem::releasePluginView(IWingPlugin *plg, EditorView *view) {
+    if (view == nullptr) {
+        return;
+    }
+    auto binding = m_viewBindings.find(view);
+    if (binding == m_viewBindings.end()) {
+        return;
+    }
+
+    binding->linkedplg.removeAll(plg);
+    auto &undo = binding->undoStackPlg;
+    auto r =
+        std::find_if(undo.begin(), undo.end(),
+                     [plg](const QPair<QUndoCommand *, IWingPlugin *> &cmd) {
+                         return cmd.second == plg;
+                     });
+    if (r != undo.end()) {
+        delete r->first;
+        undo.erase(r, undo.end());
+    }
+    if (binding->linkedplg.isEmpty()) {
+        m_viewBindings.erase(binding);
+    }
+}
+
+void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
+    const auto plugins = boundPluginsForView(view);
+    for (auto plg : plugins) {
+        auto &file = m_plgviewMap[plg];
+        file.contexts.removeIf(
+            [this, plg,
+             view](const QSharedPointer<PluginFileContext> &context) {
+                if (context->view != view) {
+                    return false;
+                }
+                if (m_plgviewMap[plg].currentFID == context->fid) {
+                    m_plgviewMap[plg].currentFID = -1;
+                }
+                dispatchPluginFileClosedEvent(
+                    plg, _win->getEditorViewFileType(view), view->fileNameUrl(),
+                    context->fid);
+                return true;
+            });
+    }
+    m_viewBindings.remove(view);
 }
 
 EditorView *PluginSystem::closeHandle(IWingPlugin *plg, int handle) {
     if (handle < 0) {
         return nullptr;
     }
-    auto &vm = m_plgviewMap[plg];
-    auto &handles = vm.contexts;
-    auto r = std::find_if(
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        handles.cbegin(), handles.cend(),
-#else
-        handles.begin(), handles.end(),
-#endif
-        [handle](const QSharedPointer<PluginFileContext> &d) {
-            return equalCompareHandle(d->fid, handle);
+    auto &map = m_plgviewMap[plg];
+    auto &contexts = map.contexts;
+    auto it = std::find_if(
+        contexts.begin(), contexts.end(),
+        [handle](const QSharedPointer<PluginFileContext> &context) {
+            return context->fid == handle;
         });
-    if (r == handles.end()) {
+    if (it == contexts.end()) {
         return nullptr;
     }
-    auto sharedc = *r;
-    auto view = sharedc->view;
-    auto &bind = m_viewBindings[view].linkedplg;
-    bind.removeOne(plg);
-    if (bind.isEmpty()) {
-        m_viewBindings.remove(view);
+    auto view = (*it)->view.data();
+    contexts.erase(it);
+    if (map.currentFID == handle) {
+        map.currentFID = -1;
     }
-
-    if (vm.currentFID == handle) {
-        vm.currentFID = -1;
-    }
-    handles.erase(r);
+    releasePluginView(plg, view);
     return view;
 }
 
@@ -2952,6 +3118,10 @@ void PluginSystem::installAPI(lua_State *L) {
     }
 
 #include PLUGINSYSTEM_LUAU_BINDING
+
+    m_scriptDocumentRegistries.removeIf(
+        [](const auto &entry) { return entry.value().expired(); });
+    m_scriptDocumentRegistries.insert(lua_mainthread(L), scriptContexts);
 }
 
 PluginInfo PluginSystem::getPluginInfo(IWingPluginBase *plg) const {
@@ -3450,8 +3620,25 @@ void PluginSystem::registerHexContextMenu(IWingPlugin *plg) {
 }
 
 void PluginSystem::applyFunctionTables(QObject *plg) {
+    auto plugin = qobject_cast<IWingPlugin *>(plg);
+    if (plugin && !m_plgviewMap.contains(plugin)) {
+        m_plgviewMap.insert(plugin, {});
+        connect(plugin, &QObject::destroyed, this,
+                [this, plugin] { cleanUpPluginHandles(plugin); });
+    }
     CallTableEvent ev(&_api);
     QApplication::sendEvent(plg, &ev);
+}
+
+void PluginSystem::cleanUpPluginHandles(IWingPlugin *plg) {
+    const auto contexts = m_plgviewMap.value(plg).contexts;
+    for (const auto &context : contexts) {
+        closeHandle(plg, context->fid);
+    }
+    m_plgviewMap.remove(plg);
+    for (auto &plugins : _evplgs) {
+        plugins.removeAll(plg);
+    }
 }
 
 QString PluginSystem::getPUID(IWingPluginBase *p) {
@@ -3537,6 +3724,8 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
         // prepare for file contenxt
         m_plgviewMap.insert(p, {});
+        connect(p, &QObject::destroyed, this,
+                [this, p] { cleanUpPluginHandles(p); });
     } catch (const QString &error) {
         Logger::critical(error);
         if (p_tr) {
@@ -3609,7 +3798,7 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 }
                 if (_win->reportErrFileError(res, {}, {}, {})) {
                     RecentFileManager::RecentInfo info;
-                    info.url = Utilities::getDeviceFileName(ext, file);
+                    info.url = WingHex::deviceUrl(ext, file);
                     _win->m_recentmanager->addRecentFile(info);
                 }
             }));
@@ -3926,10 +4115,47 @@ PluginSystem::pluginContextById(IWingPlugin *plg, int fid) const {
     auto &handles = m_plgviewMap[plg].contexts;
     auto r = std::find_if(handles.begin(), handles.end(),
                           [fid](const QSharedPointer<PluginFileContext> &d) {
-                              return equalCompareHandle(d->fid, fid);
+                              return d->fid == fid;
                           });
     if (r == handles.end()) {
         return nullptr;
     }
     return *r;
+}
+
+int PluginSystem::closeFileHandle(const QObject *sender, int handle) {
+    if (!checkThreadAff()) {
+        return ErrFile::NotAllowedInNoneGUIThread;
+    }
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (!plg) {
+        return ErrFile::Error;
+    }
+    auto view = closeHandle(plg, handle);
+    if (!view) {
+        return ErrFile::NotExist;
+    }
+    dispatchPluginFileClosedEvent(plg, _win->getEditorViewFileType(view),
+                                  view->fileNameUrl(), handle);
+    return ErrFile::Success;
+}
+
+DocumentInfo PluginSystem::documentInfo(const QObject *sender, int handle) {
+    DocumentInfo info;
+    if (handle < 0) {
+        return info;
+    }
+    auto plg = checkPluginAndReport(sender, __func__);
+    auto view = handle2EditorView(plg, handle);
+    if (!view || view->isClosed()) {
+        return info;
+    }
+    info.fileNameUrl = view->fileNameUrl();
+    if (!view->workSpaceName().isEmpty()) {
+        info.workSpaceName = view->workSpaceName();
+    }
+    info.documentType = view->documentType();
+    info.isSaved = view->isSaved();
+    info.isReadOnly = view->isReadOnly(this);
+    return info;
 }

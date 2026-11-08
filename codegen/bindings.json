@@ -156,6 +156,10 @@
           "namespace": "hex",
           "name": "HexPosition"
         },
+        "WingHex::DocumentInfo": {
+          "namespace": "hex",
+          "name": "DocumentInfo"
+        },
         "WingHex::MetadataInfo": {
           "namespace": "hex",
           "name": "MetadataInfo"
@@ -165,6 +169,10 @@
         "WingHex::ErrFile": {
           "namespace": "hex",
           "name": "ErrFile"
+        },
+        "WingHex::DocumentType": {
+          "namespace": "hex",
+          "name": "DocumentType"
         },
         "WingHex::SelectionMode": {
           "namespace": "hex",
@@ -199,8 +207,12 @@
             "currentPos",
             "currentRow",
             "currentColumn",
-            "currentOffset"
-          ]
+            "currentOffset",
+            "isFileOpened",
+            "openedFiles",
+            "allOpenedFiles"
+          ],
+          "pass_lua_state": true
         },
         {
           "module": "",
@@ -232,11 +244,13 @@
             "openFile",
             "closeFile",
             "openCurrent",
-            "closeCurrent"
+            "closeCurrent",
+            "closeFileHandle"
           ],
           "exclude": [
             "setCurrent*"
-          ]
+          ],
+          "pass_lua_state": true
         },
         {
           "module": "",
@@ -250,7 +264,8 @@
             "logDebug": "debug",
             "logWarn": "warn",
             "logError": "error"
-          }
+          },
+          "pass_lua_state": true
         },
         {
           "module": "toast",
@@ -260,14 +275,16 @@
           ],
           "rename": {
             "toast": "show"
-          }
+          },
+          "pass_lua_state": true
         },
         {
           "module": "service",
           "namespace": "service",
           "include": [
             "existsServiceHost"
-          ]
+          ],
+          "pass_lua_state": true
         }
       ],
       "integer_type": "integer",
@@ -295,7 +312,8 @@
           ],
           "rename": {
             "invokeScriptService": "invokeService"
-          }
+          },
+          "pass_lua_state": true
         }
       ]
     }

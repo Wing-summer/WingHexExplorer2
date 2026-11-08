@@ -16,6 +16,7 @@
 */
 
 #include "scriptmachine.h"
+#include "class/application/startuptrace.h"
 #include SCRIPTMACHINE_LUAU_BINDING
 
 #include "Luau/CodeGen.h"
@@ -175,6 +176,7 @@ void ScriptMachine::finishScriptRegistration() {
 
     luaL_sandbox(_main);
 
+    StartupTrace::PhaseTimer startupPhases;
     // setup language server
     auto &lsp = LuauLanguageServer::instance();
     LuauLanguageServer::InitializationOptions opts;
@@ -198,7 +200,9 @@ void ScriptMachine::finishScriptRegistration() {
         loadedDefinitions.insert(file);
         opts.pluginDefinitionFiles.append(file);
     }
+    startupPhases.checkpoint("scripting.lsp_options");
     lsp.initialize(opts);
+    startupPhases.checkpoint("scripting.lsp_initialize");
 
     _scriptRegistrationFinished = true;
 }
@@ -706,7 +710,7 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
 
     // collect the handle info
     auto &api = PluginSystem::instance();
-    auto handles = api.scriptHandles();
+    auto handles = api.scriptHandles(T);
 
     auto runner = new LuauScheduler(ctx);
     QObject::connect(
@@ -740,15 +744,10 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
                 dbg->detach();
             }
 
+            // Release only this execution's newly acquired document handles.
+            PluginSystem::instance().cleanScriptHandles(T, handles);
             R.destory();
             _luaReq.clearRequireCache();
-
-            // Before leaving, allow the engine to clean up
-            // remaining objects by discarding the module and doing
-            // a full garbage collection so that this can also be
-            // debugged if desired
-            auto &api = PluginSystem::instance();
-            api.cleanScriptHandles(handles);
 
             onFinished(true);
         });

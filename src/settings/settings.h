@@ -21,12 +21,16 @@
 #include <QApplication>
 #include <QSettings>
 #include <QString>
+#include <type_traits>
 
 inline QString getRealContent(const QString &value) { return value; }
 
+// Only dereferenceable QString keys participate in this overload.
 template <typename T>
-inline QString getRealContent(T &value) {
-    static_assert(std::is_same<QString &, decltype(*value)>());
+inline auto getRealContent(T &value)
+    -> std::enable_if_t<std::is_same_v<decltype(*value), QString &> ||
+                            std::is_same_v<decltype(*value), const QString &>,
+                        QString> {
     return *value;
 }
 

@@ -56,7 +56,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
             Toast::toast(
                 m_parent,
                 skin.standardPixmap(ThemeManager::StandardIcon::ClearHistory),
-                tr("No history entries to remove."));
+                tr("No history entries to remove"));
             return;
         }
 
@@ -68,7 +68,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                 Toast::toast(m_parent,
                              skin.standardPixmap(
                                  ThemeManager::StandardIcon::ClearHistory),
-                             tr("No history entries to remove."));
+                             tr("No history entries to remove"));
             } else {
                 // indices are already ordered
                 for (auto pidx = idxs.rbegin(); pidx != idxs.rend(); ++pidx) {
@@ -82,7 +82,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                 Toast::toast(m_parent,
                              skin.standardPixmap(
                                  ThemeManager::StandardIcon::ClearHistory),
-                             tr("History entries removed."));
+                             tr("History entries removed"));
             }
         }
     });
@@ -256,8 +256,8 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                             m_parent,
                             ThemeManager::instance().standardPixmap(
                                 ThemeManager::StandardIcon::ClearHistory),
-                            tr("The file does not exist; this entry "
-                               "has been removed!"));
+                            tr("The file does not exist; this entry has been "
+                               "removed"));
                     }
                 }
             }
@@ -299,7 +299,7 @@ void RecentFileManager::clearFile() {
         Toast::toast(m_parent,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::ClearHistory),
-                     tr("No history entries to remove."));
+                     tr("No history entries to remove"));
         return;
     }
     for (const auto &item : std::as_const(hitems)) {
@@ -312,5 +312,5 @@ void RecentFileManager::clearFile() {
     Toast::toast(m_parent,
                  ThemeManager::instance().standardPixmap(
                      ThemeManager::StandardIcon::ClearHistory),
-                 tr("History cleared."));
+                 tr("History cleared"));
 }

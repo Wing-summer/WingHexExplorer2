@@ -15,8 +15,43 @@ PLACEHOLDER = re.compile(r"%(?:L?\d+|L?n)")
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_:]*[a-z][A-Z][A-Za-z0-9_:]*$")
 
 
+def tooltip_sources():
+    """Find directly translated tooltips without rewriting data."""
+    sources = set()
+    literal = r'"(?:\\.|[^"\\])*"'
+    calls = re.compile(
+        r'\b(?:setToolTip|setStatusTip)\s*\(\s*'
+        r'(?:[\w]+::)*tr\s*\(\s*((?:' + literal + r'\s*)+)')
+    for path in (ROOT / "src").rglob("*"):
+        if path.suffix == ".ui":
+            for prop in ET.parse(path).getroot().iter("property"):
+                node = prop.find("string")
+                if (prop.get("name") in {"toolTip", "statusTip"}
+                        and node is not None and node.get("notr") != "true" and node.text):
+                    sources.add((path.resolve(), node.text))
+        elif path.suffix in {".cpp", ".h"}:
+            for match in calls.finditer(path.read_text()):
+                try:
+                    source = "".join(json.loads(text) for text in re.findall(literal, match[1]))
+                except ValueError:
+                    continue
+                sources.add((path.resolve(), source))
+    return sources
+
+
+def has_terminal_punctuation(text, source):
+    text = text.rstrip()
+    # Rich or multi-sentence explanations require contextual review.
+    if "<" in text or "\n" in text or "\n" in source:
+        return False
+    if re.search(r"[.!?。！？]\s+\S", source):
+        return False
+    return text.endswith((".", "。")) and not text.endswith("...")
+
+
 def check():
     errors = []
+    tooltips = tooltip_sources()
     catalogs = sorted((ROOT / "lang").glob("*/winghex_*.ts"))
     if {p.parent.name for p in catalogs} != {"zh_CN", "zh_TW"}:
         errors.append("Only zh_CN and zh_TW catalogs should be maintained")
@@ -38,11 +73,18 @@ def check():
                     continue
                 if translation.get("type") in {"unfinished", "vanished", "obsolete"}:
                     errors.append(f"{label}: {translation.get('type')} translation")
+                is_tooltip = any(
+                    ((path.parent / loc.get("filename", "")).resolve(), source) in tooltips
+                    for loc in message.findall("location"))
+                if is_tooltip and has_terminal_punctuation(source, source):
+                    errors.append(f"{label}: unnecessary final period in short tooltip")
                 forms = translation.findall("numerusform") or [translation]
                 for form in forms:
                     text = "".join(form.itertext()).strip()
                     if not text:
                         errors.append(f"{label}: empty translation")
+                    if is_tooltip and has_terminal_punctuation(text, source):
+                        errors.append(f"{label}: unnecessary final period in translated short tooltip")
                     if Counter(PLACEHOLDER.findall(source)) != Counter(PLACEHOLDER.findall(text)):
                         errors.append(f"{label}: inconsistent placeholders")
                     if "<" not in source and source.count("&") != text.count("&"):

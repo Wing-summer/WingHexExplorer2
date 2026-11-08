@@ -1,9 +1,16 @@
+#include "QHexEdit2/chunks.h"
 #include "qhexview.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QFontDatabase>
 #include <QImage>
 #include <QSignalSpy>
+#include <QStringEncoder>
+#include <QTemporaryFile>
 #include <QtTest>
+#include <atomic>
+#include <thread>
+#include <vector>
 
 class QHexViewTests : public QObject {
     Q_OBJECT
@@ -40,6 +47,142 @@ private:
     }
 
 private slots:
+    void unicodeCellsAvoidFontScan_data() {
+        QTest::addColumn<int>("encoding");
+        QTest::addColumn<QByteArray>("bytes");
+        QTest::addColumn<QByteArray>("placeholderBytes");
+        QTest::addColumn<bool>("hasGlyph");
+        const QList<char32_t> characters = {0x0041, 0x4e2d,  0x0628,  0x0915,
+                                            0x0780, 0x10400, 0x1f600, 0xffffd,
+                                            0x0378, 0x202e};
+        for (auto character : characters) {
+            const auto text = QString::fromUcs4(&character, 1);
+            bool hasGlyph = false;
+            if (QChar::isPrint(character)) {
+                for (const auto &family : QFontDatabase::families()) {
+                    if (QRawFont::fromFont(QFont(family))
+                            .supportsCharacter(character)) {
+                        hasGlyph = true;
+                        break;
+                    }
+                }
+            }
+            // An unassigned/noncharacter scalar of the same encoded size.
+            const char32_t placeholder = character < 0x80      ? 0x00
+                                         : character < 0x800   ? 0x0378
+                                         : character < 0x10000 ? 0xffff
+                                                               : 0x10ffff;
+            for (auto encoding :
+                 {QStringConverter::Utf8, QStringConverter::Utf16LE,
+                  QStringConverter::Utf32LE}) {
+                QStringEncoder encoder(encoding);
+                const QByteArray bytes = encoder(text);
+                const QByteArray placeholderBytes =
+                    encoder(QString::fromUcs4(&placeholder, 1));
+                const auto name =
+                    QStringLiteral("U+%1-%2")
+                        .arg(uint(character), 0, 16)
+                        .arg(QString::fromLatin1(
+                            QStringConverter::nameForEncoding(encoding)))
+                        .toLatin1();
+                QTest::newRow(name.constData())
+                    << int(encoding) << bytes << placeholderBytes << hasGlyph;
+            }
+        }
+    }
+
+    void unicodeCellsAvoidFontScan() {
+        QFETCH(int, encoding);
+        QFETCH(QByteArray, bytes);
+        QFETCH(QByteArray, placeholderBytes);
+        QFETCH(bool, hasGlyph);
+        QCOMPARE(bytes.size(), placeholderBytes.size());
+        QHexView view;
+        auto doc = QSharedPointer<QHexDocument>(
+            QHexDocument::fromInternalBuffer(false));
+        QVERIFY(doc->insert(0, bytes));
+        view.setDocument(doc);
+        auto *renderer = view.renderer();
+        renderer->setStringEncoding(QStringConverter::Encoding(encoding));
+        renderer->enableCursor(false);
+
+        static int fontMessages = 0;
+        static QtMessageHandler previousHandler = nullptr;
+        fontMessages = 0;
+        previousHandler = qInstallMessageHandler(
+            [](QtMsgType type, const QMessageLogContext &context,
+               const QString &message) {
+                if (message.contains(
+                        QStringLiteral("OpenType support missing"))) {
+                    ++fontMessages;
+                } else if (previousHandler) {
+                    previousHandler(type, context, message);
+                }
+            });
+        const auto render = [&] {
+            QImage image(1600, 200, QImage::Format_ARGB32);
+            image.fill(Qt::transparent);
+            QPainter painter(&image);
+            renderer->render(&painter, 0, 1, 0);
+            return image;
+        };
+        const auto first = render();
+        const auto second = render();
+        // Application fonts can be installed or removed while a view exists.
+        QMetaObject::invokeMethod(qGuiApp, "fontDatabaseChanged");
+        const auto afterInvalidation = render();
+        qInstallMessageHandler(previousHandler);
+        QCOMPARE(fontMessages, 0);
+        QCOMPARE(first, second);
+        QCOMPARE(first, afterInvalidation);
+
+        QVERIFY(doc->replace(0, placeholderBytes));
+        const auto placeholder = render();
+        const QRect asciiRect(
+            qCeil(renderer->getAsciiColumnX() + renderer->borderSize()),
+            qCeil(renderer->headerLineCount() * renderer->lineHeight()),
+            qFloor(renderer->getCellWidth() * bytes.size()),
+            qFloor(renderer->lineHeight()));
+        if (hasGlyph) {
+            QVERIFY(first.copy(asciiRect) != placeholder.copy(asciiRect));
+        } else {
+            QCOMPARE(first.copy(asciiRect), placeholder.copy(asciiRect));
+        }
+    }
+
+    void concurrentChunkReadsKeepDeviceCursorConsistent() {
+        QTemporaryFile file;
+        QVERIFY(file.open());
+        QByteArray expected(64 * 1024, 'a');
+        for (qsizetype i = 0; i < expected.size(); ++i) {
+            expected[i] = char(i % 251);
+        }
+        QCOMPARE(file.write(expected), qint64(expected.size()));
+        QVERIFY(file.flush());
+        Chunks chunks(&file);
+        QVERIFY(chunks.overwrite(0, 'X'));
+        expected[0] = 'X';
+        const auto needle = expected.mid(123, 16);
+        std::atomic<bool> correct{true};
+        std::vector<std::thread> readers;
+        for (int thread = 0; thread < 8; ++thread) {
+            readers.emplace_back([&, thread] {
+                for (int i = 0; i < 100; ++i) {
+                    const auto offset = (thread * 7919 + i * 113) % 65000;
+                    if (chunks.data(offset, 97) != expected.mid(offset, 97) ||
+                        chunks.indexOf(needle, 0) != expected.indexOf(needle) ||
+                        chunks.lastIndexOf(needle, expected.size()) !=
+                            expected.lastIndexOf(needle)) {
+                        correct = false;
+                    }
+                }
+            });
+        }
+        for (auto &reader : readers) {
+            reader.join();
+        }
+        QVERIFY(correct.load());
+    }
     void rebindingDoesNotDuplicateCursorConnections() {
         QHexView view;
         auto doc = document();

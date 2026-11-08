@@ -34,7 +34,7 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
     auto layout = new QVBoxLayout(widget);
 
     this->setFixedSize(500, 600);
-    auto l = new QLabel(tr("Select checksums to calculate:"), this);
+    auto l = new QLabel(tr("Select checksums to calculate"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     hashlist = new QTreeWidget(this);
@@ -104,9 +104,9 @@ void CheckSumDialog::on_accept() {
     }
     if (_result.isEmpty()) {
         Toast::toast(this,
-                     ThemeManager::instance()
-                         .standardPixmap(ThemeManager::StandardIcon::Checksum),
-                     tr("No files available for checksum calculation."));
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::Checksum),
+                     tr("No files available for checksum calculation"));
         return;
     }
     done(1);

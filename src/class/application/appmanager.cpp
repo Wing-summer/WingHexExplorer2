@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -16,8 +16,12 @@
 */
 
 #include "appmanager.h"
+#include "startupfeedback.h"
+#include "startuptrace.h"
 
 #include <QFont>
+#include <QScopeGuard>
+#include <QSettings>
 
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
@@ -34,6 +38,7 @@
 #include "inspectqtloghelper.h"
 #include "logger.h"
 #include "luau/runtime/scriptmanager.h"
+#include "settings/settings.h"
 #include "utilities.h"
 
 #include <KSyntaxHighlighting/Repository>
@@ -42,6 +47,8 @@ AppManager *AppManager::_instance = nullptr;
 
 AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
+    StartupTrace::mark("application.qt_constructed");
+    StartupTrace::PhaseTimer startupPhases;
     ASSERT_SINGLETON;
 
     _instance = this;
@@ -63,21 +70,40 @@ AppManager::AppManager(int &argc, char *argv[])
         throw CrashCode::AlreadyStart;
     }
 
+    startupPhases.checkpoint("application.language_and_services");
     auto &set = SettingManager::instance();
     Logger::instance();
     QFont font(set.appFontFamily(), set.appfontSize());
     setFont(font);
 
-    ThemeManager::instance().setTheme(ThemeManager::Theme(set.themeID()));
+    auto &theme = ThemeManager::instance();
+    theme.setStyleSheetDeferred(true);
+    auto finishStyle =
+        qScopeGuard([&theme] { theme.setStyleSheetDeferred(false); });
+    theme.setTheme(ThemeManager::Theme(set.themeID()));
+
+    startupPhases.checkpoint("application.settings_and_theme");
 
     // add luau highlight support
     auto &repo = WingCodeEdit::syntaxRepo();
     repo.addCustomSearchPath(QStringLiteral(":/WingScript/Luau"));
 
     auto dontSplash = set.dontUseSplash();
+    QString SPLASH_HISTORY_KEY;
+    QVariantList splashHistory;
 
     if (!dontSplash) {
-        splash = new SplashDialog;
+        // Separate histories for materially different startup configurations.
+        SPLASH_HISTORY_KEY = QStringLiteral("startup.splash.%1.%2.%3.%4.%5")
+                                 .arg(applicationVersion())
+                                 .arg(set.themeID())
+                                 .arg(set.scriptEnabled())
+                                 .arg(set.enablePlugin())
+                                 .arg(args.size() > 1);
+        HANDLE_CONFIG;
+        splashHistory = READ_CONFIG(SPLASH_HISTORY_KEY, {}).toList();
+        splash = new SplashDialog(SplashDialog::DisplayMode::Automatic,
+                                  StartupFeedback::estimate(splashHistory));
     }
 
     const auto cmdlist = CommandHistoryManager::load();
@@ -88,7 +114,17 @@ AppManager::AppManager(int &argc, char *argv[])
 
     _timer.start();
 
+    startupPhases.checkpoint("application.syntax_history_and_splash");
     _w = new MainWindow(splash);
+    startupPhases.checkpoint("application.mainwindow");
+    // Applying QSS before restoring docks repeatedly restyles the same widget
+    // subtrees as they are reparented. Polish the complete tree once instead.
+    if (splash) {
+        splash->prepareForBlockingPhase();
+    }
+    theme.setStyleSheetDeferred(false);
+    finishStyle.dismiss();
+    startupPhases.checkpoint("application.stylesheet");
 
     setActivationWindow(_w);
 
@@ -122,7 +158,7 @@ AppManager::AppManager(int &argc, char *argv[])
             });
 
     if (splash) {
-        splash->setInfoText(tr("Opening files..."));
+        splash->setInfoText(tr("Opening files"));
     }
 
     if (args.size() > 1) {
@@ -144,11 +180,16 @@ AppManager::AppManager(int &argc, char *argv[])
         }
     }
 
+    startupPhases.checkpoint("application.open_files");
     connect(_w, &MainWindow::closed, this,
             []() { AppManager::instance()->exit(); });
 
     if (splash) {
-        splash->close();
+        HANDLE_CONFIG;
+        WRITE_CONFIG(
+            SPLASH_HISTORY_KEY,
+            StartupFeedback::remember(splashHistory, splash->elapsedTime()));
+        splash->finish();
         splash = nullptr;
     }
 }
@@ -202,7 +243,7 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
                 Toast::toast(_w,
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::OpenFile),
-                             tr("This file is already open."));
+                             tr("This file is already open"));
             } else {
                 editor->raise();
             }
@@ -218,7 +259,7 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
             Toast::toast(_w,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::OpenFile),
-                         tr("This file is already open."));
+                         tr("This file is already open"));
         } else {
             editor->raise();
         }

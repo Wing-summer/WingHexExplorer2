@@ -7,6 +7,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 option(WINGHEX_FORCE_CPP17 "Force using C++17" OFF)
+option(WINGHEX_ENABLE_STARTUP_PROFILE
+       "Enable startup phase and first-paint profiling" OFF)
 
 if(NOT WINGHEX_FORCE_CPP17 AND "cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     set(CMAKE_CXX_STANDARD 20)
@@ -295,6 +297,8 @@ set(CLASS_SRC
     src/class/application/inspectqtloghelper.h
     src/class/application/logger.cpp
     src/class/application/logger.h
+    src/class/application/startupfeedback.h
+    src/class/application/startuptrace.h
     src/class/application/wingupdater.cpp
     src/class/application/wingupdater.h
     src/class/file/fileaccesscheck.cpp
@@ -317,6 +321,7 @@ set(CLASS_SRC
     src/class/settings/settingmanager.h
     src/class/settings/thememanager.cpp
     src/class/settings/thememanager.h
+    src/class/settings/themestylesheet.h
     src/class/util/changedstringlist.cpp
     src/class/util/changedstringlist.h
     src/class/util/cryptographichash.cpp
@@ -325,6 +330,10 @@ set(CLASS_SRC
     src/class/util/qkeysequences.h
     src/class/util/resettabletimer.cpp
     src/class/util/resettabletimer.h)
+
+if(WINGHEX_ENABLE_STARTUP_PROFILE)
+    list(APPEND CLASS_SRC src/class/application/startuptrace.cpp)
+endif()
 
 set(LUAU_LS
     src/luau/lsp/attachcommentsvisitor.cpp
@@ -374,6 +383,10 @@ set(LUAU_MOD_SRC
     src/luau/scriptsymbol.h
     src/luau/runtime/scriptserviceapi.h
     src/luau/runtime/scriptserviceapi.cpp
+    src/luau/runtime/scriptdocumentcontext.h
+    src/luau/runtime/scriptdocumentcontext.cpp
+    src/luau/runtime/scriptdocumentregistry.h
+    src/luau/runtime/scriptdocumentregistry.cpp
     src/luau/runtime/scriptfilesystem.h
     src/luau/runtime/scriptfilesystem.cpp
     src/luau/scriptbindingengine.h
@@ -545,6 +558,11 @@ else()
     qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES})
 endif()
 
+if(WINGHEX_ENABLE_STARTUP_PROFILE)
+    target_compile_definitions(
+        WingHexExplorer2 PRIVATE WINGHEX_ENABLE_STARTUP_PROFILE)
+endif()
+
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
     target_compile_definitions(
         WingHexExplorer2
@@ -642,6 +660,54 @@ endif()
 wingluauqt_integrate(TARGET WingHexExplorer2
   CONFIG "${WINGHEX_BINDINGS_GENERATION_CONFIG}"
   ${_binding_output_arguments})
+
+# Host-owned Luau modules and generated support files.
+get_target_property(_binding_definitions_dir WingLuauBind
+                    QTLUAU_DEFINITION_SOURCES)
+get_filename_component(_binding_output_dir "${_binding_definitions_dir}"
+                       DIRECTORY)
+set(_hexdoc_module_source
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/luau/modules/hexdoc.luau")
+set(_hexdoc_api_source "${_binding_output_dir}/generated/hexdoc_api.luau")
+
+# Deploy modules for the normal @s/ resolver used by runtime and LSP.
+set(_luau_modules_runtime_dir "$<TARGET_FILE_DIR:WingHexExplorer2>/luaulib")
+
+add_custom_target(
+    WingHexSystemModules ALL
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${_luau_modules_runtime_dir}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${_hexdoc_module_source}"
+            "${_hexdoc_api_source}" "${_luau_modules_runtime_dir}"
+    VERBATIM)
+# Host-generated browser pages accompany the generated root catalog.
+file(GLOB _hexdoc_symbol_pages CONFIGURE_DEPENDS
+     "${_binding_definitions_dir}/hexdoc_symbols_*.json")
+if(IS_ABSOLUTE "${WingLuauBind_DEFINITIONS_DIR}")
+    set(_symbol_catalog_runtime_dir "${WingLuauBind_DEFINITIONS_DIR}")
+else()
+    set(_symbol_catalog_runtime_dir
+        "$<TARGET_FILE_DIR:WingHexExplorer2>/${WingLuauBind_DEFINITIONS_DIR}")
+endif()
+add_custom_target(
+    WingHexSymbolCatalog ALL
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${_symbol_catalog_runtime_dir}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${_hexdoc_symbol_pages}
+            "${_symbol_catalog_runtime_dir}"
+    VERBATIM)
+add_dependencies(WingHexExplorer2 WingHexSystemModules WingHexSymbolCatalog)
+# WingLuauQt's install glob includes these host-generated symbol pages.
+
+# Install the same modules beside the executable.
+if(APPLE)
+    set(_luau_modules_install_dir "${PROJECT_NAME}.app/Contents/MacOS/luaulib")
+else()
+    set(_luau_modules_install_dir "luaulib")
+endif()
+install(
+    FILES "${_hexdoc_module_source}" "${_hexdoc_api_source}"
+    DESTINATION "${_luau_modules_install_dir}"
+    COMPONENT LuauModules)
 
 target_compile_options(
     WingHexExplorer2

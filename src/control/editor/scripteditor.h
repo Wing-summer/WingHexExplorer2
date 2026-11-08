@@ -62,7 +62,7 @@ public:
     virtual void clearFunctionTip() override;
     virtual void syncDocChange() override;
 
-    virtual void saveState(QXmlStreamWriter &Stream) const override;
+    bool isStateSaveEnabled() const override;
 
     virtual void syncSemanticTokens() override;
 

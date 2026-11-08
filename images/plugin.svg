@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <defs>
-    <clipPath id="outside-gear" clipPathUnits="userSpaceOnUse">
-      <path d="M-20-20H220V220H-20Z M121 80H145L148 97Q154 99 158 103L174 97 186 117 172 128Q173 134 172 139L186 150 174 170 158 164Q153 168 148 170L145 187H121L118 170Q112 168 108 164L92 170 80 150 94 139Q93 133 94 128L80 117 92 97 108 103Q112 99 118 97Z" clip-rule="evenodd" fill-rule="evenodd" />
-    </clipPath>
-  </defs>
-  <path d="M53 55C49 43 47 18 67 18C87 18 87 37 81 55H114V152H18V120C58 131 57 80 18 87V55Z" fill="none" stroke="#1296db" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" data-theme-stroke="accent" clip-path="url(#outside-gear)" />
+  <path d="M81.2 152H18V120C58 131 57 80 18 87V55H53C49 43 47 18 67 18C87 18 87 37 81 55H114V99" fill="none" stroke="#1296db" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" data-theme-stroke="accent" />
   <path d="M121 80H145L148 97Q154 99 158 103L174 97 186 117 172 128Q173 134 172 139L186 150 174 170 158 164Q153 168 148 170L145 187H121L118 170Q112 168 108 164L92 170 80 150 94 139Q93 133 94 128L80 117 92 97 108 103Q112 99 118 97Z" fill="none" stroke="#1296db" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" data-theme-stroke="accent" />
   <circle cx="133" cy="133" r="19" fill="none" stroke="#1296db" stroke-width="9" data-theme-stroke="accent" />
 </svg>

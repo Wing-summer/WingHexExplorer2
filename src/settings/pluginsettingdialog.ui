@@ -121,7 +121,7 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Plugins:</string>
+              <string>Plugins</string>
              </property>
             </widget>
            </item>
@@ -186,7 +186,7 @@
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Device extension:</string>
+              <string>Device extension</string>
              </property>
             </widget>
            </item>
@@ -239,7 +239,7 @@
            <item>
             <widget class="QLabel" name="label_3">
              <property name="text">
-              <string>Cert:</string>
+              <string>Cert</string>
              </property>
             </widget>
            </item>

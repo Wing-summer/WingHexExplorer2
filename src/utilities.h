@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -417,7 +417,7 @@ public:
                           std::is_base_of_v<QAbstractButton, T>) {
                 w->setText(w->text() + QStringLiteral(" (*)"));
                 w->setToolTip(QApplication::tr(
-                    "Restart the application to apply this change."));
+                    "Restart the application to apply this change"));
             }
         }
     }
@@ -478,11 +478,6 @@ public:
 
     inline static QString getUrlString(const QString &fileName) {
         return QUrl::fromLocalFile(fileName).toString(QUrl::FullyEncoded);
-    }
-
-    inline static QString getDeviceFileName(const QString &ext,
-                                            const QString &file) {
-        return QStringLiteral("wdrv://") + ext + QStringLiteral("/") + file;
     }
 
     inline static QMap<QString, int> hexLineWidthMap() {

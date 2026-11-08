@@ -61,7 +61,7 @@ void Chunks::resetIODevice() {
 // ***************************************** Getting data out of Chunks
 
 QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
-    QReadLocker locker(&_mutex);
+    QWriteLocker locker(&_mutex);
     return __data(pos, maxSize);
 }
 
@@ -85,7 +85,7 @@ bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
 qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
     qint64 result = -1;
     QByteArray buffer;
-    QReadLocker locker(&_mutex);
+    QWriteLocker locker(&_mutex);
     for (qint64 pos = from; (pos < _size) && (result < 0); pos += BUFFER_SIZE) {
         buffer = __data(pos, BUFFER_SIZE + ba.size() - 1);
         auto findPos = buffer.indexOf(ba);
@@ -99,7 +99,7 @@ qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
 qint64 Chunks::lastIndexOf(const QByteArray &ba, qint64 from) const {
     qint64 result = -1;
     QByteArray buffer;
-    QReadLocker locker(&_mutex);
+    QWriteLocker locker(&_mutex);
     for (qint64 pos = from; (pos > 0) && (result < 0); pos -= BUFFER_SIZE) {
         qint64 sPos = pos - BUFFER_SIZE - ba.size() + 1;
         if (sPos < 0) {

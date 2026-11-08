@@ -7,10 +7,15 @@ Each suite builds independently against production code in this repository, with
 
 | 目录 / Directory | 覆盖范围 / Coverage | 运行入口 / Runner |
 | --- | --- | --- |
+| [ads](ads/README.md) | 二进制布局、批量恢复与性能基准 / Binary layouts, bulk restoration and performance benchmarks | Qt Test / Benchmark |
+| [settings](settings/README.md) | 配置键重载、全局静态键及宏读写 / Settings key overloads, global static keys and macro round trips | CTest / Qt Test |
+| [startup](startup/README.md) | 启动计时开关、首帧与隔离测量 / Startup profiling gates, first paint and isolated measurements | CTest / Python |
+| [toast](toast/README.md) | Toast 浮层、输入、生命周期与 Wayland / Toast overlays, input, lifetime, and Wayland | CTest / Qt Test |
 | [qtableviewext](qtableviewext/README.md) | 表格搜索、异步排序及列宽 / Table search, async sorting, and column widths | CTest |
 | [qhexview](qhexview/README.md) | 十六进制视图、选区、剪贴板与撤销 / Hex view, selections, clipboard, and undo | CTest |
 | [luaulsp](luaulsp/README.md) | Luau 诊断、补全、类型与模块解析 / Luau diagnostics, completion, types, and module resolution | CTest |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |
+| [plugindocument](plugindocument/README.md) | 插件文档对象、句柄生命周期与宿主集成 / Plugin document objects, handle lifecycle and host integration | Qt Test / Python |
 | [i18n](i18n/README.md) | 语言加载、回退、插件翻译与 UI 尺寸 / Language loading, fallback, plugin translation, and UI sizing | Python |
 
 ## 环境与运行 / Environment and execution

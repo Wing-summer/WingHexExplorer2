@@ -130,7 +130,7 @@
         <location filename="../testform.ui" line="194"/>
         <location filename="../testform.ui" line="518"/>
         <source>Text</source>
-        <translation>文本 </translation>
+        <translation>文本</translation>
     </message>
     <message>
         <location filename="../testform.ui" line="124"/>

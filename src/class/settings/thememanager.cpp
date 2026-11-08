@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -16,6 +16,7 @@
 */
 
 #include "thememanager.h"
+#include "themestylesheet.h"
 
 #include <QApplication>
 #include <QDomDocument>
@@ -23,6 +24,8 @@
 #include <QIconEngine>
 #include <QMetaEnum>
 #include <QPainter>
+#include <QPixmapCache>
+#include <QProxyStyle>
 #include <QRegularExpression>
 #include <QStyle>
 #include <QStyleFactory>
@@ -33,6 +36,67 @@
 #include <cmath>
 
 namespace {
+// Standard icons are queried on demand rather than resolved for every QWidget
+// while applying QSS. QSS defaults override enum-named resource aliases.
+class ThemeProxyStyle final : public QProxyStyle {
+public:
+    explicit ThemeProxyStyle(QStyle *base) : QProxyStyle(base) {}
+
+    QIcon standardIcon(StandardPixmap role, const QStyleOption *option,
+                       const QWidget *widget) const override {
+        const auto icon = themedIcon(role);
+        return icon.isNull() ? QProxyStyle::standardIcon(role, option, widget)
+                             : icon;
+    }
+
+    QPixmap standardPixmap(StandardPixmap role, const QStyleOption *option,
+                           const QWidget *widget) const override {
+        const auto size =
+            QProxyStyle::pixelMetric(PM_SmallIconSize, option, widget);
+        auto pixmap = themedIcon(role).pixmap(size, size);
+        if (!pixmap.isNull()) {
+            return pixmap;
+        }
+        return QProxyStyle::standardPixmap(role, option, widget);
+    }
+
+    void setIcons(const QHash<int, QString> &paths, const QString &iconPrefix) {
+        m_paths = paths;
+        m_iconPrefix = iconPrefix;
+        m_icons.clear();
+    }
+
+private:
+    QIcon themedIcon(StandardPixmap role) const {
+        const auto found = m_icons.constFind(int(role));
+        if (found != m_icons.cend()) {
+            return found.value();
+        }
+        auto path = m_paths.value(int(role));
+        if (path.isEmpty()) {
+            // QSS cannot name every Qt standard role; QRC aliases cover the
+            // rest.
+            const auto roles = QMetaEnum::fromType<QStyle::StandardPixmap>();
+            const auto key = roles.valueToKey(int(role));
+            if (!key) {
+                return {};
+            }
+            path = m_iconPrefix + QString::fromLatin1(key) +
+                   QStringLiteral(".svg");
+            if (!QFile::exists(path)) {
+                return {};
+            }
+        }
+        const QIcon icon(path);
+        m_icons.insert(int(role), icon);
+        return icon;
+    }
+
+    QHash<int, QString> m_paths;
+    QString m_iconPrefix;
+    mutable QHash<int, QIcon> m_icons;
+};
+
 using StandardIcon = ThemeManager::StandardIcon;
 QString resourceName(StandardIcon icon) {
     const auto meta = QMetaEnum::fromType<StandardIcon>();
@@ -183,11 +247,32 @@ public:
 private:
     QPixmap render(const QSize &size, QIcon::Mode mode, QIcon::State state,
                    qreal ratio) const {
-        Q_UNUSED(state);
         if (size.isEmpty() || ratio <= 0) {
             return {};
         }
         auto &theme = ThemeManager::instance();
+        // QIconEngine does not cache custom SVG rasterizations. Use Qt's
+        // bounded GUI cache so copies and repeated sizes share their pixels.
+        // Palette/style also affect disabled and selected icon generation.
+        const auto palette = QApplication::palette();
+        auto *style = QApplication::style();
+        QString cacheKey = QStringLiteral("wing-theme-icon/");
+        cacheKey += m_path.isEmpty() ? QString::number(int(m_icon)) : m_path;
+        for (const auto &part :
+             {QString::number(int(theme.currentTheme())),
+              QString::number(theme.iconCacheRevision()),
+              QString::number(size.width()), QString::number(size.height()),
+              QString::number(int(mode)), QString::number(int(state)),
+              QString::number(ratio, 'g', 17),
+              QString::number(palette.cacheKey()),
+              QString::number(quintptr(style), 16)}) {
+            cacheKey += QLatin1Char('|');
+            cacheKey += part;
+        }
+        QPixmap cached;
+        if (QPixmapCache::find(cacheKey, &cached)) {
+            return cached;
+        }
         const auto data = m_path.isEmpty() ? theme.standardIconData(m_icon)
                                            : theme.resourceIconData(m_path);
         if (data.isEmpty()) {
@@ -207,11 +292,11 @@ private:
         image.setDevicePixelRatio(ratio);
         if (mode == QIcon::Disabled || mode == QIcon::Selected) {
             QStyleOption option;
-            option.palette = QApplication::palette();
-            image = QApplication::style()->generatedIconPixmap(mode, image,
-                                                               &option);
+            option.palette = palette;
+            image = style->generatedIconPixmap(mode, image, &option);
             image.setDevicePixelRatio(ratio);
         }
+        QPixmapCache::insert(cacheKey, image);
         return image;
     }
     StandardIcon m_icon = StandardIcon::None;
@@ -261,14 +346,27 @@ void ThemeManager::applyTheme(Theme theme) {
         qWarning("Cannot load the application theme stylesheet");
         return;
     }
-    if (!m_initialized) {
+    auto styleSheet = QString::fromUtf8(sheet.readAll());
+    const auto icons = ThemeStyleSheet::extractStandardIcons(styleSheet);
+    const auto iconPrefix = QStringLiteral(":/") + directory +
+                            QStringLiteral("/standard-icons/");
+    auto *proxy = static_cast<ThemeProxyStyle *>(m_themeStyle.data());
+    if (!proxy) {
 #ifdef Q_OS_WIN
-        qApp->setStyle(QStyleFactory::create(QStringLiteral("windowsvista")));
+        proxy = new ThemeProxyStyle(
+            QStyleFactory::create(QStringLiteral("windowsvista")));
 #else
-        qApp->setStyle(QStyleFactory::create(QStringLiteral("fusion")));
+        proxy = new ThemeProxyStyle(
+            QStyleFactory::create(QStringLiteral("fusion")));
 #endif
+        proxy->setIcons(icons, iconPrefix);
+        m_themeStyle = proxy;
+        qApp->setStyle(proxy);
+    } else {
+        proxy->setIcons(icons, iconPrefix);
     }
     m_theme = theme;
+    ++m_iconCacheRevision;
     m_initialized = true;
     m_icons.clear();
     m_data.clear();
@@ -288,11 +386,32 @@ void ThemeManager::applyTheme(Theme theme) {
         palette.setColor(QPalette::Link, QColor::fromRgb(88, 147, 248));
     }
     qApp->setPalette(palette);
-    qApp->setStyleSheet(QString::fromUtf8(sheet.readAll()));
+    if (m_styleSheetDeferred) {
+        m_pendingStyleSheet = styleSheet;
+        m_styleSheetPending = true;
+    } else {
+        qApp->setStyleSheet(styleSheet);
+    }
     Q_EMIT themeChanged(theme);
     for (auto &widget : QApplication::allWidgets()) {
         widget->update();
     }
+}
+
+void ThemeManager::setStyleSheetDeferred(bool deferred) {
+    m_styleSheetDeferred = deferred;
+    if (!deferred && m_styleSheetPending) {
+        m_styleSheetPending = false;
+        ++m_iconCacheRevision;
+        qApp->setStyleSheet(m_pendingStyleSheet);
+        m_pendingStyleSheet.clear();
+    }
+}
+
+quint64 ThemeManager::iconCacheRevision() const { return m_iconCacheRevision; }
+
+QString ThemeManager::currentStyleSheet() const {
+    return m_styleSheetPending ? m_pendingStyleSheet : qApp->styleSheet();
 }
 
 ThemeManager::Theme ThemeManager::currentTheme() const { return m_theme; }
@@ -332,13 +451,13 @@ QString ThemeManager::iconResource(StandardIcon icon) const {
 }
 
 QIcon ThemeManager::standardIcon(StandardIcon icon) const {
-    if (iconResource(icon).isEmpty()) {
-        return {};
-    }
     const int id = static_cast<int>(icon);
     auto cached = m_icons.constFind(id);
     if (cached != m_icons.cend()) {
         return cached.value();
+    }
+    if (iconResource(icon).isEmpty()) {
+        return {};
     }
     QIcon result(new ThemeIconEngine(icon));
     m_icons.insert(id, result);

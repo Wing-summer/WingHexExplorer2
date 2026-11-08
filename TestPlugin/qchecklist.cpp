@@ -131,7 +131,7 @@ void QCheckList::updateText() {
 
 void QCheckList::on_modelDataChanged() {
     updateText();
-    emit globalCheckStateChanged(globalCheckState());
+    Q_EMIT globalCheckStateChanged(globalCheckState());
 }
 
 void QCheckList::on_itemPressed(const QModelIndex &index) {

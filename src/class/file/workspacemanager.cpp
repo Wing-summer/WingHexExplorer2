@@ -119,7 +119,7 @@ QUrl WorkSpaceManager::loadWorkSpaceDocFile(const QString &filename,
             auto path =
                 finfo.isAbsolute() ? fi : curDir + QDir::separator() + fi;
             finfo.setFile(path);
-            file = QUrl::fromLocalFile(path);
+            file = QUrl::fromLocalFile(QDir::cleanPath(path));
         } else {
             file = url;
         }
