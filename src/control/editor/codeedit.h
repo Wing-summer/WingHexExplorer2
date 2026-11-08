@@ -41,8 +41,8 @@ public:
     void gotoLine(int line);
 
 signals:
-    void contentModified(bool b);
-    void navigationRequested(bool typeDefinition);
+    void sigOnContentModified(bool b);
+    void sigOnNavigationRequested(bool typeDefinition);
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;

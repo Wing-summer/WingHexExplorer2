@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "qtlocalpeer.h"
+
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QRegularExpression>
@@ -14,8 +15,9 @@ typedef BOOL(WINAPI *PProcessIdToSessionId)(DWORD, DWORD *);
 static PProcessIdToSessionId pProcessIdToSessionId = 0;
 #endif
 #if defined(Q_OS_UNIX)
-#include <sys/types.h>
 #include <time.h>
+
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
@@ -24,28 +26,28 @@ static PProcessIdToSessionId pProcessIdToSessionId = 0;
 const char *QtLocalPeer::ack = "ack";
 
 QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
-    : QObject(parent), id(appId) {
-    QString prefix = id;
-    if (id.isEmpty()) {
-        id = QCoreApplication::applicationFilePath();
+    : QObject(parent), m_id(appId) {
+    QString prefix = m_id;
+    if (m_id.isEmpty()) {
+        m_id = QCoreApplication::applicationFilePath();
 #if defined(Q_OS_WIN)
         id = id.toLower();
 #endif
-        prefix = id.section(QLatin1Char('/'), -1);
+        prefix = m_id.section(QLatin1Char('/'), -1);
     }
     static QRegularExpression regex(QStringLiteral("[^a-zA-Z]"));
     prefix.remove(regex);
     prefix.truncate(6);
 
-    QByteArray idc = id.toUtf8();
+    QByteArray idc = m_id.toUtf8();
     quint16 idNum =
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         qChecksum(idc);
 #else
         qChecksum(idc.constData(), idc.size());
 #endif
-    socketName = QLatin1String("qtsingleapp-") + prefix + QLatin1Char('-') +
-                 QString::number(idNum, 16);
+    m_socketName = QLatin1String("qtsingleapp-") + prefix + QLatin1Char('-') +
+                   QString::number(idNum, 16);
 
 #if defined(Q_OS_WIN)
     if (!pProcessIdToSessionId) {
@@ -59,42 +61,42 @@ QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
         socketName += QLatin1Char('-') + QString::number(sessionId, 16);
     }
 #else
-    socketName += QLatin1Char('-') + QString::number(::getuid(), 16);
+    m_socketName += QLatin1Char('-') + QString::number(::getuid(), 16);
 #endif
 
-    server = new QLocalServer(this);
+    m_server = new QLocalServer(this);
     QString lockName = QDir(QDir::tempPath()).absolutePath() +
-                       QLatin1Char('/') + socketName +
+                       QLatin1Char('/') + m_socketName +
                        QLatin1String("-lockfile");
-    lockFile.setFileName(lockName);
-    lockFile.open(QIODevice::ReadWrite);
+    m_lockFile.setFileName(lockName);
+    m_lockFile.open(QIODevice::ReadWrite);
 }
 
-QtLocalPeer::~QtLocalPeer() { server->close(); }
+QtLocalPeer::~QtLocalPeer() { m_server->close(); }
 
 bool QtLocalPeer::isClient() {
-    if (lockFile.isLocked()) {
+    if (m_lockFile.isLocked()) {
         return false;
     }
 
-    if (!lockFile.lock(QtLP_Private::QtLockedFile::WriteLock, false)) {
+    if (!m_lockFile.lock(QtLP_Private::QtLockedFile::WriteLock, false)) {
         return true;
     }
 
-    bool res = server->listen(socketName);
+    bool res = m_server->listen(m_socketName);
 #if defined(Q_OS_UNIX) && (QT_VERSION >= QT_VERSION_CHECK(4, 5, 0))
     // ### Workaround
-    if (!res && server->serverError() == QAbstractSocket::AddressInUseError) {
+    if (!res && m_server->serverError() == QAbstractSocket::AddressInUseError) {
         QFile::remove(QDir::cleanPath(QDir::tempPath()) + QLatin1Char('/') +
-                      socketName);
-        res = server->listen(socketName);
+                      m_socketName);
+        res = m_server->listen(m_socketName);
     }
 #endif
     if (!res) {
         qWarning("QtSingleCoreApplication: listen on local socket failed, %s",
-                 qPrintable(server->errorString()));
+                 qPrintable(m_server->errorString()));
     }
-    QObject::connect(server, SIGNAL(newConnection()),
+    QObject::connect(m_server, SIGNAL(newConnection()),
                      SLOT(receiveConnection()));
     return false;
 }
@@ -108,7 +110,7 @@ bool QtLocalPeer::sendMessage(const QByteArray &uMsg, int timeout) {
     bool connOk = false;
     for (int i = 0; i < 2; i++) {
         // Try twice, in case the other instance is just starting up
-        socket.connectToServer(socketName);
+        socket.connectToServer(m_socketName);
         connOk = socket.waitForConnected(timeout / 2);
         if (connOk || i) {
             break;
@@ -138,7 +140,7 @@ bool QtLocalPeer::sendMessage(const QByteArray &uMsg, int timeout) {
 }
 
 void QtLocalPeer::receiveConnection() {
-    QLocalSocket *socket = server->nextPendingConnection();
+    QLocalSocket *socket = m_server->nextPendingConnection();
     if (!socket) {
         return;
     }
@@ -177,5 +179,5 @@ void QtLocalPeer::receiveConnection() {
     socket->waitForBytesWritten(1000);
     socket->waitForDisconnected(1000); // make sure client reads ack
     delete socket;
-    Q_EMIT messageReceived(uMsg); // ### (might take a long time to return)
+    Q_EMIT sigOnMessageReceived(uMsg); // ### (might take a long time to return)
 }

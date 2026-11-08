@@ -9,13 +9,13 @@
  */
 
 #include "ribbontabcontent.h"
-#include "ribbonbuttongroup.h"
 #include "ui_ribbontabcontent.h"
-
-#include "control/common/eventfilter.h"
 
 #include <QScrollBar>
 #include <QWheelEvent>
+
+#include "control/common/eventfilter.h"
+#include "ribbonbuttongroup.h"
 
 RibbonTabContent::RibbonTabContent(QWidget *parent)
     : QWidget(parent), ui(new Ui::RibbonTabContent) {
@@ -26,7 +26,7 @@ RibbonTabContent::RibbonTabContent(QWidget *parent)
     auto hb = ui->ribbonTabScrollArea->horizontalScrollBar();
     auto view = ui->ribbonTabScrollArea->viewport();
     auto we = new EventFilter(QEvent::Wheel, this);
-    connect(we, &EventFilter::eventTriggered, this,
+    connect(we, &EventFilter::sigOnEventTriggered, this,
             [hb, view](QObject *obj, QEvent *event) {
                 Q_ASSERT(obj == view);
                 auto e = static_cast<QWheelEvent *>(event);

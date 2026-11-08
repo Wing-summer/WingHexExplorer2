@@ -24,13 +24,7 @@
         \see QEditConfig
 */
 
-#include "control/console/scriptingconsolebase.h"
-#include "control/editor/codeedit.h"
-#include "luau/runtime/scriptsettings.h"
 #include "ui_qeditconfig.h"
-#include "utilities.h"
-
-#include "class/settings/thememanager.h"
 
 #include <QSignalBlocker>
 #include <QVBoxLayout>
@@ -38,6 +32,12 @@
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
+
+#include "class/settings/thememanager.h"
+#include "control/console/scriptingconsolebase.h"
+#include "control/editor/codeedit.h"
+#include "luau/runtime/scriptsettings.h"
+#include "utilities.h"
 
 /*!
         \ingroup dialogs
@@ -69,62 +69,64 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         console->write(QStringLiteral("end"));
         console->newLine();
         console->stdOutLine(QStringLiteral("01234"));
-        _edit = console;
+        m_edit = console;
     } else {
-        _edit = new WingCodeEdit(this);
+        m_edit = new WingCodeEdit(this);
         QFile code(
             QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.luau"));
         auto ret = code.open(QFile::ReadOnly);
         Q_ASSERT(ret);
         Q_UNUSED(ret);
         auto cbuffer = code.readAll();
-        _edit->setPlainText(QString::fromUtf8(cbuffer));
+        m_edit->setPlainText(QString::fromUtf8(cbuffer));
     }
 
-    _edit->setReadOnly(true);
-    _edit->setUndoRedoEnabled(false);
-    _edit->setSyntax(
+    m_edit->setReadOnly(true);
+    m_edit->setUndoRedoEnabled(false);
+    m_edit->setSyntax(
         WingCodeEdit::syntaxRepo().definitionForName(QStringLiteral("Luau")));
 
-    ui->layoutEdit->addWidget(_edit);
-
-    connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            _edit, [this](int index) {
-                if (index == 0) {
-                    switch (ThemeManager::instance().currentTheme()) {
-                    case ThemeManager::Theme::Dark:
-                        _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
-                            KSyntaxHighlighting::Repository::DarkTheme));
-                        break;
-                    case ThemeManager::Theme::System:
-                    case ThemeManager::Theme::Light:
-                        _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
-                            KSyntaxHighlighting::Repository::LightTheme));
-                        break;
-                    }
-                } else {
-                    _edit->setTheme(WingCodeEdit::syntaxRepo().theme(
-                        ui->cbTheme->itemText(index)));
-                }
-            });
+    ui->layoutEdit->addWidget(m_edit);
 
     connect(
-        &ThemeManager::instance(), &ThemeManager::themeChanged, this, [this]() {
-            if (ui->cbTheme->currentIndex() == 0) {
-                const auto type =
-                    ThemeManager::instance().currentTheme() ==
-                            ThemeManager::Theme::Dark
-                        ? KSyntaxHighlighting::Repository::DarkTheme
-                        : KSyntaxHighlighting::Repository::LightTheme;
-                _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(type));
+        ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
+        m_edit, [this](int index) {
+            if (index == 0) {
+                switch (ThemeManager::instance().currentTheme()) {
+                case ThemeManager::Theme::Dark:
+                    m_edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
+                        KSyntaxHighlighting::Repository::DarkTheme));
+                    break;
+                case ThemeManager::Theme::System:
+                case ThemeManager::Theme::Light:
+                    m_edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
+                        KSyntaxHighlighting::Repository::LightTheme));
+                    break;
+                }
+            } else {
+                m_edit->setTheme(WingCodeEdit::syntaxRepo().theme(
+                    ui->cbTheme->itemText(index)));
             }
         });
+
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
+            [this]() {
+                if (ui->cbTheme->currentIndex() == 0) {
+                    const auto type =
+                        ThemeManager::instance().currentTheme() ==
+                                ThemeManager::Theme::Dark
+                            ? KSyntaxHighlighting::Repository::DarkTheme
+                            : KSyntaxHighlighting::Repository::LightTheme;
+                    m_edit->setTheme(
+                        WingCodeEdit::syntaxRepo().defaultTheme(type));
+                }
+            });
 
     const auto &settings = ScriptSettings::instance();
     ui->cbFont->setFontFilters(QFontComboBox::MonospacedFonts);
     setPreviewFont(m_isConsole ? settings.consoleFont()
                                : settings.editorFont());
-    connect(ui->cbFont, &QFontComboBox::currentFontChanged, _edit,
+    connect(ui->cbFont, &QFontComboBox::currentFontChanged, m_edit,
             [this](const QFont &font) {
                 auto &settings = ScriptSettings::instance();
                 if (m_isConsole) {
@@ -135,8 +137,8 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 setPreviewFont(m_isConsole ? settings.consoleFont()
                                            : settings.editorFont());
             });
-    connect(ui->spnFontSize, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
-            [this](int value) {
+    connect(ui->spnFontSize, QOverload<int>::of(&QSpinBox::valueChanged),
+            m_edit, [this](int value) {
                 auto &settings = ScriptSettings::instance();
                 if (m_isConsole) {
                     settings.setConsoleFontSize(value);
@@ -146,33 +148,33 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
                 setPreviewFont(m_isConsole ? settings.consoleFont()
                                            : settings.editorFont());
             });
-    connect(ui->spnTabWidth, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
-            &CodeEdit::setIndentWidth);
+    connect(ui->spnTabWidth, QOverload<int>::of(&QSpinBox::valueChanged),
+            m_edit, &CodeEdit::setIndentWidth);
     connect(ui->cbIndentation,
-            QOverload<int>::of(&QComboBox::currentIndexChanged), _edit,
+            QOverload<int>::of(&QComboBox::currentIndexChanged), m_edit,
             [this](int index) {
                 bool b;
                 auto iden = WingCodeEdit::IndentationMode(
                     ui->cbIndentation->itemData(index).toInt(&b));
                 if (b) {
-                    _edit->setIndentationMode(iden);
+                    m_edit->setIndentationMode(iden);
                 }
             });
-    connect(ui->chkShowLineNumber, &QCheckBox::toggled, _edit,
+    connect(ui->chkShowLineNumber, &QCheckBox::toggled, m_edit,
             &CodeEdit::setShowLineNumbers);
-    connect(ui->chkShowFolding, &QCheckBox::toggled, _edit,
+    connect(ui->chkShowFolding, &QCheckBox::toggled, m_edit,
             &CodeEdit::setShowFolding);
-    connect(ui->chkShowIndentGuides, &QCheckBox::toggled, _edit,
+    connect(ui->chkShowIndentGuides, &QCheckBox::toggled, m_edit,
             &CodeEdit::setShowIndentGuides);
-    connect(ui->chkWordWrap, &QCheckBox::toggled, _edit,
+    connect(ui->chkWordWrap, &QCheckBox::toggled, m_edit,
             &CodeEdit::setWordWrap);
-    connect(ui->chkShowWhitespace, &QCheckBox::toggled, _edit,
+    connect(ui->chkShowWhitespace, &QCheckBox::toggled, m_edit,
             &CodeEdit::setShowWhitespace);
-    connect(ui->chkMatchBraces, &QCheckBox::toggled, _edit,
+    connect(ui->chkMatchBraces, &QCheckBox::toggled, m_edit,
             &CodeEdit::setMatchBraces);
-    connect(ui->chkAutoCloseChar, &QCheckBox::toggled, _edit,
+    connect(ui->chkAutoCloseChar, &QCheckBox::toggled, m_edit,
             &CodeEdit::setAutoCloseChar);
-    connect(ui->chkAutoIden, &QCheckBox::toggled, _edit,
+    connect(ui->chkAutoIden, &QCheckBox::toggled, m_edit,
             &CodeEdit::setAutoIndent);
 
     auto &theme = ThemeManager::instance();
@@ -182,13 +184,13 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         ui->chkShowIndentGuides->setEnabled(false);
         ui->chkWordWrap->setEnabled(false);
 
-        _name = tr("Console");
-        _id = QStringLiteral("Console");
-        _icon = theme.standardIcon(ThemeManager::StandardIcon::Console);
+        m_name = tr("Console");
+        m_id = QStringLiteral("Console");
+        m_icon = theme.standardIcon(ThemeManager::StandardIcon::Console);
     } else {
-        _name = tr("Edit");
-        _id = QStringLiteral("Edit");
-        _icon = theme.standardIcon(ThemeManager::StandardIcon::File);
+        m_name = tr("Edit");
+        m_id = QStringLiteral("Edit");
+        m_icon = theme.standardIcon(ThemeManager::StandardIcon::File);
     }
 
     reload();
@@ -256,7 +258,7 @@ QEditConfig::~QEditConfig() { delete ui; }
 void QEditConfig::setPreviewFont(const QFont &font) {
     const QSignalBlocker fontBlocker(ui->cbFont);
     const QSignalBlocker sizeBlocker(ui->spnFontSize);
-    _edit->setDefaultFont(font);
+    m_edit->setDefaultFont(font);
     ui->cbFont->setCurrentFont(font);
     // Platform aliases may not have a matching row in the font family model.
     ui->cbFont->setEditText(font.family());
@@ -270,7 +272,7 @@ void QEditConfig::setPreviewFont(const QFont &font) {
 */
 void QEditConfig::restore() {
     auto &set = ScriptSettings::instance();
-    set.reset(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
+    set.reset(m_isConsole ? ScriptSettings::Console : ScriptSettings::Editor);
     reload();
 }
 
@@ -341,8 +343,8 @@ void QEditConfig::loadIndentations() {
     ui->cbIndentation->setCurrentIndex(0);
 }
 
-QIcon QEditConfig::categoryIcon() const { return _icon; }
+QIcon QEditConfig::categoryIcon() const { return m_icon; }
 
-QString QEditConfig::name() const { return _name; }
+QString QEditConfig::name() const { return m_name; }
 
-QString QEditConfig::id() const { return _id; }
+QString QEditConfig::id() const { return m_id; }

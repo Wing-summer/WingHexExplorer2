@@ -17,9 +17,9 @@
 
 #include "idbtreeview.h"
 
-#include "utilities.h"
-
 #include <QTimer>
+
+#include "utilities.h"
 
 IDBTreeView::IDBTreeView(QWidget *parent) : QTreeView(parent) {
     Utilities::applyTreeViewProperty(this);

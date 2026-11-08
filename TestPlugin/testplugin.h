@@ -21,9 +21,9 @@
 #ifndef TESTPLUGIN_H
 #define TESTPLUGIN_H
 
-#include "WingPlugin/iwingplugin.h"
-
 #include <QSharedMemory>
+
+#include "WingPlugin/iwingplugin.h"
 
 class TestPlugin final : public WingHex::IWingPlugin {
     Q_OBJECT
@@ -111,18 +111,18 @@ private:
     void testCrash();
 
 private:
-    QDialog *_tform = nullptr;
-    QMenu *_tmenu = nullptr;
+    QDialog *m_tform = nullptr;
+    QMenu *m_tmenu = nullptr;
 
-    QSharedMemory *_tsharemem = nullptr;
+    QSharedMemory *m_tsharemem = nullptr;
 
-    bool ENABLE_META = false;
+    bool m_enableMeta = false;
 
-    QList<WingHex::WingDockWidgetInfo> _winfo;
-    QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
-    QList<WingHex::SettingPage *> _setpages;
-    QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
-    WingHex::HexEditorContext *_curContext = nullptr;
+    QList<WingHex::WingDockWidgetInfo> m_winfo;
+    QList<WingHex::WingRibbonToolBoxInfo> m_rtbinfo;
+    QList<WingHex::SettingPage *> m_setpages;
+    QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> m_evws;
+    WingHex::HexEditorContext *m_curContext = nullptr;
 };
 
 #endif // TESTPLUGIN_H

@@ -1,10 +1,10 @@
 #ifndef CRASHREPORT_H
 #define CRASHREPORT_H
 
-#include "dialog/framelessdialogbase.h"
-
 #include <QAbstractButton>
 #include <QWidget>
+
+#include "dialog/framelessdialogbase.h"
 
 namespace Ui {
 class CrashReport;
@@ -27,7 +27,7 @@ private slots:
 private:
     Ui::CrashReport *ui;
 
-    FramelessDialogBase *_dialog = nullptr;
+    FramelessDialogBase *m_dialog = nullptr;
 };
 
 #endif // CRASHREPORT_H

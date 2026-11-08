@@ -34,12 +34,12 @@ public:
     QCheckListStyledItemDelegate(QObject *parent = 0)
         : QStyledItemDelegate(parent) {}
 
-    void paint(QPainter *painter_, const QStyleOptionViewItem &option_,
-               const QModelIndex &index_) const {
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const {
         QStyleOptionViewItem &refToNonConstOption =
-            const_cast<QStyleOptionViewItem &>(option_);
+            const_cast<QStyleOptionViewItem &>(option);
         refToNonConstOption.showDecorationSelected = false;
-        QStyledItemDelegate::paint(painter_, refToNonConstOption, index_);
+        QStyledItemDelegate::paint(painter, refToNonConstOption, index);
     }
 };
 
@@ -72,7 +72,7 @@ private:
     QString m_unknownlyCheckedText;
 
 signals:
-    void globalCheckStateChanged(int);
+    void sigOnGlobalCheckStateChanged(int);
 
 public:
     explicit QCheckList(QWidget *parent = nullptr);
@@ -101,7 +101,7 @@ public:
     int globalCheckState();
 
 protected:
-    bool eventFilter(QObject *_object, QEvent *_event);
+    bool eventFilter(QObject *object, QEvent *event);
 
 private:
     void updateText();

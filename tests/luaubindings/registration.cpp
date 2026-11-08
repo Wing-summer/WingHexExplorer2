@@ -2,12 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
-#include "filesystem_checks.h"
-#include "generated_bindings.hpp"
-#include "luau/runtime/scriptwindowfactory.h"
-#include "luau/wingluaurequire.h"
-#include "qtluau/execution.hpp"
-#include "qtluau/module_values.hpp"
 #include <QElapsedTimer>
 #include <QFile>
 #include <QJsonArray>
@@ -17,7 +11,22 @@
 #include <QStatusBar>
 #include <QToolBar>
 #include <QVBoxLayout>
+
+#include "qtluau/execution.hpp"
+#include "qtluau/module_values.hpp"
+
+#include "filesystem_checks.h"
+#include "generated_bindings.hpp"
+#include "luau/runtime/scriptwindowfactory.h"
+#include "luau/wingluaurequire.h"
 extern "C" int luaopen_cffi(lua_State *L);
+#include <array>
+#include <cctype>
+#include <iostream>
+#include <optional>
+#include <set>
+#include <string>
+
 #include <QAbstractButton>
 #include <QApplication>
 #include <QColorDialog>
@@ -26,12 +35,6 @@ extern "C" int luaopen_cffi(lua_State *L);
 #include <QMessageBox>
 #include <QScopeGuard>
 #include <QTimer>
-#include <array>
-#include <cctype>
-#include <iostream>
-#include <optional>
-#include <set>
-#include <string>
 
 LUAU_FASTFLAG(LuauIntegerType2)
 
@@ -80,6 +83,7 @@ bool checkMethodNames(lua_State *L) {
     }
     return invalid.empty();
 }
+
 bool checkWarning(lua_State *L, const QString &script,
                   QMessageBox::StandardButtons expected,
                   QMessageBox::StandardButton clicked) {
@@ -317,7 +321,8 @@ int runRegistrationTest() {
         return 1;
     }
     require.registerBuiltinLoader("network", [](lua_State *state) {
-        return qtluau::loadRegisteredModule(state, "network", bindings::registerModule);
+        return qtluau::loadRegisteredModule(state, "network",
+                                            bindings::registerModule);
     });
     luaopen_cffi(L);
     if (!require.registerBuiltinValue("cffi", -1)) {

@@ -19,21 +19,21 @@
 
 BreakPoint BreakPoint::create(int line) {
     BreakPoint bp;
-    bp.line_ = line;
+    bp.m_line = line;
     return bp;
 }
 
-int BreakPoint::line() const { return line_; }
+int BreakPoint::line() const { return m_line; }
 
-int BreakPoint::enable(lua_State *L, int func_index, bool enable) {
+int BreakPoint::enable(lua_State *L, int funcIndex, bool enable) {
     lua_checkstack(L, 1);
-    lua_getref(L, func_index);
-    int result = lua_breakpoint(L, -1, line_, enable);
-    auto old = line_;
+    lua_getref(L, funcIndex);
+    int result = lua_breakpoint(L, -1, m_line, enable);
+    auto old = m_line;
     if (result == -1) {
         return -1;
     } else {
-        line_ = result;
+        m_line = result;
     }
     lua_pop(L, 1);
     return old;

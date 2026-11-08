@@ -17,16 +17,16 @@
 
 #include "checksumdialog.h"
 
-#include "class/settings/thememanager.h"
-#include "class/util/cryptographichash.h"
-#include "control/toast.h"
-
 #include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QLabel>
 #include <QShortcut>
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
+
+#include "class/settings/thememanager.h"
+#include "class/util/cryptographichash.h"
+#include "control/toast.h"
 
 CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
     : FramelessDialogBase(parent) {
@@ -37,14 +37,14 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
     auto l = new QLabel(tr("Select checksums to calculate"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
-    hashlist = new QTreeWidget(this);
-    hashlist->setColumnCount(1);
-    hashlist->header()->hide();
-    hashlist->setContextMenuPolicy(Qt::ActionsContextMenu);
-    hashlist->addAction(tr("Select all"), this, [this]() {
-        auto total = hashlist->topLevelItemCount();
+    m_hashlist = new QTreeWidget(this);
+    m_hashlist->setColumnCount(1);
+    m_hashlist->header()->hide();
+    m_hashlist->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_hashlist->addAction(tr("Select all"), this, [this]() {
+        auto total = m_hashlist->topLevelItemCount();
         for (int i = 0; i < total; ++i) {
-            auto parent = hashlist->topLevelItem(i);
+            auto parent = m_hashlist->topLevelItem(i);
             parent->setCheckState(0, Qt::Checked);
             auto total = parent->childCount();
             for (int i = 0; i < total; ++i) {
@@ -53,10 +53,10 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
             }
         }
     });
-    hashlist->addAction(tr("Clear selection"), this, [this]() {
-        auto total = hashlist->topLevelItemCount();
+    m_hashlist->addAction(tr("Clear selection"), this, [this]() {
+        auto total = m_hashlist->topLevelItemCount();
         for (int i = 0; i < total; ++i) {
-            auto parent = hashlist->topLevelItem(i);
+            auto parent = m_hashlist->topLevelItem(i);
             parent->setCheckState(0, Qt::Unchecked);
             auto total = parent->childCount();
             for (int i = 0; i < total; ++i) {
@@ -66,16 +66,16 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
         }
     });
     populateData(cs);
-    auto total = hashlist->topLevelItemCount();
+    auto total = m_hashlist->topLevelItemCount();
     for (int i = 0; i < total; ++i) {
-        updateCheckStatus(hashlist->topLevelItem(i));
+        updateCheckStatus(m_hashlist->topLevelItem(i));
     }
 
-    connect(hashlist, &QTreeWidget::itemChanged, this,
+    connect(m_hashlist, &QTreeWidget::itemChanged, this,
             &CheckSumDialog::onItemChanged);
-    connect(hashlist, &QTreeWidget::itemClicked, this,
+    connect(m_hashlist, &QTreeWidget::itemClicked, this,
             &CheckSumDialog::onItemClicked);
-    layout->addWidget(hashlist);
+    layout->addWidget(m_hashlist);
     layout->addSpacing(10);
     auto dbbox = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -94,15 +94,15 @@ CheckSumDialog::CheckSumDialog(QVector<int> &cs, QWidget *parent)
         ThemeManager::StandardIcon::Checksum));
 }
 
-const QVector<int> &CheckSumDialog::getResults() { return _result; }
+const QVector<int> &CheckSumDialog::getResults() { return m_result; }
 
 void CheckSumDialog::on_accept() {
-    _result.clear();
-    auto total = hashlist->topLevelItemCount();
+    m_result.clear();
+    auto total = m_hashlist->topLevelItemCount();
     for (int i = 0; i < total; ++i) {
-        collectCheckedLeaves(hashlist->topLevelItem(i), _result);
+        collectCheckedLeaves(m_hashlist->topLevelItem(i), m_result);
     }
-    if (_result.isEmpty()) {
+    if (m_result.isEmpty()) {
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Checksum),
@@ -181,9 +181,9 @@ void CheckSumDialog::collectCheckedLeaves(QTreeWidgetItem *item,
 }
 
 void CheckSumDialog::populateData(QVector<int> &cs) {
-    hashlist->clear();
+    m_hashlist->clear();
 
-    auto make_data = [](CryptographicHash::Algorithm m) -> QPair<QString, int> {
+    auto makeData = [](CryptographicHash::Algorithm m) -> QPair<QString, int> {
         auto e = QMetaEnum::fromType<CryptographicHash::Algorithm>();
         auto n = int(m);
         return qMakePair(QString::fromLatin1(e.valueToKey(n)), n);
@@ -191,51 +191,51 @@ void CheckSumDialog::populateData(QVector<int> &cs) {
 
     static QHash<QString, QList<QPair<QString, int>>> buffer{
         {QStringLiteral("LegacyHash"),
-         {make_data(CryptographicHash::Algorithm::Md4),
-          make_data(CryptographicHash::Algorithm::Md5)}},
+         {makeData(CryptographicHash::Algorithm::Md4),
+          makeData(CryptographicHash::Algorithm::Md5)}},
         {QStringLiteral("Checksum"),
-         {make_data(CryptographicHash::Algorithm::CRC8),
-          make_data(CryptographicHash::Algorithm::CRC8_MAXIM),
-          make_data(CryptographicHash::Algorithm::CRC16),
-          make_data(CryptographicHash::Algorithm::CRC16_CCITT_FALSE),
-          make_data(CryptographicHash::Algorithm::CRC16_MODBUS),
-          make_data(CryptographicHash::Algorithm::CRC32),
-          make_data(CryptographicHash::Algorithm::CRC32_C),
-          make_data(CryptographicHash::Algorithm::CRC64)}},
+         {makeData(CryptographicHash::Algorithm::CRC8),
+          makeData(CryptographicHash::Algorithm::CRC8_MAXIM),
+          makeData(CryptographicHash::Algorithm::CRC16),
+          makeData(CryptographicHash::Algorithm::CRC16_CCITT_FALSE),
+          makeData(CryptographicHash::Algorithm::CRC16_MODBUS),
+          makeData(CryptographicHash::Algorithm::CRC32),
+          makeData(CryptographicHash::Algorithm::CRC32_C),
+          makeData(CryptographicHash::Algorithm::CRC64)}},
         {QStringLiteral("SHA1"),
-         {make_data(CryptographicHash::Algorithm::Sha1)}},
+         {makeData(CryptographicHash::Algorithm::Sha1)}},
         {QStringLiteral("SHA2"),
-         {make_data(CryptographicHash::Algorithm::Sha224),
-          make_data(CryptographicHash::Algorithm::Sha256),
-          make_data(CryptographicHash::Algorithm::Sha384),
-          make_data(CryptographicHash::Algorithm::Sha512)}},
+         {makeData(CryptographicHash::Algorithm::Sha224),
+          makeData(CryptographicHash::Algorithm::Sha256),
+          makeData(CryptographicHash::Algorithm::Sha384),
+          makeData(CryptographicHash::Algorithm::Sha512)}},
         {QStringLiteral("Keccak"),
-         {make_data(CryptographicHash::Algorithm::Keccak_224),
-          make_data(CryptographicHash::Algorithm::Keccak_256),
-          make_data(CryptographicHash::Algorithm::Keccak_384),
-          make_data(CryptographicHash::Algorithm::Keccak_512)}},
+         {makeData(CryptographicHash::Algorithm::Keccak_224),
+          makeData(CryptographicHash::Algorithm::Keccak_256),
+          makeData(CryptographicHash::Algorithm::Keccak_384),
+          makeData(CryptographicHash::Algorithm::Keccak_512)}},
         {QStringLiteral("SHA3"),
-         {make_data(CryptographicHash::Algorithm::RealSha3_224),
-          make_data(CryptographicHash::Algorithm::RealSha3_256),
-          make_data(CryptographicHash::Algorithm::RealSha3_384),
-          make_data(CryptographicHash::Algorithm::RealSha3_512)}},
+         {makeData(CryptographicHash::Algorithm::RealSha3_224),
+          makeData(CryptographicHash::Algorithm::RealSha3_256),
+          makeData(CryptographicHash::Algorithm::RealSha3_384),
+          makeData(CryptographicHash::Algorithm::RealSha3_512)}},
         {QStringLiteral("Blake2b"),
-         {make_data(CryptographicHash::Algorithm::Blake2b_160),
-          make_data(CryptographicHash::Algorithm::Blake2b_256),
-          make_data(CryptographicHash::Algorithm::Blake2b_384),
-          make_data(CryptographicHash::Algorithm::Blake2b_512)}},
+         {makeData(CryptographicHash::Algorithm::Blake2b_160),
+          makeData(CryptographicHash::Algorithm::Blake2b_256),
+          makeData(CryptographicHash::Algorithm::Blake2b_384),
+          makeData(CryptographicHash::Algorithm::Blake2b_512)}},
         {QStringLiteral("Blake2s"),
-         {make_data(CryptographicHash::Algorithm::Blake2s_128),
-          make_data(CryptographicHash::Algorithm::Blake2s_160),
-          make_data(CryptographicHash::Algorithm::Blake2s_224),
-          make_data(CryptographicHash::Algorithm::Blake2s_256)}}};
+         {makeData(CryptographicHash::Algorithm::Blake2s_128),
+          makeData(CryptographicHash::Algorithm::Blake2s_160),
+          makeData(CryptographicHash::Algorithm::Blake2s_224),
+          makeData(CryptographicHash::Algorithm::Blake2s_256)}}};
 
     std::sort(cs.begin(), cs.end());
     for (auto it = buffer.constBegin(); it != buffer.constEnd(); ++it) {
         const auto &rootName = it.key();
         const auto &children = it.value();
 
-        auto root = new QTreeWidgetItem(hashlist);
+        auto root = new QTreeWidgetItem(m_hashlist);
         root->setText(0, rootName);
 
         root->setFlags(root->flags() | Qt::ItemIsUserCheckable |
@@ -257,8 +257,8 @@ void CheckSumDialog::populateData(QVector<int> &cs) {
         root->setCheckState(0, Qt::Checked);
     }
 
-    hashlist->sortItems(0, Qt::AscendingOrder);
-    hashlist->expandAll();
+    m_hashlist->sortItems(0, Qt::AscendingOrder);
+    m_hashlist->expandAll();
 }
 
 void CheckSumDialog::updateCheckStatus(QTreeWidgetItem *parent) {

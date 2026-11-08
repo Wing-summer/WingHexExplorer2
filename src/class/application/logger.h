@@ -51,7 +51,7 @@ public:
     static Level defaultLevel();
 
 signals:
-    void log(const QString &message);
+    void sigOnLogMessage(const QString &message);
 
 public slots:
     static void newLine();
@@ -81,9 +81,9 @@ private:
     Q_DISABLE_COPY_MOVE(Logger)
 
 private:
-    Level _level = Level::q4DEBUG;
-    QSharedPointer<QFile> _file = nullptr;
-    QSharedPointer<QTextStream> _stream = nullptr;
+    Level m_level = Level::q4DEBUG;
+    QSharedPointer<QFile> m_file = nullptr;
+    QSharedPointer<QTextStream> m_stream = nullptr;
 };
 
 #endif // LOGGER_H

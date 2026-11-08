@@ -22,9 +22,10 @@
 #ifndef METAREMOVECOMMAND_H
 #define METAREMOVECOMMAND_H
 
-#include "metacommand.h"
 #include <QList>
 #include <QObject>
+
+#include "metacommand.h"
 
 // this class is newed by wingsummer
 

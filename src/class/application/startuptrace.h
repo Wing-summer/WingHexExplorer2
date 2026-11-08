@@ -44,9 +44,13 @@ private:
 };
 #else
 inline void start() {}
+
 inline bool enabled() { return false; }
+
 inline void mark(const char *, qint64 = -1) {}
+
 inline void watchWindow(QWidget *) {}
+
 class PhaseTimer {
 public:
     void checkpoint(const char *) {}

@@ -41,11 +41,11 @@ protected:
 
 private:
     friend class QConsoleWidget;
-    QConsoleWidget *widget_;
-    QByteArray readbuff_;
-    int readpos_;
-    qint64 writtenSinceLastEmit_, readSinceLastEmit_;
-    bool readyReadEmmited_;
+    QConsoleWidget *m_widget;
+    QByteArray m_readbuff;
+    int m_readpos;
+    qint64 m_writtenSinceLastEmit, m_readSinceLastEmit;
+    bool m_readyReadEmmited;
 };
 
 #endif

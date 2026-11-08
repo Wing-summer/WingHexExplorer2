@@ -16,25 +16,29 @@
 */
 
 #include "scriptbindingengine.h"
+
+#include <new>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-
 #include <QThread>
 
 #include <lua.h>
 #include <lualib.h>
-#include <new>
 
 namespace WingScriptBind {
 
 namespace {
 char objectMarker;
+
 struct StackGuard {
     lua_State *state;
     int top;
+
     explicit StackGuard(lua_State *value)
         : state(value), top(lua_gettop(value)) {}
+
     ~StackGuard() { lua_settop(state, top); }
 };
 } // namespace
@@ -45,10 +49,12 @@ class ScriptBindingEngine::Impl final : public IRegistrationApi {
         Callable setter;
         bool isStatic = false;
     };
+
     struct Function {
         QList<Callable> overloads;
         bool isStatic = false;
     };
+
     struct Scope {
         ScopeId parent = 0;
         QString name;
@@ -61,10 +67,12 @@ class ScriptBindingEngine::Impl final : public IRegistrationApi {
         QHash<QString, Function> functions;
         QHash<QString, Property> properties;
     };
+
     struct Control {
         Impl *engine = nullptr;
     };
     enum class Operation { Call, Index, NewIndex, Construct };
+
     struct Closure {
         std::shared_ptr<Control> control;
         ScopeId scope;
@@ -75,24 +83,24 @@ class ScriptBindingEngine::Impl final : public IRegistrationApi {
 
 public:
     Impl(lua_State *state, ObjectCodec codec)
-        : state_(state), codec_(std::move(codec)),
-          thread_(QThread::currentThread()),
-          control_(std::make_shared<Control>()) {
-        if (!state_) {
+        : m_state(state), m_codec(std::move(codec)),
+          m_thread(QThread::currentThread()),
+          m_control(std::make_shared<Control>()) {
+        if (!m_state) {
             throw ScriptException(Exception::InvalidArgument);
         }
-        control_->engine = this;
+        m_control->engine = this;
         Scope root;
-        lua_pushvalue(state_, LUA_GLOBALSINDEX);
-        root.table = lua_ref(state_, -1);
-        lua_pop(state_, 1);
-        scopes_.insert(0, root);
+        lua_pushvalue(m_state, LUA_GLOBALSINDEX);
+        root.table = lua_ref(m_state, -1);
+        lua_pop(m_state, 1);
+        m_scopes.insert(0, root);
     }
 
     ScriptSymbolCatalog symbolCatalog() const {
         checkThread();
         ScriptSymbolCatalog result;
-        for (auto it = scopes_.cbegin(); it != scopes_.cend(); ++it) {
+        for (auto it = m_scopes.cbegin(); it != m_scopes.cend(); ++it) {
             if (it.key() == 0) {
                 continue;
             }
@@ -121,7 +129,7 @@ public:
                          ? QStringLiteral("Native property")
                          : QStringLiteral("Read-only native property")});
             }
-            const auto constants = constants_.value(it.key());
+            const auto constants = m_constants.value(it.key());
             for (const auto &name : constants) {
                 result.append({id + '/' + name,
                                id,
@@ -134,13 +142,13 @@ public:
     }
 
     ~Impl() override {
-        control_->engine = nullptr;
-        for (const auto &scope : std::as_const(scopes_)) {
+        m_control->engine = nullptr;
+        for (const auto &scope : std::as_const(m_scopes)) {
             if (scope.table != LUA_NOREF) {
-                lua_unref(state_, scope.table);
+                lua_unref(m_state, scope.table);
             }
             if (scope.metatable != LUA_NOREF) {
-                lua_unref(state_, scope.metatable);
+                lua_unref(m_state, scope.metatable);
             }
         }
     }
@@ -153,20 +161,20 @@ public:
     }
 
     void retainNamespaceScope(ScopeId root) noexcept override {
-        if (QThread::currentThread() == thread_) {
-            ++leases_[root];
+        if (QThread::currentThread() == m_thread) {
+            ++m_leases[root];
         }
     }
 
     void releaseNamespaceScope(ScopeId root) noexcept override {
-        if (QThread::currentThread() != thread_) {
+        if (QThread::currentThread() != m_thread) {
             return;
         }
-        auto lease = leases_.find(root);
-        if (lease == leases_.end() || --lease.value() > 0) {
+        auto lease = m_leases.find(root);
+        if (lease == m_leases.end() || --lease.value() > 0) {
             return;
         }
-        leases_.erase(lease);
+        m_leases.erase(lease);
         prune(root);
     }
 
@@ -200,7 +208,7 @@ public:
             }
         }
         const auto id = child(parent, name, true, type, bases, flags);
-        StackGuard guard(state_);
+        StackGuard guard(m_state);
         materialize(id);
         return id;
     }
@@ -226,24 +234,24 @@ public:
              member == QStringLiteral("__metatable"))) {
             throw ScriptException(Exception::InvalidArgument);
         }
-        StackGuard guard(state_);
+        StackGuard guard(m_state);
         materialize(scope);
-        scopes_[scope].functions.insert(member, {overloads, isStatic});
+        m_scopes[scope].functions.insert(member, {overloads, isStatic});
         if (!get(scope).isClass || isStatic) {
-            lua_getref(state_, get(scope).table);
+            lua_getref(m_state, get(scope).table);
             pushClosure(scope, member, Operation::Call);
-            lua_rawsetfield(state_, -2, member.toUtf8().constData());
+            lua_rawsetfield(m_state, -2, member.toUtf8().constData());
         }
         if (member == QStringLiteral("__constructor") && get(scope).isClass) {
-            lua_getref(state_, get(scope).table);
-            lua_getmetatable(state_, -1);
+            lua_getref(m_state, get(scope).table);
+            lua_getmetatable(m_state, -1);
             pushClosure(scope, member, Operation::Construct);
-            lua_rawsetfield(state_, -2, "__call");
+            lua_rawsetfield(m_state, -2, "__call");
         } else if (member.startsWith(QStringLiteral("__")) &&
                    get(scope).isClass && !isStatic) {
-            lua_getref(state_, get(scope).metatable);
+            lua_getref(m_state, get(scope).metatable);
             pushClosure(scope, member, Operation::Call, true);
-            lua_rawsetfield(state_, -2, member.toUtf8().constData());
+            lua_rawsetfield(m_state, -2, member.toUtf8().constData());
         }
     }
 
@@ -255,10 +263,10 @@ public:
             throw ScriptException(Exception::InvalidArgument);
         }
         checkMember(scope, member);
-        StackGuard guard(state_);
+        StackGuard guard(m_state);
         materialize(scope);
         ensureTableMetatable(scope);
-        scopes_[scope].properties.insert(
+        m_scopes[scope].properties.insert(
             member, {std::move(getter), std::move(setter), isStatic});
     }
 
@@ -267,23 +275,23 @@ public:
         checkThread();
         const auto member = checkedName(name);
         checkMember(scope, member);
-        StackGuard guard(state_);
+        StackGuard guard(m_state);
         materialize(scope);
-        lua_getref(state_, get(scope).table);
-        pushValue(state_, value, 0);
-        lua_rawsetfield(state_, -2, member.toUtf8().constData());
-        constants_[scope].insert(member);
+        lua_getref(m_state, get(scope).table);
+        pushValue(m_state, value, 0);
+        lua_rawsetfield(m_state, -2, member.toUtf8().constData());
+        m_constants[scope].insert(member);
     }
 
     void collectGarbage() {
         checkThread();
-        lua_gc(state_, LUA_GCCOLLECT, 0);
+        lua_gc(m_state, LUA_GCCOLLECT, 0);
     }
 
     void registerDefinitionFile(ScopeId scope,
                                 QAnyStringView fileName) override {
         checkThread();
-        if (lua_getreadonly(state_, LUA_GLOBALSINDEX)) {
+        if (lua_getreadonly(m_state, LUA_GLOBALSINDEX)) {
             throw ScriptException(
                 Exception::RegistrationFailed,
                 QStringLiteral("Definition registration has finished"));
@@ -300,7 +308,7 @@ public:
         }
         const auto path =
             resource ? QDir::cleanPath(name) : info.canonicalFilePath();
-        if (definitionPaths_.contains(path)) {
+        if (m_definitionPaths.contains(path)) {
             return;
         }
         QFile file(path);
@@ -308,27 +316,27 @@ public:
             throw ScriptException(Exception::InvalidArgument,
                                   file.errorString());
         }
-        definitionPaths_.insert(path);
-        definitionFiles_.append(path);
+        m_definitionPaths.insert(path);
+        m_definitionFiles.append(path);
     }
 
     QStringList definitionFiles() const {
         checkThread();
-        return definitionFiles_;
+        return m_definitionFiles;
     }
 
 private:
     static constexpr ScopeId invalidScope = std::numeric_limits<ScopeId>::max();
 
     void checkThread() const {
-        if (QThread::currentThread() != thread_) {
+        if (QThread::currentThread() != m_thread) {
             throw ScriptException(Exception::WrongThread);
         }
     }
 
     const Scope &get(ScopeId scope) const {
-        auto found = scopes_.constFind(scope);
-        if (found == scopes_.cend()) {
+        auto found = m_scopes.constFind(scope);
+        if (found == m_scopes.cend()) {
             throw ScriptException(Exception::InvalidScope);
         }
         return found.value();
@@ -343,7 +351,8 @@ private:
     }
 
     ScopeId classScope(const TypeInfo &type) const {
-        for (auto scope = scopes_.cbegin(); scope != scopes_.cend(); ++scope) {
+        for (auto scope = m_scopes.cbegin(); scope != m_scopes.cend();
+             ++scope) {
             if (scope->isClass && sameType(scope->type, type)) {
                 return scope.key();
             }
@@ -355,7 +364,8 @@ private:
                   const TypeInfo &type, const QList<BaseInfo> &bases,
                   ClassFlags flags) {
         const auto member = checkedName(name);
-        for (auto scope = scopes_.cbegin(); scope != scopes_.cend(); ++scope) {
+        for (auto scope = m_scopes.cbegin(); scope != m_scopes.cend();
+             ++scope) {
             if (scope.key() != 0 && scope->parent == parent &&
                 scope->name == member) {
                 if (scope->isClass != isClass) {
@@ -377,7 +387,7 @@ private:
         const auto &record = get(parent);
         if (record.functions.contains(member) ||
             record.properties.contains(member) ||
-            constants_.value(parent).contains(member)) {
+            m_constants.value(parent).contains(member)) {
             throw ScriptException(Exception::DuplicateName, member);
         }
         Scope recordValue;
@@ -387,8 +397,8 @@ private:
         recordValue.type = type;
         recordValue.bases = bases;
         recordValue.flags = flags;
-        auto id = nextScope_++;
-        scopes_.insert(id, std::move(recordValue));
+        auto id = m_nextScope++;
+        m_scopes.insert(id, std::move(recordValue));
         return id;
     }
 
@@ -396,24 +406,25 @@ private:
         const auto &record = get(scope);
         if (record.functions.contains(name) ||
             record.properties.contains(name) ||
-            constants_.value(scope).contains(name)) {
+            m_constants.value(scope).contains(name)) {
             throw ScriptException(Exception::DuplicateName, name);
         }
-        for (auto child = scopes_.cbegin(); child != scopes_.cend(); ++child) {
+        for (auto child = m_scopes.cbegin(); child != m_scopes.cend();
+             ++child) {
             if (child.key() && child->parent == scope && child->name == name) {
                 throw ScriptException(Exception::DuplicateName, name);
             }
         }
         if (record.table != LUA_NOREF) {
-            StackGuard guard(state_);
-            lua_getref(state_, record.table);
-            if (lua_getreadonly(state_, -1)) {
+            StackGuard guard(m_state);
+            lua_getref(m_state, record.table);
+            if (lua_getreadonly(m_state, -1)) {
                 throw ScriptException(
                     Exception::RegistrationFailed,
                     QStringLiteral("Registration table is read-only"));
             }
-            lua_rawgetfield(state_, -1, name.toUtf8().constData());
-            if (!lua_isnil(state_, -1)) {
+            lua_rawgetfield(m_state, -1, name.toUtf8().constData());
+            if (!lua_isnil(m_state, -1)) {
                 throw ScriptException(Exception::DuplicateName, name);
             }
         }
@@ -421,7 +432,8 @@ private:
 
     void prune(ScopeId scope) {
         QList<ScopeId> children;
-        for (auto entry = scopes_.cbegin(); entry != scopes_.cend(); ++entry) {
+        for (auto entry = m_scopes.cbegin(); entry != m_scopes.cend();
+             ++entry) {
             if (entry.key() && entry->parent == scope) {
                 children.append(entry.key());
             }
@@ -430,8 +442,8 @@ private:
             prune(child);
         }
         if (scope && get(scope).table == LUA_NOREF &&
-            !leases_.contains(scope)) {
-            scopes_.remove(scope);
+            !m_leases.contains(scope)) {
+            m_scopes.remove(scope);
         }
     }
 
@@ -441,76 +453,76 @@ private:
         }
         const auto record = get(scope);
         materialize(record.parent);
-        lua_getref(state_, get(record.parent).table);
-        if (lua_getreadonly(state_, -1)) {
+        lua_getref(m_state, get(record.parent).table);
+        if (lua_getreadonly(m_state, -1)) {
             throw ScriptException(
                 Exception::RegistrationFailed,
                 QStringLiteral("Parent registration table is read-only"));
         }
-        lua_rawgetfield(state_, -1, record.name.toUtf8().constData());
-        if (lua_isnil(state_, -1)) {
-            lua_pop(state_, 1);
-            lua_newtable(state_);
-            lua_pushvalue(state_, -1);
-            lua_rawsetfield(state_, -3, record.name.toUtf8().constData());
-        } else if (!lua_istable(state_, -1) || record.isClass) {
+        lua_rawgetfield(m_state, -1, record.name.toUtf8().constData());
+        if (lua_isnil(m_state, -1)) {
+            lua_pop(m_state, 1);
+            lua_newtable(m_state);
+            lua_pushvalue(m_state, -1);
+            lua_rawsetfield(m_state, -3, record.name.toUtf8().constData());
+        } else if (!lua_istable(m_state, -1) || record.isClass) {
             throw ScriptException(Exception::DuplicateName, record.name);
         }
-        scopes_[scope].table = lua_ref(state_, -1);
-        lua_pop(state_, 2);
+        m_scopes[scope].table = lua_ref(m_state, -1);
+        lua_pop(m_state, 2);
         if (record.isClass) {
-            lua_newtable(state_);
-            lua_pushlightuserdata(state_, &objectMarker);
-            lua_rawsetfield(state_, -2, "__wing_binding");
+            lua_newtable(m_state);
+            lua_pushlightuserdata(m_state, &objectMarker);
+            lua_rawsetfield(m_state, -2, "__wing_binding");
             pushClosure(scope, {}, Operation::Index, true);
-            lua_rawsetfield(state_, -2, "__index");
+            lua_rawsetfield(m_state, -2, "__index");
             pushClosure(scope, {}, Operation::NewIndex, true);
-            lua_rawsetfield(state_, -2, "__newindex");
+            lua_rawsetfield(m_state, -2, "__newindex");
             if (!record.flags.testFlag(ClassFlag::VisibleMetatables)) {
-                lua_pushboolean(state_, false);
-                lua_rawsetfield(state_, -2, "__metatable");
+                lua_pushboolean(m_state, false);
+                lua_rawsetfield(m_state, -2, "__metatable");
             }
-            scopes_[scope].metatable = lua_ref(state_, -1);
-            lua_pop(state_, 1);
+            m_scopes[scope].metatable = lua_ref(m_state, -1);
+            lua_pop(m_state, 1);
             ensureTableMetatable(scope);
         }
     }
 
     void ensureTableMetatable(ScopeId scope) {
-        lua_getref(state_, get(scope).table);
-        if (lua_getmetatable(state_, -1)) {
-            lua_rawgetfield(state_, -1, "__wing_scope");
-            const bool own = lua_touserdata(state_, -1) == control_.get();
-            lua_pop(state_, 2);
+        lua_getref(m_state, get(scope).table);
+        if (lua_getmetatable(m_state, -1)) {
+            lua_rawgetfield(m_state, -1, "__wing_scope");
+            const bool own = lua_touserdata(m_state, -1) == m_control.get();
+            lua_pop(m_state, 2);
             if (!own) {
                 throw ScriptException(
                     Exception::RegistrationFailed,
                     QStringLiteral("Existing table has a foreign metatable"));
             }
-            lua_pop(state_, 1);
+            lua_pop(m_state, 1);
             return;
         }
-        lua_newtable(state_);
-        lua_pushlightuserdata(state_, control_.get());
-        lua_rawsetfield(state_, -2, "__wing_scope");
+        lua_newtable(m_state);
+        lua_pushlightuserdata(m_state, m_control.get());
+        lua_rawsetfield(m_state, -2, "__wing_scope");
         pushClosure(scope, {}, Operation::Index);
-        lua_rawsetfield(state_, -2, "__index");
+        lua_rawsetfield(m_state, -2, "__index");
         pushClosure(scope, {}, Operation::NewIndex);
-        lua_rawsetfield(state_, -2, "__newindex");
-        lua_pushboolean(state_, false);
-        lua_rawsetfield(state_, -2, "__metatable");
-        lua_setmetatable(state_, -2);
-        lua_pop(state_, 1);
+        lua_rawsetfield(m_state, -2, "__newindex");
+        lua_pushboolean(m_state, false);
+        lua_rawsetfield(m_state, -2, "__metatable");
+        lua_setmetatable(m_state, -2);
+        lua_pop(m_state, 1);
     }
 
     void pushClosure(ScopeId scope, const QString &name, Operation operation,
                      bool instance = false) {
         auto *memory = lua_newuserdatadtor(
-            state_, sizeof(Closure), [](lua_State *, void *data) {
+            m_state, sizeof(Closure), [](lua_State *, void *data) {
                 static_cast<Closure *>(data)->~Closure();
             });
-        new (memory) Closure{control_, scope, name, operation, instance};
-        lua_pushcclosure(state_, &dispatch, "C++ binding", 1);
+        new (memory) Closure{m_control, scope, name, operation, instance};
+        lua_pushcclosure(m_state, &dispatch, "C++ binding", 1);
     }
 
     bool readObject(lua_State *state, int index, ObjectValue &result) {
@@ -525,9 +537,9 @@ private:
                 return true;
             }
         }
-        if (codec_.read) {
+        if (m_codec.read) {
             const int top = lua_gettop(state);
-            const bool handled = codec_.read(state, index, result);
+            const bool handled = m_codec.read(state, index, result);
             if (lua_gettop(state) != top) {
                 throw ScriptException(
                     Exception::RegistrationFailed,
@@ -545,7 +557,7 @@ private:
                                   QStringLiteral("Table nesting is too deep"));
         }
         Value result;
-        if (codec_.readValue && codec_.readValue(state, index, result)) {
+        if (m_codec.readValue && m_codec.readValue(state, index, result)) {
             return result;
         }
         index = lua_absindex(state, index);
@@ -599,7 +611,7 @@ private:
         if (depth > 64 || !lua_checkstack(state, 4)) {
             throw ScriptException(Exception::InvalidArgument);
         }
-        if (codec_.pushValue && codec_.pushValue(state, value)) {
+        if (m_codec.pushValue && m_codec.pushValue(state, value)) {
             return;
         }
         switch (value.kind) {
@@ -641,9 +653,9 @@ private:
             if (!value.object.pointer || !value.object.type.rtti) {
                 throw ScriptException(Exception::TypeMismatch);
             }
-            if (codec_.push) {
+            if (m_codec.push) {
                 int top = lua_gettop(state);
-                bool handled = codec_.push(state, value.object);
+                bool handled = m_codec.push(state, value.object);
                 if (lua_gettop(state) != top + (handled ? 1 : 0)) {
                     throw ScriptException(
                         Exception::RegistrationFailed,
@@ -756,10 +768,10 @@ private:
                     return 1;
                 }
             }
-            if (attempt != 0 || !codec_.adaptArguments) {
+            if (attempt != 0 || !m_codec.adaptArguments) {
                 break;
             }
-            codec_.adaptArguments(arguments);
+            m_codec.adaptArguments(arguments);
         }
         throw ScriptException(Exception::TypeMismatch,
                               QStringLiteral("No matching overload"));
@@ -824,7 +836,7 @@ private:
                         static_cast<Closure *>(data)->~Closure();
                     });
                 new (memory)
-                    Closure{control_, scope, name, Operation::Call, true};
+                    Closure{m_control, scope, name, Operation::Call, true};
                 lua_pushcclosure(state, &dispatch, "C++ method", 1);
                 return 1;
             }
@@ -870,35 +882,35 @@ private:
         lua_error(state);
     }
 
-    lua_State *state_;
-    ObjectCodec codec_;
-    QThread *thread_;
-    std::shared_ptr<Control> control_;
-    QHash<ScopeId, Scope> scopes_;
-    QHash<ScopeId, QSet<QString>> constants_;
-    QHash<ScopeId, int> leases_;
-    QSet<QString> definitionPaths_;
-    QStringList definitionFiles_;
-    ScopeId nextScope_ = 1;
+    lua_State *m_state;
+    ObjectCodec m_codec;
+    QThread *m_thread;
+    std::shared_ptr<Control> m_control;
+    QHash<ScopeId, Scope> m_scopes;
+    QHash<ScopeId, QSet<QString>> m_constants;
+    QHash<ScopeId, int> m_leases;
+    QSet<QString> m_definitionPaths;
+    QStringList m_definitionFiles;
+    ScopeId m_nextScope = 1;
 };
 
 ScriptBindingEngine::ScriptBindingEngine(lua_State *state, ObjectCodec codec)
-    : impl_(std::make_unique<Impl>(state, std::move(codec))) {}
+    : m_impl(std::make_unique<Impl>(state, std::move(codec))) {}
 
 ScriptBindingEngine::~ScriptBindingEngine() = default;
 
 IRegistrationApi &ScriptBindingEngine::registrations() noexcept {
-    return *impl_;
+    return *m_impl;
 }
 
-void ScriptBindingEngine::collectGarbage() { impl_->collectGarbage(); }
+void ScriptBindingEngine::collectGarbage() { m_impl->collectGarbage(); }
 
 ScriptSymbolCatalog ScriptBindingEngine::symbolCatalog() const {
-    return impl_->symbolCatalog();
+    return m_impl->symbolCatalog();
 }
 
 QStringList ScriptBindingEngine::definitionFiles() const {
-    return impl_->definitionFiles();
+    return m_impl->definitionFiles();
 }
 
 } // namespace WingScriptBind

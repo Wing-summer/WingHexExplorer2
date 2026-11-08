@@ -18,9 +18,11 @@
 #ifndef SETTINGDIALOG_H
 #define SETTINGDIALOG_H
 
-#include "WingPlugin/settingpage.h"
-#include "framelessdialogbase.h"
 #include <QAbstractButton>
+
+#include "WingPlugin/settingpage.h"
+
+#include "framelessdialogbase.h"
 
 namespace Ui {
 class SettingDialog;
@@ -46,7 +48,7 @@ public slots:
     void restoreLayout(const QByteArray &layout);
 
 signals:
-    void onClosing();
+    void sigOnClosing();
 
     // QObject interface
 public:
@@ -61,7 +63,7 @@ private:
 private:
     Ui::SettingDialog *ui;
     QList<WingHex::SettingPage *> m_pages;
-    FramelessDialogBase *_dialog = nullptr;
+    FramelessDialogBase *m_dialog = nullptr;
 };
 
 #endif // SETTINGDIALOG_H

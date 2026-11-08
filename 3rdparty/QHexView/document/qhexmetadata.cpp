@@ -20,16 +20,17 @@
 */
 
 #include "qhexmetadata.h"
-#include "commands/meta/metaaddcommand.h"
-#include "commands/meta/metaclearcommand.h"
-#include "commands/meta/metaremovecommand.h"
-#include "commands/meta/metaremoveposcommand.h"
-#include "commands/meta/metareplacecommand.h"
 
 #include <cmath>
 
 #include <QtAlgorithms>
 #include <QtConcurrent/QtConcurrentMap>
+
+#include "commands/meta/metaaddcommand.h"
+#include "commands/meta/metaclearcommand.h"
+#include "commands/meta/metaremovecommand.h"
+#include "commands/meta/metaremoveposcommand.h"
+#include "commands/meta/metareplacecommand.h"
 
 QHexMetadata::QHexMetadata(QUndoStack *undo, QObject *parent)
     : QObject(parent), m_undo(undo) {}
@@ -193,7 +194,7 @@ bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
     auto r = m_linemeta.removeIf(
         [](const QPair<qsizetype, QHash<QHexMetadataItem, QHexLineMetadata>>
                &item) { return item.second.isEmpty(); });
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
     return r > 0;
 }
 
@@ -209,7 +210,7 @@ bool QHexMetadata::removeMetadata(qsizetype offset) {
     };
 
     auto r = m_metadata.removeIf(rmfn);
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
     return r > 0;
 }
 
@@ -286,7 +287,7 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
     for (const auto &meta : std::as_const(m_metadata)) {
         addMetaLines(meta);
     }
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
 }
 
 bool QHexMetadata::hasMetadata() const { return m_metadata.count() > 0; }
@@ -327,7 +328,7 @@ void QHexMetadata::endMarco() { m_undo->endMacro(); }
 void QHexMetadata::clear() {
     m_linemeta.clear();
     m_metadata.clear();
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
 }
 
 bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
@@ -336,7 +337,7 @@ bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
     if (checkValidMetadata(begin, end, fgcolor, bgcolor, comment)) {
         QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
         addMetadata(absi);
-        Q_EMIT metadataChanged();
+        Q_EMIT sigOnMetadataChanged();
         return true;
     }
     return false;
@@ -351,7 +352,7 @@ void QHexMetadata::setLineWidth(quint8 width) {
             addMetaLines(item);
         }
 
-        Q_EMIT metadataChanged();
+        Q_EMIT sigOnMetadataChanged();
     }
 }
 
@@ -375,7 +376,7 @@ void QHexMetadata::insertAdjust(qsizetype offset, qsizetype length) {
         addMetaLines(meta);
     }
 
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
 }
 
 void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
@@ -398,7 +399,7 @@ void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
         addMetaLines(meta);
     }
 
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
 }
 
 QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
@@ -436,7 +437,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
             addMetaLines(meta);
         }
 
-        Q_EMIT metadataChanged();
+        Q_EMIT sigOnMetadataChanged();
 
         QtConcurrent::blockingMap(
             rmmetas, [](QHexMetadataItem &meta) { meta.adjflag = false; });
@@ -474,7 +475,7 @@ void QHexMetadata::removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
         addMetaLines(meta);
     }
 
-    Q_EMIT metadataChanged();
+    Q_EMIT sigOnMetadataChanged();
 }
 
 bool QHexMetadata::areColorsContrast(const QColor &color1,

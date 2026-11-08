@@ -37,14 +37,14 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent)
                                      {300.0 / 360.0, Qt::magenta},
                                      {359.0 / 360.0, Qt::red}});
 
-    _oldColor.setHsv(180, 255, 255);
-    updateColor(_oldColor);
-    _color = _oldColor;
+    m_oldColor.setHsv(180, 255, 255);
+    updateColor(m_oldColor);
+    m_color = m_oldColor;
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->buildUpContent(this);
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->buildUpContent(this);
 
-    Utilities::moveToCenter(_dialog);
+    Utilities::moveToCenter(m_dialog);
 }
 
 ColorPickerDialog::~ColorPickerDialog() { delete ui; }
@@ -65,9 +65,9 @@ void ColorPickerDialog::on_brightnessSlider_valueChanged(int value) {
 }
 
 void ColorPickerDialog::updateColor() {
-    _color.setHsv(ui->hueSlider->value(), ui->saturationSlider->value(),
-                  ui->brightnessSlider->value());
-    updateColor(_color);
+    m_color.setHsv(ui->hueSlider->value(), ui->saturationSlider->value(),
+                   ui->brightnessSlider->value());
+    updateColor(m_color);
 }
 
 void ColorPickerDialog::updateHueSlider() {
@@ -92,20 +92,20 @@ void ColorPickerDialog::updateColor(QColor color) {
     ui->leColor->setText(color.name());
     ui->wcolor->setStyleSheet(QStringLiteral("background-color: ") +
                               color.name());
-    Q_EMIT colorChanged();
+    Q_EMIT sigOnColorChanged();
 }
 
-QColor ColorPickerDialog::color() const { return _color; }
+QColor ColorPickerDialog::color() const { return m_color; }
 
 void ColorPickerDialog::setColor(const QColor &newColor) {
-    if (_color == newColor) {
+    if (m_color == newColor) {
         return;
     }
-    _oldColor = newColor;
+    m_oldColor = newColor;
     updateColor(newColor);
 }
 
-int ColorPickerDialog::exec() { return _dialog->exec(); }
+int ColorPickerDialog::exec() { return m_dialog->exec(); }
 
 void ColorPickerDialog::on_leColor_editingFinished() {
     QColor color(ui->leColor->text());
@@ -116,12 +116,12 @@ void ColorPickerDialog::on_leColor_editingFinished() {
 
 void ColorPickerDialog::on_buttonBox_clicked(QAbstractButton *button) {
     if (button == ui->buttonBox->button(QDialogButtonBox::Ok)) {
-        _dialog->done(1);
+        m_dialog->done(1);
     } else if (button == ui->buttonBox->button(QDialogButtonBox::Cancel)) {
-        _dialog->done(0);
+        m_dialog->done(0);
     } else if (button == ui->buttonBox->button(QDialogButtonBox::Reset)) {
-        _color = _oldColor;
-        updateColor(_oldColor);
+        m_color = m_oldColor;
+        updateColor(m_oldColor);
     } else {
         Q_ASSERT(false);
     }

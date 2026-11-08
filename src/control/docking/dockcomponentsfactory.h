@@ -8,7 +8,7 @@ public:
     // CDockComponentsFactory interface
 public:
     virtual ads::CDockWidgetTab *
-    createDockWidgetTab(ads::CDockWidget *DockWidget) const override;
+    createDockWidgetTab(ads::CDockWidget *dockWidget) const override;
 };
 
 #endif // DOCKCOMPONENTSFACTORY_H

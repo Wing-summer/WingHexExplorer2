@@ -22,10 +22,10 @@
 #ifndef BOOKMARKCLEARCOMMAND_H
 #define BOOKMARKCLEARCOMMAND_H
 
+#include <QMap>
+
 #include "../undocommandbase.h"
 #include "document/qhexdocument.h"
-
-#include <QMap>
 
 class BookMarkClearCommand : public UndoCommandBase {
 public:

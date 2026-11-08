@@ -23,16 +23,16 @@
 
 ConsoleHighlighAnim::ConsoleHighlighAnim(QObject *parent)
     : QObject(parent), m_highlightColor(qApp->palette().highlight().color()),
-      m_alpha(0), _w(nullptr), _anim(nullptr) {
-    _anim = new QPropertyAnimation(this, QByteArrayLiteral("alpha"), this);
-    _anim->setStartValue(10);
-    _anim->setEndValue(100);
-    _anim->setDuration(800);
-    _anim->setEasingCurve(QEasingCurve::InOutQuad);
-    _anim->setLoopCount(-1);
-    connect(_anim, &QPropertyAnimation::finished, this, [this]() {
-        if (_w) {
-            _w->setStyleSheet({});
+      m_alpha(0), m_w(nullptr), m_anim(nullptr) {
+    m_anim = new QPropertyAnimation(this, QByteArrayLiteral("alpha"), this);
+    m_anim->setStartValue(10);
+    m_anim->setEndValue(100);
+    m_anim->setDuration(800);
+    m_anim->setEasingCurve(QEasingCurve::InOutQuad);
+    m_anim->setLoopCount(-1);
+    connect(m_anim, &QPropertyAnimation::finished, this, [this]() {
+        if (m_w) {
+            m_w->setStyleSheet({});
         }
     });
 }
@@ -45,7 +45,7 @@ void ConsoleHighlighAnim::setAlpha(int newAlpha) {
     }
     m_alpha = newAlpha;
 
-    auto clsname = _w->metaObject()->className();
+    auto clsname = m_w->metaObject()->className();
     auto ss = QStringLiteral("background-color: rgba(%1, %2, %3, %4);")
                   .arg(m_highlightColor.red())
                   .arg(m_highlightColor.green())
@@ -55,37 +55,37 @@ void ConsoleHighlighAnim::setAlpha(int newAlpha) {
         ss.prepend('{').prepend(clsname).append('}');
     }
 
-    if (_w) {
-        _w->setStyleSheet(ss);
+    if (m_w) {
+        m_w->setStyleSheet(ss);
     }
 
-    Q_EMIT alphaChanged();
+    Q_EMIT sigOnAlphaChanged();
 }
 
-QWidget *ConsoleHighlighAnim::widget() const { return _w; }
+QWidget *ConsoleHighlighAnim::widget() const { return m_w; }
 
 void ConsoleHighlighAnim::setWidget(QWidget *newW) {
-    if (_w) {
-        _w->setStyleSheet({});
+    if (m_w) {
+        m_w->setStyleSheet({});
     }
-    _w = newW;
+    m_w = newW;
 }
 
 void ConsoleHighlighAnim::start() {
-    if (_w == nullptr) {
+    if (m_w == nullptr) {
         return;
     }
-    if (_anim->state() == QPropertyAnimation::Stopped) {
-        _anim->start();
+    if (m_anim->state() == QPropertyAnimation::Stopped) {
+        m_anim->start();
     }
 }
 
 void ConsoleHighlighAnim::stop() {
-    if (_anim->state() == QPropertyAnimation::Running) {
-        _anim->stop();
+    if (m_anim->state() == QPropertyAnimation::Running) {
+        m_anim->stop();
 
-        if (_w) {
-            _w->setStyleSheet({});
+        if (m_w) {
+            m_w->setStyleSheet({});
         }
     }
 }

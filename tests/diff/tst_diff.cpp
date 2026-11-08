@@ -1,18 +1,22 @@
-#include "QHexView/qhexview.h"
-#include "class/diff/binarydiff.h"
-#include "class/diff/diffsource.h"
-#include "control/diffrenderer.h"
-#include "model/diffresultmodel.h"
+#include <cstring>
+#include <random>
+
 #include <QBuffer>
 #include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QtConcurrent>
-#include <cstring>
-#include <random>
+
+#include "QHexView/qhexview.h"
+
+#include "class/diff/binarydiff.h"
+#include "class/diff/diffsource.h"
+#include "control/diffrenderer.h"
+#include "model/diffresultmodel.h"
 
 using namespace WingDiff;
+
 class DiffTests : public QObject {
     Q_OBJECT
 private:
@@ -45,7 +49,9 @@ private:
         QCOMPARE(a.mid(qsizetype(x)), b.mid(qsizetype(y)));
         QVERIFY(results.allocatedBytes() <= 24 * MiB);
     }
+
 private slots:
+
     void edits() {
         compare({}, {});
         compare({}, "a");
@@ -56,6 +62,7 @@ private slots:
         compare("abcdef", "abXYef");
         compare("abcdef", "XYcdefZZ");
     }
+
     void randomEdits() {
         std::mt19937 generator(17);
         for (int run = 0; run < 100; ++run) {
@@ -74,6 +81,7 @@ private slots:
             compare(left, right);
         }
     }
+
     void resynchronize() {
         std::mt19937 generator(11);
         QByteArray left(5 * int(MiB), Qt::Uninitialized);
@@ -128,18 +136,23 @@ private slots:
             explicit GeneratedDevice(char value) : m_value(value) {
                 open(QIODevice::ReadOnly | QIODevice::Unbuffered);
             }
+
             qint64 size() const override { return 80 * qint64(MiB); }
+
             bool isSequential() const override { return false; }
+
             qint64 readData(char *data, qint64 count) override {
                 const auto length = std::min(count, size() - pos());
                 std::memset(data, m_value, size_t(length));
                 return length;
             }
+
             qint64 writeData(const char *, qint64) override { return -1; }
 
         private:
             char m_value;
         };
+
         GeneratedDevice a('A'), b('B');
         ResultStore store(24 * MiB);
         const auto outcome = BinaryDiff().compare(&a, &b, Options(), store);
@@ -151,6 +164,7 @@ private slots:
         QVERIFY(store.coarseCount() > 0);
         QVERIFY(outcome.firstResultMs >= 0);
     }
+
     void cancelled() {
         QBuffer a, b;
         a.setData("abc");
@@ -162,14 +176,20 @@ private slots:
                      .compare(&a, &b, Options(), store, [] { return true; })
                      .status,
                  Status::Cancelled);
+
         class LargeDevice final : public QIODevice {
         public:
             LargeDevice() { open(QIODevice::ReadOnly); }
+
             qint64 size() const override { return 64 * 1024 * qint64(MiB); }
+
             bool isSequential() const override { return false; }
+
             qint64 readData(char *, qint64) override { return -1; }
+
             qint64 writeData(const char *, qint64) override { return -1; }
         } largeA, largeB;
+
         ResultStore largeStore(MiB);
         QTest::ignoreMessage(
             QtWarningMsg, "An input exceeds the configured file size limit.");
@@ -185,10 +205,11 @@ private slots:
                      .status,
                  Status::Cancelled);
     }
+
     void contentNotificationsExcludePresentationChanges() {
         QHexView view;
         auto doc = view.document();
-        QSignalSpy contents(doc.data(), &QHexDocument::contentsChanged);
+        QSignalSpy contents(doc.data(), &QHexDocument::sigOnContentsChanged);
         QVERIFY(doc->insert(0, QByteArray("abc")));
         QCOMPARE(contents.count(), 1);
         doc->setBaseAddress(0x1000);
@@ -209,6 +230,7 @@ private slots:
         doc->redo();
         QCOMPARE(contents.count(), 6);
     }
+
     void sharedReadOnlyView() {
         QSharedPointer<QHexDocument> doc(
             QHexDocument::fromInternalBuffer(false));
@@ -241,7 +263,7 @@ private slots:
         first.renderer()->enableCursor(false);
         second.renderer()->enableCursor(false);
         const auto original = first.grab().toImage();
-        QSignalSpy changed(doc.data(), &QHexDocument::documentChanged);
+        QSignalSpy changed(doc.data(), &QHexDocument::sigOnDocumentChanged);
         auto renderer =
             new DiffRenderer(doc.data(), first.cursor(),
                              QFontMetricsF(first.font()), &first, false);
@@ -258,6 +280,7 @@ private slots:
         QVERIFY(!doc->metadata()->hasMetadata());
         QCOMPARE(second.grab().toImage(), original);
     }
+
     void rendererReplacementPreservesViewState() {
         QHexView view, other;
         auto document = view.document();
@@ -280,7 +303,7 @@ private slots:
         QVERIFY(!view.addressVisible());
         QCOMPARE(view.headerColor(), QColor(Qt::cyan));
         QVERIFY(other.asciiVisible());
-        QSignalSpy repaint(renderer, &QHexRenderer::repaintRequested);
+        QSignalSpy repaint(renderer, &QHexRenderer::sigOnRepaintRequested);
         QSharedPointer<QHexDocument> replacement(
             QHexDocument::fromInternalBuffer(false));
         view.setDocument(replacement, cursor);
@@ -289,6 +312,7 @@ private slots:
         QVERIFY(view.setRenderer(renderer));
         QCOMPARE(view.cursor()->position().offset(), qsizetype(3));
     }
+
     void selectionOverridesDiffInHexAndAscii() {
         QSharedPointer<QHexDocument> doc(
             QHexDocument::fromInternalBuffer(false));
@@ -317,6 +341,7 @@ private slots:
         b.cursor()->select(qsizetype(8));
         QCOMPARE(a.grab().toImage(), b.grab().toImage());
     }
+
     void continuousMillionRows() {
         auto store = std::make_shared<ResultStore>(64 * MiB);
         DiffResultModel model;
@@ -338,37 +363,50 @@ private slots:
         qInfo() << "Million rows: elapsed ms" << timer.elapsed()
                 << "compact storage bytes" << store->allocatedBytes();
     }
+
     void cancellationDuringReadHasNoError() {
         QTest::failOnWarning();
         bool cancelled = false;
+
         class CancellingDevice final : public QIODevice {
         public:
             bool *cancelled;
+
             explicit CancellingDevice(bool *token) : cancelled(token) {
                 open(ReadOnly);
             }
+
             qint64 size() const override { return 100; }
+
             bool isSequential() const override { return false; }
+
             qint64 readData(char *, qint64) override {
                 *cancelled = true;
                 return -1;
             }
+
             qint64 writeData(const char *, qint64) override { return -1; }
         } a(&cancelled), b(&cancelled);
+
         ResultStore store(MiB);
         const auto outcome = BinaryDiff().compare(&a, &b, Options(), store,
                                                   [&] { return cancelled; });
         QCOMPARE(outcome.status, Status::Cancelled);
         QCOMPARE(outcome.error, Error::None);
     }
+
     void readErrorIsNotEndOfFile() {
         class BrokenDevice final : public QIODevice {
         public:
             qint64 size() const override { return 100; }
+
             bool isSequential() const override { return false; }
+
             qint64 readData(char *, qint64) override { return -1; }
+
             qint64 writeData(const char *, qint64) override { return -1; }
         };
+
         BrokenDevice a, b;
         QVERIFY(a.open(QIODevice::ReadOnly));
         QVERIFY(b.open(QIODevice::ReadOnly));
@@ -377,6 +415,7 @@ private slots:
         QCOMPARE(result.status, Status::Failed);
         QVERIFY(result.error != Error::None);
     }
+
     void publishedRangesRemainImmutable() {
         ResultStore store(24 * MiB);
         QVERIFY(store.append({0, 2, 0, 2, Type::Replace, true}));
@@ -416,6 +455,7 @@ private slots:
             {0, 64 * 1024 * MiB, 0, 48 * 1024 * MiB, Type::Replace, true}));
         QCOMPARE(large.mapOffset(32 * 1024 * MiB, false), 24 * 1024 * MiB);
     }
+
     void memoryAndDetailDegradation() {
         QByteArray a(2 * int(MiB), Qt::Uninitialized);
         std::mt19937 generator(99);
@@ -440,6 +480,7 @@ private slots:
         QVERIFY(results.differences() < 2000);
         QVERIFY(outcome.bytesRead < 20 * MiB);
     }
+
     void sourceMemoryAndOwnerCancellation() {
         QTest::failOnWarning();
         QSharedPointer<QHexDocument> doc(
@@ -464,6 +505,7 @@ private slots:
         QTRY_VERIFY(pending.isFinished());
         QVERIFY(pending.result().isEmpty());
     }
+
     void largeEditedPayloadDoesNotPinAnUnboundedVersion() {
         QSharedPointer<QHexDocument> doc(
             QHexDocument::fromInternalBuffer(false));
@@ -508,6 +550,7 @@ private slots:
         QCOMPARE(opened.error, QHexReadError::SourceChanged);
         QVERIFY(!opened.device);
     }
+
     void readSessionEdits() {
         QTemporaryDir dir;
         const auto path = dir.filePath("input.bin");

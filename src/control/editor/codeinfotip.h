@@ -18,10 +18,10 @@
 #ifndef CODEINFOTIP_H
 #define CODEINFOTIP_H
 
-#include "luau/lsp/lsp.h"
-
 #include <QIcon>
 #include <QPlainTextEdit>
+
+#include "luau/lsp/lsp.h"
 
 class CodeInfoTip {
 public:
@@ -54,13 +54,13 @@ private:
                                  bool hasCodeLineContext);
 
 private:
-    QString documentationText;
-    QString insertionText;
+    QString m_documentationText;
+    QString m_insertionText;
 
-    lsp::InsertTextFormat insertionFormat = lsp::InsertTextFormat::PlainText;
+    lsp::InsertTextFormat m_insertionFormat = lsp::InsertTextFormat::PlainText;
 
-    std::optional<lsp::Range> textEditRange;
-    std::vector<lsp::TextEdit> additionalTextEdits;
+    std::optional<lsp::Range> m_textEditRange;
+    std::vector<lsp::TextEdit> m_additionalTextEdits;
 };
 
 Q_DECLARE_METATYPE(CodeInfoTip);

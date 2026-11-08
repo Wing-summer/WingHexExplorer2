@@ -23,7 +23,7 @@ DbgCallStackModel::DbgCallStackModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
 int DbgCallStackModel::rowCount(const QModelIndex &parent) const {
-    return parent.isValid() ? 0 : _frames.size();
+    return parent.isValid() ? 0 : m_frames.size();
 }
 
 int DbgCallStackModel::columnCount(const QModelIndex &parent) const {
@@ -36,10 +36,10 @@ QVariant DbgCallStackModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        if (r < 0 || r >= _frames.size()) {
+        if (r < 0 || r >= m_frames.size()) {
             return {};
         }
-        const auto &frame = _frames.at(r);
+        const auto &frame = m_frames.at(r);
         switch (index.column()) {
         case 0:
             return frame.line;
@@ -77,20 +77,22 @@ QVariant DbgCallStackModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void DbgCallStackModel::attachDebugger(LuauDebugger *debugger) {
-    if (_debugger != debugger) {
-        if (_debugger) {
-            _debugger->disconnect(this, nullptr);
+    if (m_debugger != debugger) {
+        if (m_debugger) {
+            m_debugger->disconnect(this, nullptr);
         }
-        _debugger = debugger;
-        if (_debugger) {
-            connect(_debugger, &LuauDebugger::onPullCallStack, this, [this]() {
-                beginResetModel();
-                _frames = _debugger->stackFrames();
-                endResetModel();
-            });
+        m_debugger = debugger;
+        if (m_debugger) {
+            connect(m_debugger, &LuauDebugger::sigOnPullCallStack, this,
+                    [this]() {
+                        beginResetModel();
+                        m_frames = m_debugger->stackFrames();
+                        endResetModel();
+                    });
         }
     }
     beginResetModel();
-    _frames = _debugger ? _debugger->stackFrames() : QVector<LuauStackFrame>{};
+    m_frames =
+        m_debugger ? m_debugger->stackFrames() : QVector<LuauStackFrame>{};
     endResetModel();
 }

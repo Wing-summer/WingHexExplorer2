@@ -1,5 +1,7 @@
-#include "QHexEdit2/chunks.h"
-#include "qhexview.h"
+#include <atomic>
+#include <thread>
+#include <vector>
+
 #include <QApplication>
 #include <QClipboard>
 #include <QFontDatabase>
@@ -8,9 +10,10 @@
 #include <QStringEncoder>
 #include <QTemporaryFile>
 #include <QtTest>
-#include <atomic>
-#include <thread>
-#include <vector>
+
+#include "QHexEdit2/chunks.h"
+
+#include "qhexview.h"
 
 class QHexViewTests : public QObject {
     Q_OBJECT
@@ -47,6 +50,7 @@ private:
     }
 
 private slots:
+
     void unicodeCellsAvoidFontScan_data() {
         QTest::addColumn<int>("encoding");
         QTest::addColumn<QByteArray>("bytes");
@@ -183,16 +187,17 @@ private slots:
         }
         QVERIFY(correct.load());
     }
+
     void rebindingDoesNotDuplicateCursorConnections() {
         QHexView view;
         auto doc = document();
         for (int i = 0; i < 4; ++i) {
             view.setDocument(doc);
         }
-        QSignalSpy location(&view, &QHexView::cursorLocationChanged);
+        QSignalSpy location(&view, &QHexView::sigOnCursorLocationChanged);
         view.cursor()->moveTo(qsizetype(2));
         QCOMPARE(location.count(), 1);
-        QSignalSpy selection(&view, &QHexView::cursorSelectionChanged);
+        QSignalSpy selection(&view, &QHexView::sigOnCursorSelectionChanged);
         view.cursor()->select(qsizetype(2));
         QCOMPARE(selection.count(), 1);
     }
@@ -203,8 +208,9 @@ private slots:
         auto doc = document();
         first.setDocument(doc, &cursor);
         second.setDocument(doc, &cursor);
-        QSignalSpy firstChanges(&first, &QHexView::cursorLocationChanged);
-        QSignalSpy secondChanges(&second, &QHexView::cursorLocationChanged);
+        QSignalSpy firstChanges(&first, &QHexView::sigOnCursorLocationChanged);
+        QSignalSpy secondChanges(&second,
+                                 &QHexView::sigOnCursorLocationChanged);
         second.setDocument(doc, &cursor);
         cursor.moveTo(qsizetype(3));
         QCOMPARE(firstChanges.count(), 1);
@@ -215,9 +221,11 @@ private slots:
         QHexView view;
         auto doc = document();
         view.setDocument(doc);
-        QSignalSpy documentChanges(doc.data(), &QHexDocument::documentChanged);
-        QSignalSpy layout(view.renderer(), &QHexRenderer::layoutChanged);
-        QSignalSpy repaint(view.renderer(), &QHexRenderer::repaintRequested);
+        QSignalSpy documentChanges(doc.data(),
+                                   &QHexDocument::sigOnDocumentChanged);
+        QSignalSpy layout(view.renderer(), &QHexRenderer::sigOnLayoutChanged);
+        QSignalSpy repaint(view.renderer(),
+                           &QHexRenderer::sigOnRepaintRequested);
         view.setAsciiVisible(false);
         view.setAsciiVisible(false);
         view.setAddressVisible(false);
@@ -460,7 +468,7 @@ private slots:
         view.setDocument(document());
         view.cursor()->select(qsizetype(2));
         view.setCopyLimit(0);
-        QSignalSpy limit(&view, &QHexView::copyLimitRaised);
+        QSignalSpy limit(&view, &QHexView::sigOnCopyLimitRaised);
         QVERIFY(!view.Cut());
         QCOMPARE(limit.count(), 1);
         QVERIFY(!view.cut(false));

@@ -18,11 +18,12 @@
 #ifndef APPMANAGER_H
 #define APPMANAGER_H
 
-#include "dialog/mainwindow.h"
-#include "qtsingleapplication/src/qtsingleapplication.h"
-
 #include <QElapsedTimer>
 #include <QPointer>
+
+#include "qtsingleapplication/src/qtsingleapplication.h"
+
+#include "dialog/mainwindow.h"
 
 class AppManager : public QtSingleApplication {
     Q_OBJECT
@@ -46,11 +47,11 @@ public slots:
                               bool skipScripting, bool *isWorkSpace);
 
 private:
-    MainWindow *_w = nullptr;
-    QElapsedTimer _timer;
-    QPointer<SplashDialog> splash;
+    MainWindow *m_w = nullptr;
+    QElapsedTimer m_timer;
+    QPointer<SplashDialog> m_splash;
 
-    static AppManager *_instance;
+    static AppManager *m_instance;
 };
 
 #endif // APPMANAGER_H

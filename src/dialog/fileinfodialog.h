@@ -18,12 +18,12 @@
 #ifndef FILEINFODIALOG_H
 #define FILEINFODIALOG_H
 
-#include "control/editorview.h"
-#include "framelessdialogbase.h"
-
 #include <QLabel>
 #include <QPushButton>
 #include <QTextBrowser>
+
+#include "control/editorview.h"
+#include "framelessdialogbase.h"
 
 class FileInfoDialog : public FramelessDialogBase {
     Q_OBJECT
@@ -35,10 +35,10 @@ private:
     void reloadData();
 
 private:
-    EditorView *_editor;
-    QLabel *_lblicon;
-    QTextBrowser *_tb;
-    QPushButton *_clnbtn;
+    EditorView *m_editor;
+    QLabel *m_lblicon;
+    QTextBrowser *m_tb;
+    QPushButton *m_clnbtn;
 };
 
 #endif // FILEINFODIALOG_H

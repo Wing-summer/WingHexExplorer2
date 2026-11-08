@@ -62,7 +62,7 @@ private:
 private:
     Ui::ReaderTestForm *ui;
 
-    QTextBrowser *_br;
+    QTextBrowser *m_br;
 };
 
 #endif // READERTESTFORM_H

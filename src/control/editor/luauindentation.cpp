@@ -17,10 +17,11 @@
 
 #include "luauindentation.h"
 
-#include <Luau/Lexer.h>
-#include <Luau/Parser.h>
 #include <QSet>
 #include <QVector>
+
+#include <Luau/Lexer.h>
+#include <Luau/Parser.h>
 
 namespace {
 using Token = Luau::Lexeme;
@@ -82,11 +83,13 @@ computeIndentation(const QString &source, const WingCodeEdit &editor,
             ? tabWidth
             : qMax(1, editor.indentWidth());
     const int baseline = leadingColumns(lines.last(), tabWidth);
+
     struct Frame {
         int close;
         int indent;
         int kind;
     };
+
     QVector<Frame> stack;
     const auto bytes = source.toUtf8();
     Luau::Allocator allocator;

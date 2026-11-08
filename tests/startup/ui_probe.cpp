@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#include "class/plugin/pluginsystem.h"
-#include "class/settings/settingmanager.h"
-#include "class/settings/thememanager.h"
-#include "dialog/mainwindow.h"
-#include "dialog/settingdialog.h"
+#include <cstdio>
+#include <functional>
 
 #include <QApplication>
 #include <QDialog>
 #include <QListWidget>
 #include <QSplitter>
 #include <QTimer>
-#include <cstdio>
-#include <functional>
+
+#include "class/plugin/pluginsystem.h"
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "dialog/mainwindow.h"
+#include "dialog/settingdialog.h"
 
 // Reuse the existing host-test friend to exercise the production registration
 // function during startup, without loading a shared plugin into the test.
@@ -25,10 +26,15 @@ public:
 class FixturePage final : public WingHex::SettingPage {
 public:
     explicit FixturePage(const QString &id) : m_id(id) {}
+
     QIcon categoryIcon() const override { return {}; }
+
     QString name() const override { return m_id; }
+
     QString id() const override { return m_id; }
+
     bool showInRibbon() const override { return true; }
+
     void restore() override {}
 
 private:
@@ -38,12 +44,17 @@ private:
 class FixturePlugin final : public WingHex::IWingPlugin {
 public:
     QList<WingHex::SettingPage *> pages;
+
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("fixture");
     }
+
     const QString pluginComment() const override { return {}; }
+
     QList<WingHex::SettingPage *> registeredSettingPages() const override {
         return pages;
     }

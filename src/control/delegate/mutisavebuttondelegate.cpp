@@ -17,11 +17,11 @@
 
 #include "mutisavebuttondelegate.h"
 
-#include "class/settings/thememanager.h"
-#include "utilities.h"
-
 #include <QMouseEvent>
 #include <QPainter>
+
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 MutiSaveButtonDelegate::MutiSaveButtonDelegate(QObject *parent)
     : QStyledItemDelegate(parent) {}
@@ -31,8 +31,8 @@ void MutiSaveButtonDelegate::paint(QPainter *p,
                                    const QModelIndex &index) const {
     QStyledItemDelegate::paint(p, option, index);
     auto btnRect = getFileIconRect(option.rect);
-    p->drawPixmap(btnRect, ThemeManager::instance()
-                               .standardPixmap(ThemeManager::StandardIcon::File));
+    p->drawPixmap(btnRect, ThemeManager::instance().standardPixmap(
+                               ThemeManager::StandardIcon::File));
 }
 
 QSize MutiSaveButtonDelegate::sizeHint(const QStyleOptionViewItem &option,
@@ -51,7 +51,7 @@ bool MutiSaveButtonDelegate::editorEvent(QEvent *event,
         if (me->button() == Qt::LeftButton) {
             auto btnRect = getFileIconRect(option.rect);
             if (btnRect.contains(me->pos())) {
-                Q_EMIT buttonClicked(index);
+                Q_EMIT sigOnButtonClicked(index);
                 return true;
             }
         }

@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "windowbutton.h"
-#include "windowbutton_p.h"
 
 #include <QtCore/QDebug>
 #include <QtGui/QtEvents>
+
+#include "windowbutton_p.h"
 
 namespace QWK {
 
@@ -79,7 +80,7 @@ void WindowButton::checkStateSet() {
 
 void WindowButton::mouseDoubleClickEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
-        Q_EMIT doubleClicked();
+        Q_EMIT sigOnDoubleClicked();
     }
 }
 

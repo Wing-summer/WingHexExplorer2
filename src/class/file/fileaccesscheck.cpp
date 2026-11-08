@@ -139,11 +139,11 @@ FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
 
     LocalFree(pSD);
     CloseHandle(hAccessToken);
-    return (accessCheckResult && accessStatus) ? Status::OK : Status::Deny;
+    return (accessCheckResult && accessStatus) ? Status::Ok : Status::Deny;
 #else
     auto path = filePath.toUtf8();
     if (geteuid() != 0) {
-        return access(path, W_OK) == 0 ? Status::OK : Status::Deny;
+        return access(path, W_OK) == 0 ? Status::Ok : Status::Deny;
     }
 
     uid_t targetUid;
@@ -176,7 +176,7 @@ FileAccessCheck::canStandardUserWriteFile(const QString &filePath) {
     } else {
         int status;
         waitpid(pid, &status, 0);
-        return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? Status::OK
+        return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? Status::Ok
                                                                : Status::Deny;
     }
 #endif

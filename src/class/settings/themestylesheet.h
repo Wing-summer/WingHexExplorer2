@@ -67,6 +67,7 @@ inline int standardIconRole(const QString &property) {
         const char *property;
         QStyle::StandardPixmap role;
     };
+
     // Qt property names are stable; resource paths remain solely in the QSS.
     static constexpr Entry entries[] = {
         {"dialog-cancel-icon", QStyle::SP_DialogCancelButton},

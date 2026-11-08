@@ -50,9 +50,9 @@ public:
     void setIconFollowWindow(bool value);
 
 Q_SIGNALS:
-    void minimizeRequested();
-    void maximizeRequested(bool max = false);
-    void closeRequested();
+    void sigOnMinimizeRequested();
+    void sigOnMaximizeRequested(bool max = false);
+    void sigOnCloseRequested();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

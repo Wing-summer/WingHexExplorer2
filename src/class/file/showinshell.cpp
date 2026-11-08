@@ -35,6 +35,10 @@
 #define NOMINMAX
 #endif
 #define WIN32_LEAN_AND_MEAN
+#include <ShObjIdl.h>
+#include <ShlDisp.h>
+#include <Windows.h>
+
 #include <QAxObject>
 #include <QCoreApplication>
 #include <QDebug>
@@ -42,9 +46,6 @@
 #include <QFileInfo>
 #include <QTextBrowser>
 #include <QUuid>
-#include <ShObjIdl.h>
-#include <ShlDisp.h>
-#include <Windows.h>
 
 bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
     QFileInfo appFI(filePath);

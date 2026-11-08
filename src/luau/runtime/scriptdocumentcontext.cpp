@@ -17,34 +17,37 @@
 
 #include "scriptdocumentcontext.h"
 
-#include "WingPlugin/iwingplugincalls.h"
-#include "control/editorview.h"
+#include <limits>
+#include <utility>
+
 #include <QApplication>
 #include <QThread>
 #include <QUndoCommand>
 #include <QUndoStack>
-#include <limits>
-#include <utility>
+
+#include "WingPlugin/iwingplugincalls.h"
+
+#include "control/editorview.h"
 
 ScriptDocumentContext::ScriptDocumentContext(
     CurrentView current, OpenView open, CloseView close,
     std::shared_ptr<ScriptDocumentIds> ids, int token)
-    : _current(std::move(current)), _open(std::move(open)),
-      _close(std::move(close)), _ids(std::move(ids)), _token(token) {}
+    : m_current(std::move(current)), m_open(std::move(open)),
+      m_close(std::move(close)), m_ids(std::move(ids)), m_token(token) {}
 
 ScriptDocumentContext::~ScriptDocumentContext() {
-    while (_macroDepth > 0) {
+    while (m_macroDepth > 0) {
         finishMacro();
     }
 }
 
 const QObject *ScriptDocumentContext::sender() const { return this; }
 
-int ScriptDocumentContext::token() const { return _token; }
+int ScriptDocumentContext::token() const { return m_token; }
 
 QSet<int> ScriptDocumentContext::handles() const {
     QSet<int> result;
-    for (auto it = _handles.cbegin(); it != _handles.cend(); ++it) {
+    for (auto it = m_handles.cbegin(); it != m_handles.cend(); ++it) {
         result.insert(it.key());
     }
     return result;
@@ -52,17 +55,17 @@ QSet<int> ScriptDocumentContext::handles() const {
 
 void ScriptDocumentContext::cleanHandles(const QSet<int> &handles) {
     // Release access without closing editors or consulting macro guards.
-    _handles.removeIf(
+    m_handles.removeIf(
         [&handles](const QPair<int, QPointer<EditorView>> &entry) {
             return !handles.contains(entry.first);
         });
-    if (_active >= 0 && !_handles.contains(_active)) {
-        _active = -1;
+    if (m_active >= 0 && !m_handles.contains(m_active)) {
+        m_active = -1;
     }
 }
 
 EditorView *ScriptDocumentContext::view() const {
-    auto target = _active < 0 ? _current() : _handles.value(_active).data();
+    auto target = m_active < 0 ? m_current() : m_handles.value(m_active).data();
     if (target && target->isCloneFile()) {
         target = target->cloneParent();
     }
@@ -76,22 +79,22 @@ int ScriptDocumentContext::bind(EditorView *target, bool select) {
     if (!target || target->isClosed()) {
         return WingHex::ErrFile::NotExist;
     }
-    for (auto it = _handles.cbegin(); it != _handles.cend(); ++it) {
+    for (auto it = m_handles.cbegin(); it != m_handles.cend(); ++it) {
         if (it.value() == target) {
             if (select) {
-                _active = it.key();
+                m_active = it.key();
             }
             return it.key();
         }
     }
-    if (_handles.size() >= UCHAR_MAX ||
-        _ids->handle == std::numeric_limits<int>::max()) {
+    if (m_handles.size() >= UCHAR_MAX ||
+        m_ids->handle == std::numeric_limits<int>::max()) {
         return WingHex::ErrFile::TooManyOpenedFile;
     }
-    const auto handle = _ids->handle++;
-    _handles.insert(handle, target);
+    const auto handle = m_ids->handle++;
+    m_handles.insert(handle, target);
     if (select) {
-        _active = handle;
+        m_active = handle;
     }
     return handle;
 }
@@ -107,11 +110,11 @@ int ScriptDocumentContext::openFile(const QUrl &file) {
     if (!onGuiThread()) {
         return WingHex::ErrFile::NotAllowedInNoneGUIThread;
     }
-    if (_macroDepth > 0) {
+    if (m_macroDepth > 0) {
         return WingHex::ErrFile::Error;
     }
     EditorView *target = nullptr;
-    const auto result = _open(file, &target);
+    const auto result = m_open(file, &target);
     if (result != WingHex::ErrFile::Success &&
         result != WingHex::ErrFile::AlreadyOpened) {
         return result;
@@ -123,19 +126,19 @@ int ScriptDocumentContext::openFile(const QUrl &file) {
     }
     const auto handle = bind(target, false);
     if (handle < 0 && result == WingHex::ErrFile::Success) {
-        _close(target, true);
+        m_close(target, true);
     }
     return handle;
 }
 
 bool ScriptDocumentContext::isFileOpened(int handle) const {
-    const auto target = _handles.value(handle);
+    const auto target = m_handles.value(handle);
     return handle >= 0 && target && !target->isClosed();
 }
 
 QList<QUrl> ScriptDocumentContext::openedFiles() const {
     QList<QUrl> files;
-    for (const auto &target : _handles) {
+    for (const auto &target : m_handles) {
         auto view = target.data();
         if (view == nullptr || view->isClosed() ||
             view->documentType() == WingHex::DocumentType::InValid) {
@@ -147,7 +150,7 @@ QList<QUrl> ScriptDocumentContext::openedFiles() const {
 }
 
 WingHex::DocumentInfo ScriptDocumentContext::documentInfo(int handle) const {
-    auto target = handle < 0 ? nullptr : _handles.value(handle).data();
+    auto target = handle < 0 ? nullptr : m_handles.value(handle).data();
     WingHex::DocumentInfo info;
     if (target && !target->isClosed()) {
         info.fileNameUrl = target->fileNameUrl();
@@ -160,14 +163,14 @@ WingHex::DocumentInfo ScriptDocumentContext::documentInfo(int handle) const {
 }
 
 bool ScriptDocumentContext::switchDocument(int handle) {
-    if (!onGuiThread() || _macroDepth > 0) {
+    if (!onGuiThread() || m_macroDepth > 0) {
         return false;
     }
-    auto target = _handles.value(handle);
+    auto target = m_handles.value(handle);
     if (handle >= 0 && (!target || target->isClosed())) {
         return false;
     }
-    _active = handle < 0 ? -1 : handle;
+    m_active = handle < 0 ? -1 : handle;
     return true;
 }
 
@@ -175,7 +178,7 @@ bool ScriptDocumentContext::raiseDocument(int handle) {
     if (!onGuiThread()) {
         return false;
     }
-    auto target = handle < 0 ? _current() : _handles.value(handle).data();
+    auto target = handle < 0 ? m_current() : m_handles.value(handle).data();
     if (!target || target->isClosed()) {
         return false;
     }
@@ -187,17 +190,17 @@ int ScriptDocumentContext::closeFile(int handle, bool force) {
     if (!onGuiThread()) {
         return WingHex::ErrFile::NotAllowedInNoneGUIThread;
     }
-    if (_macroDepth > 0) {
+    if (m_macroDepth > 0) {
         return WingHex::ErrFile::Error;
     }
-    auto target = _handles.value(handle);
+    auto target = m_handles.value(handle);
     if (!target || target->isClosed()) {
         return WingHex::ErrFile::NotExist;
     }
     const auto identity = target.data();
-    const auto result = _close(identity, force);
+    const auto result = m_close(identity, force);
     if (result == WingHex::ErrFile::Success) {
-        _handles.removeIf(
+        m_handles.removeIf(
             [identity](const QPair<int, QPointer<EditorView>> &entry) {
                 auto iden = entry.second;
                 return !iden || iden.data() == identity;
@@ -210,17 +213,17 @@ int ScriptDocumentContext::closeFileHandle(int handle) {
     if (!onGuiThread()) {
         return WingHex::ErrFile::NotAllowedInNoneGUIThread;
     }
-    if (_macroDepth > 0) {
+    if (m_macroDepth > 0) {
         return WingHex::ErrFile::Error;
     }
-    return handle >= 0 && _handles.remove(handle) ? WingHex::ErrFile::Success
-                                                  : WingHex::ErrFile::NotExist;
+    return handle >= 0 && m_handles.remove(handle) ? WingHex::ErrFile::Success
+                                                   : WingHex::ErrFile::NotExist;
 }
 
 int ScriptDocumentContext::closeCurrent() {
-    const auto result = closeFileHandle(_active);
+    const auto result = closeFileHandle(m_active);
     if (result == WingHex::ErrFile::Success) {
-        _active = -1;
+        m_active = -1;
     }
     return result;
 }
@@ -234,13 +237,13 @@ bool ScriptDocumentContext::beginMacro(const QString &label) {
         return false;
     }
     auto *document = target->hexEditor()->document().data();
-    if (_macroDepth == std::numeric_limits<int>::max() ||
-        (_macroDepth > 0 && _macroDocument != document)) {
+    if (m_macroDepth == std::numeric_limits<int>::max() ||
+        (m_macroDepth > 0 && m_macroDocument != document)) {
         return false;
     }
     document->beginMarco(label);
-    _macroDocument = document;
-    ++_macroDepth;
+    m_macroDocument = document;
+    ++m_macroDepth;
     return true;
 }
 
@@ -252,10 +255,10 @@ bool ScriptDocumentContext::endMacro() {
 }
 
 bool ScriptDocumentContext::isMacroEmpty() const {
-    if (_macroDepth == 0 || !_macroDocument) {
+    if (m_macroDepth == 0 || !m_macroDocument) {
         return true;
     }
-    const auto *stack = _macroDocument->undoStack();
+    const auto *stack = m_macroDocument->undoStack();
     const auto *command =
         stack->count() ? stack->command(stack->count() - 1) : nullptr;
     return !command || command->childCount() == 0;
@@ -265,12 +268,12 @@ bool ScriptDocumentContext::resetMacro() {
     if (!onGuiThread()) {
         return false;
     }
-    if (_macroDepth == 0 || !_macroDocument) {
+    if (m_macroDepth == 0 || !m_macroDocument) {
         return false;
     }
-    const auto document = _macroDocument;
+    const auto document = m_macroDocument;
     const bool empty = isMacroEmpty();
-    while (_macroDepth > 0) {
+    while (m_macroDepth > 0) {
         finishMacro();
     }
     if (document && !empty) {
@@ -280,12 +283,12 @@ bool ScriptDocumentContext::resetMacro() {
 }
 
 bool ScriptDocumentContext::finishMacro() {
-    if (_macroDepth == 0) {
+    if (m_macroDepth == 0) {
         return false;
     }
-    const auto document = _macroDocument;
-    if (--_macroDepth == 0) {
-        _macroDocument.clear();
+    const auto document = m_macroDocument;
+    if (--m_macroDepth == 0) {
+        m_macroDocument.clear();
     }
     if (document) {
         document->endMarco();

@@ -17,10 +17,6 @@
 
 #include "searchreplacewidget.h"
 
-#include "class/settings/thememanager.h"
-#include "dialog/common/wingmessagebox.h"
-#include "utilities.h"
-
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCompleter>
@@ -35,6 +31,10 @@
 #include <QStringView>
 #include <QToolButton>
 #include <QVBoxLayout>
+
+#include "class/settings/thememanager.h"
+#include "dialog/common/wingmessagebox.h"
+#include "utilities.h"
 
 SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     : CodeEditControlWidget(editor), m_editor(editor) {

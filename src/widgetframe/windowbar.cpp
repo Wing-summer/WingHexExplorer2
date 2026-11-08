@@ -3,13 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "windowbar.h"
-#include "windowbar_p.h"
 
 #include <QApplication>
 #include <QStyle>
 #include <QtCore/QDebug>
 #include <QtCore/QLocale>
 #include <QtGui/QtEvents>
+
+#include "windowbar_p.h"
 
 namespace QWK {
 
@@ -136,7 +137,7 @@ void WindowBar::setMinButton(QAbstractButton *btn) {
     }
     d->setWidgetAt(WindowBarPrivate::MinimumButton, btn);
     connect(btn, &QAbstractButton::clicked, this,
-            &WindowBar::minimizeRequested);
+            &WindowBar::sigOnMinimizeRequested);
 }
 
 void WindowBar::setMaxButton(QAbstractButton *btn) {
@@ -150,7 +151,7 @@ void WindowBar::setMaxButton(QAbstractButton *btn) {
     }
     d->setWidgetAt(WindowBarPrivate::MaximumButton, btn);
     connect(btn, &QAbstractButton::clicked, this,
-            &WindowBar::maximizeRequested);
+            &WindowBar::sigOnMaximizeRequested);
 }
 
 void WindowBar::setCloseButton(QAbstractButton *btn) {
@@ -163,7 +164,8 @@ void WindowBar::setCloseButton(QAbstractButton *btn) {
         return;
     }
     d->setWidgetAt(WindowBarPrivate::CloseButton, btn);
-    connect(btn, &QAbstractButton::clicked, this, &WindowBar::closeRequested);
+    connect(btn, &QAbstractButton::clicked, this,
+            &WindowBar::sigOnCloseRequested);
 }
 
 QAbstractButton *WindowBar::takeIconButton() {
@@ -180,7 +182,7 @@ QAbstractButton *WindowBar::takeMinButton() {
         return nullptr;
     }
     disconnect(btn, &QAbstractButton::clicked, this,
-               &WindowBar::minimizeRequested);
+               &WindowBar::sigOnMinimizeRequested);
     return btn;
 }
 
@@ -192,7 +194,7 @@ QAbstractButton *WindowBar::takeMaxButton() {
         return nullptr;
     }
     disconnect(btn, &QAbstractButton::clicked, this,
-               &WindowBar::maximizeRequested);
+               &WindowBar::sigOnMaximizeRequested);
     return btn;
 }
 
@@ -204,7 +206,7 @@ QAbstractButton *WindowBar::takeCloseButton() {
         return nullptr;
     }
     disconnect(btn, &QAbstractButton::clicked, this,
-               &WindowBar::closeRequested);
+               &WindowBar::sigOnCloseRequested);
     return btn;
 }
 

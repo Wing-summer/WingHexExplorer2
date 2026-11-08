@@ -18,11 +18,11 @@
 #include "bookmarksmodel.h"
 
 BookMarksModel::BookMarksModel(QHexDocument *doc, QObject *parent)
-    : QAbstractTableModel(parent), _doc(doc) {}
+    : QAbstractTableModel(parent), m_doc(doc) {}
 
 int BookMarksModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return _doc ? _doc->bookMarksCount() : 0;
+    return m_doc ? m_doc->bookMarksCount() : 0;
 }
 
 int BookMarksModel::columnCount(const QModelIndex &parent) const {
@@ -35,12 +35,12 @@ QVariant BookMarksModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        auto offset = _doc->bookMarkPos(r);
+        auto offset = m_doc->bookMarkPos(r);
         switch (index.column()) {
         case 0: // offset
             return offset;
         case 1: // comment
-            return _doc->bookMark(offset);
+            return m_doc->bookMark(offset);
         }
     }
     case Qt::TextAlignmentRole:
@@ -77,15 +77,15 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
 
 void BookMarksModel::setDocument(QHexDocument *newDoc) {
     beginResetModel();
-    if (_doc) {
-        disconnect(_doc);
+    if (m_doc) {
+        disconnect(m_doc);
     }
-    _doc = newDoc;
-    if (_doc) {
-        connect(_doc, &QHexDocument::bookMarkChanged, this,
+    m_doc = newDoc;
+    if (m_doc) {
+        connect(m_doc, &QHexDocument::sigOnBookmarkChanged, this,
                 [this] { Q_EMIT this->layoutChanged(); });
-        connect(_doc, &QHexDocument::destroyed, this,
-                [this]() { _doc = nullptr; });
+        connect(m_doc, &QHexDocument::destroyed, this,
+                [this]() { m_doc = nullptr; });
     }
     endResetModel();
 }

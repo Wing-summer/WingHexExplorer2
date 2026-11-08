@@ -21,12 +21,13 @@
 
 #include "qhexrenderer.h"
 
+#include <cctype>
+
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPainterPath>
 #include <QPainterPathStroker>
 #include <QTextLayout>
-#include <cctype>
 
 constexpr char HEX_UNPRINTABLE_CHAR = '.';
 
@@ -67,7 +68,7 @@ void QHexRenderer::setStringVisible(bool b) {
         return;
     }
     m_asciiVisible = b;
-    Q_EMIT layoutChanged();
+    Q_EMIT sigOnLayoutChanged();
 }
 
 bool QHexRenderer::headerVisible() { return m_headerVisible; }
@@ -77,7 +78,7 @@ void QHexRenderer::setHeaderVisible(bool b) {
         return;
     }
     m_headerVisible = b;
-    Q_EMIT layoutChanged();
+    Q_EMIT sigOnLayoutChanged();
 }
 
 void QHexRenderer::setStringEncoding(QStringConverter::Encoding encoding) {
@@ -87,7 +88,7 @@ void QHexRenderer::setStringEncoding(QStringConverter::Encoding encoding) {
 
     m_stringEncoding = encoding;
     m_lineCaches.clear();
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 QStringConverter::Encoding QHexRenderer::stringEncoding() const {
@@ -123,7 +124,7 @@ void QHexRenderer::setAddressVisible(bool b) {
         return;
     }
     m_addressVisible = b;
-    Q_EMIT layoutChanged();
+    Q_EMIT sigOnLayoutChanged();
 }
 
 void QHexRenderer::switchDoc(QHexDocument *doc) {
@@ -140,7 +141,7 @@ QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
     connect(qGuiApp, &QGuiApplication::fontDatabaseChanged, this, [this] {
         m_cellFonts.clear();
         m_scriptFamilies.clear();
-        Q_EMIT repaintRequested();
+        Q_EMIT sigOnRepaintRequested();
     });
 }
 
@@ -213,8 +214,9 @@ void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
 void QHexRenderer::updateMetrics(const QFontMetricsF &fm) {
     m_fontmetrics = fm;
     m_cellFonts.clear();
-    Q_EMIT layoutChanged();
+    Q_EMIT sigOnLayoutChanged();
 }
+
 void QHexRenderer::enableCursor(bool b) { m_cursorenabled = b; }
 
 void QHexRenderer::selectArea(const QPoint &pt) {
@@ -310,6 +312,7 @@ QHexRenderer::Areas QHexRenderer::hitTestColArea(const QPoint &pt) const {
 QHexRenderer::Areas QHexRenderer::selectedArea() const {
     return m_selectedarea;
 }
+
 bool QHexRenderer::editableArea(QHexRenderer::Areas area) const {
     return (area == Areas::HexArea || area == Areas::AsciiArea);
 }
@@ -321,14 +324,18 @@ void QHexRenderer::setCacheLineCount(qsizetype count) {
 qsizetype QHexRenderer::documentLastLine() const {
     return this->documentLines() - 1;
 }
+
 qsizetype QHexRenderer::documentLastColumn() const {
     return this->rendererLength() % hexLineWidth() - 1;
 }
+
 qsizetype QHexRenderer::documentLines() const {
     auto r = std::lldiv(this->rendererLength(), hexLineWidth());
     return r.quot + (r.rem > 0 ? 1 : 0);
 }
+
 qreal QHexRenderer::documentWidth() const { return this->getEndColumnX(); }
+
 qreal QHexRenderer::lineHeight() const { return m_fontmetrics.height(); }
 
 QRectF QHexRenderer::getLineRect(qsizetype line, qsizetype firstline) const {
@@ -359,12 +366,12 @@ QByteArray QHexRenderer::getLine(qsizetype line) const {
 
 void QHexRenderer::blinkCursor() {
     m_cursorenabled = !m_cursorenabled;
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 void QHexRenderer::setCursorVisible(bool visible) {
     m_cursorenabled = visible;
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 qsizetype QHexRenderer::rendererLength() const {
@@ -388,6 +395,7 @@ qreal QHexRenderer::getHexColumnX() const {
     }
     return 0;
 }
+
 qreal QHexRenderer::getAsciiColumnX() const {
     return this->getHexColumnX() + this->getNCellsWidth(hexLineWidth() * 3) +
            2 * this->borderSize();
@@ -1255,7 +1263,7 @@ void QHexRenderer::setCursorSync(bool newCursorSync) {
         return;
     }
     m_cursorSync = newCursorSync;
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 void QHexRenderer::drawString(QPainter *painter, const QRectF &linerect,

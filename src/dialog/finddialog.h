@@ -18,14 +18,14 @@
 #ifndef FINDDIALOG_H
 #define FINDDIALOG_H
 
-#include "control/hexlineedit.h"
-#include "framelessdialogbase.h"
-
 #include <QComboBox>
 #include <QLineEdit>
 #include <QObject>
 #include <QRadioButton>
 #include <QTextEdit>
+
+#include "control/hexlineedit.h"
+#include "framelessdialogbase.h"
 
 enum class SearchDirection { None, Foreword, Backword, Selection };
 
@@ -62,7 +62,7 @@ private:
     HexLineEdit *m_lineeditor;
     QComboBox *m_findMode;
 
-    Result _result;
+    Result m_result;
 };
 
 #endif // FINDDIALOG_H

@@ -32,7 +32,7 @@ public Q_SLOTS:
     void activateWindow();
 
 Q_SIGNALS:
-    void messageReceived(const QByteArray &message);
+    void sigOnMessageReceived(const QByteArray &message);
 
 private:
     QString genBlockServerName() const;
@@ -40,8 +40,8 @@ private:
 
 private:
     void sysInit(const QString &appId);
-    QtLocalPeer *peer;
-    QWidget *actWin;
+    QtLocalPeer *m_peer;
+    QWidget *m_actWin;
 };
 
 #endif // QTSINGLEAPPLICATION_H

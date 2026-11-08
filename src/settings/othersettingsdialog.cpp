@@ -16,14 +16,14 @@
 */
 
 #include "othersettingsdialog.h"
+#include "ui_othersettingsdialog.h"
+
+#include <QDesktopServices>
 
 #include "class/application/logger.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
-#include "ui_othersettingsdialog.h"
 #include "utilities.h"
-
-#include <QDesktopServices>
 
 OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::OtherSettingsDialog) {
@@ -131,6 +131,6 @@ QString OtherSettingsDialog::name() const { return tr("Other"); }
 QString OtherSettingsDialog::id() const { return QStringLiteral("Others"); }
 
 void OtherSettingsDialog::restore() {
-    SettingManager::instance().reset(SettingManager::SETTING::OTHER);
+    SettingManager::instance().reset(SettingManager::Setting::Other);
     reload();
 }

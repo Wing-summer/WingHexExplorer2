@@ -48,7 +48,7 @@ MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
     if (hexmeta->size() >= QHEXVIEW_METADATA_LIMIT) {
         setObsolete(true);
     } else {
-        _brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
+        m_brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
     }
 }
 
@@ -76,7 +76,7 @@ bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
 
 void MetaAddCommand::undo() {
     m_hexmeta->removeMetadata(m_meta.begin, m_meta.end);
-    for (const auto &meta : std::as_const(_brokenMetas)) {
+    for (const auto &meta : std::as_const(m_brokenMetas)) {
         m_hexmeta->metadata(meta.begin, meta.end, meta.foreground,
                             meta.background, meta.comment);
     }

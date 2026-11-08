@@ -26,7 +26,7 @@
 ReaderTestForm::ReaderTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
                                QWidget *parent)
     : WingHex::WingPluginWidget(plg, parent), ui(new Ui::ReaderTestForm),
-      _br(br) {
+      m_br(br) {
     ui->setupUi(this);
     ui->sbOffset->setRange(0, INT_MAX);
 }
@@ -35,50 +35,50 @@ ReaderTestForm::~ReaderTestForm() { delete ui; }
 
 void ReaderTestForm::on_btnReadInt8_clicked() {
     auto v = readInt8(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadInt8] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadInt8] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt16_clicked() {
     auto v = readInt16(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadInt16] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadInt16] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt32_clicked() {
     auto v = readInt32(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadInt32] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadInt32] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt64_clicked() {
     auto v = readInt64(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadInt64] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadInt64] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadFloat_clicked() {
     auto v = readFloat(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadFloat] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadFloat] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadDouble_clicked() {
     auto v = readDouble(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadDouble] ") + QString::number(v));
+    m_br->append(QStringLiteral("[ReadDouble] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadString_clicked() {
     auto v = readString(ui->sbOffset->value());
-    _br->append(QStringLiteral("[ReadString] ") + v);
+    m_br->append(QStringLiteral("[ReadString] ") + v);
 }
 
 void ReaderTestForm::on_btnReadByteArray_clicked() {
     auto v = readBytes(ui->sbOffset->value(), ui->sbLen->value());
-    _br->append(QStringLiteral("[ReadByteArray] ") + v.toHex(' '));
+    m_br->append(QStringLiteral("[ReadByteArray] ") + v.toHex(' '));
 }
 
 void ReaderTestForm::on_btnStatus_clicked() {
     static auto lf = QStringLiteral("\n");
     static auto strue = QStringLiteral("true");
     static auto sfalse = QStringLiteral("false");
-    _br->clear();
-    _br->append(
+    m_br->clear();
+    m_br->append(
         QStringLiteral("[Status]") % lf %
         QStringLiteral("isCurrentDocEditing: ") %
         (isCurrentDocEditing() ? strue : sfalse) % lf %
@@ -103,24 +103,24 @@ void ReaderTestForm::on_btnStatus_clicked() {
         QString::number(currentOffset()) % lf %
         QStringLiteral("selectedLength: ") % QString::number(selectedLength()));
 
-    _br->append(QStringLiteral("[Selection]"));
+    m_br->append(QStringLiteral("[Selection]"));
     auto total = selectionCount();
-    _br->append(QStringLiteral("selectionCount: ") % QString::number(total));
+    m_br->append(QStringLiteral("selectionCount: ") % QString::number(total));
     for (decltype(total) i = 0; i < total; ++i) {
-        _br->append(QStringLiteral("{ ") % QString::number(i) %
-                    QStringLiteral(" }"));
-        _br->append(QStringLiteral("selectionStart: ") %
-                    getPrintableHexPosition(selectionStart(i)) % lf %
-                    QStringLiteral("selectionEnd: ") %
-                    getPrintableHexPosition(selectionEnd(i)) % lf %
-                    QStringLiteral("selectionLength: ") %
-                    QString::number(selectionLength(i)) % lf %
-                    QStringLiteral("selectedBytes: ") %
-                    (selectedBytes(i)).toHex(' '));
+        m_br->append(QStringLiteral("{ ") % QString::number(i) %
+                     QStringLiteral(" }"));
+        m_br->append(QStringLiteral("selectionStart: ") %
+                     getPrintableHexPosition(selectionStart(i)) % lf %
+                     QStringLiteral("selectionEnd: ") %
+                     getPrintableHexPosition(selectionEnd(i)) % lf %
+                     QStringLiteral("selectionLength: ") %
+                     QString::number(selectionLength(i)) % lf %
+                     QStringLiteral("selectedBytes: ") %
+                     (selectedBytes(i)).toHex(' '));
     }
 
-    _br->append(QStringLiteral("[Selections]"));
-    _br->append((selectionBytes()).join('\n').toHex(' '));
+    m_br->append(QStringLiteral("[Selections]"));
+    m_br->append((selectionBytes()).join('\n').toHex(' '));
 }
 
 QString

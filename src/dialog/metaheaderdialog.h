@@ -18,9 +18,9 @@
 #ifndef METAHEADERDIALOG_H
 #define METAHEADERDIALOG_H
 
-#include "framelessdialogbase.h"
-
 #include <QListWidget>
+
+#include "framelessdialogbase.h"
 
 class MetaHeaderDialog : public FramelessDialogBase {
     Q_OBJECT
@@ -35,8 +35,8 @@ private slots:
     void on_reject();
 
 private:
-    QListWidget *headerlist = nullptr;
-    QVector<bool> _result;
+    QListWidget *m_headerlist = nullptr;
+    QVector<bool> m_result;
 };
 
 #endif // METAHEADERDIALOG_H

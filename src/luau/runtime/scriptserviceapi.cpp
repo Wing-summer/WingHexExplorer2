@@ -17,9 +17,11 @@
 
 #include "scriptserviceapi.h"
 
-#include "class/plugin/pluginsystem.h"
-#include <QList>
 #include <tuple>
+
+#include <QList>
+
+#include "class/plugin/pluginsystem.h"
 
 bool invokeScriptService(PluginSystem &system, const QObject *sender,
                          const QString &puid, const QByteArray &method,

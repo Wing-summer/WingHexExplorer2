@@ -18,11 +18,11 @@
 #ifndef LUAUVARIABLEREGISTRY_H
 #define LUAUVARIABLEREGISTRY_H
 
-#include "luauscope.h"
-#include "luauvariable.h"
-
 #include <QHash>
 #include <QVector>
+
+#include "luauscope.h"
+#include "luauvariable.h"
 
 class LuauVariableRegistry {
 public:
@@ -30,7 +30,7 @@ public:
 
 public:
     void clear();
-    void update(const QVector<lua_State *> &vm_chain);
+    void update(const QVector<lua_State *> &vmChain);
 
     static LuauScope getLocalScope(lua_State *L, int level);
     static LuauScope getUpvalueScope(lua_State *L, int level);
@@ -53,8 +53,8 @@ private:
     void fetchFromStack(lua_State *L, int level, lua_State *src);
 
 private:
-    QHash<LuauScope, LuauVariableList> variables_;
-    int depth_ = 0;
+    QHash<LuauScope, LuauVariableList> m_variables;
+    int m_depth = 0;
 };
 
 #endif // LUAUVARIABLEREGISTRY_H

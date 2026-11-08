@@ -18,10 +18,10 @@
 #ifndef ENCODINGDIALOG_H
 #define ENCODINGDIALOG_H
 
-#include "framelessdialogbase.h"
-
 #include <QDialogButtonBox>
 #include <QListWidget>
+
+#include "framelessdialogbase.h"
 
 class EncodingDialog : public FramelessDialogBase {
     Q_OBJECT
@@ -34,8 +34,8 @@ private:
     void on_reject();
 
 private:
-    QListWidget *enclist;
-    QStringConverter::Encoding result;
+    QListWidget *m_enclist;
+    QStringConverter::Encoding m_result;
 };
 
 #endif // ENCODINGDIALOG_H

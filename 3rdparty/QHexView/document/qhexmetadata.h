@@ -22,15 +22,14 @@
 #ifndef QHEXMETADATA_H
 #define QHEXMETADATA_H
 
-#include "qhexregionobject.h"
-
-#include <QObject>
-
 #include <QColor>
 #include <QHash>
 #include <QMap>
+#include <QObject>
 #include <QUndoStack>
 #include <QVector>
+
+#include "qhexregionobject.h"
 
 using qhash_result_t = size_t;
 
@@ -245,7 +244,7 @@ private:
                             const QString &comment);
 
 signals:
-    void metadataChanged();
+    void sigOnMetadataChanged();
 
 private:
     quint8 m_lineWidth;

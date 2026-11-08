@@ -18,9 +18,10 @@
 #include "framelessdialogbase.h"
 
 #ifdef WINGHEX_USE_FRAMELESS
+#include <QWKWidgets/widgetwindowagent.h>
+
 #include "class/settings/settingmanager.h"
 #include "widgetframe/windowbutton.h"
-#include <QWKWidgets/widgetwindowagent.h>
 #endif
 
 #include <QStyle>
@@ -32,9 +33,9 @@ FramelessDialogBase::FramelessDialogBase(QWidget *parent) : QDialog(parent) {
     setWindowFlag(Qt::WindowMinimizeButtonHint, false);
 
 #ifdef WINGHEX_USE_FRAMELESS
-    _useFrameLess = !SettingManager::instance().useNativeTitleBar();
-    if (_useFrameLess) {
-        _helper = new FramelessHelper(this, true);
+    m_useFrameLess = !SettingManager::instance().useNativeTitleBar();
+    if (m_useFrameLess) {
+        m_helper = new FramelessHelper(this, true);
     }
 #endif
 }
@@ -47,13 +48,13 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
     Q_ASSERT(content);
 #endif
 
-    auto WIN_WIDGET = new QWidget(this);
-    QVBoxLayout *vLayout = new QVBoxLayout(WIN_WIDGET);
+    auto winWidget = new QWidget(this);
+    QVBoxLayout *vLayout = new QVBoxLayout(winWidget);
     vLayout->setContentsMargins(1, 1, 1, 1);
 
 #ifdef WINGHEX_USE_FRAMELESS
-    if (_useFrameLess) {
-        auto titlebar = _helper->windowBar();
+    if (m_useFrameLess) {
+        auto titlebar = m_helper->windowBar();
         auto iconBtn =
             qobject_cast<QWK::WindowButton *>(titlebar->iconButton());
         Q_ASSERT(iconBtn);
@@ -69,7 +70,7 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(WIN_WIDGET);
+    layout->addWidget(winWidget);
 
     setWindowTitle(content->windowTitle());
     setWindowIcon(content->windowIcon());
@@ -93,20 +94,20 @@ void FramelessDialogBase::showEvent(QShowEvent *event) {
 
 bool FramelessDialogBase::event(QEvent *event) {
 #ifdef WINGHEX_USE_FRAMELESS
-    if (_useFrameLess) {
+    if (m_useFrameLess) {
         switch (event->type()) {
         case QEvent::WindowActivate: {
-            if (_helper->windowBar()) {
-                _helper->windowBar()->setProperty("bar-active", true);
-                style()->polish(_helper->windowBar());
+            if (m_helper->windowBar()) {
+                m_helper->windowBar()->setProperty("bar-active", true);
+                style()->polish(m_helper->windowBar());
             }
             break;
         }
 
         case QEvent::WindowDeactivate: {
-            if (_helper->windowBar()) {
-                _helper->windowBar()->setProperty("bar-active", false);
-                style()->polish(_helper->windowBar());
+            if (m_helper->windowBar()) {
+                m_helper->windowBar()->setProperty("bar-active", false);
+                style()->polish(m_helper->windowBar());
             }
             break;
         }

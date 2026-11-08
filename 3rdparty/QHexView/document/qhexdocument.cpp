@@ -20,6 +20,12 @@
 */
 
 #include "qhexdocument.h"
+
+#include <QApplication>
+#include <QBuffer>
+#include <QClipboard>
+#include <QFile>
+
 #include "commands/baseaddrcommand.h"
 #include "commands/bookmark/bookmarkaddcommand.h"
 #include "commands/bookmark/bookmarkclearcommand.h"
@@ -30,11 +36,6 @@
 #include "commands/hex/replacecommand.h"
 #include "document/commands/hex/appendcommand.h"
 
-#include <QApplication>
-#include <QBuffer>
-#include <QClipboard>
-#include <QFile>
-
 /*======================*/
 // added by wingsummer
 
@@ -43,8 +44,8 @@ QList<qsizetype> QHexDocument::getLineBookmarksPos(qsizetype line) {
     auto begin = m_hexlinewidth * line;
     auto end = m_hexlinewidth + begin - 1;
 
-    auto lbound = _bookmarks.lowerBound(begin);
-    auto ubound = _bookmarks.upperBound(end);
+    auto lbound = m_bookmarks.lowerBound(begin);
+    auto ubound = m_bookmarks.upperBound(end);
 
     for (auto p = lbound; p != ubound; ++p) {
         pos.append(p.key());
@@ -57,8 +58,8 @@ bool QHexDocument::lineHasBookMark(qsizetype line) {
     auto begin = m_hexlinewidth * line;
     auto end = m_hexlinewidth + begin - 1;
 
-    auto lbound = _bookmarks.lowerBound(begin);
-    auto ubound = _bookmarks.upperBound(end);
+    auto lbound = m_bookmarks.lowerBound(begin);
+    auto ubound = m_bookmarks.upperBound(end);
 
     return lbound != ubound;
 }
@@ -71,20 +72,20 @@ void QHexDocument::addUndoCommand(QUndoCommand *command) {
 
 void QHexDocument::setMetabgVisible(bool b) {
     m_metabg = b;
-    Q_EMIT documentChanged();
-    Q_EMIT metabgVisibleChanged(b);
+    Q_EMIT sigOnDocumentChanged();
+    Q_EMIT sigOnMetaBgVisibleChanged(b);
 }
 
 void QHexDocument::setMetafgVisible(bool b) {
     m_metafg = b;
-    Q_EMIT documentChanged();
-    Q_EMIT metafgVisibleChanged(b);
+    Q_EMIT sigOnDocumentChanged();
+    Q_EMIT sigOnMetaFgVisibleChanged(b);
 }
 
 void QHexDocument::setMetaCommentVisible(bool b) {
     m_metacomment = b;
-    Q_EMIT documentChanged();
-    Q_EMIT metaCommentVisibleChanged(b);
+    Q_EMIT sigOnDocumentChanged();
+    Q_EMIT sigOnMetaCommentVisibleChanged(b);
 }
 
 bool QHexDocument::metabgVisible() const { return m_metabg; }
@@ -96,30 +97,30 @@ bool QHexDocument::metaCommentVisible() const { return m_metacomment; }
 void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
     QMap<qsizetype, QString> bms;
 
-    if (_bookmarks.isEmpty()) {
+    if (m_bookmarks.isEmpty()) {
         return;
     }
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto rmbegin = _bookmarks.lowerBound(offset);
+    auto rmbegin = m_bookmarks.lowerBound(offset);
 #else
-    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
+    auto rmbegin = std::as_const(m_bookmarks).lowerBound(offset);
 #endif
-    auto addbegin = _bookmarks.upperBound(offset);
+    auto addbegin = m_bookmarks.upperBound(offset);
 
-    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+    for (auto p = addbegin; p != m_bookmarks.end(); ++p) {
         bms.insert(p.key() + length, p.value());
     }
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    for (auto it = rmbegin; it != _bookmarks.end();) {
-        it = _bookmarks.erase(it);
+    for (auto it = rmbegin; it != m_bookmarks.end();) {
+        it = m_bookmarks.erase(it);
     }
 #else
-    _bookmarks.erase(rmbegin, _bookmarks.cend());
+    m_bookmarks.erase(rmbegin, m_bookmarks.cend());
 #endif
 
-    _bookmarks.insert(bms);
+    m_bookmarks.insert(bms);
 }
 
 QMap<qsizetype, QString> QHexDocument::removeBookMarkAdjust(qsizetype offset,
@@ -127,23 +128,23 @@ QMap<qsizetype, QString> QHexDocument::removeBookMarkAdjust(qsizetype offset,
     QMap<qsizetype, QString> rmbms;
     QMap<qsizetype, QString> bms;
 
-    if (_bookmarks.isEmpty()) {
+    if (m_bookmarks.isEmpty()) {
         return {};
     }
 
-    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-    auto addbegin = std::as_const(_bookmarks).upperBound(offset);
+    auto rmbegin = std::as_const(m_bookmarks).lowerBound(offset);
+    auto addbegin = std::as_const(m_bookmarks).upperBound(offset);
 
     for (auto p = rmbegin; p != addbegin; ++p) {
         rmbms.insert(p.key(), p.value());
     }
 
-    for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
+    for (auto p = addbegin; p != m_bookmarks.cend(); ++p) {
         bms.insert(p.key() - length, p.value());
     }
 
-    _bookmarks.erase(rmbegin, _bookmarks.cend());
-    _bookmarks.insert(bms);
+    m_bookmarks.erase(rmbegin, m_bookmarks.cend());
+    m_bookmarks.insert(bms);
 
     return rmbms;
 }
@@ -152,38 +153,38 @@ void QHexDocument::insertBookMarkAdjustRevert(qsizetype offset,
                                               qsizetype length) {
     QMap<qsizetype, QString> bms;
 
-    if (_bookmarks.isEmpty()) {
+    if (m_bookmarks.isEmpty()) {
         return;
     }
 
-    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-    auto addbegin = std::as_const(_bookmarks).upperBound(offset);
+    auto rmbegin = std::as_const(m_bookmarks).lowerBound(offset);
+    auto addbegin = std::as_const(m_bookmarks).upperBound(offset);
 
-    for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
+    for (auto p = addbegin; p != m_bookmarks.cend(); ++p) {
         bms.insert(p.key() - length, p.value());
     }
 
-    _bookmarks.erase(rmbegin, _bookmarks.cend());
-    _bookmarks.insert(bms);
+    m_bookmarks.erase(rmbegin, m_bookmarks.cend());
+    m_bookmarks.insert(bms);
 }
 
 void QHexDocument::removeBookMarkAdjustRevert(
     const QMap<qsizetype, QString> &rmbms, qsizetype offset, qsizetype length) {
     QMap<qsizetype, QString> bms;
 
-    if (!_bookmarks.isEmpty()) {
-        auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-        auto addbegin = std::as_const(_bookmarks).upperBound(offset);
+    if (!m_bookmarks.isEmpty()) {
+        auto rmbegin = std::as_const(m_bookmarks).lowerBound(offset);
+        auto addbegin = std::as_const(m_bookmarks).upperBound(offset);
 
-        for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
+        for (auto p = addbegin; p != m_bookmarks.cend(); ++p) {
             bms.insert(p.key() + length, p.value());
         }
 
-        _bookmarks.erase(rmbegin, _bookmarks.cend());
-        _bookmarks.insert(bms);
+        m_bookmarks.erase(rmbegin, m_bookmarks.cend());
+        m_bookmarks.insert(bms);
     }
 
-    _bookmarks.insert(rmbms);
+    m_bookmarks.insert(rmbms);
 }
 
 bool QHexDocument::isDocSaved() const { return m_undostack->isClean(); }
@@ -191,7 +192,9 @@ bool QHexDocument::isDocSaved() const { return m_undostack->isClean(); }
 void QHexDocument::setDocSaved() { m_undostack->setClean(); }
 
 bool QHexDocument::isReadOnly() const { return m_readonly; }
+
 bool QHexDocument::isKeepSize() const { return m_keepsize; }
+
 bool QHexDocument::isLocked() const { return m_islocked; }
 
 void QHexDocument::setLockKeepSize(bool b) { m_lockKeepSize = b; }
@@ -203,21 +206,22 @@ bool QHexDocument::setLockedFile(bool b) {
         return false;
     }
     m_islocked = b;
-    Q_EMIT documentLockedFile(b);
+    Q_EMIT sigOnDocumentLockedFile(b);
     return true;
 }
+
 bool QHexDocument::setKeepSize(bool b) {
     if (m_readonly || m_lockKeepSize) {
         return false;
     }
 
     m_keepsize = b;
-    Q_EMIT documentKeepSize(b);
+    Q_EMIT sigOnDocumentKeepSize(b);
     return true;
 }
 
 const QMap<qsizetype, QString> &QHexDocument::bookMarks() const {
-    return _bookmarks;
+    return m_bookmarks;
 }
 
 bool QHexDocument::AddBookMark(qsizetype pos, const QString &comment) {
@@ -280,7 +284,7 @@ QUndoCommand *QHexDocument::MakeAddBookMark(QUndoCommand *parent, qsizetype pos,
 
 QUndoCommand *QHexDocument::MakeRemoveBookMark(QUndoCommand *parent,
                                                qsizetype pos) {
-    if (_bookmarks.contains(pos)) {
+    if (m_bookmarks.contains(pos)) {
         return new BookMarkRemoveCommand(this, pos, bookMark(pos), parent);
     }
     return nullptr;
@@ -288,7 +292,7 @@ QUndoCommand *QHexDocument::MakeRemoveBookMark(QUndoCommand *parent,
 
 QUndoCommand *QHexDocument::MakeModBookMark(QUndoCommand *parent, qsizetype pos,
                                             QString comment) {
-    if (_bookmarks.contains(pos)) {
+    if (m_bookmarks.contains(pos)) {
         return new BookMarkReplaceCommand(this, pos, comment, bookMark(pos),
                                           parent);
     }
@@ -296,10 +300,10 @@ QUndoCommand *QHexDocument::MakeModBookMark(QUndoCommand *parent, qsizetype pos,
 }
 
 QUndoCommand *QHexDocument::MakeClearBookMark(QUndoCommand *parent) {
-    if (_bookmarks.isEmpty()) {
+    if (m_bookmarks.isEmpty()) {
         return nullptr;
     }
-    return new BookMarkClearCommand(this, _bookmarks, parent);
+    return new BookMarkClearCommand(this, m_bookmarks, parent);
 }
 
 QUndoCommand *QHexDocument::MakeSetBaseAddr(QUndoCommand *parent,
@@ -309,24 +313,24 @@ QUndoCommand *QHexDocument::MakeSetBaseAddr(QUndoCommand *parent,
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (!existBookMark(pos)) {
-        _bookmarks.insert(pos, comment);
-        Q_EMIT documentChanged();
-        Q_EMIT bookMarkChanged();
+        m_bookmarks.insert(pos, comment);
+        Q_EMIT sigOnDocumentChanged();
+        Q_EMIT sigOnBookmarkChanged();
         return true;
     }
     return false;
 }
 
-QString QHexDocument::bookMark(qsizetype pos) { return _bookmarks.value(pos); }
+QString QHexDocument::bookMark(qsizetype pos) { return m_bookmarks.value(pos); }
 
 bool QHexDocument::bookMarkExists(qsizetype pos) {
-    return _bookmarks.contains(pos);
+    return m_bookmarks.contains(pos);
 }
 
 QList<qsizetype> QHexDocument::bookMarkRange(qsizetype begin, qsizetype end) {
     Q_ASSERT(end >= begin && begin >= 0);
-    auto it = _bookmarks.lowerBound(begin);
-    auto pend = _bookmarks.upperBound(end);
+    auto it = m_bookmarks.lowerBound(begin);
+    auto pend = m_bookmarks.upperBound(end);
 
     QList<qsizetype> ret;
     while (it != pend) {
@@ -337,8 +341,8 @@ QList<qsizetype> QHexDocument::bookMarkRange(qsizetype begin, qsizetype end) {
 }
 
 qsizetype QHexDocument::bookMarkPos(qsizetype index) {
-    Q_ASSERT(index >= 0 && index < _bookmarks.size());
-    return *(std::next(_bookmarks.keyBegin(), index));
+    Q_ASSERT(index >= 0 && index < m_bookmarks.size());
+    return *(std::next(m_bookmarks.keyBegin(), index));
 }
 
 bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
@@ -359,46 +363,46 @@ bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
         }
         m_undostack->endMacro();
     }
-    Q_EMIT documentChanged();
+    Q_EMIT sigOnDocumentChanged();
     return true;
 }
 
 bool QHexDocument::removeBookMark(qsizetype pos) {
-    auto ret = _bookmarks.remove(pos) != 0;
+    auto ret = m_bookmarks.remove(pos) != 0;
     if (ret) {
-        Q_EMIT bookMarkChanged();
+        Q_EMIT sigOnBookmarkChanged();
     }
     return ret;
 }
 
 bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
-    if (_bookmarks.contains(pos)) {
-        _bookmarks[pos] = comment;
-        Q_EMIT bookMarkChanged();
+    if (m_bookmarks.contains(pos)) {
+        m_bookmarks[pos] = comment;
+        Q_EMIT sigOnBookmarkChanged();
         return true;
     }
     return false;
 }
 
 void QHexDocument::clearBookMark() {
-    _bookmarks.clear();
-    Q_EMIT documentChanged();
-    Q_EMIT bookMarkChanged();
+    m_bookmarks.clear();
+    Q_EMIT sigOnDocumentChanged();
+    Q_EMIT sigOnBookmarkChanged();
 }
 
 bool QHexDocument::existBookMark(qsizetype pos) {
-    return _bookmarks.contains(pos);
+    return m_bookmarks.contains(pos);
 }
 
-qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
+qsizetype QHexDocument::bookMarksCount() const { return m_bookmarks.count(); }
 
 void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
     if (books.size() > QHEXVIEW_BOOKMARK_LIMIT) {
         return;
     }
-    _bookmarks = books;
-    Q_EMIT documentChanged();
-    Q_EMIT bookMarkChanged();
+    m_bookmarks = books;
+    Q_EMIT sigOnDocumentChanged();
+    Q_EMIT sigOnBookmarkChanged();
 }
 
 void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
@@ -465,7 +469,7 @@ bool QHexDocument::insert(qsizetype offset, const QByteArray &data) {
         (offset < m_buffer->length() && m_metadata->hasMetadata())) {
         return false;
     }
-    return this->_insert(offset, data);
+    return this->insertInternal(offset, data);
 }
 
 bool QHexDocument::replace(qsizetype offset, uchar b) {
@@ -479,46 +483,46 @@ bool QHexDocument::replace(qsizetype offset, const QByteArray &data) {
     if (m_readonly || m_islocked) {
         return false;
     }
-    return this->_replace(offset, data);
+    return this->replaceInternal(offset, data);
 }
 
 bool QHexDocument::remove(qsizetype offset, qsizetype len) {
     if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata()) {
         return false;
     }
-    return this->_remove(offset, len);
+    return this->removeInternal(offset, len);
 }
 
-bool QHexDocument::_insert(qsizetype offset, uchar b) {
-    return this->_insert(offset, QByteArray(1, char(b)));
+bool QHexDocument::insertInternal(qsizetype offset, uchar b) {
+    return this->insertInternal(offset, QByteArray(1, char(b)));
 }
 
-bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
+bool QHexDocument::insertInternal(qsizetype offset, const QByteArray &data) {
     if (m_buffer->insert(offset, data)) {
-        Q_EMIT contentsChanged();
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnContentsChanged();
+        Q_EMIT sigOnDocumentChanged();
         return true;
     }
     return false;
 }
 
-bool QHexDocument::_replace(qsizetype offset, uchar b) {
-    return this->_replace(offset, QByteArray(1, char(b)));
+bool QHexDocument::replaceInternal(qsizetype offset, uchar b) {
+    return this->replaceInternal(offset, QByteArray(1, char(b)));
 }
 
-bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
+bool QHexDocument::replaceInternal(qsizetype offset, const QByteArray &data) {
     if (m_buffer->replace(offset, data)) {
-        Q_EMIT contentsChanged();
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnContentsChanged();
+        Q_EMIT sigOnDocumentChanged();
         return true;
     }
     return false;
 }
 
-bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
+bool QHexDocument::removeInternal(qsizetype offset, qsizetype len) {
     if (m_buffer->remove(offset, len)) {
-        Q_EMIT contentsChanged();
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnContentsChanged();
+        Q_EMIT sigOnDocumentChanged();
         return true;
     }
     return false;
@@ -639,17 +643,17 @@ QHexDocument::QHexDocument(QFileBuffer *buffer)
     m_metadata = new QHexMetadata(m_undostack, this);
     m_metadata->setLineWidth(m_hexlinewidth);
 
-    connect(m_metadata, &QHexMetadata::metadataChanged, this,
-            &QHexDocument::metaDataChanged);
+    connect(m_metadata, &QHexMetadata::sigOnMetadataChanged, this,
+            &QHexDocument::sigOnMetaDataChanged);
 
     /*=======================*/
     // added by wingsummer
     connect(m_undostack, &QUndoStack::canUndoChanged, this,
-            &QHexDocument::canUndoChanged);
+            &QHexDocument::sigOnCanUndoChanged);
     connect(m_undostack, &QUndoStack::canRedoChanged, this,
-            &QHexDocument::canRedoChanged);
+            &QHexDocument::sigOnCanRedoChanged);
     connect(m_undostack, &QUndoStack::cleanChanged, this,
-            &QHexDocument::documentSaved);
+            &QHexDocument::sigOnDocumentSaved);
 
     /*=======================*/
 }
@@ -662,12 +666,17 @@ QHexDocument::~QHexDocument() {
 bool QHexDocument::isEmpty() const { return m_buffer->isEmpty(); }
 
 bool QHexDocument::canUndo() const { return m_undostack->canUndo(); }
+
 bool QHexDocument::canRedo() const { return m_undostack->canRedo(); }
+
 qsizetype QHexDocument::length() const { return m_buffer->length(); }
+
 quintptr QHexDocument::baseAddress() const { return m_baseaddress; }
 
 int QHexDocument::areaIndent() const { return m_areaindent; }
+
 void QHexDocument::setAreaIndent(quint8 value) { m_areaindent = value; }
+
 int QHexDocument::hexLineWidth() const { return m_hexlinewidth; }
 
 void QHexDocument::setHexLineWidth(quint8 value) {
@@ -676,7 +685,7 @@ void QHexDocument::setHexLineWidth(quint8 value) {
     }
     m_hexlinewidth = value;
     m_metadata->setLineWidth(value);
-    Q_EMIT hexLineWidthChanged();
+    Q_EMIT sigOnHexLineWidthChanged();
 }
 
 QHexMetadata *QHexDocument::metadata() const { return m_metadata; }
@@ -691,18 +700,18 @@ bool QHexDocument::setBaseAddress(quint64 baseaddress) {
     }
 
     m_baseaddress = baseaddress;
-    Q_EMIT documentChanged();
+    Q_EMIT sigOnDocumentChanged();
     return true;
 }
 
 void QHexDocument::undo() {
     m_undostack->undo();
-    Q_EMIT documentChanged();
+    Q_EMIT sigOnDocumentChanged();
 }
 
 void QHexDocument::redo() {
     m_undostack->redo();
-    Q_EMIT documentChanged();
+    Q_EMIT sigOnDocumentChanged();
 }
 
 void QHexDocument::beginMarco(const QString &text) {
@@ -730,7 +739,7 @@ bool QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
     auto cmd = MakeInsert(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnDocumentChanged();
     } else {
         return false;
     }
@@ -750,7 +759,7 @@ void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
     auto cmd = MakeAppend(nullptr, cursor, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnDocumentChanged();
     }
 }
 
@@ -762,7 +771,7 @@ bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
     auto cmd = MakeReplace(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnDocumentChanged();
     } else {
         return false;
     }
@@ -777,7 +786,7 @@ bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
     auto cmd = MakeRemove(nullptr, cursor, offset, len, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
-        Q_EMIT documentChanged();
+        Q_EMIT sigOnDocumentChanged();
     }
     return true;
 }

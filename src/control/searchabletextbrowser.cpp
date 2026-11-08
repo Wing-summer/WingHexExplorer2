@@ -30,6 +30,7 @@ SearchableTextBrowser::SearchableTextBrowser(QWidget *parent)
             &SearchableTextBrowser::performSearch);
     bindDocument();
 }
+
 SearchableTextBrowser::~SearchableTextBrowser() {
     m_findTimer.stop();
     disconnect(m_documentConnection);
@@ -37,22 +38,24 @@ SearchableTextBrowser::~SearchableTextBrowser() {
         disconnect(m_searchBar, nullptr, this, nullptr);
     }
 }
+
 void SearchableTextBrowser::buildSearchBar() {
     if (m_searchBar) {
         return;
     }
     m_searchBar = new SearchBar(this, QStringLiteral("textSearch"));
-    connect(m_searchBar, &SearchBar::queryChanged, this,
+    connect(m_searchBar, &SearchBar::sigOnQueryChanged, this,
             &SearchableTextBrowser::cancelSearch);
-    connect(m_searchBar, &SearchBar::searchRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnSearchRequested, this,
             &SearchableTextBrowser::startSearch);
-    connect(m_searchBar, &SearchBar::showRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnShowRequested, this,
             &SearchableTextBrowser::showSearch);
-    connect(m_searchBar, &SearchBar::closeRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnCloseRequested, this,
             &SearchableTextBrowser::closeSearch);
-    connect(m_searchBar, &SearchBar::geometryChanged, this,
+    connect(m_searchBar, &SearchBar::sigOnGeometryChanged, this,
             &SearchableTextBrowser::layoutSearchBar);
 }
+
 void SearchableTextBrowser::setSearchEnabled(bool enabled) {
     m_searchEnabled = enabled;
     if (enabled) {
@@ -61,12 +64,16 @@ void SearchableTextBrowser::setSearchEnabled(bool enabled) {
         closeSearch();
     }
 }
+
 bool SearchableTextBrowser::isSearchEnabled() const { return m_searchEnabled; }
+
 SearchBar *SearchableTextBrowser::searchBar() const { return m_searchBar; }
+
 void SearchableTextBrowser::setSearchText(const QString &text) {
     buildSearchBar();
     m_searchBar->setSearchText(text);
 }
+
 void SearchableTextBrowser::showSearch() {
     if (!m_searchEnabled) {
         return;
@@ -75,6 +82,7 @@ void SearchableTextBrowser::showSearch() {
     m_searchBar->activate();
     layoutSearchBar();
 }
+
 void SearchableTextBrowser::closeSearch() {
     cancelSearch();
     if (m_searchBar) {
@@ -87,16 +95,19 @@ void SearchableTextBrowser::closeSearch() {
         }
     }
 }
+
 void SearchableTextBrowser::bindDocument() {
     disconnect(m_documentConnection);
     m_documentConnection = connect(document(), &QTextDocument::contentsChanged,
                                    this, &SearchableTextBrowser::cancelSearch);
 }
+
 void SearchableTextBrowser::setDocument(QTextDocument *doc) {
     cancelSearch();
     QTextBrowser::setDocument(doc);
     bindDocument();
 }
+
 void SearchableTextBrowser::cancelSearch() {
     m_findTimer.stop();
     if (m_searchBar) {
@@ -105,8 +116,11 @@ void SearchableTextBrowser::cancelSearch() {
     }
     setExtraSelections({});
 }
+
 void SearchableTextBrowser::findNext() { startSearch(false); }
+
 void SearchableTextBrowser::findPrevious() { startSearch(true); }
+
 void SearchableTextBrowser::startSearch(bool backwards) {
     cancelSearch();
     if (!m_searchEnabled || !m_searchBar || !m_searchBar->isVisible() ||
@@ -123,6 +137,7 @@ void SearchableTextBrowser::startSearch(bool backwards) {
     m_searchBar->setState(SearchBar::State::Searching);
     m_findTimer.start(0);
 }
+
 void SearchableTextBrowser::performSearch() {
     const auto options = m_query.options;
     QTextDocument::FindFlags flags;
@@ -159,8 +174,9 @@ void SearchableTextBrowser::performSearch() {
         setExtraSelections({selection});
         m_searchBar->setState(SearchBar::State::Idle);
     }
-    Q_EMIT searchFinished(match);
+    Q_EMIT sigOnSearchFinished(match);
 }
+
 void SearchableTextBrowser::layoutSearchBar() {
     if (m_layingOut) {
         return;
@@ -178,10 +194,12 @@ void SearchableTextBrowser::layoutSearchBar() {
     }
     m_layingOut = false;
 }
+
 void SearchableTextBrowser::resizeEvent(QResizeEvent *event) {
     QTextBrowser::resizeEvent(event);
     layoutSearchBar();
 }
+
 bool SearchableTextBrowser::eventFilter(QObject *object, QEvent *event) {
     if (m_searchEnabled && m_searchBar && m_searchBar->handleKeyEvent(event)) {
         return true;

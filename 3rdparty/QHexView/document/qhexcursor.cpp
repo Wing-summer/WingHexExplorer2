@@ -20,6 +20,7 @@
 */
 
 #include "qhexcursor.h"
+
 #include <QWidget>
 
 QHexCursor::QHexCursor(QObject *parent)
@@ -120,7 +121,7 @@ bool QHexCursor::hasInternalSelection() const { return !m_sels.isEmpty(); }
 void QHexCursor::clearPreviewSelection() {
     m_selection = m_position;
     m_preMode = SelectionNormal;
-    Q_EMIT selectionChanged();
+    Q_EMIT sigOnSelectionChanged();
 }
 
 void QHexCursor::clearSelection() { m_sels.clear(); }
@@ -128,6 +129,7 @@ void QHexCursor::clearSelection() { m_sels.clear(); }
 void QHexCursor::moveTo(const QHexPosition &pos, bool clearSelection) {
     this->moveTo(pos.line, pos.column, pos.nibbleindex, clearSelection);
 }
+
 void QHexCursor::select(const QHexPosition &pos,
                         QHexCursor::SelectionModes mode) {
     this->select(pos.line, pos.column, pos.nibbleindex, mode);
@@ -143,10 +145,10 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
 
     if (clearSelection && !m_sels.isEmpty()) {
         m_sels.clear();
-        Q_EMIT selectionChanged();
+        Q_EMIT sigOnSelectionChanged();
     }
 
-    Q_EMIT positionChanged();
+    Q_EMIT sigOnPositionChanged();
 }
 
 void QHexCursor::select(qsizetype line, int column, int nibbleindex,
@@ -183,7 +185,7 @@ void QHexCursor::select(qsizetype line, int column, int nibbleindex,
     }
 
     m_preMode = SelectionMode(int(modes));
-    Q_EMIT selectionChanged();
+    Q_EMIT sigOnSelectionChanged();
 }
 
 void QHexCursor::moveTo(qsizetype offset, bool clearSelection) {
@@ -207,7 +209,7 @@ void QHexCursor::select(qsizetype length, QHexCursor::SelectionModes mode) {
 void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {
     if (m_insertionmode != mode) {
         m_insertionmode = mode;
-        Q_EMIT insertionModeChanged();
+        Q_EMIT sigOnInsertionModeChanged();
     }
 }
 
@@ -238,7 +240,7 @@ void QHexCursor::switchInsertionMode() {
         m_insertionmode = QHexCursor::OverwriteMode;
     }
 
-    Q_EMIT insertionModeChanged();
+    Q_EMIT sigOnInsertionModeChanged();
 }
 
 bool QHexCursor::hasPreviewSelection() const {
@@ -295,5 +297,5 @@ void QHexCursor::mergePreviewSelection() {
     }
     clearPreviewSelection();
 
-    Q_EMIT selectionChanged();
+    Q_EMIT sigOnSelectionChanged();
 }

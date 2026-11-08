@@ -18,9 +18,9 @@
 #ifndef WORKSPACEFORMAT_H
 #define WORKSPACEFORMAT_H
 
-#include "workspacemanager.h"
-
 #include <QDataStream>
+
+#include "workspacemanager.h"
 
 namespace WorkspaceFormat {
 

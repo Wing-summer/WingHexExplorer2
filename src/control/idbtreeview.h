@@ -18,9 +18,9 @@
 #ifndef IDBTREEVIEW_H
 #define IDBTREEVIEW_H
 
-#include "model/idbtreemodel.h"
-
 #include <QTreeView>
+
+#include "model/idbtreemodel.h"
 
 class IDBTreeView : public QTreeView {
     Q_OBJECT

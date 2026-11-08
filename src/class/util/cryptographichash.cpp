@@ -17,11 +17,11 @@
 
 #include "cryptographichash.h"
 
-#include "CRaC/include/crac.h"
-
 #include <QFile>
 #include <QMetaEnum>
 #include <QtEndian>
+
+#include "CRaC/include/crac.h"
 
 template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
 static inline QByteArray getDisplayArray(const T &data) {

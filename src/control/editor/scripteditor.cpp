@@ -17,17 +17,6 @@
 
 #include "scripteditor.h"
 
-#include "class/settings/thememanager.h"
-
-#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
-#include "editorlspevent.h"
-#include "luau/lsp/luaulanguageserver.h"
-#include "luau/luauformatter.h"
-#include "luau/runtime/scriptsettings.h"
-#include "luaucompletion.h"
-#include "luauindentation.h"
-#include "utilities.h"
-
 #include <QAction>
 #include <QFile>
 #include <QFileInfo>
@@ -36,9 +25,19 @@
 #include <QPixmap>
 #include <QScrollBar>
 
+#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
+
+#include "class/settings/thememanager.h"
+#include "editorlspevent.h"
+#include "luau/lsp/luaulanguageserver.h"
+#include "luau/luauformatter.h"
+#include "luau/runtime/scriptsettings.h"
+#include "luaucompletion.h"
+#include "luauindentation.h"
+#include "utilities.h"
 
 constexpr auto SCRIPT_LIMIT = 1024 * 1024;
 
@@ -65,9 +64,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     completer->setEnabled(true);
 
     connect(m_editor, &CodeEdit::symbolMarkLineMarginClicked, this,
-            &ScriptEditor::onToggleMark);
+            &ScriptEditor::sigOnToggleMark);
     connect(
-        m_editor, &CodeEdit::navigationRequested, this,
+        m_editor, &CodeEdit::sigOnNavigationRequested, this,
         [this](bool typeDefinition) {
             auto fileName = this->fileName();
             if (fileName.isEmpty()) {
@@ -87,31 +86,31 @@ ScriptEditor::ScriptEditor(QWidget *parent)
                 auto location =
                     lsp.gotoTypeDefinition({uri, lspPosition}, nullptr);
                 if (location) {
-                    Q_EMIT navigateToLocation(location->uri.toLocalFile(),
-                                              location->range.start.line,
-                                              location->range.start.character);
+                    Q_EMIT sigOnNavigateToLocation(
+                        location->uri.toLocalFile(), location->range.start.line,
+                        location->range.start.character);
                 }
             } else {
                 const auto locations =
                     lsp.gotoDefinition({uri, lspPosition}, nullptr);
                 if (!locations.empty()) {
                     const auto &location = locations.front();
-                    Q_EMIT navigateToLocation(location.uri.toLocalFile(),
-                                              location.range.start.line,
-                                              location.range.start.character);
+                    Q_EMIT sigOnNavigateToLocation(
+                        location.uri.toLocalFile(), location.range.start.line,
+                        location.range.start.character);
                 }
             }
         });
-    connect(m_editor, &CodeEdit::contentModified, this,
+    connect(m_editor, &CodeEdit::sigOnContentModified, this,
             [this]() { processTitle(); });
 
-    connect(&_watcher, &QFileSystemWatcher::fileChanged, this,
-            &ScriptEditor::need2Reload);
+    connect(&m_watcher, &QFileSystemWatcher::fileChanged, this,
+            &ScriptEditor::sigOnReloadNeeded);
 
     this->setWidget(m_editor);
 
-    _tokentimer = new ResettableTimer(this);
-    connect(_tokentimer, &ResettableTimer::timeoutTriggered, this,
+    m_tokentimer = new ResettableTimer(this);
+    connect(m_tokentimer, &ResettableTimer::sigOnTimeout, this,
             &ScriptEditor::syncSemanticTokens);
 
     m_instances.append(this);
@@ -162,12 +161,12 @@ bool ScriptEditor::openFile(const QString &filename) {
     f.close();
 
     if (!oldFileName.isEmpty()) {
-        _watcher.removePath(oldFileName);
+        m_watcher.removePath(oldFileName);
     }
 
     m_editor->setWindowFilePath(filename);
     lsp.onOpenDocument(QUrl::fromLocalFile(filename), m_editor->document());
-    _watcher.addPath(filename);
+    m_watcher.addPath(filename);
     m_editor->document()->setModified(false);
     processTitle();
     syncSemanticTokens();
@@ -178,13 +177,13 @@ bool ScriptEditor::save(const QString &path) {
     auto &lsp = LuauLanguageServer::instance();
     auto oldFileName = fileName();
     if (!oldFileName.isEmpty()) {
-        _watcher.removePath(oldFileName);
+        m_watcher.removePath(oldFileName);
     }
     QScopeGuard guard([this, path]() {
         if (path.isEmpty()) {
-            _watcher.addPath(fileName());
+            m_watcher.addPath(fileName());
         } else {
-            _watcher.addPath(path);
+            m_watcher.addPath(path);
         }
     });
 
@@ -225,7 +224,7 @@ bool ScriptEditor::save(const QString &path) {
     m_editor->setWindowFilePath(path);
     auto newUrl = QUrl::fromLocalFile(path);
     if (oldFileName != path) {
-        _watcher.removePath(oldFileName);
+        m_watcher.removePath(oldFileName);
         lsp.onCloseDocument(QUrl::fromLocalFile(oldFileName));
         lsp.onOpenDocument(newUrl, m_editor->document());
     }
@@ -273,7 +272,7 @@ bool ScriptEditor::isStateSaveEnabled() const { return false; }
 
 void ScriptEditor::syncSemanticTokens() {
     applySemanticTokens();
-    _tokentimer->reset(500);
+    m_tokentimer->reset(500);
 }
 
 QVector<lsp::SemanticToken> ScriptEditor::parseSemanticTokens() {
@@ -401,10 +400,10 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
-bool ScriptEditor::reloadLater() const { return _reloadLater; }
+bool ScriptEditor::reloadLater() const { return m_reloadLater; }
 
 void ScriptEditor::setReloadLater(bool newReloadLater) {
-    _reloadLater = newReloadLater;
+    m_reloadLater = newReloadLater;
 }
 
 const QList<ScriptEditor *> &ScriptEditor::instances() { return m_instances; }

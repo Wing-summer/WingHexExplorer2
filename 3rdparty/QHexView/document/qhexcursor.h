@@ -36,12 +36,15 @@ struct QHexPosition {
     int nibbleindex = -1;
 
     inline QHexPosition() = default;
+
     inline qsizetype offset() const {
         return static_cast<qsizetype>(line * lineWidth) + column;
     }
+
     inline qsizetype operator-(const QHexPosition &rhs) const {
         return this->offset() - rhs.offset();
     }
+
     inline void operator++() {
         this->column++;
         if (this->column >= lineWidth) {
@@ -49,6 +52,7 @@ struct QHexPosition {
             this->column = 0;
         }
     }
+
     inline void operator--() {
         this->column--;
         if (this->column < 0) {
@@ -61,19 +65,24 @@ struct QHexPosition {
         return (line == rhs.line) && (column == rhs.column) &&
                (nibbleindex == rhs.nibbleindex);
     }
+
     inline bool operator!=(const QHexPosition &rhs) const {
         return (line != rhs.line) || (column != rhs.column) ||
                (nibbleindex != rhs.nibbleindex);
     }
+
     inline bool operator<(const QHexPosition &rhs) const {
         return this->offset() < rhs.offset();
     }
+
     inline bool operator>(const QHexPosition &rhs) const {
         return this->offset() > rhs.offset();
     }
+
     inline bool operator<=(const QHexPosition &rhs) const {
         return this->offset() <= rhs.offset();
     }
+
     inline bool operator>=(const QHexPosition &rhs) const {
         return this->offset() >= rhs.offset();
     }
@@ -156,6 +165,7 @@ public:
                 QHexCursor::SelectionModes mode = SelectionNormal);
     void select(qsizetype length,
                 QHexCursor::SelectionModes mode = SelectionNormal);
+
     // Prevent an enum mode from binding to select(line, column).
     void select(qsizetype length, SelectionMode mode) {
         select(length, SelectionModes(mode));
@@ -175,9 +185,9 @@ private:
     bool isLineSelected(const QHexSelection &sel, qsizetype line) const;
 
 signals:
-    void positionChanged();
-    void insertionModeChanged();
-    void selectionChanged();
+    void sigOnPositionChanged();
+    void sigOnInsertionModeChanged();
+    void sigOnSelectionChanged();
 
 private:
     InsertionMode m_insertionmode;

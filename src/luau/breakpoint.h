@@ -18,26 +18,26 @@
 #ifndef BREAKPOINT_H
 #define BREAKPOINT_H
 
-#include "lua.h"
-
 #include <QString>
+
+#include "lua.h"
 
 class BreakPoint {
 public:
     static BreakPoint create(int line);
 
     int line() const;
-    int enable(lua_State *L, int func_index, bool enable);
+    int enable(lua_State *L, int funcIndex, bool enable);
 
 private:
-    int line_ = 0;
+    int m_line = 0;
 };
 
 struct BreakContext {
-    QString source_;
-    int line_ = 0;
-    int depth_ = 0;
-    lua_State *L_ = nullptr;
+    QString source;
+    int line = 0;
+    int depth = 0;
+    lua_State *state = nullptr;
 };
 
 #endif // BREAKPOINT_H

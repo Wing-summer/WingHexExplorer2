@@ -17,11 +17,11 @@
 
 #include "snippetprocessor.h"
 
+#include <algorithm>
+
 #include <QHash>
 #include <QMap>
 #include <QRegularExpression>
-
-#include <algorithm>
 
 namespace {
 struct Tabstop {
@@ -32,28 +32,28 @@ struct Tabstop {
 class Parser {
 public:
     Parser(const QString &source, const SnippetProcessor::Resolver &resolver)
-        : source_(source), resolver_(resolver) {}
+        : m_source(source), m_resolver(resolver) {}
 
     SnippetResult parse() {
-        const auto text = expand(0, source_.size());
+        const auto text = expand(0, m_source.size());
         qsizetype cursor = text.size();
         qsizetype selectionLength = 0;
-        if (!tabstops_.isEmpty()) {
-            const auto first = tabstops_.constBegin();
+        if (!m_tabstops.isEmpty()) {
+            const auto first = m_tabstops.constBegin();
             cursor = first.value().position;
             selectionLength = first.value().length;
-        } else if (finalCursor_ >= 0) {
-            cursor = finalCursor_;
+        } else if (m_finalCursor >= 0) {
+            cursor = m_finalCursor;
         }
         return SnippetResult{text, cursor, selectionLength};
     }
 
 private:
-    const QString &source_;
-    const SnippetProcessor::Resolver &resolver_;
-    QHash<QString, QString> defaults_;
-    QMap<int, Tabstop> tabstops_;
-    qsizetype finalCursor_ = -1;
+    const QString &m_source;
+    const SnippetProcessor::Resolver &m_resolver;
+    QHash<QString, QString> m_defaults;
+    QMap<int, Tabstop> m_tabstops;
+    qsizetype m_finalCursor = -1;
 
     static bool isIdentifier(QChar ch) {
         return ch.isLetterOrNumber() || ch == QLatin1Char('_');
@@ -63,7 +63,7 @@ private:
         int depth = 1;
         bool escaped = false;
         for (qsizetype i = open + 1; i < end; ++i) {
-            const auto ch = source_.at(i);
+            const auto ch = m_source.at(i);
             if (escaped) {
                 escaped = false;
             } else if (ch == QLatin1Char('\\')) {
@@ -100,64 +100,65 @@ private:
     QString expand(qsizetype begin, qsizetype end) {
         QString output;
         for (qsizetype i = begin; i < end;) {
-            const auto ch = source_.at(i);
+            const auto ch = m_source.at(i);
             if (ch == QLatin1Char('\\') && i + 1 < end) {
-                const auto escaped = source_.at(i + 1);
+                const auto escaped = m_source.at(i + 1);
                 if (QStringLiteral("$\\{}|,").contains(escaped)) {
                     output.append(escaped);
-                    ++currentOutputOffset_;
+                    ++m_currentOutputOffset;
                     i += 2;
                     continue;
                 }
                 output.append(ch);
-                ++currentOutputOffset_;
+                ++m_currentOutputOffset;
                 ++i;
                 continue;
             }
             if (ch != QLatin1Char('$') || i + 1 >= end) {
                 output.append(ch);
-                ++currentOutputOffset_;
+                ++m_currentOutputOffset;
                 ++i;
                 continue;
             }
 
-            if (source_.at(i + 1).isDigit()) {
+            if (m_source.at(i + 1).isDigit()) {
                 qsizetype next = i + 1;
-                while (next < end && source_.at(next).isDigit()) {
+                while (next < end && m_source.at(next).isDigit()) {
                     ++next;
                 }
-                const auto index = source_.mid(i + 1, next - i - 1).toInt();
+                const auto index = m_source.mid(i + 1, next - i - 1).toInt();
                 appendTabstop(output, QString::number(index), {});
                 i = next;
                 continue;
             }
-            if (source_.at(i + 1) == QLatin1Char('{')) {
+            if (m_source.at(i + 1) == QLatin1Char('{')) {
                 const auto close = matchingBrace(i + 1, end);
                 if (close >= 0) {
                     output.append(expandBraced(i + 2, close));
                     i = close + 1;
                     continue;
                 }
-            } else if (isIdentifier(source_.at(i + 1))) {
+            } else if (isIdentifier(m_source.at(i + 1))) {
                 qsizetype next = i + 2;
-                while (next < end && isIdentifier(source_.at(next))) {
+                while (next < end && isIdentifier(m_source.at(next))) {
                     ++next;
                 }
-                const auto value = resolver_(source_.mid(i + 1, next - i - 1));
+                const auto value =
+                    m_resolver(m_source.mid(i + 1, next - i - 1));
                 output.append(value);
-                currentOutputOffset_ += value.size();
+                m_currentOutputOffset += value.size();
                 i = next;
                 continue;
             }
             output.append(ch);
-            ++currentOutputOffset_;
+            ++m_currentOutputOffset;
             ++i;
         }
         return output;
     }
 
     QString expandBraced(qsizetype begin, qsizetype end) {
-        const auto content = source_.mid(begin, end - begin);
+        const auto content = m_source.mid(begin, end - begin);
         const auto colon = content.indexOf(QLatin1Char(':'));
         const auto comma = content.indexOf(QLatin1Char(','));
         const auto pipe = content.indexOf(QLatin1Char('|'));
@@ -177,16 +178,16 @@ private:
                     content.mid(pipe + 1, content.size() - pipe - 2);
                 const auto value = unescape(firstChoice(options));
                 appendTabstopValue(key, value);
-                recordTabstop(index, currentOutputOffset_, value.size());
-                currentOutputOffset_ += value.size();
+                recordTabstop(index, m_currentOutputOffset, value.size());
+                m_currentOutputOffset += value.size();
                 return value;
             }
             if (colon >= 0) {
-                const auto start = currentOutputOffset_;
-                if (defaults_.contains(key)) {
-                    const auto value = defaults_.value(key);
+                const auto start = m_currentOutputOffset;
+                if (m_defaults.contains(key)) {
+                    const auto value = m_defaults.value(key);
                     recordTabstop(index, start, value.size());
-                    currentOutputOffset_ += value.size();
+                    m_currentOutputOffset += value.size();
                     return value;
                 }
                 const auto value = expand(begin + colon + 1, end);
@@ -194,68 +195,68 @@ private:
                 recordTabstop(index, start, value.size());
                 return value;
             }
-            const auto value = defaults_.value(key);
+            const auto value = m_defaults.value(key);
             appendTabstopValue(key, value);
-            recordTabstop(index, currentOutputOffset_, value.size());
-            currentOutputOffset_ += value.size();
+            recordTabstop(index, m_currentOutputOffset, value.size());
+            m_currentOutputOffset += value.size();
             return value;
         }
 
         if (!key.isEmpty()) {
-            auto value = resolver_(key);
+            auto value = m_resolver(key);
             const bool usedDefault = value.isEmpty() && colon >= 0;
             if (usedDefault) {
                 value = expand(begin + colon + 1, end);
             }
             if (!usedDefault) {
-                currentOutputOffset_ += value.size();
+                m_currentOutputOffset += value.size();
             }
             return value;
         }
-        currentOutputOffset_ += 3 + content.size();
+        m_currentOutputOffset += 3 + content.size();
         return QStringLiteral("${") + content + QLatin1Char('}');
     }
 
     void appendTabstop(QString &output, const QString &key,
                        const QString &value) {
         const auto index = key.toInt();
-        const auto start = currentOutputOffset_;
+        const auto start = m_currentOutputOffset;
         auto text = value;
         if (text.isEmpty()) {
-            text = defaults_.value(key);
+            text = m_defaults.value(key);
         }
         output.append(text);
         appendTabstopValue(key, text);
         recordTabstop(index, start, text.size());
-        currentOutputOffset_ += text.size();
+        m_currentOutputOffset += text.size();
     }
 
     void appendTabstopValue(const QString &key, const QString &value) {
-        if (!defaults_.contains(key) && !value.isEmpty()) {
-            defaults_.insert(key, value);
+        if (!m_defaults.contains(key) && !value.isEmpty()) {
+            m_defaults.insert(key, value);
         }
     }
 
     void recordTabstop(int index, qsizetype position, qsizetype length) {
         if (index == 0) {
-            if (finalCursor_ < 0) {
-                finalCursor_ = position;
+            if (m_finalCursor < 0) {
+                m_finalCursor = position;
             }
-        } else if (index > 0 && !tabstops_.contains(index)) {
-            tabstops_.insert(index, {position, length});
+        } else if (index > 0 && !m_tabstops.contains(index)) {
+            m_tabstops.insert(index, {position, length});
         }
     }
 
-    qsizetype currentOutputOffset_ = 0;
+    qsizetype m_currentOutputOffset = 0;
 };
 } // namespace
 
 SnippetProcessor::SnippetProcessor(const Resolver &resolver)
-    : _resolver(resolver) {
+    : m_resolver(resolver) {
     Q_ASSERT(resolver);
 }
 
 SnippetResult SnippetProcessor::process(const QString &snippet) {
-    Parser parser(snippet, _resolver);
+    Parser parser(snippet, m_resolver);
     return parser.parse();
 }

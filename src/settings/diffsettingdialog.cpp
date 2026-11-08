@@ -45,7 +45,7 @@ DiffSettingDialog::DiffSettingDialog(QWidget *parent)
     connect(ui->cbPrecise, &QCheckBox::toggled, &SettingManager::instance(),
             &SettingManager::setDiffPrecise);
     connect(&SettingManager::instance(),
-            &SettingManager::sigDiffSettingsChanged, this,
+            &SettingManager::sigOnDiffSettingsChanged, this,
             &DiffSettingDialog::reload);
 }
 
@@ -70,13 +70,14 @@ QString DiffSettingDialog::name() const { return tr("Compare"); }
 QString DiffSettingDialog::id() const { return QStringLiteral("Diff"); }
 
 void DiffSettingDialog::restore() {
-    SettingManager::instance().reset(SettingManager::DIFF);
+    SettingManager::instance().reset(SettingManager::Diff);
 }
 
 void DiffSettingDialog::setFileLimit(int mebibytes) {
     SettingManager::instance().setDiffFileLimit(quint64(mebibytes) *
                                                 WingDiff::MiB);
 }
+
 void DiffSettingDialog::setMemoryBudget(int index) {
     SettingManager::instance().setDiffMemoryLimit(
         ui->cbMemory->itemData(index).toULongLong());

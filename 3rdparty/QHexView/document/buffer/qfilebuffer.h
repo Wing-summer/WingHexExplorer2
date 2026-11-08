@@ -18,9 +18,10 @@
 #ifndef QFILEBUFFER_H
 #define QFILEBUFFER_H
 
-#include "qhexreadsession.h"
 #include <QBuffer>
 #include <QIODevice>
+
+#include "qhexreadsession.h"
 
 class Chunks;
 
@@ -75,7 +76,7 @@ protected:
     bool isReadyInsert(qsizetype offset) const;
 
 private:
-    Chunks *_chunks = nullptr;
+    Chunks *m_chunks = nullptr;
     QBuffer *m_buffer = nullptr;
 };
 

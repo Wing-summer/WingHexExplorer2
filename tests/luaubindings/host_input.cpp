@@ -2,18 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
-#include "Luau/Compiler.h"
-#include "WingPlugin/binding/builder.h"
-#include "WingPlugin/iwingplugin.h"
-#include "class/settings/settingmanager.h"
-#include "control/console/scriptingconsole.h"
-#include "control/objtreewidget.h"
-#include "filesystem_checks.h"
-#include "luau/runtime/scriptfilesystem.h"
-#include "luau/runtime/scriptmachine.h"
-#include "luau/runtime/scriptwindowfactory.h"
-#include "qtluau/execution.hpp"
-#include "qtluau/value_conversion.hpp"
+#include <iostream>
+#include <stdexcept>
+
 #include <QApplication>
 #include <QDataStream>
 #include <QElapsedTimer>
@@ -29,8 +20,21 @@
 #include <QToolBar>
 #include <QTranslator>
 #include <QTreeWidgetItemIterator>
-#include <iostream>
-#include <stdexcept>
+
+#include "Luau/Compiler.h"
+
+#include "WingPlugin/binding/builder.h"
+#include "WingPlugin/iwingplugin.h"
+#include "qtluau/execution.hpp"
+#include "qtluau/value_conversion.hpp"
+
+#include "class/settings/settingmanager.h"
+#include "control/console/scriptingconsole.h"
+#include "control/objtreewidget.h"
+#include "filesystem_checks.h"
+#include "luau/runtime/scriptfilesystem.h"
+#include "luau/runtime/scriptmachine.h"
+#include "luau/runtime/scriptwindowfactory.h"
 
 static void run(lua_State *state, const QString &source, bool succeeds = true) {
     QString error;
@@ -62,7 +66,7 @@ static void checkPluginDefinitions(const QString &path, bool testPlugin) {
         "--!strict\nlocal value: boolean = NativeProbe.enabled\nlocal "
         "resource: boolean = NativeProbeResource.enabled\nprint(value, "
         "resource)\n"));
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
                      &document,
                      [&](const lsp::DocumentUri &target,
                          const QVector<lsp::Diagnostic> &items) {
@@ -714,7 +718,7 @@ print("network-scheduler-complete")
                     [&machine, mode] { machine.registerCallBack(mode, {}); });
                 timeout.start(5000);
                 auto *runner = new LuauScheduler(context);
-                QObject::connect(runner, &LuauScheduler::finished, &loop,
+                QObject::connect(runner, &LuauScheduler::sigOnFinished, &loop,
                                  [&](int status) {
                                      messages += runner->executeError();
                                      if (status != LUA_OK) {

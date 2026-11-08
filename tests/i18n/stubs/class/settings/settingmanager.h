@@ -9,6 +9,7 @@ public:
         static SettingManager settings;
         return settings;
     }
+
     QString defaultLang() const {
         return qEnvironmentVariable("WING_TEST_LANGUAGE");
     }

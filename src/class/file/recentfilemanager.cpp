@@ -17,6 +17,9 @@
 
 #include "recentfilemanager.h"
 
+#include <QFile>
+#include <QMenu>
+
 #include "class/plugin/pluginsystem.h"
 #include "class/settings/thememanager.h"
 #include "control/toast.h"
@@ -24,11 +27,8 @@
 #include "luau/runtime/scriptmanager.h"
 #include "utilities.h"
 
-#include <QFile>
-#include <QMenu>
-
 RecentFileManager::RecentFileManager(QMenu *menu, bool isScriptFile)
-    : QObject(), m_menu(menu), _isScriptFile(isScriptFile) {
+    : QObject(), m_menu(menu), m_isScriptFile(isScriptFile) {
     Q_ASSERT(menu);
     menu->setToolTipsVisible(true);
 }
@@ -52,7 +52,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
     a->setIcon(skin.standardIcon(ThemeManager::StandardIcon::Delete));
     connect(a, &QAction::triggered, this, [this] {
         auto &skin = ThemeManager::instance();
-        if (hitems.count() == 0) {
+        if (m_hitems.count() == 0) {
             Toast::toast(
                 m_parent,
                 skin.standardPixmap(ThemeManager::StandardIcon::ClearHistory),
@@ -60,7 +60,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
             return;
         }
 
-        HistoryDelDialog hisdlg(m_recents, _isScriptFile);
+        HistoryDelDialog hisdlg(m_recents, m_isScriptFile);
         if (hisdlg.exec()) {
             auto idxs = hisdlg.getResult();
 
@@ -74,10 +74,10 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                 for (auto pidx = idxs.rbegin(); pidx != idxs.rend(); ++pidx) {
                     auto ind = *pidx;
                     m_recents.removeAt(ind);
-                    auto action = hitems.takeAt(ind);
+                    auto action = m_hitems.takeAt(ind);
                     m_menu->removeAction(action);
                     action->deleteLater();
-                    _dirty = true;
+                    m_dirty = true;
                 }
                 Toast::toast(m_parent,
                              skin.standardPixmap(
@@ -104,14 +104,14 @@ bool RecentFileManager::existsPath(const RecentInfo &info) {
     const auto &url = info.url;
     if (url.isLocalFile()) {
         auto f = url.toLocalFile();
-        if (_isScriptFile) {
+        if (m_isScriptFile) {
             if (!ScriptManager::isScriptFile(f)) {
                 return false;
             }
         }
         return QFile::exists(f);
     } else {
-        if (_isScriptFile) {
+        if (m_isScriptFile) {
             return false;
         }
         auto scheme = url.scheme();
@@ -133,7 +133,7 @@ bool RecentFileManager::isDirtyInfo(const RecentInfo &old,
            old.lastUseEncoding != info.lastUseEncoding;
 }
 
-bool RecentFileManager::isDirty() const { return _dirty; }
+bool RecentFileManager::isDirty() const { return m_dirty; }
 
 QString RecentFileManager::getDisplayFileName(const RecentInfo &info,
                                               bool isScriptFile) {
@@ -181,21 +181,21 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
     if (o < 0) {
         while (m_recents.count() >= 10) {
             m_recents.removeLast();
-            auto a = hitems.takeLast();
+            auto a = m_hitems.takeLast();
             m_menu->removeAction(a);
             delete a;
-            _dirty = true;
+            m_dirty = true;
         }
         auto a = new QAction(m_menu);
 
         const auto &url = info.url;
-        a->setToolTip(getDisplayTooltip(info, _isScriptFile));
+        a->setToolTip(getDisplayTooltip(info, m_isScriptFile));
         if (url.isLocalFile()) {
             QMimeDatabase db;
             auto fileName = info.url.toLocalFile();
             auto mt = db.mimeTypeForFile(fileName);
-            auto title = getDisplayFileName(info, _isScriptFile);
-            if (_isScriptFile) {
+            auto title = getDisplayFileName(info, m_isScriptFile);
+            if (m_isScriptFile) {
                 a->setText(title);
                 a->setIcon(Utilities::getIconFromFile(qApp->style(), fileName));
             } else {
@@ -229,29 +229,29 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         connect(a, &QAction::triggered, this, [this, a] {
             auto send = qobject_cast<QAction *>(sender());
             if (send) {
-                auto idx = hitems.indexOf(send);
+                auto idx = m_hitems.indexOf(send);
                 if (idx < 0) {
                     return;
                 }
                 auto f = m_recents.at(idx);
                 if (existsPath(f)) {
-                    auto idx = hitems.indexOf(a);
+                    auto idx = m_hitems.indexOf(a);
                     if (idx > 0) {
                         m_menu->removeAction(a);
-                        m_menu->insertAction(hitems.first(), a);
-                        hitems.move(idx, 0);
+                        m_menu->insertAction(m_hitems.first(), a);
+                        m_hitems.move(idx, 0);
                         m_recents.move(idx, 0);
-                        _dirty = true;
+                        m_dirty = true;
                     }
-                    Q_EMIT triggered(f);
+                    Q_EMIT sigOnRecentFileTriggered(f);
                 } else {
-                    auto index = hitems.indexOf(send);
+                    auto index = m_hitems.indexOf(send);
                     if (index >= 0) {
                         m_menu->removeAction(send);
-                        hitems.removeAt(index);
+                        m_hitems.removeAt(index);
                         send->deleteLater();
                         m_recents.removeAt(index);
-                        _dirty = true;
+                        m_dirty = true;
                         Toast::toast(
                             m_parent,
                             ThemeManager::instance().standardPixmap(
@@ -263,21 +263,21 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             }
         });
 
-        if (hitems.count()) {
-            m_menu->insertAction(hitems.first(), a);
+        if (m_hitems.count()) {
+            m_menu->insertAction(m_hitems.first(), a);
         } else {
             m_menu->addAction(a);
         }
         m_recents.prepend(info);
-        hitems.prepend(a);
+        m_hitems.prepend(a);
     } else {
-        if (hitems.count() > 1) {
-            auto a = hitems.at(o);
+        if (m_hitems.count() > 1) {
+            auto a = m_hitems.at(o);
             m_menu->removeAction(a);
-            m_menu->insertAction(hitems.first(), a);
-            hitems.move(o, 0);
+            m_menu->insertAction(m_hitems.first(), a);
+            m_hitems.move(o, 0);
             m_recents.move(o, 0);
-            _dirty = true;
+            m_dirty = true;
         }
     }
 }
@@ -290,25 +290,25 @@ void RecentFileManager::updateRecentFile(const RecentInfo &info) {
     auto &ninfo = m_recents[o];
     if (isDirtyInfo(ninfo, info)) {
         ninfo = info;
-        _dirty = true;
+        m_dirty = true;
     }
 }
 
 void RecentFileManager::clearFile() {
-    if (hitems.count() == 0) {
+    if (m_hitems.count() == 0) {
         Toast::toast(m_parent,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::ClearHistory),
                      tr("No history entries to remove"));
         return;
     }
-    for (const auto &item : std::as_const(hitems)) {
+    for (const auto &item : std::as_const(m_hitems)) {
         m_menu->removeAction(item);
         delete item;
     }
     m_recents.clear();
-    hitems.clear();
-    _dirty = true;
+    m_hitems.clear();
+    m_dirty = true;
     Toast::toast(m_parent,
                  ThemeManager::instance().standardPixmap(
                      ThemeManager::StandardIcon::ClearHistory),

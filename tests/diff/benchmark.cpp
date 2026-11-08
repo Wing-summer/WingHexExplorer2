@@ -1,16 +1,19 @@
-#include "class/diff/binarydiff.h"
+#include <cstdio>
+#include <random>
+
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
-#include <cstdio>
-#include <random>
+
+#include "class/diff/binarydiff.h"
 #ifdef Q_OS_UNIX
 #include <sys/resource.h>
 #endif
 using namespace WingDiff;
+
 int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
     if (argc < 4) {

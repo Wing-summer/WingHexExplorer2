@@ -18,10 +18,10 @@
 #ifndef SHAREDMEMORY_H
 #define SHAREDMEMORY_H
 
-#include "WingPlugin/iwingdevice.h"
-
 #include <QByteArray>
 #include <QSharedMemory>
+
+#include "WingPlugin/iwingdevice.h"
 
 class SharedMemory : public WingHex::WingIODevice {
     Q_OBJECT

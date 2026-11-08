@@ -16,8 +16,8 @@
 */
 
 #include "qtableviewext.h"
-#include "model/asynctableproxymodel.h"
-#include "tablecolumnwidthcontroller.h"
+
+#include <algorithm>
 
 #include <QAction>
 #include <QApplication>
@@ -28,7 +28,9 @@
 #include <QMenu>
 #include <QScrollBar>
 #include <QStyle>
-#include <algorithm>
+
+#include "model/asynctableproxymodel.h"
+#include "tablecolumnwidthcontroller.h"
 
 QTableViewExt::QTableViewExt(QWidget *parent)
     : QTableView(parent), m_proxy(new AsyncTableProxyModel(this)) {
@@ -37,12 +39,12 @@ QTableViewExt::QTableViewExt(QWidget *parent)
     viewport()->installEventFilter(this);
     m_scan.timer.setSingleShot(true);
     connect(&m_scan.timer, &QTimer::timeout, this, &QTableViewExt::scanSearch);
-    connect(m_proxy, &AsyncTableProxyModel::sortingChanged, this,
+    connect(m_proxy, &AsyncTableProxyModel::sigOnSortingChanged, this,
             [this](bool busy) {
                 updateStatus();
-                Q_EMIT sortingChanged(busy);
+                Q_EMIT sigOnSortingChanged(busy);
             });
-    connect(m_proxy, &AsyncTableProxyModel::sortCleared, this, [this] {
+    connect(m_proxy, &AsyncTableProxyModel::sigOnSortCleared, this, [this] {
         m_sort.column = -1;
         auto header = horizontalHeader();
         header->setSortIndicator(-1, Qt::AscendingOrder);
@@ -191,7 +193,7 @@ void QTableViewExt::setModel(QAbstractItemModel *source) {
     restoreState();
     rebuildColumnMenu();
     scheduleWidths(true);
-    Q_EMIT modelChanged();
+    Q_EMIT sigOnModelChanged();
 }
 
 void QTableViewExt::bindDisplayModel() {
@@ -229,7 +231,7 @@ void QTableViewExt::setAsyncSortingEnabled(bool enabled) {
     m_widths->setSourceModel(m_source);
     restoreState();
     scheduleWidths();
-    Q_EMIT modelChanged();
+    Q_EMIT sigOnModelChanged();
 }
 
 bool QTableViewExt::isAsyncSortingEnabled() const { return m_sort.enabled; }
@@ -270,18 +272,19 @@ void QTableViewExt::buildSearchBar() {
     m_searchControls.bar->lineEdit()->setAccessibleName(tr("Search table"));
     m_searchControls.columns =
         m_searchControls.bar->optionsMenu()->addMenu(tr("Search columns"));
-    connect(m_searchControls.bar, &SearchBar::queryChanged, this,
+    connect(m_searchControls.bar, &SearchBar::sigOnQueryChanged, this,
             &QTableViewExt::cancelSearch);
-    connect(m_searchControls.bar, &SearchBar::searchRequested, this,
+    connect(m_searchControls.bar, &SearchBar::sigOnSearchRequested, this,
             &QTableViewExt::startSearch);
-    connect(m_searchControls.bar, &SearchBar::showRequested, this,
+    connect(m_searchControls.bar, &SearchBar::sigOnShowRequested, this,
             &QTableViewExt::showSearch);
-    connect(m_searchControls.bar, &SearchBar::closeRequested, this,
+    connect(m_searchControls.bar, &SearchBar::sigOnCloseRequested, this,
             &QTableViewExt::closeSearch);
-    connect(m_searchControls.bar, &SearchBar::geometryChanged, this,
+    connect(m_searchControls.bar, &SearchBar::sigOnGeometryChanged, this,
             &QTableViewExt::updateGeometries);
     rebuildColumnMenu();
 }
+
 void QTableViewExt::setSearchEnabled(bool enabled) {
     m_search.enabled = enabled;
     if (enabled) {
@@ -471,7 +474,7 @@ void QTableViewExt::scanSearch() {
                               : QItemSelectionModel::NoUpdate));
             scrollTo(idx);
             setSearchState(SearchState::Idle);
-            Q_EMIT searchFinished(idx);
+            Q_EMIT sigOnSearchFinished(idx);
             return;
         }
         if (budget.elapsed() >= 4) {
@@ -480,7 +483,7 @@ void QTableViewExt::scanSearch() {
         }
     }
     setSearchState(SearchState::NoMatch);
-    Q_EMIT searchFinished({});
+    Q_EMIT sigOnSearchFinished({});
 }
 
 void QTableViewExt::setSearchState(SearchState state, const QString &detail) {

@@ -18,9 +18,9 @@
 #ifndef GOTOLINEWIDGET_H
 #define GOTOLINEWIDGET_H
 
-#include "control/editor/codeeditcontrolwidget.h"
-
 #include <QSpinBox>
+
+#include "control/editor/codeeditcontrolwidget.h"
 
 class GotoLineWidget : public CodeEditControlWidget {
     Q_OBJECT
@@ -30,7 +30,7 @@ public:
     void setTotalLines(int lineTotal);
 
 signals:
-    void onGotoLine(int line);
+    void sigOnGotoLine(int line);
 
 public:
     void setOriginLine(int line);

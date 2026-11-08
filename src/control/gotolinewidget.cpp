@@ -17,11 +17,11 @@
 
 #include "gotolinewidget.h"
 
-#include "class/settings/thememanager.h"
-
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QToolButton>
+
+#include "class/settings/thememanager.h"
 
 GotoLineWidget::GotoLineWidget(QWidget *parent)
     : CodeEditControlWidget(parent) {
@@ -39,13 +39,13 @@ GotoLineWidget::GotoLineWidget(QWidget *parent)
     m_sbline->setContextMenuPolicy(Qt::NoContextMenu);
     m_sbline->setMinimumWidth(120);
     connect(m_sbline, &QSpinBox::valueChanged, this,
-            &GotoLineWidget::onGotoLine);
+            &GotoLineWidget::sigOnGotoLine);
 
     auto tbGoto = new QToolButton(this);
     tbGoto->setAutoRaise(true);
     tbGoto->setIcon(skin.standardIcon(ThemeManager::StandardIcon::ArrowRight));
     connect(tbGoto, &QToolButton::clicked, this, [this]() {
-        Q_EMIT onGotoLine(m_sbline->value());
+        Q_EMIT sigOnGotoLine(m_sbline->value());
         close();
     });
 
@@ -70,6 +70,6 @@ void GotoLineWidget::setOriginLine(int line) {
 }
 
 void GotoLineWidget::cancel() {
-    Q_EMIT onGotoLine(m_line);
+    Q_EMIT sigOnGotoLine(m_line);
     CodeEditControlWidget::cancel();
 }

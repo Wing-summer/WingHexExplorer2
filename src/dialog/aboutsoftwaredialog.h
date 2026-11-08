@@ -40,7 +40,7 @@ private:
 private:
     Ui::AboutSoftwareDialog *ui;
 
-    FramelessDialogBase *_dialog;
+    FramelessDialogBase *m_dialog;
 };
 
 #endif // ABOUTSOFTWAREDIALOG_H

@@ -16,7 +16,6 @@
 */
 
 #include "QConsoleWidget.h"
-#include "QConsoleIODevice.h"
 
 #include <QAbstractItemView>
 #include <QAbstractTextDocumentLayout>
@@ -38,9 +37,11 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
+#include "QConsoleIODevice.h"
+
 QConsoleWidget::QConsoleWidget(QWidget *parent)
-    : WingCodeEdit(parent), mode_(Output), inpos_(0) {
-    iodevice_ = new QConsoleIODevice(this, this);
+    : WingCodeEdit(parent), m_mode(Output), m_inpos(0) {
+    m_iodevice = new QConsoleIODevice(this, this);
 
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setUndoRedoEnabled(false);
@@ -53,10 +54,10 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
 
 QConsoleWidget::~QConsoleWidget() {}
 
-QConsoleWidget::ConsoleMode QConsoleWidget::mode() const { return mode_; }
+QConsoleWidget::ConsoleMode QConsoleWidget::mode() const { return m_mode; }
 
 void QConsoleWidget::setMode(ConsoleMode m) {
-    if (m == mode_) {
+    if (m == m_mode) {
         return;
     }
 
@@ -64,20 +65,20 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         QTextCursor cursor = textCursor();
         cursor.movePosition(QTextCursor::End);
         setTextCursor(cursor);
-        inpos_ = cursor.position();
-        mode_ = Input;
+        m_inpos = cursor.position();
+        m_mode = Input;
     }
 
     if (m == Output) {
-        history_.deactivate();
-        mode_ = Output;
+        m_history.deactivate();
+        m_mode = Output;
     }
 }
 
-QIODevice *QConsoleWidget::device() const { return iodevice_; }
+QIODevice *QConsoleWidget::device() const { return m_iodevice; }
 
 QString QConsoleWidget::getCommandLine() {
-    if (mode_ == Output) {
+    if (m_mode == Output) {
         return {};
     }
 
@@ -94,7 +95,7 @@ void QConsoleWidget::paste() {
     const QMimeData *const clipboard = QApplication::clipboard()->mimeData();
     const QString text = clipboard->text();
     if (!text.isNull()) {
-        history_.deactivate();
+        m_history.deactivate();
         textCursor.insertText(text);
         setTextCursor(textCursor);
     }
@@ -115,16 +116,16 @@ void QConsoleWidget::handleReturnKey(Qt::KeyboardModifiers mod) {
 
     // Update the history
     if (!code.isEmpty()) {
-        history_.add(code);
+        m_history.add(code);
     }
 
     // append the newline char and
     // send signal / update iodevice
-    if (iodevice_->isOpen()) {
-        iodevice_->consoleWidgetInput(code);
+    if (m_iodevice->isOpen()) {
+        m_iodevice->consoleWidgetInput(code);
     }
 
-    Q_EMIT consoleCommand(code);
+    Q_EMIT sigOnConsoleCommand(code);
 }
 
 void QConsoleWidget::handleTabKey(Qt::KeyboardModifiers mod) {
@@ -145,14 +146,14 @@ void QConsoleWidget::handleHistoryKey(QKeyEvent *event) {
     event->accept();
     auto doc = this->document();
     auto cursor = textCursor();
-    const auto first = doc->findBlock(inpos_);
+    const auto first = doc->findBlock(m_inpos);
     const auto last = doc->lastBlock();
     auto block = cursor.block();
     doc->documentLayout()->blockBoundingRect(block);
     const auto line =
         block.layout()->lineForTextPosition(cursor.positionInBlock());
     const auto firstLine =
-        first.layout()->lineForTextPosition(inpos_ - first.position());
+        first.layout()->lineForTextPosition(m_inpos - first.position());
     const auto atBoundary =
         up ? block == first && (!line.isValid() || !firstLine.isValid() ||
                                 line.lineNumber() <= firstLine.lineNumber())
@@ -161,8 +162,8 @@ void QConsoleWidget::handleHistoryKey(QKeyEvent *event) {
                   line.lineNumber() == last.layout()->lineCount() - 1);
 
     if (modifiers != Qt::NoModifier || !atBoundary) {
-        if (cursor.anchor() < inpos_) {
-            cursor.setPosition(inpos_);
+        if (cursor.anchor() < m_inpos) {
+            cursor.setPosition(m_inpos);
         }
         const auto anchorMode = modifiers.testFlag(Qt::ShiftModifier)
                                     ? QTextCursor::KeepAnchor
@@ -177,29 +178,29 @@ void QConsoleWidget::handleHistoryKey(QKeyEvent *event) {
         return;
     }
 
-    if (!history_.isActive()) {
+    if (!m_history.isActive()) {
         if (!up) {
             return;
         }
         auto code = currentCommandLine();
         code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
-        history_.activate(code);
+        m_history.activate(code);
     }
-    if (history_.move(up)) {
-        replaceCommandLine(history_.currentValue());
+    if (m_history.move(up)) {
+        replaceCommandLine(m_history.currentValue());
         cursor = textCursor();
         if (up) {
-            cursor.setPosition(inpos_);
+            cursor.setPosition(m_inpos);
         } else {
             cursor.movePosition(QTextCursor::End);
         }
         setTextCursor(cursor);
-        if (history_.pos_ == -1) {
-            history_.deactivate();
+        if (m_history.pos == -1) {
+            m_history.deactivate();
         }
     } else {
-        if (history_.pos_ == -1) {
-            history_.deactivate();
+        if (m_history.pos == -1) {
+            m_history.deactivate();
         }
         QApplication::beep();
     }
@@ -225,7 +226,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     if (mods == Qt::ControlModifier) {
         switch (key) {
         case Qt::Key_Q:
-            Q_EMIT abortEvaluation();
+            Q_EMIT sigOnAbortEvaluation();
             e->accept();
             return;
         case Qt::Key_C:
@@ -250,7 +251,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             // Allow cut only if the selection is limited to the interactive
             // area
             if (selectionInEditZone) {
-                history_.deactivate();
+                m_history.deactivate();
                 cut();
             }
             e->accept();
@@ -265,7 +266,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             return;
         case Qt::Key_Backspace:
             e->accept();
-            history_.deactivate();
+            m_history.deactivate();
             replaceCommandLine(QString());
             return;
         }
@@ -278,8 +279,8 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         key == Qt::Key_Right || key == Qt::Key_Home || key == Qt::Key_End ||
         key == Qt::Key_PageUp || key == Qt::Key_PageDown ||
         key == Qt::Key_Shift || key == Qt::Key_Control || key == Qt::Key_Alt;
-    if (history_.isActive() && !navigationKey) {
-        history_.deactivate();
+    if (m_history.isActive() && !navigationKey) {
+        m_history.deactivate();
     }
 
     // Force the cursor back to the interactive area
@@ -287,7 +288,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     if (!isCursorInEditZone() && key != Qt::Key_Control &&
         key != Qt::Key_Shift && key != Qt::Key_Alt) {
         auto block = textCursor.block();
-        if (block.position() >= document()->findBlock(inpos_).position()) {
+        if (block.position() >= document()->findBlock(m_inpos).position()) {
             textCursor.setPosition(inputStartForBlock(block));
         } else {
             textCursor.movePosition(QTextCursor::End);
@@ -305,7 +306,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         auto pos = textCursor.position();
         auto block = textCursor.block();
         if ((!textCursor.hasSelection() || shiftMod) &&
-            pos == inputStartForBlock(block) && pos > inpos_) {
+            pos == inputStartForBlock(block) && pos > m_inpos) {
             textCursor.movePosition(QTextCursor::PreviousBlock,
                                     shiftMod ? QTextCursor::KeepAnchor
                                              : QTextCursor::MoveAnchor);
@@ -350,7 +351,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             auto nextBlock = block.next();
             // cursor must be in edit zone
             if (textCursor.hasSelection() ||
-                textCursor.selectionStart() < inpos_) {
+                textCursor.selectionStart() < m_inpos) {
                 QApplication::beep();
             } else if (!textCursor.hasSelection() && textCursor.atBlockEnd() &&
                        nextBlock.isValid()) {
@@ -397,7 +398,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     case Qt::Key_Home:
         e->accept();
         textCursor.setPosition(mods.testFlag(Qt::ControlModifier)
-                                   ? inpos_
+                                   ? m_inpos
                                    : inputStartForBlock(textCursor.block()),
                                shiftMod ? QTextCursor::KeepAnchor
                                         : QTextCursor::MoveAnchor);
@@ -476,7 +477,7 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
     // Select the text after the last command prompt ...
     QTextCursor textCursor = this->textCursor();
     textCursor.movePosition(QTextCursor::End);
-    textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    textCursor.setPosition(m_inpos, QTextCursor::KeepAnchor);
 
     // ... and replace it with new string.
     textCursor.insertText(str);
@@ -489,16 +490,16 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
 QString QConsoleWidget::currentCommandLine() const {
     QTextCursor textCursor = this->textCursor();
     textCursor.movePosition(QTextCursor::End);
-    textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    textCursor.setPosition(m_inpos, QTextCursor::KeepAnchor);
     return textCursor.selectedText();
 }
 
 int QConsoleWidget::inputStartForBlock(const QTextBlock &block) const {
-    return qMax(inpos_, block.position());
+    return qMax(m_inpos, block.position());
 }
 
 int QConsoleWidget::blockTextStart(const QTextBlock &block) const {
-    if (block.position() < document()->findBlock(inpos_).position()) {
+    if (block.position() < document()->findBlock(m_inpos).position()) {
         return -1;
     }
     return inputStartForBlock(block) - block.position();
@@ -506,7 +507,7 @@ int QConsoleWidget::blockTextStart(const QTextBlock &block) const {
 
 void QConsoleWidget::dragMoveEvent(QDragMoveEvent *e) { e->ignore(); }
 
-int QConsoleWidget::currentHeaderPos() const { return inpos_; }
+int QConsoleWidget::currentHeaderPos() const { return m_inpos; }
 
 int QConsoleWidget::write(const QString &message) {
     QTextCursor tc = textCursor();
@@ -521,7 +522,7 @@ int QConsoleWidget::write(const QString &message) {
         editpos = tc.position() - editpos;
 
         // convert the input pos as relative from the end
-        inpos_ = tc.position() - inpos_;
+        m_inpos = tc.position() - m_inpos;
 
         // insert block
         tc.movePosition(QTextCursor::StartOfBlock);
@@ -532,7 +533,7 @@ int QConsoleWidget::write(const QString &message) {
         tc.insertText(message);
         tc.movePosition(QTextCursor::End);
         // restore input pos
-        inpos_ = tc.position() - inpos_;
+        m_inpos = tc.position() - m_inpos;
         // restore the edit pos
         tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, editpos);
 
@@ -562,40 +563,40 @@ int QConsoleWidget::write(const QString &message) {
     }
 }
 
-QConsoleWidget::History &QConsoleWidget::history() { return history_; }
+QConsoleWidget::History &QConsoleWidget::history() { return m_history; }
 
 /////////////////// QConsoleWidget::History /////////////////////
 
-QConsoleWidget::History QConsoleWidget::history_;
+QConsoleWidget::History QConsoleWidget::m_history;
 
-QConsoleWidget::History::History(void)
-    : pos_(0), active_(false), maxsize_(100) {}
+QConsoleWidget::History::History(void) : pos(0), active(false), maxSize(100) {}
+
 QConsoleWidget::History::~History(void) {}
 
 void QConsoleWidget::History::add(const QString &str) {
-    active_ = false;
-    auto idx = strings_.indexOf(str);
+    active = false;
+    auto idx = strings.indexOf(str);
     if (idx >= 0) {
-        strings_.move(idx, 0);
+        strings.move(idx, 0);
         return;
     }
-    if (strings_.size() == maxsize_) {
-        strings_.pop_back();
+    if (strings.size() == maxSize) {
+        strings.pop_back();
     }
-    strings_.push_front(str);
+    strings.push_front(str);
 }
 
 void QConsoleWidget::History::activate(const QString &tk) {
-    active_ = true;
-    token_ = tk;
-    pos_ = -1;
+    active = true;
+    token = tk;
+    pos = -1;
 }
 
 bool QConsoleWidget::History::move(bool dir) {
-    if (active_) {
-        int next = indexOf(dir, pos_);
-        if (pos_ != next) {
-            pos_ = next;
+    if (active) {
+        int next = indexOf(dir, pos);
+        if (pos != next) {
+            pos = next;
             return true;
         } else {
             return false;
@@ -606,7 +607,7 @@ bool QConsoleWidget::History::move(bool dir) {
 }
 
 int QConsoleWidget::History::indexOf(bool dir, int from) const {
-    return qBound(-1, from + (dir ? 1 : -1), int(strings_.size()) - 1);
+    return qBound(-1, from + (dir ? 1 : -1), int(strings.size()) - 1);
 }
 
 /////////////////// Stream manipulators /////////////////////
@@ -626,6 +627,7 @@ QTextStream &inputMode(QTextStream &s) {
     }
     return s;
 }
+
 QTextStream &outChannel(QTextStream &s) {
     QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
     if (d) {
@@ -633,6 +635,7 @@ QTextStream &outChannel(QTextStream &s) {
     }
     return s;
 }
+
 QTextStream &errChannel(QTextStream &s) {
     QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
     if (d) {
@@ -654,7 +657,7 @@ void QConsoleWidget::mousePressEvent(QMouseEvent *event) {
 
 void QConsoleWidget::insertFromMimeData(const QMimeData *source) {
     if (mode() == Input && canPaste()) {
-        history_.deactivate();
+        m_history.deactivate();
         WingCodeEdit::insertFromMimeData(source);
     }
 }

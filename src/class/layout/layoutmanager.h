@@ -48,8 +48,8 @@ private:
     void process(const QDir &dir);
 
 private:
-    QHash<QString, QByteArray> _layouts;
-    QStringList _caches;
+    QHash<QString, QByteArray> m_layouts;
+    QStringList m_caches;
     Q_DISABLE_COPY_MOVE(LayoutManager)
 };
 

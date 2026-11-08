@@ -1,14 +1,5 @@
-#include "class/application/startupfeedback.h"
-#include "class/settings/thememanager.h"
-#include "class/settings/themestylesheet.h"
-#include "dialog/splashdialog.h"
-
-#include "TestPlugin/testform.h"
-#include "WingPlugin/iwingplugin.h"
-#include "WingPlugin/iwingpluginbasecalls.h"
-#include "WingPlugin/wingcore.h"
-#include "WingPlugin/wingplugincalls.h"
-#include "WingPlugin/wingplugincalls_p.h"
+#include <cmath>
+#include <memory>
 
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -29,8 +20,18 @@
 #include <QSvgRenderer>
 #include <QToolButton>
 #include <QtTest>
-#include <cmath>
-#include <memory>
+
+#include "WingPlugin/iwingplugin.h"
+#include "WingPlugin/iwingpluginbasecalls.h"
+#include "WingPlugin/wingcore.h"
+#include "WingPlugin/wingplugincalls.h"
+#include "WingPlugin/wingplugincalls_p.h"
+
+#include "TestPlugin/testform.h"
+#include "class/application/startupfeedback.h"
+#include "class/settings/thememanager.h"
+#include "class/settings/themestylesheet.h"
+#include "dialog/splashdialog.h"
 
 using Icon = WingHex::StandardIcon;
 
@@ -53,16 +54,20 @@ double contrastRatio(const QColor &first, const QColor &second) {
 class FormProbePlugin final : public WingHex::IWingPlugin {
 public:
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("style-probe");
     }
+
     const QString pluginComment() const override { return {}; }
 };
 
 class ThemeEndpoint : public QObject {
     Q_OBJECT
 public slots:
+
     QPixmap appAuthorPixmap(const QObject *sender) {
         Q_UNUSED(sender);
         QPixmap image(1, 1);
@@ -74,15 +79,18 @@ public slots:
         Q_UNUSED(sender);
         return ThemeManager::instance().standardIcon(icon);
     }
+
     QPixmap standardPixmap(const QObject *sender, WingHex::StandardIcon icon) {
         Q_UNUSED(sender);
         return ThemeManager::instance().standardPixmap(icon);
     }
+
     QByteArray standardIconData(const QObject *sender,
                                 WingHex::StandardIcon icon) {
         Q_UNUSED(sender);
         return ThemeManager::instance().standardIconData(icon);
     }
+
     WingHex::AppTheme currentAppTheme(const QObject *sender) {
         Q_UNUSED(sender);
         return ThemeManager::instance().currentTheme() ==
@@ -112,7 +120,9 @@ public:
         add(&WingHex::IWingPluginBaseCalls::currentAppTheme, "currentAppTheme",
             "currentAppTheme(const QObject*)");
     }
+
     WingHex::CallTable callTable() const override { return m_table; }
+
     QObject *callReceiver() const override { return &m_endpoint; }
 
 protected:
@@ -126,6 +136,7 @@ private:
 class ThemeTests : public QObject {
     Q_OBJECT
 private slots:
+
     void initTestCase() {
         const auto output = qEnvironmentVariable("WING_THEME_PREVIEWS");
         if (output.isEmpty()) {
@@ -777,7 +788,7 @@ private slots:
         const auto icon = theme.standardIcon(Icon::Undo);
         const auto darkData = theme.standardIconData(Icon::Undo);
         const auto dark = icon.pixmap(64, 64).toImage();
-        QSignalSpy spy(&theme, &ThemeManager::themeChanged);
+        QSignalSpy spy(&theme, &ThemeManager::sigOnThemeChanged);
         theme.setTheme(ThemeManager::Theme::Light);
         QCOMPARE(spy.count(), 1);
         const auto light = icon.pixmap(64, 64).toImage();

@@ -16,11 +16,12 @@
 */
 
 #include "huecolorpickerslider.h"
-#include "dialog/colorpickerdialog.h"
 
 #include <QAction>
 #include <QMessageBox>
 #include <QMouseEvent>
+
+#include "dialog/colorpickerdialog.h"
 
 HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
                                            QWidget *parent)
@@ -34,18 +35,18 @@ HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
                             {300.0 / 360.0, Qt::magenta},
                             {1.0, Qt::red}});
 
-    _color.setHsv(180, 255, 255);
+    m_color.setHsv(180, 255, 255);
     connect(this, &HueColorPickerSlider::valueChanged, this, [this](int v) {
-        _color.setHsv(v, _color.hsvSaturation(), _color.value());
-        this->setToolTip(_color.name());
-        Q_EMIT colorChanged(_color);
+        m_color.setHsv(v, m_color.hsvSaturation(), m_color.value());
+        this->setToolTip(m_color.name());
+        Q_EMIT sigOnColorChanged(m_color);
     });
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
     auto a = new QAction(tr("Select color"), this);
     connect(a, &QAction::triggered, this, [this] {
         ColorPickerDialog d;
-        d.setColor(_color);
+        d.setColor(m_color);
         if (d.exec()) {
             setColor(d.color());
         }
@@ -55,11 +56,11 @@ HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
     this->setValue(180);
 }
 
-QColor HueColorPickerSlider::color() const { return _color; }
+QColor HueColorPickerSlider::color() const { return m_color; }
 
 void HueColorPickerSlider::setColor(const QColor &newColor) {
-    if (_color != newColor) {
-        _color = newColor;
+    if (m_color != newColor) {
+        m_color = newColor;
 
         auto colorS = newColor.hsvSaturation();
         auto colorV = newColor.value();
@@ -78,7 +79,7 @@ void HueColorPickerSlider::setColor(const QColor &newColor) {
         }
         setValue(hue);
 
-        Q_EMIT colorChanged(newColor);
+        Q_EMIT sigOnColorChanged(newColor);
     }
 }
 

@@ -18,7 +18,7 @@
 #include "qkeysequences.h"
 
 QKeySequences::QKeySequences() {
-    _kseqs = {
+    m_kseqs = {
         {Key::OPEN_WORKSPACE,
          QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_W)},
         {Key::REDO,
@@ -92,7 +92,7 @@ QKeySequences::QKeySequences() {
 }
 
 QKeySequence QKeySequences::keySequence(Key key) const {
-    return _kseqs.value(key, QKeySequence());
+    return m_kseqs.value(key, QKeySequence());
 }
 
 const QKeySequences &QKeySequences::instance() {

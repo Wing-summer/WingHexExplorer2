@@ -35,8 +35,8 @@ public:
     void setContents(const QStringList &newContents);
 
 private:
-    QStringList contents;
-    QHash<QString, bool> mods;
+    QStringList m_contents;
+    QHash<QString, bool> m_mods;
 };
 
 #endif // CHANGEDSTRINGLIST_H

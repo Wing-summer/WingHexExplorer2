@@ -151,7 +151,7 @@ private:
 private:
     Ui::CtlTestForm *ui;
 
-    QTextBrowser *_br;
+    QTextBrowser *m_br;
 };
 
 #endif // CTLTESTFORM_H

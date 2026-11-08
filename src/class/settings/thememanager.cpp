@@ -16,7 +16,8 @@
 */
 
 #include "thememanager.h"
-#include "themestylesheet.h"
+
+#include <cmath>
 
 #include <QApplication>
 #include <QDomDocument>
@@ -33,7 +34,7 @@
 #include <QStyleOption>
 #include <QSvgRenderer>
 
-#include <cmath>
+#include "themestylesheet.h"
 
 namespace {
 // Standard icons are queried on demand rather than resolved for every QWidget
@@ -98,6 +99,7 @@ private:
 };
 
 using StandardIcon = ThemeManager::StandardIcon;
+
 QString resourceName(StandardIcon icon) {
     const auto meta = QMetaEnum::fromType<StandardIcon>();
     const auto key = meta.valueToKey(int(icon));
@@ -213,21 +215,28 @@ QByteArray themedResourceData(const QString &path, ThemeManager::Theme theme) {
 class ThemeIconEngine final : public QIconEngine {
 public:
     explicit ThemeIconEngine(StandardIcon icon) : m_icon(icon) {}
+
     explicit ThemeIconEngine(const QString &path) : m_path(path) {}
+
     QIconEngine *clone() const override { return new ThemeIconEngine(*this); }
+
     QString key() const override { return QStringLiteral("WingThemeIcon"); }
+
     QString iconName() override {
         return m_path.isEmpty() ? resourceName(m_icon) : m_path;
     }
+
     bool isNull() override {
         return m_path.isEmpty()
                    ? ThemeManager::instance().iconResource(m_icon).isEmpty()
                    : !QFile::exists(m_path);
     }
+
     QPixmap pixmap(const QSize &size, QIcon::Mode mode,
                    QIcon::State state) override {
         return render(size, mode, state, 1.0);
     }
+
     QPixmap scaledPixmap(const QSize &size, QIcon::Mode mode,
                          QIcon::State state, qreal scale) override {
 #if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
@@ -237,6 +246,7 @@ public:
         return render(size * scale, mode, state, scale);
 #endif
     }
+
     void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode,
                QIcon::State state) override {
         const qreal ratio = painter->device()->devicePixelRatioF();
@@ -299,6 +309,7 @@ private:
         QPixmapCache::insert(cacheKey, image);
         return image;
     }
+
     StandardIcon m_icon = StandardIcon::None;
     QString m_path;
 };
@@ -313,6 +324,7 @@ ThemeManager::ThemeManager() {
                 }
             });
 }
+
 ThemeManager::~ThemeManager() = default;
 
 ThemeManager &ThemeManager::instance() {
@@ -348,8 +360,8 @@ void ThemeManager::applyTheme(Theme theme) {
     }
     auto styleSheet = QString::fromUtf8(sheet.readAll());
     const auto icons = ThemeStyleSheet::extractStandardIcons(styleSheet);
-    const auto iconPrefix = QStringLiteral(":/") + directory +
-                            QStringLiteral("/standard-icons/");
+    const auto iconPrefix =
+        QStringLiteral(":/") + directory + QStringLiteral("/standard-icons/");
     auto *proxy = static_cast<ThemeProxyStyle *>(m_themeStyle.data());
     if (!proxy) {
 #ifdef Q_OS_WIN
@@ -392,7 +404,7 @@ void ThemeManager::applyTheme(Theme theme) {
     } else {
         qApp->setStyleSheet(styleSheet);
     }
-    Q_EMIT themeChanged(theme);
+    Q_EMIT sigOnThemeChanged(theme);
     for (auto &widget : QApplication::allWidgets()) {
         widget->update();
     }

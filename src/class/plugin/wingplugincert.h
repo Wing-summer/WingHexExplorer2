@@ -19,7 +19,6 @@
 #define WINGPLUGINCERT_H
 
 #include <QFileInfo>
-
 #include <QHash>
 #include <QSslCertificate>
 
@@ -52,9 +51,9 @@ private:
     WingPluginCert();
     Q_DISABLE_COPY_MOVE(WingPluginCert)
 
-    QSslCertificate _sysCert;
-    QHash<QSslCertificate, QFileInfo> _certs;
-    QHash<QByteArray, QSslCertificate> _cs;
+    QSslCertificate m_sysCert;
+    QHash<QSslCertificate, QFileInfo> m_certs;
+    QHash<QByteArray, QSslCertificate> m_cs;
 };
 
 #endif // WINGPLUGINCERT_H

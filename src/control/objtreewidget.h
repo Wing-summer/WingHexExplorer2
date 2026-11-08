@@ -19,7 +19,6 @@
 #define OBJTREEWIDGET_H
 
 #include "luau/lsp/luaulanguageserver.h"
-
 #include "searchabletreewidget.h"
 
 class ObjTreeWidget : public SearchableTreeWidget {
@@ -34,11 +33,12 @@ private:
     struct SymbolCache {
         QHash<QString, LuauLanguageServer::Symbol> entries;
         QSet<QString> loaded;
-    } _symbols;
+    } m_symbols;
+
     struct RestoreState {
         QSet<QString> expanded;
         QString selected;
-    } _restore;
+    } m_restore;
 
 private:
     void populateChildren(QTreeWidgetItem *item);

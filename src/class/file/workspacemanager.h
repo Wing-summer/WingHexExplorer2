@@ -18,13 +18,13 @@
 #ifndef WORKSPACEMANAGER_H
 #define WORKSPACEMANAGER_H
 
-#include "QHexView/document/qhexmetadata.h"
-
 #include <QByteArray>
 #include <QMap>
 #include <QUrl>
 #include <QVariantMap>
 #include <QVector>
+
+#include "QHexView/document/qhexmetadata.h"
 
 struct WorkSpaceInfo {
     quint64 base = 0;

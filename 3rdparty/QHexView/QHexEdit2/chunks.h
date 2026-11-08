@@ -40,10 +40,11 @@
 
 // I (wingsummer) made some modifications, great thanks for Simsys's effort!
 
-#include "document/buffer/qhexreadsession.h"
 #include <QByteArray>
 #include <QList>
 #include <QReadWriteLock>
+
+#include "document/buffer/qhexreadsession.h"
 
 struct Chunk {
     QByteArray data;
@@ -96,10 +97,10 @@ private:
     QByteArray __data(qint64 pos = 0, qint64 count = -1) const;
 
 private:
-    QIODevice *_ioDevice;
-    mutable QReadWriteLock _mutex;
-    qint64 _size = 0;
-    mutable QList<Chunk> _chunks;
+    QIODevice *m_ioDevice;
+    mutable QReadWriteLock m_mutex;
+    qint64 m_size = 0;
+    mutable QList<Chunk> m_chunks;
 };
 
 /** \endcond docNever */

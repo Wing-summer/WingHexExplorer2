@@ -18,12 +18,12 @@
 #ifndef LUAUVARIABLE_H
 #define LUAUVARIABLE_H
 
-#include "luauscope.h"
+#include <optional>
 
 #include <QSharedPointer>
 #include <QString>
 
-#include <optional>
+#include "luauscope.h"
 
 class LuauVariableRegistry;
 
@@ -57,27 +57,27 @@ private:
     void addScope(LuauVariableRegistry *registry, lua_State *L);
 
     static void addRawFields(LuauVariableRegistry *registry, lua_State *L,
-                             const LuauScope &scope, int value_idx);
+                             const LuauScope &scope, int valueIdx);
     static void addIterFields(LuauVariableRegistry *registry, lua_State *L,
-                              const LuauScope &scope, int value_idx);
+                              const LuauScope &scope, int valueIdx);
     static void addCustomFields(LuauVariableRegistry *registry, lua_State *L,
-                                const LuauScope &scope, int value_idx);
+                                const LuauScope &scope, int valueIdx);
     static LuauVariable::Ptr addField(lua_State *L,
                                       LuauVariableRegistry *registry,
                                       const LuauScope &scope);
 
-    static bool hasGetters(lua_State *L, int value_idx);
+    static bool hasGetters(lua_State *L, int valueIdx);
 
-    QString preprocess(const QString &input_value);
+    QString preprocess(const QString &inputValue);
 
 private:
-    lua_State *L_ = nullptr;
-    int level_ = 0;
-    QString name_;
-    std::optional<int> index_ = std::nullopt;
-    QString value_;
-    LuauScope scope_;
-    int type_ = LUA_TNIL;
+    lua_State *m_state = nullptr;
+    int m_level = 0;
+    QString m_name;
+    std::optional<int> m_index = std::nullopt;
+    QString m_value;
+    LuauScope m_scope;
+    int m_type = LUA_TNIL;
 };
 
 using LuauVariableList = QSharedPointer<QVector<LuauVariable::Ptr>>;

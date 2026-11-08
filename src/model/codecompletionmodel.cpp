@@ -19,16 +19,16 @@
 
 CodeCompletionModel::CodeCompletionModel(const QList<CodeInfoTip> &infos,
                                          QObject *parent)
-    : QAbstractListModel(parent), _infos(infos) {}
+    : QAbstractListModel(parent), m_infos(infos) {}
 
 int CodeCompletionModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return _infos.size();
+    return m_infos.size();
 }
 
 QVariant CodeCompletionModel::data(const QModelIndex &index, int role) const {
     auto r = index.row();
-    auto info = _infos.at(r);
+    auto info = m_infos.at(r);
 
     switch (role) {
     case Qt::SelfDataRole:

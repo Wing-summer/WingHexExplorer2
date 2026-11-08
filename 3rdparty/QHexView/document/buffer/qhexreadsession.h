@@ -18,14 +18,14 @@
 #ifndef QHEXREADSESSION_H
 #define QHEXREADSESSION_H
 
+#include <memory>
+#include <vector>
+
 #include <QByteArray>
 #include <QDateTime>
 #include <QIODevice>
 #include <QLoggingCategory>
 #include <QString>
-
-#include <memory>
-#include <vector>
 
 Q_DECLARE_LOGGING_CATEGORY(lcQHexRead)
 
@@ -62,6 +62,7 @@ public:
         QByteArray bytes;
         bool edited = false;
     };
+
     qint64 length = 0;
     QString fileName;
     qint64 sourceSize = 0;

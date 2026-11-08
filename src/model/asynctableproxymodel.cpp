@@ -17,13 +17,14 @@
 
 #include "asynctableproxymodel.h"
 
-#include <QCollator>
-#include <QElapsedTimer>
-#include <QtConcurrentRun>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
 #include <optional>
+
+#include <QCollator>
+#include <QElapsedTimer>
+#include <QtConcurrentRun>
 
 namespace {
 
@@ -31,11 +32,13 @@ enum class KeyKind { Missing, SignedInteger, UnsignedInteger, Floating, Text };
 
 struct SortKey {
     KeyKind kind = KeyKind::Missing;
+
     union {
         qint64 signedValue = 0;
         quint64 unsignedValue;
         double floatingValue;
     };
+
     std::optional<QCollatorSortKey> text;
 };
 
@@ -217,8 +220,8 @@ AsyncTableProxyModel::AsyncTableProxyModel(QObject *parent)
             QElapsedTimer commit;
             commit.start();
             publish(result.rows, result.inverse);
-            Q_EMIT sortingMeasured(m_snapshotMs, result.workerMs,
-                                   commit.elapsed());
+            Q_EMIT sigOnSortingMeasured(m_snapshotMs, result.workerMs,
+                                        commit.elapsed());
         }
         if (m_pending) {
             m_collect.start(0);
@@ -398,7 +401,7 @@ bool AsyncTableProxyModel::setHeaderData(int section, Qt::Orientation o,
 void AsyncTableProxyModel::setBusy(bool busy) {
     if (m_busy != busy) {
         m_busy = busy;
-        Q_EMIT sortingChanged(busy);
+        Q_EMIT sigOnSortingChanged(busy);
     }
 }
 
@@ -434,7 +437,7 @@ void AsyncTableProxyModel::sort(int c, Qt::SortOrder order) {
         QList<int> rows(rowCount());
         std::iota(rows.begin(), rows.end(), 0);
         publish(rows, rows);
-        Q_EMIT sortCleared();
+        Q_EMIT sigOnSortCleared();
     }
 }
 

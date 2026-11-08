@@ -25,11 +25,11 @@
 #include "class/file/fileaccesscheck.h"
 #endif
 
-#include "define.h"
-
 #include <QDebug>
 #include <QProcessEnvironment>
 #include <QSettings>
+
+#include "define.h"
 
 void loadEnvConfig(int argc, char *argv[]) {
     // anti-env-inject

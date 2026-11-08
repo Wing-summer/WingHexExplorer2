@@ -16,13 +16,7 @@
 */
 
 #include "settingdialog.h"
-
-#include "class/settings/thememanager.h"
 #include "ui_settingdialog.h"
-
-#include "control/toast.h"
-#include "dialog/common/wingmessagebox.h"
-#include "utilities.h"
 
 #include <QApplication>
 #include <QBuffer>
@@ -31,6 +25,11 @@
 #include <QMenu>
 #include <QPushButton>
 #include <QTimer>
+
+#include "class/settings/thememanager.h"
+#include "control/toast.h"
+#include "dialog/common/wingmessagebox.h"
+#include "utilities.h"
 
 SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
                              QWidget *parent)
@@ -71,11 +70,11 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
         page->restore();
     });
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->installEventFilter(this);
-    _dialog->buildUpContent(this);
-    _dialog->setWindowIcon(icon);
-    _dialog->setWindowTitle(title);
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->installEventFilter(this);
+    m_dialog->buildUpContent(this);
+    m_dialog->setWindowIcon(icon);
+    m_dialog->setWindowTitle(title);
 
     ui->btnRestore->setStyleSheet(
         QStringLiteral("QToolButton::down-arrow {width:10px; height:10px; "
@@ -122,7 +121,7 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
 
 SettingDialog::~SettingDialog() {
     delete ui;
-    _dialog->deleteLater();
+    m_dialog->deleteLater();
 }
 
 void SettingDialog::addPage(WingHex::SettingPage *page) {
@@ -151,7 +150,7 @@ void SettingDialog::showConfig(int index) {
         ui->listWidget->setCurrentRow(index);
     }
     Utilities::moveToCenter(this);
-    _dialog->exec();
+    m_dialog->exec();
 }
 
 void SettingDialog::showConfig(WingHex::SettingPage *page) {
@@ -171,13 +170,13 @@ void SettingDialog::showConfig(const QString &id) {
     }
     ui->listWidget->setCurrentRow(m_pages.indexOf(*r));
     Utilities::moveToCenter(this);
-    _dialog->exec();
+    m_dialog->exec();
 }
 
 QByteArray SettingDialog::saveLayout() {
     QByteArray ret;
     QDataStream buffer(&ret, QDataStream::WriteOnly);
-    buffer << _dialog->saveGeometry();
+    buffer << m_dialog->saveGeometry();
     buffer << ui->splitter->saveState();
     return ret;
 }
@@ -188,7 +187,7 @@ void SettingDialog::restoreLayout(const QByteArray &layout) {
     QByteArray ret;
     buffer >> ret;
     if (!ret.isEmpty()) {
-        _dialog->restoreGeometry(ret);
+        m_dialog->restoreGeometry(ret);
     }
     buffer >> ret;
     if (!ret.isEmpty()) {
@@ -212,7 +211,7 @@ bool SettingDialog::eventFilter(QObject *, QEvent *event) {
                 return true;
             }
         }
-        Q_EMIT onClosing();
+        Q_EMIT sigOnClosing();
     }
     return false;
 }
@@ -221,7 +220,7 @@ void SettingDialog::toastTakeEffectReboot() {
     auto page = qobject_cast<WingHex::SettingPage *>(sender());
     if (page) {
         auto icon = page->categoryIcon();
-        Toast::toast(_dialog, icon.pixmap(200, 200),
+        Toast::toast(m_dialog, icon.pixmap(200, 200),
                      tr("Restart the application to apply these changes"));
     }
 }
@@ -229,10 +228,10 @@ void SettingDialog::toastTakeEffectReboot() {
 void SettingDialog::toastTakeEffectReboot(WingHex::SettingPage *page) {
     if (page) {
         auto icon = page->categoryIcon();
-        Toast::toast(_dialog, icon.pixmap(200, 200),
+        Toast::toast(m_dialog, icon.pixmap(200, 200),
                      tr("Restart the application to apply these changes"));
     } else {
-        Toast::toast(_dialog,
+        Toast::toast(m_dialog,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Settings),
                      tr("Restart the application to apply these changes"));

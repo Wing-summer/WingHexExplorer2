@@ -16,9 +16,11 @@
 */
 
 #include "scriptfilesystem.h"
+
+#include <stdexcept>
+
 #include <QFileInfo>
 #include <QGlobalStatic>
-#include <stdexcept>
 
 namespace ScriptFileSystem {
 namespace {
@@ -65,9 +67,9 @@ void setFileSystemAccessPolicy(FileSystemAccessPolicy policy) {
 }
 
 bool ScriptFile::prepareOpen(OpenMode &mode) {
-    openedExisting_ = exists() || QFileInfo(fileName()).isSymbolicLink();
+    m_openedExisting = exists() || QFileInfo(fileName()).isSymbolicLink();
     if (writesFile(mode) && !mayOverwrite()) {
-        if (openedExisting_) {
+        if (m_openedExisting) {
             setErrorString(QStringLiteral(
                 "File overwrite is prohibited by script settings"));
             return false;
@@ -87,7 +89,7 @@ bool ScriptFile::openWithPermissions(OpenMode mode, Permissions permissions) {
 }
 
 bool ScriptFile::permitsWrite() const {
-    return (isOpen() && !openedExisting_) || mayOverwrite();
+    return (isOpen() && !m_openedExisting) || mayOverwrite();
 }
 
 qint64 ScriptFile::writeData(const char *data, qint64 size) {

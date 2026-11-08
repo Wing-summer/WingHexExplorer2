@@ -18,13 +18,14 @@
 #ifndef LUAUUTIL_H
 #define LUAUUTIL_H
 
-#include "luau/VM/src/lobject.h"
+#include <optional>
 
 #include <QString>
 
 #include <lua.h>
 #include <lualib.h>
-#include <optional>
+
+#include "luau/VM/src/lobject.h"
 
 namespace LuauUtil {
 
@@ -34,8 +35,8 @@ public:
     ~StackGuard();
 
 private:
-    lua_State *L_;
-    int top_;
+    lua_State *m_state;
+    int m_top;
 };
 
 class ReadOnlyGuard {
@@ -44,9 +45,9 @@ public:
     ~ReadOnlyGuard();
 
 private:
-    lua_State *L_;
-    int index_;
-    bool enable_;
+    lua_State *m_state;
+    int m_index;
+    bool m_enable;
 };
 
 class DisableDebugStep {
@@ -55,10 +56,10 @@ public:
     ~DisableDebugStep();
 
 private:
-    lua_State *main_vm_;
-    lua_Callbacks *callbacks_;
+    lua_State *m_mainVm;
+    lua_Callbacks *m_callbacks;
     using DebugStep = void (*)(lua_State *, lua_Debug *);
-    DebugStep old_debug_step_;
+    DebugStep m_oldDebugStep;
 };
 
 // A non-yieldable C boundary; return the protected status and all Lua results.

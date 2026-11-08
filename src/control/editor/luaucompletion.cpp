@@ -16,15 +16,16 @@
 
 #include "luaucompletion.h"
 
+#include <QKeyEvent>
+
 #include "editorlspevent.h"
 #include "luau/lsp/lsp.h"
 #include "luau/lsp/luaulanguageserver.h"
 #include "model/codecompletionmodel.h"
 
-#include <QKeyEvent>
-
 LuauCompletion::LuauCompletion(LspEditorInterace *inter, WingCodeEdit *parent)
-    : WingCompleter(parent), _timer(new ResettableTimer(this)), _inter(inter) {
+    : WingCompleter(parent), m_timer(new ResettableTimer(this)),
+      m_inter(inter) {
     Q_ASSERT(parent);
     Q_ASSERT(inter);
 
@@ -35,11 +36,11 @@ LuauCompletion::LuauCompletion(LspEditorInterace *inter, WingCodeEdit *parent)
             QOverload<const QModelIndex &>::of(&LuauCompletion::activated),
             this, &LuauCompletion::onActivatedCodeComplete);
     parent->installEventFilter(this);
-    connect(_timer, &ResettableTimer::timeoutTriggered, this,
+    connect(m_timer, &ResettableTimer::sigOnTimeout, this,
             &LuauCompletion::onCodeComplete);
 }
 
-void LuauCompletion::clearFunctionTip() { _inter->clearFunctionTip(); }
+void LuauCompletion::clearFunctionTip() { m_inter->clearFunctionTip(); }
 
 QString LuauCompletion::wordSeperators() const {
     return QStringLiteral("~!@$%^&*()+{}|\"<>?,/;'[]\\-=");
@@ -47,12 +48,12 @@ QString LuauCompletion::wordSeperators() const {
 
 bool LuauCompletion::processTrigger(const QString &trigger,
                                     const QString &content) {
-    auto lspURL = _inter->lspFileNameURL();
-    if (!_ok || lspURL.isEmpty() || content.isEmpty()) {
+    auto lspURL = m_inter->lspFileNameURL();
+    if (!m_ok || lspURL.isEmpty() || content.isEmpty()) {
         return false;
     }
 
-    const auto cursor = _inter->currentPosition();
+    const auto cursor = m_inter->currentPosition();
     if (cursor.blockNumber < 0 || cursor.positionInBlock < 0) {
         return false;
     }
@@ -85,8 +86,8 @@ bool LuauCompletion::processTrigger(const QString &trigger,
 
     setModel(new CodeCompletionModel(items, this));
     setCompletionPrefix(prefix);
-    _ok = false;
-    _timer->reset(300);
+    m_ok = false;
+    m_timer->reset(300);
     return !items.isEmpty();
 }
 
@@ -102,7 +103,7 @@ bool LuauCompletion::eventFilter(QObject *watched, QEvent *event) {
     return WingCompleter::eventFilter(watched, event);
 }
 
-void LuauCompletion::onCodeComplete() { _ok = true; }
+void LuauCompletion::onCodeComplete() { m_ok = true; }
 
 void LuauCompletion::onActivatedCodeComplete(const QModelIndex &index) {
     const auto item = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
@@ -112,6 +113,6 @@ void LuauCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         item.kind == lsp::CompletionItemKind::Operator ||
         item.kind == lsp::CompletionItemKind::Interface ||
         item.kind == lsp::CompletionItemKind::Constructor) {
-        EditorLspEvent::showSignatureHelp(_inter);
+        EditorLspEvent::showSignatureHelp(m_inter);
     }
 }

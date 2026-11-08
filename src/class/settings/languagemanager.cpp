@@ -17,16 +17,17 @@
 
 #include "languagemanager.h"
 
-#include "class/settings/settingmanager.h"
-#include <QDebug>
-#include <QFile>
-#include <QMap>
 #include <utility>
 
 #include <QApplication>
+#include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QLibraryInfo>
+#include <QMap>
 #include <QTranslator>
+
+#include "class/settings/settingmanager.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 2)
 #include <QtCore/private/qzipreader_p.h>
@@ -50,7 +51,7 @@ LanguageManager::LanguageManager() {
 
     // English is built in and must work without an external language directory.
     const QLocale english(QStringLiteral("en_US"));
-    _defaultLocale = english;
+    m_defaultLocale = english;
     const auto readResource = [](const QString &path) {
         QFile file(path);
         if (file.open(QIODevice::ReadOnly)) {
@@ -60,8 +61,8 @@ LanguageManager::LanguageManager() {
                  qUtf8Printable(path));
         return QString();
     };
-    _data.about = readResource(QStringLiteral(":/i18n/en/about.md"));
-    _data.dev = readResource(QStringLiteral(":/i18n/en/devs.md"));
+    m_data.about = readResource(QStringLiteral(":/i18n/en/about.md"));
+    m_data.dev = readResource(QStringLiteral(":/i18n/en/devs.md"));
 
     const QString langPath =
         qApp->applicationDirPath() + QStringLiteral("/lang");
@@ -108,8 +109,8 @@ LanguageManager::LanguageManager() {
                                      candidate.trFiles.constData()),
                                  candidate.trFiles.size()) &&
                 qApp->installTranslator(translator)) {
-                _data = std::move(candidate);
-                _defaultLocale = requested;
+                m_data = std::move(candidate);
+                m_defaultLocale = requested;
             } else {
                 qWarning("Cannot load language package; using English: %s",
                          qUtf8Printable(package));
@@ -132,14 +133,14 @@ LanguageManager::LanguageManager() {
 #endif
 
     auto qtTranslator = new QTranslator(qApp);
-    if (qtTranslator->load(_defaultLocale, QStringLiteral("qtbase"),
+    if (qtTranslator->load(m_defaultLocale, QStringLiteral("qtbase"),
                            QStringLiteral("_"), qtPath)) {
 
         qApp->installTranslator(qtTranslator);
     }
 
     qtTranslator = new QTranslator(qApp);
-    if (qtTranslator->load(_defaultLocale, QStringLiteral("qt"),
+    if (qtTranslator->load(m_defaultLocale, QStringLiteral("qt"),
                            QStringLiteral("_"), qtPath)) {
 
         qApp->installTranslator(qtTranslator);
@@ -180,7 +181,7 @@ bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale,
 
 QStringList LanguageManager::langs() const { return m_langs; }
 
-QLocale LanguageManager::defaultLocale() const { return _defaultLocale; }
+QLocale LanguageManager::defaultLocale() const { return m_defaultLocale; }
 
 QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
     QDir langDir(QStringLiteral(":/PLGLANG"));
@@ -188,7 +189,7 @@ QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
         return nullptr;
     }
     auto translator = new QTranslator(qApp);
-    if (translator->load(_defaultLocale, plgID, QStringLiteral("_"),
+    if (translator->load(m_defaultLocale, plgID, QStringLiteral("_"),
                          langDir.absolutePath())) {
         if (qApp->installTranslator(translator)) {
             return translator;
@@ -199,4 +200,4 @@ QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
     return nullptr;
 }
 
-LanguageManager::LanguageData LanguageManager::data() const { return _data; }
+LanguageManager::LanguageData LanguageManager::data() const { return m_data; }

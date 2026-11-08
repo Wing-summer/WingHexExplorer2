@@ -17,11 +17,11 @@
 
 #include "idbtreemodel.h"
 
-#include "luau/luauvariableregistry.h"
-#include "luau/runtime/scriptmachine.h"
-
 #include <algorithm>
 #include <functional>
+
+#include "luau/luauvariableregistry.h"
+#include "luau/runtime/scriptmachine.h"
 
 namespace {
 constexpr int NameColumn = 0;
@@ -39,48 +39,48 @@ struct VariableLocation {
 IDBTreeModel::IDBTreeModel(QObject *parent) : QAbstractItemModel(parent) {}
 
 void IDBTreeModel::setRoot(LuauVariableRegistry *r, const LuauScope &scope) {
-    root = r;
-    rootScope = scope;
+    m_root = r;
+    m_rootScope = scope;
     refresh();
 }
 
 void IDBTreeModel::resetRoot() {
-    root = nullptr;
-    rootScope = LuauScope();
+    m_root = nullptr;
+    m_rootScope = LuauScope();
     refresh();
 }
 
 void IDBTreeModel::updateScope(const LuauScope &scope) {
-    rootScope = scope;
+    m_rootScope = scope;
     refresh();
 }
 
 void IDBTreeModel::refresh() {
     beginResetModel();
-    proxyMap.clear();
-    auto L = rootScope.getLuaState();
-    if (root && L) {
-        root->update(ScriptMachine::instance().getThreadAncestors(L));
+    m_proxyMap.clear();
+    auto L = m_rootScope.getLuaState();
+    if (m_root && L) {
+        m_root->update(ScriptMachine::instance().getThreadAncestors(L));
     }
     endResetModel();
 }
 
 void IDBTreeModel::setPageSize(int s) {
     s = std::max(1, s);
-    if (pageSize == s) {
+    if (m_pageSize == s) {
         return;
     }
 
     beginResetModel();
-    pageSize = s;
-    proxyMap.clear();
+    m_pageSize = s;
+    m_proxyMap.clear();
     endResetModel();
 }
 
 QModelIndex IDBTreeModel::index(int row, int column,
                                 const QModelIndex &parent) const {
-    if (row < 0 || column < 0 || column >= columnCount(parent) || !root ||
-        rootScope.getType() == LuauScope::Type::Unknown) {
+    if (row < 0 || column < 0 || column >= columnCount(parent) || !m_root ||
+        m_rootScope.getType() == LuauScope::Type::Unknown) {
         return {};
     }
 
@@ -89,7 +89,7 @@ QModelIndex IDBTreeModel::index(int row, int column,
     int pageIndex = 0;
 
     if (!parent.isValid()) {
-        variables = root->getVariables(rootScope, true);
+        variables = m_root->getVariables(m_rootScope, true);
     } else {
         void *ip = parent.internalPointer();
         if (!ip) {
@@ -103,14 +103,14 @@ QModelIndex IDBTreeModel::index(int row, int column,
             }
             owner = proxy->owner;
             pageIndex = proxy->pageIndex;
-            variables = root->getVariables(proxy->scope, true);
+            variables = m_root->getVariables(proxy->scope, true);
         } else {
             auto *rawOwner = decodeVar(ip);
             if (!rawOwner || !rawOwner->hasFields()) {
                 return {};
             }
             owner = getPtrFromRaw(rawOwner);
-            variables = root->getVariables(rawOwner->getScope(), true);
+            variables = m_root->getVariables(rawOwner->getScope(), true);
         }
     }
 
@@ -118,9 +118,9 @@ QModelIndex IDBTreeModel::index(int row, int column,
         return {};
     }
 
-    const int start = pageIndex * pageSize;
+    const int start = pageIndex * m_pageSize;
     const int total = static_cast<int>(variables->size());
-    const int visibleCount = std::max(0, std::min(pageSize, total - start));
+    const int visibleCount = std::max(0, std::min(m_pageSize, total - start));
 
     if (row < visibleCount) {
         return createIndex(row, column,
@@ -129,7 +129,7 @@ QModelIndex IDBTreeModel::index(int row, int column,
 
     if (row == visibleCount && start + visibleCount < total) {
         auto proxy = owner ? getOrCreateProxy(owner, pageIndex + 1)
-                           : getOrCreateProxy(rootScope, pageIndex + 1);
+                           : getOrCreateProxy(m_rootScope, pageIndex + 1);
         return createIndex(row, column, encodeProxy(proxy.get()));
     }
 
@@ -137,12 +137,12 @@ QModelIndex IDBTreeModel::index(int row, int column,
 }
 
 bool IDBTreeModel::hasChildren(const QModelIndex &parent) const {
-    if (!root || rootScope.getType() == LuauScope::Type::Unknown) {
+    if (!m_root || m_rootScope.getType() == LuauScope::Type::Unknown) {
         return false;
     }
 
     if (!parent.isValid()) {
-        auto variables = root->getVariables(rootScope, true);
+        auto variables = m_root->getVariables(m_rootScope, true);
         return variables && !variables->isEmpty();
     }
 
@@ -156,11 +156,11 @@ bool IDBTreeModel::hasChildren(const QModelIndex &parent) const {
         if (!proxy) {
             return false;
         }
-        auto variables = root->getVariables(proxy->scope, false);
+        auto variables = m_root->getVariables(proxy->scope, false);
         if (!variables) {
             return false;
         }
-        return proxy->pageIndex * pageSize <
+        return proxy->pageIndex * m_pageSize <
                static_cast<int>(variables->size());
     }
 
@@ -169,7 +169,7 @@ bool IDBTreeModel::hasChildren(const QModelIndex &parent) const {
 }
 
 QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
-    if (!child.isValid() || !root) {
+    if (!child.isValid() || !m_root) {
         return {};
     }
 
@@ -193,16 +193,16 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
 
         auto parentProxy =
             proxy->owner ? getOrCreateProxy(proxy->owner, proxy->pageIndex - 1)
-                         : getOrCreateProxy(rootScope, proxy->pageIndex - 1);
-        auto variables = root->getVariables(proxy->scope, false);
+                         : getOrCreateProxy(m_rootScope, proxy->pageIndex - 1);
+        auto variables = m_root->getVariables(proxy->scope, false);
         if (!variables) {
             return {};
         }
 
-        const int parentStart = (proxy->pageIndex - 1) * pageSize;
-        const int parentShow =
-            std::max(0, std::min(pageSize, static_cast<int>(variables->size()) -
-                                               parentStart));
+        const int parentStart = (proxy->pageIndex - 1) * m_pageSize;
+        const int parentShow = std::max(
+            0, std::min(m_pageSize,
+                        static_cast<int>(variables->size()) - parentStart));
         return createIndex(parentShow, 0, encodeProxy(parentProxy.get()));
     }
 
@@ -211,7 +211,7 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
         return {};
     }
 
-    auto rootVariables = root->getVariables(rootScope, false);
+    auto rootVariables = m_root->getVariables(m_rootScope, false);
     if (!rootVariables) {
         return {};
     }
@@ -225,7 +225,7 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
             return {};
         }
 
-        const LuauScope scope = owner ? owner->getScope() : rootScope;
+        const LuauScope scope = owner ? owner->getScope() : m_rootScope;
         for (int row = 0; row < variables->size(); ++row) {
             auto current = variables->at(row);
             if (current.get() == variable.get()) {
@@ -237,7 +237,7 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
             if (!current || !current->hasFields()) {
                 continue;
             }
-            auto children = root->getVariables(current->getScope(), false);
+            auto children = m_root->getVariables(current->getScope(), false);
             auto found = locate(children, current);
             if (found.found) {
                 return found;
@@ -252,7 +252,7 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
         return {};
     }
 
-    const int pageIndex = location.row / pageSize;
+    const int pageIndex = location.row / m_pageSize;
     if (pageIndex == 0) {
         if (!location.owner) {
             return {};
@@ -261,21 +261,21 @@ QModelIndex IDBTreeModel::parent(const QModelIndex &child) const {
     }
 
     auto proxy = location.owner ? getOrCreateProxy(location.owner, pageIndex)
-                                : getOrCreateProxy(rootScope, pageIndex);
-    auto variables = root->getVariables(location.scope, false);
+                                : getOrCreateProxy(m_rootScope, pageIndex);
+    auto variables = m_root->getVariables(location.scope, false);
     if (!variables) {
         return {};
     }
 
-    const int parentStart = (pageIndex - 1) * pageSize;
+    const int parentStart = (pageIndex - 1) * m_pageSize;
     const int proxyRow =
-        std::max(0, std::min(pageSize, static_cast<int>(variables->size()) -
-                                           parentStart));
+        std::max(0, std::min(m_pageSize, static_cast<int>(variables->size()) -
+                                             parentStart));
     return createIndex(proxyRow, 0, encodeProxy(proxy.get()));
 }
 
 int IDBTreeModel::rowCount(const QModelIndex &parent) const {
-    if (!root || rootScope.getType() == LuauScope::Type::Unknown) {
+    if (!m_root || m_rootScope.getType() == LuauScope::Type::Unknown) {
         return 0;
     }
 
@@ -283,7 +283,7 @@ int IDBTreeModel::rowCount(const QModelIndex &parent) const {
     int pageIndex = 0;
 
     if (!parent.isValid()) {
-        variables = root->getVariables(rootScope, true);
+        variables = m_root->getVariables(m_rootScope, true);
     } else {
         void *ip = parent.internalPointer();
         if (!ip) {
@@ -296,13 +296,13 @@ int IDBTreeModel::rowCount(const QModelIndex &parent) const {
                 return 0;
             }
             pageIndex = proxy->pageIndex;
-            variables = root->getVariables(proxy->scope, true);
+            variables = m_root->getVariables(proxy->scope, true);
         } else {
             auto *variable = decodeVar(ip);
             if (!variable || !variable->hasFields()) {
                 return 0;
             }
-            variables = root->getVariables(variable->getScope(), true);
+            variables = m_root->getVariables(variable->getScope(), true);
         }
     }
 
@@ -310,13 +310,13 @@ int IDBTreeModel::rowCount(const QModelIndex &parent) const {
         return 0;
     }
 
-    const int start = pageIndex * pageSize;
+    const int start = pageIndex * m_pageSize;
     const int total = static_cast<int>(variables->size());
     if (start >= total) {
         return 0;
     }
 
-    const int visibleCount = std::min(pageSize, total - start);
+    const int visibleCount = std::min(m_pageSize, total - start);
     return visibleCount + (start + visibleCount < total ? 1 : 0);
 }
 
@@ -426,11 +426,11 @@ bool IDBTreeModel::isProxyNode(const QModelIndex &index) const {
     return index.isValid() && isProxy(index.internalPointer());
 }
 
-int IDBTreeModel::getPageSize() const { return pageSize; }
+int IDBTreeModel::getPageSize() const { return m_pageSize; }
 
 IDBTreeModel::ProxyNodeInfo
 IDBTreeModel::getProxyNodeInfo(const QModelIndex &index) const {
-    if (!index.isValid() || !isProxyNode(index) || !root) {
+    if (!index.isValid() || !isProxyNode(index) || !m_root) {
         return {};
     }
 
@@ -442,28 +442,28 @@ IDBTreeModel::getProxyNodeInfo(const QModelIndex &index) const {
     ProxyNodeInfo info;
     info.isValid = true;
     info.pageIndex = proxy->pageIndex;
-    info.startIndex = proxy->pageIndex * pageSize;
+    info.startIndex = proxy->pageIndex * m_pageSize;
     info.ownerIdentifier =
         proxy->owner ? proxy->owner->getName() : proxy->scope.getName();
 
-    auto variables = root->getVariables(proxy->scope, false);
+    auto variables = m_root->getVariables(proxy->scope, false);
     if (!variables) {
         info.itemCount = 0;
         return info;
     }
 
     const int total = static_cast<int>(variables->size());
-    info.itemCount = std::max(0, std::min(pageSize, total - info.startIndex));
+    info.itemCount = std::max(0, std::min(m_pageSize, total - info.startIndex));
     return info;
 }
 
 QModelIndex
 IDBTreeModel::findIndexForOwner(const LuauVariable::Ptr &owner) const {
-    if (!owner || !root) {
+    if (!owner || !m_root) {
         return {};
     }
 
-    auto rootVariables = root->getVariables(rootScope, false);
+    auto rootVariables = m_root->getVariables(m_rootScope, false);
     if (!rootVariables) {
         return {};
     }
@@ -477,7 +477,7 @@ IDBTreeModel::findIndexForOwner(const LuauVariable::Ptr &owner) const {
             return {};
         }
 
-        const LuauScope scope = parent ? parent->getScope() : rootScope;
+        const LuauScope scope = parent ? parent->getScope() : m_rootScope;
         for (int row = 0; row < variables->size(); ++row) {
             auto current = variables->at(row);
             if (current.get() == owner.get()) {
@@ -489,7 +489,7 @@ IDBTreeModel::findIndexForOwner(const LuauVariable::Ptr &owner) const {
             if (!current || !current->hasFields()) {
                 continue;
             }
-            auto children = root->getVariables(current->getScope(), false);
+            auto children = m_root->getVariables(current->getScope(), false);
             auto found = locate(children, current);
             if (found.found) {
                 return found;
@@ -504,15 +504,15 @@ IDBTreeModel::findIndexForOwner(const LuauVariable::Ptr &owner) const {
         return {};
     }
 
-    return createIndex(location.row % pageSize, 0, encodeVar(owner.get()));
+    return createIndex(location.row % m_pageSize, 0, encodeVar(owner.get()));
 }
 
 LuauVariable::Ptr IDBTreeModel::getPtrFromRaw(LuauVariable *raw) const {
-    if (!raw || !root || rootScope.getType() == LuauScope::Type::Unknown) {
+    if (!raw || !m_root || m_rootScope.getType() == LuauScope::Type::Unknown) {
         return {};
     }
 
-    auto rootVariables = root->getVariables(rootScope, false);
+    auto rootVariables = m_root->getVariables(m_rootScope, false);
     if (!rootVariables) {
         return {};
     }
@@ -536,7 +536,7 @@ LuauVariable::Ptr IDBTreeModel::getPtrFromRaw(LuauVariable *raw) const {
             if (!variable || !variable->hasFields()) {
                 continue;
             }
-            auto children = root->getVariables(variable->getScope(), false);
+            auto children = m_root->getVariables(variable->getScope(), false);
             auto found = find(children);
             if (found) {
                 return found;
@@ -552,15 +552,15 @@ LuauVariable::Ptr IDBTreeModel::getPtrFromRaw(LuauVariable *raw) const {
 std::shared_ptr<IDBTreeModel::ProxyNode>
 IDBTreeModel::getOrCreateProxy(const LuauScope &scope, int pageIndex) const {
     ProxyKey key{nullptr, scope.getKey(), pageIndex};
-    auto it = proxyMap.find(key);
-    if (it != proxyMap.end()) {
+    auto it = m_proxyMap.find(key);
+    if (it != m_proxyMap.end()) {
         return it->second;
     }
 
     auto proxy = std::make_shared<ProxyNode>();
     proxy->scope = scope;
     proxy->pageIndex = pageIndex;
-    proxyMap[key] = proxy;
+    m_proxyMap[key] = proxy;
     return proxy;
 }
 
@@ -568,12 +568,12 @@ std::shared_ptr<IDBTreeModel::ProxyNode>
 IDBTreeModel::getOrCreateProxy(const LuauVariable::Ptr &owner,
                                int pageIndex) const {
     if (!owner) {
-        return getOrCreateProxy(rootScope, pageIndex);
+        return getOrCreateProxy(m_rootScope, pageIndex);
     }
 
     ProxyKey key{owner.get(), owner->getScope().getKey(), pageIndex};
-    auto it = proxyMap.find(key);
-    if (it != proxyMap.end()) {
+    auto it = m_proxyMap.find(key);
+    if (it != m_proxyMap.end()) {
         return it->second;
     }
 
@@ -581,6 +581,6 @@ IDBTreeModel::getOrCreateProxy(const LuauVariable::Ptr &owner,
     proxy->owner = owner;
     proxy->scope = owner->getScope();
     proxy->pageIndex = pageIndex;
-    proxyMap[key] = proxy;
+    m_proxyMap[key] = proxy;
     return proxy;
 }

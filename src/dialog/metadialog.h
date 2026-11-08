@@ -18,8 +18,6 @@
 #ifndef METADIALOG_H
 #define METADIALOG_H
 
-#include "framelessdialogbase.h"
-
 #include <QCheckBox>
 #include <QColor>
 #include <QDialog>
@@ -29,6 +27,7 @@
 #include <QPalette>
 
 #include "control/huecolorpickerslider.h"
+#include "framelessdialogbase.h"
 
 class MetaDialog : public FramelessDialogBase {
     Q_OBJECT
@@ -47,13 +46,13 @@ private:
     void on_reject();
 
 private:
-    QCheckBox *cforeground, *cbackground, *ccomment;
+    QCheckBox *m_cforeground, *m_cbackground, *m_ccomment;
     QLineEdit *m_comment;
-    HueColorPickerSlider *iforeground, *ibackground;
+    HueColorPickerSlider *m_iforeground, *m_ibackground;
 
-    QColor _foreground;
-    QColor _background;
-    QString _comment;
+    QColor m_foreground;
+    QColor m_background;
+    QString m_commentValue;
 };
 
 #endif // METADIALOG_H

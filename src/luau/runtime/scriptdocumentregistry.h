@@ -18,10 +18,12 @@
 #ifndef SCRIPTDOCUMENTREGISTRY_H
 #define SCRIPTDOCUMENTREGISTRY_H
 
-#include "scriptdocumentcontext.h"
+#include <memory>
+
 #include <QHash>
 #include <QPointer>
-#include <memory>
+
+#include "scriptdocumentcontext.h"
 
 struct lua_State;
 
@@ -36,12 +38,12 @@ public:
     ScriptDocumentContext *forCaller(lua_State *L);
 
 private:
-    ScriptDocumentContext::CurrentView _current;
-    ScriptDocumentContext::OpenView _open;
-    ScriptDocumentContext::CloseView _close;
-    std::shared_ptr<ScriptDocumentIds> _ids =
+    ScriptDocumentContext::CurrentView m_current;
+    ScriptDocumentContext::OpenView m_open;
+    ScriptDocumentContext::CloseView m_close;
+    std::shared_ptr<ScriptDocumentIds> m_ids =
         std::make_shared<ScriptDocumentIds>();
-    QHash<const void *, QPointer<ScriptDocumentContext>> _contexts;
+    QHash<const void *, QPointer<ScriptDocumentContext>> m_contexts;
 };
 
 #endif // SCRIPTDOCUMENTREGISTRY_H

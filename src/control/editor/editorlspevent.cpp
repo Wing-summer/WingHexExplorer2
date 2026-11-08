@@ -17,11 +17,11 @@
 
 #include "editorlspevent.h"
 
-#include "luau/lsp/luaulanguageserver.h"
-
 #include <QJsonArray>
 #include <QTextDocument>
 #include <QToolTip>
+
+#include "luau/lsp/luaulanguageserver.h"
 
 bool EditorLspEvent::processEvent(QEvent *event, LspEditorInterace *editor) {
     auto type = event->type();

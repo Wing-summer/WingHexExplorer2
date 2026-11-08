@@ -18,11 +18,11 @@
 #include "metadatamodel.h"
 
 MetaDataModel::MetaDataModel(QHexDocument *doc, QObject *parent)
-    : QAbstractTableModel(parent), _doc(doc) {}
+    : QAbstractTableModel(parent), m_doc(doc) {}
 
 int MetaDataModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return _doc ? _doc->metadata()->size() : 0;
+    return m_doc ? m_doc->metadata()->size() : 0;
 }
 
 int MetaDataModel::columnCount(const QModelIndex &parent) const {
@@ -34,7 +34,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
         auto r = index.row();
-        const auto &d = _doc->metadata()->at(r);
+        const auto &d = m_doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return QString(QStringLiteral("0x") +
@@ -59,7 +59,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::ToolTipRole: {
         auto r = index.row();
-        const auto &d = _doc->metadata()->at(r);
+        const auto &d = m_doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return QString(QString::number(d.begin) + QStringLiteral(" - 0x") +
@@ -84,7 +84,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::DecorationRole: {
         auto r = index.row();
-        const auto &d = _doc->metadata()->at(r);
+        const auto &d = m_doc->metadata()->at(r);
         switch (index.column()) {
         case 2:
             if (d.foreground.isValid()) {
@@ -104,7 +104,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         return int(Qt::AlignCenter);
     case Qt::UserRole:
         auto r = index.row();
-        const auto &d = _doc->metadata()->at(r);
+        const auto &d = m_doc->metadata()->at(r);
         switch (index.column()) {
         case 0: // begin
             return d.begin;
@@ -156,15 +156,15 @@ QVariant MetaDataModel::headerData(int section, Qt::Orientation orientation,
 
 void MetaDataModel::setDocument(QHexDocument *newDoc) {
     beginResetModel();
-    if (_doc) {
-        disconnect(_doc);
+    if (m_doc) {
+        disconnect(m_doc);
     }
-    _doc = newDoc;
-    if (_doc) {
-        connect(_doc, &QHexDocument::metaDataChanged, this,
+    m_doc = newDoc;
+    if (m_doc) {
+        connect(m_doc, &QHexDocument::sigOnMetaDataChanged, this,
                 [this] { Q_EMIT this->layoutChanged(); });
-        connect(_doc, &QHexDocument::destroyed, this,
-                [this]() { _doc = nullptr; });
+        connect(m_doc, &QHexDocument::destroyed, this,
+                [this]() { m_doc = nullptr; });
     }
     endResetModel();
 }

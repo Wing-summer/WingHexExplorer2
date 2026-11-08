@@ -18,12 +18,13 @@
 #ifndef LUAUSCOPE_H
 #define LUAUSCOPE_H
 
-#include <lua.h>
-#include <luau/VM/src/lapi.h>
-#include <luau/VM/src/lstate.h>
-
 #include <QHash>
 #include <QString>
+
+#include <lua.h>
+
+#include <luau/VM/src/lapi.h>
+#include <luau/VM/src/lstate.h>
 
 class LuauScope {
 public:
@@ -79,9 +80,9 @@ private:
     static inline LuauScope createFromAddress(lua_State *L, int index,
                                               const T *address) {
         LuauScope scope;
-        scope.L_ = L;
+        scope.m_state = L;
         scope.createKey(std::hash<const T *>{}(address));
-        scope.ref_ = lua_ref(L, index);
+        scope.m_ref = lua_ref(L, index);
         return scope;
     }
 
@@ -90,13 +91,13 @@ private:
     void newRef(int ref);
 
 private:
-    int key_ = 0;
-    QString name_;
-    Type type_ = Type::Unknown;
-    lua_State *L_ = nullptr;
-    int ref_ = LUA_REFNIL;
-    mutable bool loaded_ = false;
-    int level_ = 0;
+    int m_key = 0;
+    QString m_name;
+    Type m_type = Type::Unknown;
+    lua_State *m_state = nullptr;
+    int m_ref = LUA_REFNIL;
+    mutable bool m_loaded = false;
+    int m_level = 0;
 };
 
 inline size_t qHash(const LuauScope &key, size_t seed = 0) noexcept {

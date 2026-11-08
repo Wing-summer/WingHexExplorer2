@@ -27,56 +27,56 @@ void LuauDebugger::attach(lua_State *L) {
         return;
     }
 
-    if (attached_) {
+    if (m_attached) {
         detach();
     }
 
-    L_ = lua_mainthread(L);
-    thread_stack_.clear();
-    thread_stack_.push(L_);
-    callbacks_ = lua_callbacks(L_);
-    callbacks_->debugbreak = &LuauDebugger::debugBreak;
-    callbacks_->debugstep = &LuauDebugger::debugStep;
-    attached_ = true;
-    lua_singlestep(L_, true);
+    m_state = lua_mainthread(L);
+    m_threadStack.clear();
+    m_threadStack.push(m_state);
+    m_callbacks = lua_callbacks(m_state);
+    m_callbacks->debugbreak = &LuauDebugger::debugBreak;
+    m_callbacks->debugstep = &LuauDebugger::debugStep;
+    m_attached = true;
+    lua_singlestep(m_state, true);
 }
 
 void LuauDebugger::detach() {
-    if (!attached_) {
+    if (!m_attached) {
         return;
     }
 
     // If we are currently parked in the break loop, make sure we release the
     // VM so it can finish running before we tear the hooks down.
-    if (breakLoop_ != nullptr) {
+    if (m_breakLoop != nullptr) {
         processSingleStep(nullptr);
         resumeInternal();
     }
 
-    if (callbacks_ != nullptr) {
-        callbacks_->debugbreak = nullptr;
-        callbacks_->debugstep = nullptr;
+    if (m_callbacks != nullptr) {
+        m_callbacks->debugbreak = nullptr;
+        m_callbacks->debugstep = nullptr;
     }
-    lua_singlestep(L_, false);
+    lua_singlestep(m_state, false);
 
-    for (auto &file : files_) {
-        file->removeRef(L_);
+    for (auto &file : m_files) {
+        file->removeRef(m_state);
     }
-    files_.clear();
-    variable_registry_.clear();
-    thread_stack_.clear();
-    stackFrames_.clear();
-    frameStates_.clear();
-    frameLevels_.clear();
-    frameDepths_.clear();
-    callbacks_ = nullptr;
-    L_ = nullptr;
-    breakVm_ = nullptr;
-    attached_ = false;
-    resume_ = true;
-    pauseRequested_ = false;
-    terminateRequested_ = false;
-    singleStepProcessor_ = nullptr;
+    m_files.clear();
+    m_variableRegistry.clear();
+    m_threadStack.clear();
+    m_stackFrames.clear();
+    m_frameStates.clear();
+    m_frameLevels.clear();
+    m_frameDepths.clear();
+    m_callbacks = nullptr;
+    m_state = nullptr;
+    m_breakVm = nullptr;
+    m_attached = false;
+    m_resume = true;
+    m_pauseRequested = false;
+    m_terminateRequested = false;
+    m_singleStepProcessor = nullptr;
 }
 
 void LuauDebugger::debugBreak(lua_State *L, lua_Debug *ar) {
@@ -99,14 +99,14 @@ void LuauDebugger::debugStep(lua_State *L, lua_Debug *ar) {
     if (debugger == nullptr) {
         return;
     }
-    if (debugger->terminateRequested_) {
+    if (debugger->m_terminateRequested) {
         LuauUtil::throwError(L, "Thread execution is terminated");
         return;
     }
-    if (debugger->singleStepProcessor_ == nullptr) {
+    if (debugger->m_singleStepProcessor == nullptr) {
         return;
     }
-    if (debugger->singleStepProcessor_(L, ar)) {
+    if (debugger->m_singleStepProcessor(L, ar)) {
         debugger->onDebugBreak(L, ar, BreakReason::Step);
     }
 }
@@ -118,22 +118,22 @@ void LuauDebugger::onLuaFileLoaded(lua_State *L, const QString &path,
     }
 
     lua_singlestep(L, true);
-    auto f = files_.value(path);
+    auto f = m_files.value(path);
     if (f) {
         if (!source.isEmpty()) {
             f->setSource(QString::fromUtf8(source));
         }
         const auto adjustedLines = f->addRef(LuaFileRef(L));
         for (const auto &[oldLine, newLine] : adjustedLines) {
-            Q_EMIT onAdjustBreakPointLine(path, oldLine, newLine);
+            Q_EMIT sigOnAdjustBreakPointLine(path, oldLine, newLine);
         }
     } else {
         auto file = LuauFileContext::create(path);
         file->setSource(QString::fromUtf8(source));
         const auto adjustedLines = file->addRef(LuaFileRef(L));
-        files_.insert(path, file);
+        m_files.insert(path, file);
         for (const auto &[oldLine, newLine] : adjustedLines) {
-            Q_EMIT onAdjustBreakPointLine(path, oldLine, newLine);
+            Q_EMIT sigOnAdjustBreakPointLine(path, oldLine, newLine);
         }
     }
 }
@@ -144,27 +144,27 @@ void LuauDebugger::resume() {
 }
 
 void LuauDebugger::pause() {
-    if (!attached_ || isDebugBreak()) {
+    if (!m_attached || isDebugBreak()) {
         return;
     }
-    pauseRequested_ = true;
+    m_pauseRequested = true;
     processSingleStep(
-        [this](lua_State *, lua_Debug *) { return pauseRequested_; });
+        [this](lua_State *, lua_Debug *) { return m_pauseRequested; });
 }
 
 void LuauDebugger::terminate() {
-    if (!attached_) {
+    if (!m_attached) {
         return;
     }
 
-    terminateRequested_ = true;
+    m_terminateRequested = true;
     if (isDebugBreak()) {
         processSingleStep([](lua_State *, lua_Debug *) { return false; });
-        resume_ = true;
-        if (breakLoop_ != nullptr) {
-            breakLoop_->quit();
+        m_resume = true;
+        if (m_breakLoop != nullptr) {
+            m_breakLoop->quit();
         }
-        Q_EMIT onDebugActionExec();
+        Q_EMIT sigOnDebugActionExec();
     } else {
         processSingleStep([](lua_State *, lua_Debug *) { return false; });
     }
@@ -173,22 +173,22 @@ void LuauDebugger::terminate() {
 void LuauDebugger::setBreakPoints(
     const QString &path,
     const std::unordered_map<int, BreakPoint> &breakpoints) {
-    auto file = files_.value(path);
+    auto file = m_files.value(path);
     if (!file) {
         file = LuauFileContext::create(path);
-        files_.insert(path, file);
+        m_files.insert(path, file);
     }
     file->setBreakPoints(breakpoints);
 }
 
 void LuauDebugger::clearBreakPoints() {
-    for (auto &file : files_) {
+    for (auto &file : m_files) {
         file->clearBreakPoints();
     }
 }
 
 void LuauDebugger::onDebugBreak(lua_State *L, lua_Debug *, BreakReason reason) {
-    if (L == nullptr || !attached_) {
+    if (L == nullptr || !m_attached) {
         return;
     }
 
@@ -196,45 +196,46 @@ void LuauDebugger::onDebugBreak(lua_State *L, lua_Debug *, BreakReason reason) {
         return;
     }
 
-    breakVm_ = L;
-    breakContext_ = getBreakContext(L);
-    resume_ = false;
-    pauseRequested_ = false;
-    terminateRequested_ = false;
+    m_breakVm = L;
+    m_breakContext = getBreakContext(L);
+    m_resume = false;
+    m_pauseRequested = false;
+    m_terminateRequested = false;
     processSingleStep(nullptr);
     const auto frameState = L;
-    frameStates_.clear();
-    frameLevels_.clear();
-    frameDepths_.clear();
-    stackFrames_ = updateStackFrames(L);
-    variable_registry_.update(getThreadAncestors(frameState));
+    m_frameStates.clear();
+    m_frameLevels.clear();
+    m_frameDepths.clear();
+    m_stackFrames = updateStackFrames(L);
+    m_variableRegistry.update(getThreadAncestors(frameState));
 
-    Q_EMIT onRunCurrentLine(breakContext_.source_, breakContext_.line_);
-    Q_EMIT onPullVariables();
-    Q_EMIT onPullCallStack();
+    Q_EMIT sigOnRunCurrentLine(m_breakContext.source, m_breakContext.line);
+    Q_EMIT sigOnPullVariables();
+    Q_EMIT sigOnPullCallStack();
 
     waitForResume();
 }
 
-bool LuauDebugger::isDebugBreak() { return attached_ && !resume_; }
+bool LuauDebugger::isDebugBreak() { return m_attached && !m_resume; }
 
 void LuauDebugger::stepOver() {
     if (!isDebugBreak()) {
         return;
     }
 
-    const auto oldContext = breakContext_;
+    const auto oldContext = m_breakContext;
     processSingleStep([this, oldContext](lua_State *L, lua_Debug *) {
-        if (oldContext.L_ != nullptr && oldContext.L_->status == LUA_YIELD) {
+        if (oldContext.state != nullptr &&
+            oldContext.state->status == LUA_YIELD) {
             return false;
         }
         const auto context = getBreakContext(L);
-        if (L != oldContext.L_ && getParent(L) != oldContext.L_) {
+        if (L != oldContext.state && getParent(L) != oldContext.state) {
             return false;
         }
-        return (context.depth_ == oldContext.depth_ &&
-                context.line_ != oldContext.line_) ||
-               context.depth_ < oldContext.depth_;
+        return (context.depth == oldContext.depth &&
+                context.line != oldContext.line) ||
+               context.depth < oldContext.depth;
     });
     resumeInternal();
 }
@@ -243,12 +244,12 @@ void LuauDebugger::stepIn() {
     if (!isDebugBreak()) {
         return;
     }
-    const auto oldContext = breakContext_;
+    const auto oldContext = m_breakContext;
     processSingleStep([this, oldContext](lua_State *L, lua_Debug *) {
         const auto context = getBreakContext(L);
-        return context.L_ != oldContext.L_ ||
-               context.line_ != oldContext.line_ ||
-               context.depth_ != oldContext.depth_;
+        return context.state != oldContext.state ||
+               context.line != oldContext.line ||
+               context.depth != oldContext.depth;
     });
     resumeInternal();
 }
@@ -257,9 +258,9 @@ void LuauDebugger::stepOut() {
     if (!isDebugBreak()) {
         return;
     }
-    const auto oldContext = breakContext_;
+    const auto oldContext = m_breakContext;
     processSingleStep([this, oldContext](lua_State *L, lua_Debug *) {
-        return getBreakContext(L).depth_ < oldContext.depth_;
+        return getBreakContext(L).depth < oldContext.depth;
     });
     resumeInternal();
 }
@@ -281,9 +282,9 @@ QVector<LuauStackFrame> LuauDebugger::updateStackFrames(lua_State *L) {
             frame.line = ar.currentline;
             frame.id = frames.size();
             frames.append(std::move(frame));
-            frameStates_.append(sourceState);
-            frameLevels_.append(level);
-            frameDepths_.append(depth);
+            m_frameStates.append(sourceState);
+            m_frameLevels.append(level);
+            m_frameDepths.append(depth);
             ++depth;
         }
         L = getParent(L);
@@ -293,20 +294,20 @@ QVector<LuauStackFrame> LuauDebugger::updateStackFrames(lua_State *L) {
 }
 
 LuauFileContext LuauDebugger::findLoadedLuauFile(const QString &path) {
-    return files_.value(path);
+    return m_files.value(path);
 }
 
 const QVector<LuauStackFrame> &LuauDebugger::stackFrames() const {
-    return stackFrames_;
+    return m_stackFrames;
 }
 
 LuauVariableRegistry *LuauDebugger::variableRegistry() {
-    return &variable_registry_;
+    return &m_variableRegistry;
 }
 
 LuauVariable::Ptr LuauDebugger::evaluateExpression(const QString &expression,
                                                    int frameId) {
-    if (!isDebugBreak() || frameId < 0 || frameId >= frameStates_.size()) {
+    if (!isDebugBreak() || frameId < 0 || frameId >= m_frameStates.size()) {
         return {};
     }
 
@@ -315,8 +316,8 @@ LuauVariable::Ptr LuauDebugger::evaluateExpression(const QString &expression,
         return {};
     }
 
-    auto *L = frameStates_.at(frameId);
-    const auto level = frameLevels_.at(frameId);
+    auto *L = m_frameStates.at(frameId);
+    const auto level = m_frameLevels.at(frameId);
     LuauUtil::StackGuard guard(L);
     if (!LuauUtil::pushBreakEnv(L, level)) {
         return {};
@@ -330,34 +331,34 @@ LuauVariable::Ptr LuauDebugger::evaluateExpression(const QString &expression,
         lua_remove(L, -2);
         break;
     }
-    return variable_registry_.createVariable(L, exp, level);
+    return m_variableRegistry.createVariable(L, exp, level);
 }
 
 LuauScope LuauDebugger::localScope(int frameId) const {
-    if (frameId < 0 || frameId >= frameStates_.size()) {
+    if (frameId < 0 || frameId >= m_frameStates.size()) {
         return {};
     }
-    return LuauVariableRegistry::getLocalScope(frameStates_.at(frameId),
-                                               frameDepths_.at(frameId));
+    return LuauVariableRegistry::getLocalScope(m_frameStates.at(frameId),
+                                               m_frameDepths.at(frameId));
 }
 
 LuauScope LuauDebugger::upvalueScope(int frameId) const {
-    if (frameId < 0 || frameId >= frameStates_.size()) {
+    if (frameId < 0 || frameId >= m_frameStates.size()) {
         return {};
     }
-    return LuauVariableRegistry::getUpvalueScope(frameStates_.at(frameId),
-                                                 frameDepths_.at(frameId));
+    return LuauVariableRegistry::getUpvalueScope(m_frameStates.at(frameId),
+                                                 m_frameDepths.at(frameId));
 }
 
 LuauScope LuauDebugger::globalScope() const {
-    return LuauVariableRegistry::getGlobalScope(breakVm_);
+    return LuauVariableRegistry::getGlobalScope(m_breakVm);
 }
 
 LuauStackFrame LuauDebugger::stackFrame(int frameId) const {
-    if (frameId < 0 || frameId >= stackFrames_.size()) {
+    if (frameId < 0 || frameId >= m_stackFrames.size()) {
         return {};
     }
-    return stackFrames_.at(frameId);
+    return m_stackFrames.at(frameId);
 }
 
 int LuauDebugger::getStackDepth(lua_State *L) const {
@@ -374,26 +375,26 @@ BreakContext LuauDebugger::getBreakContext(lua_State *L) const {
     lua_Debug ar;
     lua_getinfo(L, 0, "sl", &ar);
     BreakContext ctx;
-    ctx.source_ = getDebugSource(ar);
-    ctx.line_ = ar.currentline;
-    ctx.depth_ = getStackDepth(L);
-    ctx.L_ = L;
+    ctx.source = getDebugSource(ar);
+    ctx.line = ar.currentline;
+    ctx.depth = getStackDepth(L);
+    ctx.state = L;
     return ctx;
 }
 
 void LuauDebugger::processSingleStep(SingleStepProcessor processor) {
-    singleStepProcessor_ = std::move(processor);
-    enableDebugStep(singleStepProcessor_ != nullptr);
+    m_singleStepProcessor = std::move(processor);
+    enableDebugStep(m_singleStepProcessor != nullptr);
 }
 
 void LuauDebugger::enableDebugStep(bool enable) {
-    if (L_ == nullptr || callbacks_ == nullptr) {
+    if (m_state == nullptr || m_callbacks == nullptr) {
         return;
     }
-    callbacks_->debugstep = enable ? &LuauDebugger::debugStep : nullptr;
-    lua_singlestep(L_, enable);
-    if (breakVm_ != nullptr && breakVm_ != L_) {
-        lua_singlestep(breakVm_, enable);
+    m_callbacks->debugstep = enable ? &LuauDebugger::debugStep : nullptr;
+    lua_singlestep(m_state, enable);
+    if (m_breakVm != nullptr && m_breakVm != m_state) {
+        lua_singlestep(m_breakVm, enable);
     }
 }
 
@@ -401,30 +402,30 @@ void LuauDebugger::resumeInternal() {
     if (!isDebugBreak()) {
         return;
     }
-    resume_ = true;
-    pauseRequested_ = false;
-    variable_registry_.clear();
-    stackFrames_.clear();
-    frameStates_.clear();
-    frameLevels_.clear();
-    frameDepths_.clear();
-    if (breakLoop_ != nullptr) {
-        breakLoop_->quit();
+    m_resume = true;
+    m_pauseRequested = false;
+    m_variableRegistry.clear();
+    m_stackFrames.clear();
+    m_frameStates.clear();
+    m_frameLevels.clear();
+    m_frameDepths.clear();
+    if (m_breakLoop != nullptr) {
+        m_breakLoop->quit();
     }
-    Q_EMIT onDebugActionExec();
+    Q_EMIT sigOnDebugActionExec();
 }
 
 void LuauDebugger::waitForResume() {
     QEventLoop loop;
-    breakLoop_ = &loop;
+    m_breakLoop = &loop;
     loop.exec();
-    breakLoop_ = nullptr;
-    breakVm_ = nullptr;
-    variable_registry_.clear();
-    stackFrames_.clear();
-    frameStates_.clear();
-    frameLevels_.clear();
-    frameDepths_.clear();
+    m_breakLoop = nullptr;
+    m_breakVm = nullptr;
+    m_variableRegistry.clear();
+    m_stackFrames.clear();
+    m_frameStates.clear();
+    m_frameLevels.clear();
+    m_frameDepths.clear();
 }
 
 QString LuauDebugger::getDebugSource(lua_Debug ar) {
@@ -448,7 +449,7 @@ BreakPoint *LuauDebugger::findBreakPoint(lua_State *L) const {
     if (L == nullptr || !lua_getinfo(L, 0, "sl", &ar) || ar.source == nullptr) {
         return nullptr;
     }
-    auto file = files_.value(getDebugSource(ar));
+    auto file = m_files.value(getDebugSource(ar));
     return file ? file->findBreakPoint(ar.currentline) : nullptr;
 }
 
@@ -462,15 +463,15 @@ QVector<lua_State *> LuauDebugger::getThreadAncestors(lua_State *L) {
 }
 
 void LuauDebugger::pushThreadStack(lua_State *state) {
-    thread_stack_.push(state);
+    m_threadStack.push(state);
 }
 
-void LuauDebugger::popThreadStack() { thread_stack_.pop(); }
+void LuauDebugger::popThreadStack() { m_threadStack.pop(); }
 
 lua_State *LuauDebugger::getParent(lua_State *L) const {
-    auto it = std::find(thread_stack_.begin(), thread_stack_.end(), L);
-    if (it != thread_stack_.end()) {
-        return it == thread_stack_.begin() ? nullptr : *(it - 1);
+    auto it = std::find(m_threadStack.begin(), m_threadStack.end(), L);
+    if (it != m_threadStack.end()) {
+        return it == m_threadStack.begin() ? nullptr : *(it - 1);
     }
-    return thread_stack_.isEmpty() ? nullptr : thread_stack_.back();
+    return m_threadStack.isEmpty() ? nullptr : m_threadStack.back();
 }

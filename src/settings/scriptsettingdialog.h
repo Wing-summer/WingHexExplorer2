@@ -18,10 +18,12 @@
 #ifndef SCRIPTSETTINGDIALOG_H
 #define SCRIPTSETTINGDIALOG_H
 
+#include <QWidget>
+
 #include "WingPlugin/settingpage.h"
+
 #include "class/util/changedstringlist.h"
 #include "luau/runtime/scriptmanager.h"
-#include <QWidget>
 
 namespace Ui {
 class ScriptSettingDialog;
@@ -37,8 +39,8 @@ public:
 private:
     Ui::ScriptSettingDialog *ui;
 
-    QStringList _usrHideCats;
-    QStringList _sysHideCats;
+    QStringList m_originalUsrHideCats;
+    QStringList m_originalSysHideCats;
 
     ChangedStringList m_usrHideCats;
     ChangedStringList m_sysHideCats;

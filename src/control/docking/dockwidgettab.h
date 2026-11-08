@@ -24,7 +24,7 @@ class DockWidgetTab : public ads::CDockWidgetTab {
     Q_OBJECT
 
 public:
-    DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent = nullptr);
+    DockWidgetTab(ads::CDockWidget *dockWidget, QWidget *parent = nullptr);
 
     // CDockAreaTitleBar interface
 public:
@@ -33,8 +33,8 @@ public:
 private:
     void initMenuItems(QMenu *menu, const QUrl &path);
 
-    QAction *createAutoHideToAction(const QString &Title,
-                                    ads::SideBarLocation Location, QMenu *Menu);
+    QAction *createAutoHideToAction(const QString &title,
+                                    ads::SideBarLocation location, QMenu *menu);
 };
 
 #endif // DOCKWIDGETTAB_H

@@ -17,16 +17,17 @@
 
 #include "wingluaurequire.h"
 
+#include <algorithm>
+
+#include <QCryptographicHash>
+#include <QDebug>
+#include <qlatin1stringview.h>
+#include <qnamespace.h>
+
 #include "lua.h"
 #include "lualib.h"
 
 #include "Luau/Compiler.h"
-
-#include <QCryptographicHash>
-#include <QDebug>
-#include <algorithm>
-#include <qlatin1stringview.h>
-#include <qnamespace.h>
 
 WingLuauRequire::WingLuauRequire() {}
 
@@ -35,52 +36,53 @@ bool WingLuauRequire::initRequire(lua_State *L, Options options) {
         return false;
     }
 
-    builtinLoaders_.clear();
-    builtinModules_.clear();
-    builtinNamespaces_.clear();
-    knownChunks_.clear();
-    L_ = L;
-    options_ = std::move(options);
-    options_.systemRoot = normalizeRoot(options_.systemRoot);
-    options_.userRoot = normalizeRoot(options_.userRoot);
+    m_builtinLoaders.clear();
+    m_builtinModules.clear();
+    m_builtinNamespaces.clear();
+    m_knownChunks.clear();
+    m_state = L;
+    m_options = std::move(options);
+    m_options.systemRoot = normalizeRoot(m_options.systemRoot);
+    m_options.userRoot = normalizeRoot(m_options.userRoot);
     return true;
 }
 
 void WingLuauRequire::installRequire() {
-    if (!L_) {
+    if (!m_state) {
         return;
     }
 
-    const int top = lua_gettop(L_);
+    const int top = lua_gettop(m_state);
 
     // Keep the native Luau require as the first upvalue of the adapter.
-    luarequire_pushrequire(L_, &WingLuauRequire::configInit, this);
-    lua_pushlightuserdata(L_, this);
-    lua_pushboolean(L_, false);
-    lua_pushcclosure(L_, &WingLuauRequire::cbRequireDispatch, "require", 3);
-    lua_setglobal(L_, "require");
+    luarequire_pushrequire(m_state, &WingLuauRequire::configInit, this);
+    lua_pushlightuserdata(m_state, this);
+    lua_pushboolean(m_state, false);
+    lua_pushcclosure(m_state, &WingLuauRequire::cbRequireDispatch, "require",
+                     3);
+    lua_setglobal(m_state, "require");
 
-    LUAU_ASSERT(lua_gettop(L_) == top);
+    LUAU_ASSERT(lua_gettop(m_state) == top);
 }
 
 void WingLuauRequire::installProxyRequire(const char *globalName) {
-    if (!L_ || !globalName || !*globalName) {
+    if (!m_state || !globalName || !*globalName) {
         return;
     }
 
-    const int top = lua_gettop(L_);
-    luarequire_pushproxyrequire(L_, &WingLuauRequire::configInit, this);
-    lua_pushlightuserdata(L_, this);
-    lua_pushboolean(L_, true);
-    lua_pushcclosure(L_, &WingLuauRequire::cbRequireDispatch, "proxyrequire",
-                     3);
-    lua_setglobal(L_, globalName);
-    LUAU_ASSERT(lua_gettop(L_) == top);
+    const int top = lua_gettop(m_state);
+    luarequire_pushproxyrequire(m_state, &WingLuauRequire::configInit, this);
+    lua_pushlightuserdata(m_state, this);
+    lua_pushboolean(m_state, true);
+    lua_pushcclosure(m_state, &WingLuauRequire::cbRequireDispatch,
+                     "proxyrequire", 3);
+    lua_setglobal(m_state, globalName);
+    LUAU_ASSERT(lua_gettop(m_state) == top);
 }
 
 bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
                                            int valueIndex) {
-    if (!L_) {
+    if (!m_state) {
         qCritical("lua_State is null");
         return false;
     }
@@ -91,8 +93,8 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
         return false;
     }
 
-    const int top = lua_gettop(L_);
-    const int absoluteValueIndex = lua_absindex(L_, valueIndex);
+    const int top = lua_gettop(m_state);
+    const int absoluteValueIndex = lua_absindex(m_state, valueIndex);
     if (absoluteValueIndex <= 0 || absoluteValueIndex > top) {
         qCritical("invalid Lua value index");
         return false;
@@ -101,20 +103,20 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
     auto normalizedName = normalized.toUtf8();
     auto normalizedNameData = normalizedName.constData();
 
-    lua_pushcfunction(L_, luarequire_registermodule,
+    lua_pushcfunction(m_state, luarequire_registermodule,
                       "luarequire_registermodule");
-    lua_pushfstring(L_, "@b/%s", normalizedNameData);
-    lua_pushvalue(L_, absoluteValueIndex);
+    lua_pushfstring(m_state, "@b/%s", normalizedNameData);
+    lua_pushvalue(m_state, absoluteValueIndex);
 
-    const int status = lua_pcall(L_, 2, 0, 0);
+    const int status = lua_pcall(m_state, 2, 0, 0);
     if (status != LUA_OK) {
-        const char *message = lua_tostring(L_, -1);
+        const char *message = lua_tostring(m_state, -1);
         if (message) {
             qCritical("%s", message);
         } else {
             qCritical("register builtin failed");
         }
-        lua_settop(L_, top);
+        lua_settop(m_state, top);
         return false;
     }
 
@@ -122,46 +124,46 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
     // is intentionally an internal implementation detail, while this table
     // lets the host loader serve the builtin when @<name> resolves through
     // the normal alias fallback without colliding with another package source.
-    lua_getfield(L_, LUA_REGISTRYINDEX, builtinRegistryKey());
-    if (lua_isnil(L_, -1)) {
-        lua_pop(L_, 1);
-        lua_newtable(L_);
-        lua_pushvalue(L_, -1);
-        lua_setfield(L_, LUA_REGISTRYINDEX, builtinRegistryKey());
+    lua_getfield(m_state, LUA_REGISTRYINDEX, builtinRegistryKey());
+    if (lua_isnil(m_state, -1)) {
+        lua_pop(m_state, 1);
+        lua_newtable(m_state);
+        lua_pushvalue(m_state, -1);
+        lua_setfield(m_state, LUA_REGISTRYINDEX, builtinRegistryKey());
     }
 
-    lua_pushvalue(L_, absoluteValueIndex);
-    lua_setfield(L_, -2, normalizedNameData);
-    lua_pop(L_, 1);
+    lua_pushvalue(m_state, absoluteValueIndex);
+    lua_setfield(m_state, -2, normalizedNameData);
+    lua_pop(m_state, 1);
 
-    builtinModules_.insert(normalized);
+    m_builtinModules.insert(normalized);
 
     const auto parts = normalized.split('/', Qt::SkipEmptyParts);
     QString prefix;
     for (const auto &part : parts) {
         prefix = prefix.isEmpty() ? part : prefix + QStringLiteral("/") + part;
-        builtinNamespaces_.insert(prefix);
+        m_builtinNamespaces.insert(prefix);
     }
 
-    lua_settop(L_, top);
+    lua_settop(m_state, top);
     return true;
 }
 
 bool WingLuauRequire::registerBuiltinLoader(
     const QString &moduleName, std::function<int(lua_State *)> loader) {
     const auto normalized = normalizeBuiltinName(moduleName);
-    if (!L_ || normalized.isEmpty() || !loader ||
-        builtinModules_.contains(normalized)) {
+    if (!m_state || normalized.isEmpty() || !loader ||
+        m_builtinModules.contains(normalized)) {
         return false;
     }
     auto entry = std::make_shared<BuiltinLoader>();
     entry->load = std::move(loader);
-    builtinLoaders_.insert(normalized, std::move(entry));
-    builtinModules_.insert(normalized);
+    m_builtinLoaders.insert(normalized, std::move(entry));
+    m_builtinModules.insert(normalized);
     QString prefix;
     for (const auto &part : normalized.split('/', Qt::SkipEmptyParts)) {
         prefix = prefix.isEmpty() ? part : prefix + '/' + part;
-        builtinNamespaces_.insert(prefix);
+        m_builtinNamespaces.insert(prefix);
     }
     return true;
 }
@@ -178,27 +180,27 @@ int WingLuauRequire::cbBuiltinLoad(lua_State *L) {
 }
 
 void WingLuauRequire::clearRequireCache() {
-    if (!L_) {
+    if (!m_state) {
         return;
     }
 
-    lua_pushcfunction(L_, luarequire_clearcache, "luarequire_clearcache");
-    lua_call(L_, 0, 0);
+    lua_pushcfunction(m_state, luarequire_clearcache, "luarequire_clearcache");
+    lua_call(m_state, 0, 0);
 }
 
 void WingLuauRequire::clearRequireCacheEntry(const char *cacheKey) {
-    if (!L_ || qstrlen(cacheKey) == 0) {
+    if (!m_state || qstrlen(cacheKey) == 0) {
         return;
     }
 
-    lua_pushcfunction(L_, luarequire_clearcacheentry,
+    lua_pushcfunction(m_state, luarequire_clearcacheentry,
                       "luarequire_clearcacheentry");
-    lua_pushstring(L_, cacheKey);
-    lua_call(L_, 1, 0);
+    lua_pushstring(m_state, cacheKey);
+    lua_call(m_state, 1, 0);
 }
 
 const WingLuauRequire::Options &WingLuauRequire::options() const {
-    return options_;
+    return m_options;
 }
 
 QString WingLuauRequire::callerChunkname(lua_State *L) {
@@ -388,21 +390,22 @@ struct WingLuauRequire::ResolutionSession::Impl {
 WingLuauRequire::ResolutionSession::ResolutionSession(
     const Options &options, const QSet<QString> &builtinModules,
     const QStringList &configRoots)
-    : impl(std::make_unique<Impl>()) {
-    auto &navigator = impl->navigator;
-    navigator.resolutionQuery_ = &impl->query;
-    impl->query.roots = configRoots;
-    if (!impl->state || !navigator.initRequire(impl->state.get(), options)) {
+    : m_impl(std::make_unique<Impl>()) {
+    auto &navigator = m_impl->navigator;
+    navigator.m_resolutionQuery = &m_impl->query;
+    m_impl->query.roots = configRoots;
+    if (!m_impl->state ||
+        !navigator.initRequire(m_impl->state.get(), options)) {
         throw std::runtime_error("Cannot initialize module resolution session");
     }
-    luaL_openlibs(impl->state.get());
+    luaL_openlibs(m_impl->state.get());
     for (const auto &name : builtinModules) {
         const QString normalized = name.toLower();
-        navigator.builtinModules_.insert(normalized);
+        navigator.m_builtinModules.insert(normalized);
         QString prefix;
         for (const auto &part : normalized.split('/')) {
             prefix = prefix.isEmpty() ? part : prefix + '/' + part;
-            navigator.builtinNamespaces_.insert(prefix);
+            navigator.m_builtinNamespaces.insert(prefix);
         }
     }
 }
@@ -425,11 +428,11 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
     // Use the runtime's native resolver, including configuration aliases. Only
     // its load callback is replaced: analysis records the destination and never
     // executes the resolved module.
-    auto &navigator = impl->navigator;
-    auto &query = impl->query;
-    auto &state = impl->state;
+    auto &navigator = m_impl->navigator;
+    auto &query = m_impl->query;
+    auto &state = m_impl->state;
     query.resolution = {};
-    navigator.knownChunks_.clear();
+    navigator.m_knownChunks.clear();
     lua_settop(state.get(), 0);
     // Require's result cache would skip the destination-recording load
     // callback. Reuse the VM, but resolve every query against the current
@@ -443,32 +446,32 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
         source.kind = NodeKind::ExternalFile;
         source.physicalPath = normalizeExistingPath(contextPath);
         if (const auto owned = navigator.mapAbsolutePathToNode(
-                Scope::User, navigator.options_.userRoot, source.physicalPath,
+                Scope::User, navigator.m_options.userRoot, source.physicalPath,
                 false)) {
             source = *owned;
         } else if (const auto owned = navigator.mapAbsolutePathToNode(
-                       Scope::System, navigator.options_.systemRoot,
+                       Scope::System, navigator.m_options.systemRoot,
                        source.physicalPath, false)) {
             source = *owned;
         }
-        navigator.knownChunks_.insert(chunk, source);
+        navigator.m_knownChunks.insert(chunk, source);
     }
     const auto initialize = +[](luarequire_Configuration *config) {
         configInit(config);
         config->reset = +[](lua_State *L, void *context, const char *chunk) {
             auto *navigator = static_cast<WingLuauRequire *>(context);
             const auto known =
-                navigator->knownChunks_.constFind(QString::fromUtf8(chunk));
-            if (known != navigator->knownChunks_.cend()) {
+                navigator->m_knownChunks.constFind(QString::fromUtf8(chunk));
+            if (known != navigator->m_knownChunks.cend()) {
                 // The requiring document may exist only in the editor buffer.
-                navigator->current_ = known.value();
+                navigator->m_current = known.value();
                 return NAVIGATE_SUCCESS;
             }
             return cbReset(L, context, chunk);
         };
         config->get_config_status = +[](lua_State *L, void *context) {
             auto *navigator = static_cast<WingLuauRequire *>(context);
-            auto *query = navigator->resolutionQuery_;
+            auto *query = navigator->m_resolutionQuery;
             const auto directory = navigator->configDirectory();
             if (!query->roots.isEmpty() &&
                 std::none_of(query->roots.cbegin(), query->roots.cend(),
@@ -488,7 +491,7 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
                 const auto result = cbToAliasFallback(L, context, alias);
                 if (result == NAVIGATE_AMBIGUOUS) {
                     static_cast<WingLuauRequire *>(context)
-                        ->resolutionQuery_->resolution.kind =
+                        ->m_resolutionQuery->resolution.kind =
                         FileModuleResolution::Kind::Ambiguous;
                 }
                 return result;
@@ -497,7 +500,7 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
             const auto result = cbToChild(L, context, name);
             if (result == NAVIGATE_AMBIGUOUS) {
                 static_cast<WingLuauRequire *>(context)
-                    ->resolutionQuery_->resolution.kind =
+                    ->m_resolutionQuery->resolution.kind =
                     FileModuleResolution::Kind::Ambiguous;
             }
             return result;
@@ -505,14 +508,14 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
         config->load = +[](lua_State *L, void *context, const char *,
                            const char *, const char *) {
             auto *navigator = static_cast<WingLuauRequire *>(context);
-            auto *query = navigator->resolutionQuery_;
-            if (navigator->current_.kind == NodeKind::Builtin) {
+            auto *query = navigator->m_resolutionQuery;
+            if (navigator->m_current.kind == NodeKind::Builtin) {
                 query->resolution = {FileModuleResolution::Kind::Builtin,
-                                     navigator->current_.builtinPath};
+                                     navigator->m_current.builtinPath};
             } else {
                 query->resolution = {
                     FileModuleResolution::Kind::File,
-                    navigator->loadPathForNode(navigator->current_)};
+                    navigator->loadPathForNode(navigator->m_current)};
             }
             lua_pushboolean(L, true);
             return 1;
@@ -607,10 +610,11 @@ WingLuauRequire::makeScopeRootNode(Scope scope, const QString &physicalRoot,
     node.explicitSource = explicitSource;
     return node;
 }
+
 bool WingLuauRequire::isModuleNode(const Node &node) const {
     switch (node.kind) {
     case NodeKind::Builtin:
-        return builtinModules_.contains(node.builtinPath);
+        return m_builtinModules.contains(node.builtinPath);
 
     case NodeKind::ModuleFile:
     case NodeKind::ExternalFile:
@@ -637,8 +641,8 @@ WingLuauRequire::findAliasSources(const QString &alias) const {
 
     // A builtin namespace is considered an owner of the shorthand
     // namespace. The exact module is checked later by
-    // isModuleNode()/builtinModules_.
-    result.builtin = builtinNamespaces_.contains(alias);
+    // isModuleNode()/m_builtinModules.
+    result.builtin = m_builtinNamespaces.contains(alias);
     result.user = findPackageInScope(Scope::User, alias);
     result.system = findPackageInScope(Scope::System, alias);
     return result;
@@ -762,37 +766,38 @@ WingLuauRequire::resolveChild(const QString &component) const {
     // A module directory exposes its children, but its reserved init file
     // is not itself a child module. Keep this rule on the actual navigation
     // path, not in makeCandidateFromBase(), which also resolves package roots.
-    if (current_.kind == NodeKind::ModuleDirectory &&
+    if (m_current.kind == NodeKind::ModuleDirectory &&
         component == QLatin1String("init")) {
         return {};
     }
 
-    switch (current_.kind) {
+    switch (m_current.kind) {
     case NodeKind::ScopeRoot:
-        if (current_.scope == Scope::System) {
-            return resolveChildFromSingleRoot(options_.systemRoot,
+        if (m_current.scope == Scope::System) {
+            return resolveChildFromSingleRoot(m_options.systemRoot,
                                               Scope::System, component,
-                                              current_.explicitSource);
+                                              m_current.explicitSource);
         }
 
-        if (current_.scope == Scope::User) {
-            return resolveChildFromSingleRoot(options_.userRoot, Scope::User,
+        if (m_current.scope == Scope::User) {
+            return resolveChildFromSingleRoot(m_options.userRoot, Scope::User,
                                               component,
-                                              current_.explicitSource);
+                                              m_current.explicitSource);
         }
 
         return {};
 
     case NodeKind::Builtin: {
-        const QString child = current_.builtinPath.isEmpty()
+        const QString child = m_current.builtinPath.isEmpty()
                                   ? component.toLower()
-                                  : current_.builtinPath + QStringLiteral("/") +
+                                  : m_current.builtinPath +
+                                        QStringLiteral("/") +
                                         component.toLower();
 
         // Builtins form a logical registry tree, not a filesystem root.
         // A registered module can also have registered descendants, so a
         // node may act as both a module and a namespace.
-        if (!builtinNamespaces_.contains(child)) {
+        if (!m_builtinNamespaces.contains(child)) {
             return {};
         }
 
@@ -808,8 +813,8 @@ WingLuauRequire::resolveChild(const QString &component) const {
     case NodeKind::ModuleDirectory:
     case NodeKind::ExternalDirectory:
         return makeCandidateFromBase(
-            current_.physicalPath, current_.scope, current_.rootPath, component,
-            current_.packageName, current_.explicitSource);
+            m_current.physicalPath, m_current.scope, m_current.rootPath,
+            component, m_current.packageName, m_current.explicitSource);
 
     case NodeKind::ModuleFile:
     case NodeKind::ExternalFile:
@@ -822,9 +827,9 @@ WingLuauRequire::resolveChild(const QString &component) const {
 QString WingLuauRequire::rootForScope(Scope scope) const {
     switch (scope) {
     case Scope::System:
-        return options_.systemRoot;
+        return m_options.systemRoot;
     case Scope::User:
-        return options_.userRoot;
+        return m_options.userRoot;
     case Scope::External:
         break;
     }
@@ -953,7 +958,7 @@ QString WingLuauRequire::cacheKeyForNode(const Node &node) const {
 }
 
 QString WingLuauRequire::configDirectory() const {
-    switch (current_.kind) {
+    switch (m_current.kind) {
     case NodeKind::Builtin:
         // Builtins have no filesystem location and therefore no project
         // configuration scope of their own.
@@ -962,10 +967,10 @@ QString WingLuauRequire::configDirectory() const {
     case NodeKind::Directory:
     case NodeKind::ModuleDirectory:
     case NodeKind::ExternalDirectory:
-        return current_.physicalPath;
+        return m_current.physicalPath;
     case NodeKind::ModuleFile:
     case NodeKind::ExternalFile:
-        return QFileInfo(current_.physicalPath).absolutePath();
+        return QFileInfo(m_current.physicalPath).absolutePath();
     }
 
     return {};
@@ -1091,13 +1096,13 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     // Treat the REPL as a script rooted at the process working directory.
     // This enables the same filesystem and package requires as file scripts.
     if (key.startsWith('=')) {
-        current_ = {};
-        current_.scope = Scope::External;
-        current_.kind = NodeKind::ExternalFile;
-        current_.physicalPath = normalizeExistingPath(
+        m_current = {};
+        m_current.scope = Scope::External;
+        m_current.kind = NodeKind::ExternalFile;
+        m_current.physicalPath = normalizeExistingPath(
             joinPath(QDir::currentPath(), QStringLiteral(".__wing_repl__")));
-        return current_.physicalPath.isEmpty() ? NAVIGATE_NOT_FOUND
-                                               : NAVIGATE_SUCCESS;
+        return m_current.physicalPath.isEmpty() ? NAVIGATE_NOT_FOUND
+                                                : NAVIGATE_SUCCESS;
     }
 
     // Exact known chunk names take priority.
@@ -1108,11 +1113,11 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     //
     // may actually represent a User, System, or Builtin node. The exact
     // Node recorded when the chunkname was generated is authoritative.
-    const auto known = knownChunks_.constFind(key);
+    const auto known = m_knownChunks.constFind(key);
 
-    if (known != knownChunks_.constEnd()) {
-        current_ = known.value();
-        return isModuleNode(current_) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
+    if (known != m_knownChunks.constEnd()) {
+        m_current = known.value();
+        return isModuleNode(m_current) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
     }
 
     // ScriptMachine loads file scripts with an @-prefixed filesystem path
@@ -1148,14 +1153,14 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
 
         const QString builtinPath = parts.sliced(1).join('/').toLower();
 
-        if (!builtinModules_.contains(builtinPath)) {
+        if (!m_builtinModules.contains(builtinPath)) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        current_ = {};
-        current_.scope = Scope::External;
-        current_.kind = NodeKind::Builtin;
-        current_.builtinPath = builtinPath;
+        m_current = {};
+        m_current.scope = Scope::External;
+        m_current.kind = NodeKind::Builtin;
+        m_current.builtinPath = builtinPath;
 
         return NAVIGATE_SUCCESS;
     }
@@ -1173,11 +1178,11 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     if (isSysPak || isUsrPak) {
         const Scope scope = isSysPak ? Scope::System : Scope::User;
 
-        if (scope == Scope::System && options_.systemRoot.isEmpty()) {
+        if (scope == Scope::System && m_options.systemRoot.isEmpty()) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        if (scope == Scope::User && options_.userRoot.isEmpty()) {
+        if (scope == Scope::User && m_options.userRoot.isEmpty()) {
             return NAVIGATE_NOT_FOUND;
         }
 
@@ -1185,7 +1190,7 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        current_ = makeScopeRootNode(scope, {}, true);
+        m_current = makeScopeRootNode(scope, {}, true);
 
         for (int i = 1; i < parts.size(); ++i) {
             const Candidate candidate = resolveChild(parts.at(i));
@@ -1198,10 +1203,10 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
                 return NAVIGATE_NOT_FOUND;
             }
 
-            current_ = candidate.node;
+            m_current = candidate.node;
         }
 
-        return isModuleNode(current_) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
+        return isModuleNode(m_current) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
     }
 
     // ------------------------------------------------------------
@@ -1233,20 +1238,20 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
     // the complete builtin path must be registered.
     if (sources.builtin) {
         const QString builtinPath = parts.join('/').toLower();
-        if (!builtinModules_.contains(builtinPath)) {
+        if (!m_builtinModules.contains(builtinPath)) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        current_ = {};
-        current_.scope = Scope::External;
-        current_.kind = NodeKind::Builtin;
-        current_.builtinPath = builtinPath;
+        m_current = {};
+        m_current.scope = Scope::External;
+        m_current.kind = NodeKind::Builtin;
+        m_current.builtinPath = builtinPath;
 
         return NAVIGATE_SUCCESS;
     }
 
     // User/System shorthand.
-    current_ = sources.hasUser() ? sources.user.node : sources.system.node;
+    m_current = sources.hasUser() ? sources.user.node : sources.system.node;
 
     for (int i = 1; i < parts.size(); ++i) {
         const Candidate candidate = resolveChild(parts.at(i));
@@ -1259,12 +1264,12 @@ WingLuauRequire::resetToChunkname(const char *chunkname) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        current_ = candidate.node;
+        m_current = candidate.node;
     }
 
     // A shorthand chunkname must resolve to an actual module, never merely
     // to a directory/namespace.
-    return isModuleNode(current_) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
+    return isModuleNode(m_current) ? NAVIGATE_SUCCESS : NAVIGATE_NOT_FOUND;
 }
 
 luarequire_NavigateResult
@@ -1281,13 +1286,13 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
     std::optional<Node> systemNode;
     std::optional<Node> userNode;
 
-    if (!options_.systemRoot.isEmpty()) {
-        systemNode = mapAbsolutePathToNode(Scope::System, options_.systemRoot,
+    if (!m_options.systemRoot.isEmpty()) {
+        systemNode = mapAbsolutePathToNode(Scope::System, m_options.systemRoot,
                                            physical, false);
     }
 
-    if (!options_.userRoot.isEmpty()) {
-        userNode = mapAbsolutePathToNode(Scope::User, options_.userRoot,
+    if (!m_options.userRoot.isEmpty()) {
+        userNode = mapAbsolutePathToNode(Scope::User, m_options.userRoot,
                                          physical, false);
     }
 
@@ -1298,12 +1303,12 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
     }
 
     if (systemNode) {
-        current_ = *systemNode;
+        m_current = *systemNode;
         return NAVIGATE_SUCCESS;
     }
 
     if (userNode) {
-        current_ = *userNode;
+        m_current = *userNode;
         return NAVIGATE_SUCCESS;
     }
 
@@ -1315,10 +1320,10 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        current_ = {};
-        current_.scope = Scope::External;
-        current_.kind = NodeKind::ExternalFile;
-        current_.physicalPath = physical;
+        m_current = {};
+        m_current.scope = Scope::External;
+        m_current.kind = NodeKind::ExternalFile;
+        m_current.physicalPath = physical;
         return NAVIGATE_SUCCESS;
     }
 
@@ -1328,10 +1333,10 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
             return NAVIGATE_AMBIGUOUS;
         }
 
-        current_ = {};
-        current_.scope = Scope::External;
-        current_.kind = NodeKind::ExternalDirectory;
-        current_.physicalPath = physical;
+        m_current = {};
+        m_current.scope = Scope::External;
+        m_current.kind = NodeKind::ExternalDirectory;
+        m_current.physicalPath = physical;
         return NAVIGATE_SUCCESS;
     }
 
@@ -1408,18 +1413,18 @@ WingLuauRequire::cbToAliasOverride(lua_State *, void *ctx,
     // @s and @u are reserved host aliases and intentionally override
     // project configuration aliases.
     if (alias.compare(QLatin1String("s"), Qt::CaseInsensitive) == 0) {
-        if (self->options_.systemRoot.isEmpty()) {
+        if (self->m_options.systemRoot.isEmpty()) {
             return NAVIGATE_NOT_FOUND;
         }
-        self->current_ = makeScopeRootNode(Scope::System, {}, true);
+        self->m_current = makeScopeRootNode(Scope::System, {}, true);
         return NAVIGATE_SUCCESS;
     }
 
     if (alias.compare(QLatin1String("u"), Qt::CaseInsensitive) == 0) {
-        if (self->options_.userRoot.isEmpty()) {
+        if (self->m_options.userRoot.isEmpty()) {
             return NAVIGATE_NOT_FOUND;
         }
-        self->current_ = makeScopeRootNode(Scope::User, {}, true);
+        self->m_current = makeScopeRootNode(Scope::User, {}, true);
         return NAVIGATE_SUCCESS;
     }
 
@@ -1427,9 +1432,9 @@ WingLuauRequire::cbToAliasOverride(lua_State *, void *ctx,
     // builtin path is missing, navigate from the builtin namespace so Luau
     // reports the missing child component instead of an invalid @b alias.
     if (alias.compare(QLatin1String("b"), Qt::CaseInsensitive) == 0) {
-        self->current_ = {};
-        self->current_.scope = Scope::External;
-        self->current_.kind = NodeKind::Builtin;
+        self->m_current = {};
+        self->m_current.scope = Scope::External;
+        self->m_current.kind = NodeKind::Builtin;
         return NAVIGATE_SUCCESS;
     }
 
@@ -1482,14 +1487,14 @@ WingLuauRequire::cbToAliasFallback(lua_State *, void *ctx,
 
     if (sources.builtin) {
         // Builtin shorthand is a logical registry node, not a filesystem root.
-        self->current_ = {};
-        self->current_.scope = Scope::External;
-        self->current_.kind = NodeKind::Builtin;
-        self->current_.builtinPath = packageName;
+        self->m_current = {};
+        self->m_current.scope = Scope::External;
+        self->m_current.kind = NodeKind::Builtin;
+        self->m_current.builtinPath = packageName;
         return NAVIGATE_SUCCESS;
     }
 
-    self->current_ =
+    self->m_current =
         sources.hasUser() ? sources.user.node : sources.system.node;
 
     return NAVIGATE_SUCCESS;
@@ -1501,44 +1506,44 @@ luarequire_NavigateResult WingLuauRequire::cbToParent(lua_State *, void *ctx) {
         return NAVIGATE_NOT_FOUND;
     }
 
-    if (self->current_.kind == NodeKind::ScopeRoot) {
+    if (self->m_current.kind == NodeKind::ScopeRoot) {
         return NAVIGATE_NOT_FOUND;
     }
 
-    if (self->current_.kind == NodeKind::Builtin) {
-        const int slash = self->current_.builtinPath.lastIndexOf('/');
+    if (self->m_current.kind == NodeKind::Builtin) {
+        const int slash = self->m_current.builtinPath.lastIndexOf('/');
         if (slash < 0) {
             return NAVIGATE_NOT_FOUND;
         }
 
-        self->current_.builtinPath = self->current_.builtinPath.left(slash);
+        self->m_current.builtinPath = self->m_current.builtinPath.left(slash);
         return NAVIGATE_SUCCESS;
     }
 
-    if (self->current_.physicalPath.isEmpty()) {
+    if (self->m_current.physicalPath.isEmpty()) {
         return NAVIGATE_NOT_FOUND;
     }
 
     const QString parent = normalizeExistingPath(
-        QFileInfo(self->current_.physicalPath).absolutePath());
-    if (parent.isEmpty() || parent == self->current_.physicalPath) {
+        QFileInfo(self->m_current.physicalPath).absolutePath());
+    if (parent.isEmpty() || parent == self->m_current.physicalPath) {
         return NAVIGATE_NOT_FOUND;
     }
 
     // Stop at a package-store boundary instead of leaking into the parent
     // directory that happens to contain the store.
-    if (!self->current_.rootPath.isEmpty() &&
-        parent == self->current_.rootPath) {
-        self->current_ = makeScopeRootNode(self->current_.scope, parent,
-                                           self->current_.explicitSource);
+    if (!self->m_current.rootPath.isEmpty() &&
+        parent == self->m_current.rootPath) {
+        self->m_current = makeScopeRootNode(self->m_current.scope, parent,
+                                            self->m_current.explicitSource);
         return NAVIGATE_SUCCESS;
     }
 
-    self->current_.physicalPath = parent;
-    if (self->current_.scope == Scope::External) {
-        self->current_.kind = NodeKind::ExternalDirectory;
+    self->m_current.physicalPath = parent;
+    if (self->m_current.scope == Scope::External) {
+        self->m_current.kind = NodeKind::ExternalDirectory;
     } else {
-        self->current_.kind = NodeKind::Directory;
+        self->m_current.kind = NodeKind::Directory;
     }
     return NAVIGATE_SUCCESS;
 }
@@ -1567,7 +1572,7 @@ luarequire_NavigateResult WingLuauRequire::cbToChild(lua_State *, void *ctx,
         return NAVIGATE_NOT_FOUND;
     }
 
-    self->current_ = candidate.node;
+    self->m_current = candidate.node;
     return NAVIGATE_SUCCESS;
 }
 
@@ -1576,15 +1581,15 @@ bool WingLuauRequire::cbIsModulePresent(lua_State *, void *ctx) {
     if (!self) {
         return false;
     }
-    switch (self->current_.kind) {
+    switch (self->m_current.kind) {
     case NodeKind::Builtin:
-        return self->builtinModules_.contains(self->current_.builtinPath);
+        return self->m_builtinModules.contains(self->m_current.builtinPath);
     case NodeKind::ModuleFile:
     case NodeKind::ExternalFile:
-        return QFileInfo(self->current_.physicalPath).isFile();
+        return QFileInfo(self->m_current.physicalPath).isFile();
     case NodeKind::ModuleDirectory:
     case NodeKind::ExternalDirectory:
-        return self->directoryInitStatus(self->current_.physicalPath) ==
+        return self->directoryInitStatus(self->m_current.physicalPath) ==
                InitStatus::Present;
     case NodeKind::ScopeRoot:
     case NodeKind::Directory:
@@ -1625,12 +1630,12 @@ luarequire_WriteResult WingLuauRequire::cbGetChunkname(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    const QString chunkname = self->chunknameForNode(self->current_);
+    const QString chunkname = self->chunknameForNode(self->m_current);
     if (chunkname.isEmpty()) {
         return WRITE_FAILURE;
     }
 
-    self->knownChunks_.insert(chunkname, self->current_);
+    self->m_knownChunks.insert(chunkname, self->m_current);
     return writeString(chunkname, buffer, bufferSize, sizeOut);
 }
 
@@ -1643,7 +1648,7 @@ luarequire_WriteResult WingLuauRequire::cbGetLoadname(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    const QString loadName = self->loadPathForNode(self->current_);
+    const QString loadName = self->loadPathForNode(self->m_current);
     if (loadName.isEmpty()) {
         return WRITE_FAILURE;
     }
@@ -1660,7 +1665,7 @@ luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    const QString cacheKey = self->cacheKeyForNode(self->current_);
+    const QString cacheKey = self->cacheKeyForNode(self->m_current);
     if (cacheKey.isEmpty()) {
         return WRITE_FAILURE;
     }
@@ -1693,14 +1698,14 @@ luarequire_WriteResult WingLuauRequire::cbGetConfig(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    if (self->options_.maxConfigBytes >= 0 &&
-        file.size() > self->options_.maxConfigBytes) {
+    if (self->m_options.maxConfigBytes >= 0 &&
+        file.size() > self->m_options.maxConfigBytes) {
         return WRITE_FAILURE;
     }
 
     const auto contentSize = file.size();
-    if (self->options_.maxConfigBytes >= 0 &&
-        contentSize > self->options_.maxConfigBytes) {
+    if (self->m_options.maxConfigBytes >= 0 &&
+        contentSize > self->m_options.maxConfigBytes) {
         return WRITE_FAILURE;
     }
 
@@ -1718,7 +1723,7 @@ luarequire_WriteResult WingLuauRequire::cbGetConfig(lua_State *, void *ctx,
 
 int WingLuauRequire::cbGetLuauConfigTimeout(lua_State *, void *ctx) {
     auto *self = static_cast<WingLuauRequire *>(ctx);
-    return self ? self->options_.luauConfigTimeoutMs : 2000;
+    return self ? self->m_options.luauConfigTimeoutMs : 2000;
 }
 
 int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
@@ -1731,11 +1736,11 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
     const QString loadName = QString::fromUtf8(loadname);
     if (loadName.startsWith(QStringLiteral("builtin:"), Qt::CaseInsensitive)) {
         const QString builtinPath = loadName.sliced(8);
-        if (!self->builtinModules_.contains(builtinPath)) {
+        if (!self->m_builtinModules.contains(builtinPath)) {
             luaL_error(L, "builtin module '%s' is not registered", loadname);
         }
 
-        if (auto entry = self->builtinLoaders_.value(builtinPath)) {
+        if (auto entry = self->m_builtinLoaders.value(builtinPath)) {
             if (entry->state == BuiltinLoader::State::Loading) {
                 luaL_error(L, "Cyclic builtin initialization: %s", loadname);
             }
@@ -1792,12 +1797,12 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
     // module needs to run in a new thread, isolated from the rest
     // note: we create ML on main thread so that it doesn't inherit
     // environment of L
-    lua_State *GL = lua_mainthread(L);
-    lua_State *ML = lua_newthread(GL);
-    lua_xmove(GL, L, 1);
+    lua_State *gl = lua_mainthread(L);
+    lua_State *ml = lua_newthread(gl);
+    lua_xmove(gl, L, 1);
 
     // new thread needs to have the globals sandboxed
-    luaL_sandboxthread(ML);
+    luaL_sandboxthread(ml);
 
     bool hadContents = false;
     int loadStatus = LUA_OK;
@@ -1814,9 +1819,9 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
 
             auto *self = static_cast<WingLuauRequire *>(ctx);
             if (self) {
-                const auto &cb = self->options_.onLuauFileLoading;
+                const auto &cb = self->m_options.onLuauFileLoading;
                 if (cb) {
-                    auto r = cb(L, ML, loadFile, source);
+                    auto r = cb(L, ml, loadFile, source);
                     if (!r) {
                         luaL_error(L, "failed to load module '%s'", loadname);
                     }
@@ -1827,7 +1832,7 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
             const std::string sourceString(source.constData(), source.size());
             const auto bytecode = Luau::compile(sourceString);
             loadStatus =
-                luau_load(ML, chunkname, bytecode.data(), bytecode.size(), 0);
+                luau_load(ml, chunkname, bytecode.data(), bytecode.size(), 0);
         }
     }
 
@@ -1835,32 +1840,32 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
         luaL_error(L, "could not read file '%s'", loadname);
     }
     if (loadStatus != LUA_OK) {
-        if (lua_isstring(ML, -1)) {
-            luaL_error(L, "error loading module: %s", lua_tostring(ML, -1));
+        if (lua_isstring(ml, -1)) {
+            luaL_error(L, "error loading module: %s", lua_tostring(ml, -1));
         }
         luaL_error(L, "unknown error loading module");
     }
 
-    if (FFlag::LuauCyclicRequireShortCircuit && lua_usesexport(ML, -1) != 0) {
+    if (FFlag::LuauCyclicRequireShortCircuit && lua_usesexport(ml, -1) != 0) {
         luarequire_createplaceholder(L);
     }
 
-    const int resumeStatus = lua_resume(ML, L, 0);
+    const int resumeStatus = lua_resume(ml, L, 0);
 
     if (resumeStatus == LUA_OK) {
-        if (lua_gettop(ML) != 1) {
+        if (lua_gettop(ml) != 1) {
             luaL_error(L, "module must return a single value");
         }
     } else if (resumeStatus == LUA_YIELD) {
         luaL_error(L, "module can not yield");
-    } else if (!lua_isstring(ML, -1)) {
+    } else if (!lua_isstring(ml, -1)) {
         luaL_error(L, "unknown error while running module");
     } else {
-        luaL_error(L, "error while running module: %s", lua_tostring(ML, -1));
+        luaL_error(L, "error while running module: %s", lua_tostring(ml, -1));
     }
 
     // add ML result to L stack
-    lua_xmove(ML, L, 1);
+    lua_xmove(ml, L, 1);
 
     // remove ML thread from L stack
     lua_remove(L, -2);

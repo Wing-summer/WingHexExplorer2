@@ -17,15 +17,16 @@
 
 #include "tablecolumnwidthcontroller.h"
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 #include <QAbstractItemDelegate>
 #include <QElapsedTimer>
 #include <QHeaderView>
 #include <QMouseEvent>
 #include <QStyleOptionViewItem>
 #include <QTreeView>
-#include <algorithm>
-#include <cmath>
-#include <limits>
 
 namespace {
 using WidthPolicy = QTableViewExt::ColumnWidthPolicy;
@@ -34,6 +35,7 @@ struct WidthBounds {
     int minimum;
     int maximum;
 };
+
 struct WeightedColumn {
     int column;
     WidthBounds bounds;
@@ -496,7 +498,7 @@ void TableColumnWidthController::apply() {
     }
     m_applyingWidths = false;
     if (m_table) {
-        Q_EMIT m_table->columnWidthsAdjusted();
+        Q_EMIT m_table->sigOnColumnWidthsAdjusted();
     }
 }
 

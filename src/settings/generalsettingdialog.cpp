@@ -18,15 +18,14 @@
 #include "generalsettingdialog.h"
 #include "ui_generalsettingdialog.h"
 
+#include <QLibraryInfo>
 #include <QMetaEnum>
+#include <QSysInfo>
 
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
 #include "utilities.h"
-
-#include <QLibraryInfo>
-#include <QSysInfo>
 
 GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::GeneralSettingDialog) {
@@ -81,7 +80,8 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     connect(ui->cbFont, &QFontComboBox::currentTextChanged, sm,
             &SettingManager::setAppFontFamily);
     connect(ui->cbTheme, &QComboBox::currentIndexChanged, this, [this]() {
-        SettingManager::instance().setThemeID(ui->cbTheme->currentData().toInt());
+        SettingManager::instance().setThemeID(
+            ui->cbTheme->currentData().toInt());
     });
     connect(ui->cbWinState, &QComboBox::currentIndexChanged, sm, [](int index) {
         Qt::WindowState state;
@@ -153,6 +153,6 @@ QString GeneralSettingDialog::name() const { return tr("General"); }
 QString GeneralSettingDialog::id() const { return QStringLiteral("General"); }
 
 void GeneralSettingDialog::restore() {
-    SettingManager::instance().reset(SettingManager::SETTING::APP);
+    SettingManager::instance().reset(SettingManager::Setting::App);
     reload();
 }

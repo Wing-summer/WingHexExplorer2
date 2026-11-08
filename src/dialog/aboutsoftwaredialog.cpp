@@ -16,7 +16,6 @@
 */
 
 #include "aboutsoftwaredialog.h"
-
 #include "ui_aboutsoftwaredialog.h"
 
 #include "class/settings/languagemanager.h"
@@ -39,20 +38,20 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->tbLicense->setMarkdown(
         readContent(QStringLiteral(":/com.wingsummer.winghex/src/LICENSE.md")));
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->buildUpContent(this);
-    _dialog->setWindowTitle(this->windowTitle());
-    _dialog->setMinimumSize(800, 600);
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->buildUpContent(this);
+    m_dialog->setWindowTitle(this->windowTitle());
+    m_dialog->setMinimumSize(800, 600);
 
-    Utilities::moveToCenter(_dialog);
+    Utilities::moveToCenter(m_dialog);
 }
 
 AboutSoftwareDialog::~AboutSoftwareDialog() {
     delete ui;
-    _dialog->deleteLater();
+    m_dialog->deleteLater();
 }
 
-int AboutSoftwareDialog::exec() { return _dialog->exec(); }
+int AboutSoftwareDialog::exec() { return m_dialog->exec(); }
 
 QString AboutSoftwareDialog::readContent(const QString &path) {
     QFile file(path);

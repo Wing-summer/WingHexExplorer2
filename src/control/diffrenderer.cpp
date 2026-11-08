@@ -25,12 +25,12 @@ DiffRenderer::DiffRenderer(QHexDocument *document, QHexCursor *cursor,
 void DiffRenderer::setResults(
     std::shared_ptr<const WingDiff::ResultStore> results) {
     m_results = std::move(results);
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 void DiffRenderer::setDarkTheme(bool dark) {
     m_dark = dark;
-    Q_EMIT repaintRequested();
+    Q_EMIT sigOnRepaintRequested();
 }
 
 void DiffRenderer::applyLineFormats(qsizetype line,

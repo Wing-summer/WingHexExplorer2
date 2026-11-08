@@ -41,9 +41,9 @@ const QString SharedMemoryDriver::pluginComment() const {
 }
 
 WingHex::WingIODevice *SharedMemoryDriver::onOpenFile(const QString &path) {
-    _count++;
+    m_count++;
     auto mem = new SharedMemory(path, SharedMemory::ReadWrite, this);
-    connect(mem, &SharedMemory::destroyed, this, [this]() { _count--; });
+    connect(mem, &SharedMemory::destroyed, this, [this]() { m_count--; });
     return mem;
 }
 
@@ -53,7 +53,7 @@ bool SharedMemoryDriver::onCloseFile(WingHex::WingIODevice *dev) {
 }
 
 bool SharedMemoryDriver::isShareMemUsed(const WingHex::SenderInfo &) {
-    return _count;
+    return m_count;
 }
 
 QString SharedMemoryDriver::supportedFileExtDisplayName() const {
@@ -61,7 +61,8 @@ QString SharedMemoryDriver::supportedFileExtDisplayName() const {
 }
 
 QIcon SharedMemoryDriver::supportedFileIcon() const {
-    return QIcon(QStringLiteral(":/images/ShareMemDrv/images/shared-memory.svg"));
+    return QIcon(
+        QStringLiteral(":/images/ShareMemDrv/images/shared-memory.svg"));
 }
 
 QString SharedMemoryDriver::onOpenFileBegin() {

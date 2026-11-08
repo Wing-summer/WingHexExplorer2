@@ -16,16 +16,17 @@
 */
 
 #include "QConsoleIODevice.h"
-#include "QConsoleWidget.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QTimer>
 
+#include "QConsoleWidget.h"
+
 QConsoleIODevice::QConsoleIODevice(QConsoleWidget *w, QObject *parent)
-    : QIODevice(parent), widget_(w), readpos_(0), writtenSinceLastEmit_(0),
-      readSinceLastEmit_(0) {
+    : QIODevice(parent), m_widget(w), m_readpos(0), m_writtenSinceLastEmit(0),
+      m_readSinceLastEmit(0) {
     setCurrentWriteChannel(QConsoleWidget::StandardOutput);
 
     open(QIODevice::ReadWrite | QIODevice::Unbuffered);
@@ -34,12 +35,12 @@ QConsoleIODevice::QConsoleIODevice(QConsoleWidget *w, QObject *parent)
 QConsoleIODevice::~QConsoleIODevice() {}
 
 qint64 QConsoleIODevice::bytesAvailable() const {
-    return (qint64)(readbuff_.size() - readpos_);
+    return (qint64)(m_readbuff.size() - m_readpos);
 }
 
 bool QConsoleIODevice::waitForReadyRead(int msecs) {
-    if (!widget_->device()->isOpen() ||
-        widget_->mode() != QConsoleWidget::Input) {
+    if (!m_widget->device()->isOpen() ||
+        m_widget->mode() != QConsoleWidget::Input) {
         return false;
     }
 
@@ -55,29 +56,29 @@ bool QConsoleIODevice::waitForReadyRead(int msecs) {
         QTimer::singleShot(msecs, &loop, SLOT(quit()));
     }
 
-    readyReadEmmited_ = false;
+    m_readyReadEmmited = false;
     loop.exec();
-    return readyReadEmmited_;
+    return m_readyReadEmmited;
 }
 
-QConsoleWidget *QConsoleIODevice::widget() const { return widget_; }
+QConsoleWidget *QConsoleIODevice::widget() const { return m_widget; }
 
 qint64 QConsoleIODevice::readData(char *data, qint64 len) {
     int b = bytesAvailable();
     if (b) {
         b = qMin(len, b);
-        memcpy(data, readbuff_.constData() + readpos_, b);
-        readpos_ += b;
+        memcpy(data, m_readbuff.constData() + m_readpos, b);
+        m_readpos += b;
     }
     return (qint64)b;
 }
 
 qint64 QConsoleIODevice::writeData(const char *data, qint64 len) {
-    widget_->write(QString::fromLatin1(data, len));
-    writtenSinceLastEmit_ += len;
+    m_widget->write(QString::fromLatin1(data, len));
+    m_writtenSinceLastEmit += len;
     if (!signalsBlocked()) {
-        Q_EMIT bytesWritten(writtenSinceLastEmit_);
-        writtenSinceLastEmit_ = 0;
+        Q_EMIT bytesWritten(m_writtenSinceLastEmit);
+        m_writtenSinceLastEmit = 0;
     }
     return len;
 }
@@ -86,19 +87,19 @@ void QConsoleIODevice::consoleWidgetInput(const QString &in) {
     QByteArray ba = in.toLatin1();
     int sz = ba.size();
     if (bytesAvailable()) {
-        if (readpos_) {
-            readbuff_ = readbuff_.mid(readpos_);
+        if (m_readpos) {
+            m_readbuff = m_readbuff.mid(m_readpos);
         }
-        readbuff_.append(ba);
+        m_readbuff.append(ba);
     } else {
-        readbuff_ = ba;
+        m_readbuff = ba;
     }
-    readpos_ = 0;
+    m_readpos = 0;
 
-    readSinceLastEmit_ += sz;
+    m_readSinceLastEmit += sz;
     if (!signalsBlocked()) {
         Q_EMIT readyRead();
-        readyReadEmmited_ = true;
-        readSinceLastEmit_ = 0;
+        m_readyReadEmmited = true;
+        m_readSinceLastEmit = 0;
     }
 }

@@ -27,8 +27,8 @@
 
 MutiSaveDialog::MutiSaveDialog(const QVector<EditorInfo *> &editors,
                                EditorsCtl *edctl, QWidget *parent)
-    : QWidget(parent), ui(new Ui::MutiSaveDialog), _editors(editors),
-      _esctl(edctl) {
+    : QWidget(parent), ui(new Ui::MutiSaveDialog), m_editors(editors),
+      m_esctl(edctl) {
     ui->setupUi(this);
     setWindowIcon(ThemeManager::instance().standardIcon(
         ThemeManager::StandardIcon::Unsaved));
@@ -37,16 +37,16 @@ MutiSaveDialog::MutiSaveDialog(const QVector<EditorInfo *> &editors,
             [this](QAbstractButton *button) {
                 auto sbtn = ui->buttonBox->standardButton(button);
                 if (sbtn == QDialogButtonBox::Discard) {
-                    _dialog->done(SAVE_DISCARD);
+                    m_dialog->done(SAVE_DISCARD);
                 } else if (sbtn == QDialogButtonBox::Cancel) {
-                    _dialog->done(SAVE_CANCEL);
+                    m_dialog->done(SAVE_CANCEL);
                 } else if (sbtn == QDialogButtonBox::SaveAll) {
-                    _dialog->done(SAVE_SAVE);
+                    m_dialog->done(SAVE_SAVE);
                 }
             });
 
     auto delegate = new MutiSaveButtonDelegate(this);
-    connect(delegate, &MutiSaveButtonDelegate::buttonClicked, this,
+    connect(delegate, &MutiSaveButtonDelegate::sigOnButtonClicked, this,
             &MutiSaveDialog::onClickFileButton);
     ui->listWidget->setItemDelegate(delegate);
 
@@ -57,20 +57,20 @@ MutiSaveDialog::MutiSaveDialog(const QVector<EditorInfo *> &editors,
         ui->listWidget->addItem(item);
     }
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->buildUpContent(this);
-    _dialog->setWindowTitle(this->windowTitle());
-    _dialog->setMinimumSize(400, 350);
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->buildUpContent(this);
+    m_dialog->setWindowTitle(this->windowTitle());
+    m_dialog->setMinimumSize(400, 350);
 
-    Utilities::moveToCenter(_dialog);
+    Utilities::moveToCenter(m_dialog);
 }
 
 MutiSaveDialog::~MutiSaveDialog() {
     delete ui;
-    _dialog->deleteLater();
+    m_dialog->deleteLater();
 }
 
-int MutiSaveDialog::exec() { return _dialog->exec(); }
+int MutiSaveDialog::exec() { return m_dialog->exec(); }
 
 void MutiSaveDialog::onClickFileButton(const QModelIndex &index) {
     QMenu menu;
@@ -79,34 +79,34 @@ void MutiSaveDialog::onClickFileButton(const QModelIndex &index) {
         theme.standardIcon(ThemeManager::StandardIcon::Saved), tr("Save"));
     auto row = index.row();
     connect(a, &QAction::triggered, this, [this, row]() {
-        auto e = _editors.at(row);
-        Q_ASSERT(_esctl);
-        if (_esctl->save(e)) {
-            _editors.removeAt(row);
+        auto e = m_editors.at(row);
+        Q_ASSERT(m_esctl);
+        if (m_esctl->save(e)) {
+            m_editors.removeAt(row);
             auto le = ui->listWidget->takeItem(row);
             if (le) {
                 delete le;
             }
         }
 
-        if (_editors.isEmpty()) {
-            _dialog->done(SAVE_NOOP);
+        if (m_editors.isEmpty()) {
+            m_dialog->done(SAVE_NOOP);
         }
     });
     a = menu.addAction(theme.standardIcon(ThemeManager::StandardIcon::Unsaved),
                        tr("Discard"));
     connect(a, &QAction::triggered, this, [this, row]() {
-        auto e = _editors.at(row);
-        Q_ASSERT(_esctl);
-        _esctl->discard(e);
-        _editors.removeAt(row);
+        auto e = m_editors.at(row);
+        Q_ASSERT(m_esctl);
+        m_esctl->discard(e);
+        m_editors.removeAt(row);
         auto le = ui->listWidget->takeItem(row);
         if (le) {
             delete le;
         }
 
-        if (_editors.isEmpty()) {
-            _dialog->done(SAVE_NOOP);
+        if (m_editors.isEmpty()) {
+            m_dialog->done(SAVE_NOOP);
         }
     });
     menu.exec(QCursor::pos());

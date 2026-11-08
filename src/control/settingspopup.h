@@ -20,9 +20,10 @@
 #ifndef SETTINGSPOPUP_H
 #define SETTINGSPOPUP_H
 
-#include <KSyntaxHighlighting/Definition>
 #include <QIcon>
 #include <QLineEdit>
+
+#include <KSyntaxHighlighting/Definition>
 
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -36,7 +37,7 @@ public:
     QSize sizeHint() const override;
 
 Q_SIGNALS:
-    void navigateDown();
+    void sigOnNavigateDown();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -79,7 +80,7 @@ public:
     SyntaxPopup(QWidget *parent = nullptr);
 
 Q_SIGNALS:
-    void syntaxSelected(const KSyntaxHighlighting::Definition &syntax);
+    void sigOnSyntaxSelected(const KSyntaxHighlighting::Definition &syntax);
 
 private Q_SLOTS:
     void syntaxItemChosen(QTreeWidgetItem *current, int column);
@@ -95,7 +96,7 @@ public:
     EncodingPopup(QWidget *parent = Q_NULLPTR);
 
 Q_SIGNALS:
-    void encodingSelected(const QString &codecName);
+    void sigOnEncodingSelected(const QString &codecName);
 
 private Q_SLOTS:
     void encodingItemChosen(QTreeWidgetItem *current, int column);

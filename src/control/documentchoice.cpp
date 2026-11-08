@@ -20,6 +20,6 @@
 DocumentChoice::DocumentChoice(QWidget *parent) : QComboBox(parent) {}
 
 void DocumentChoice::showPopup() {
-    Q_EMIT aboutToShowPopup();
+    Q_EMIT sigOnAboutToShowPopup();
     QComboBox::showPopup();
 }

@@ -17,11 +17,24 @@
 
 #include "scriptingdialog.h"
 
+#include <QClipboard>
+#include <QDesktopServices>
+#include <QHeaderView>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLabel>
+#include <QListView>
+#include <QPainter>
+#include <QPicture>
+#include <QStatusBar>
+#include <QToolTip>
+
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "WingCodeEdit/wingsymbolcenter.h"
+
 #include "aboutsoftwaredialog.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
@@ -43,18 +56,6 @@
 #include "model/idbtreemodel.h"
 #include "model/idbwatchmodel.h"
 #include "utilities.h"
-
-#include <QClipboard>
-#include <QDesktopServices>
-#include <QHeaderView>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QLabel>
-#include <QListView>
-#include <QPainter>
-#include <QPicture>
-#include <QStatusBar>
-#include <QToolTip>
 
 constexpr auto EMPTY_FUNC = [] {};
 
@@ -80,7 +81,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu, true);
-    connect(m_recentmanager, &RecentFileManager::triggered, this,
+    connect(m_recentmanager, &RecentFileManager::sigOnRecentFileTriggered, this,
             [this](const RecentFileManager::RecentInfo &rinfo) {
                 bool o;
                 auto e = openFile(rinfo.url.toLocalFile(), &o);
@@ -109,24 +110,24 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     layout->addWidget(q_check_ptr(m_ribbon));
 
     buildUpDockSystem(cw);
-    _defaultLayout = m_dock->saveState();
+    m_defaultLayout = m_dock->saveState();
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
-    _status = new QLabel(this);
-    m_status->addPermanentWidget(_status);
+    m_statusLabel = new QLabel(this);
+    m_status->addPermanentWidget(m_statusLabel);
     layout->addWidget(m_status);
     buildUpContent(cw);
 
     registerMark();
 
     auto &theme = ThemeManager::instance();
-    connect(&theme, &ThemeManager::themeChanged, this,
+    connect(&theme, &ThemeManager::sigOnThemeChanged, this,
             &ScriptingDialog::registerMark);
 
     updateEditModeEnabled();
 
-    m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
+    m_tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
     // ok, preparing for starting...
     updateWindowTitle();
@@ -136,7 +137,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     // load saved docking layout
     auto &set = SettingManager::instance();
     m_dock->restoreState(set.scriptDockLayout());
-    _savedLayout = m_dock->saveState();
+    m_savedLayout = m_dock->saveState();
     m_lastusedpath = set.lastUsedScriptPath();
     m_watchModel->reloadExpressionList(set.watchExpressions());
 
@@ -152,7 +153,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                                                callbacks);
 
     auto lsp = &LuauLanguageServer::instance();
-    connect(lsp, &LuauLanguageServer::onPublishDiagnostic, this,
+    connect(lsp, &LuauLanguageServer::sigOnPublishDiagnostic, this,
             [this](const lsp::DocumentUri &uri,
                    const QVector<lsp::Diagnostic> &diagnostics) {
                 if (!uri.isLocalFile()) {
@@ -204,7 +205,7 @@ void ScriptingDialog::initConsole() {
     m_consoleout->init();
     auto dbg = ScriptMachine::instance().debugger();
     Q_ASSERT(dbg);
-    connect(dbg, &LuauDebugger::onAdjustBreakPointLine, this,
+    connect(dbg, &LuauDebugger::sigOnAdjustBreakPointLine, this,
             [this](const QString &file, int oldLineNbr, int newLineNbr) {
                 auto editor = findEditorView(file);
                 if (editor) {
@@ -212,7 +213,7 @@ void ScriptingDialog::initConsole() {
                     addBreakPoint(editor, newLineNbr);
                 }
             });
-    connect(dbg, &LuauDebugger::onPullVariables, this, [this]() {
+    connect(dbg, &LuauDebugger::sigOnPullVariables, this, [this]() {
         auto dbg = ScriptMachine::instance().debugger();
         if (!dbg->isDebugBreak()) {
             m_gvarshow->dataModel()->resetRoot();
@@ -226,9 +227,9 @@ void ScriptingDialog::initConsole() {
         m_upvarshow->dataModel()->setRoot(reg, dbg->upvalueScope(0));
         m_watchModel->refresh();
     });
-    connect(dbg, &LuauDebugger::onRunCurrentLine, this,
+    connect(dbg, &LuauDebugger::sigOnRunCurrentLine, this,
             &ScriptingDialog::goRunFileLine);
-    connect(dbg, &LuauDebugger::onDebugActionExec, this,
+    connect(dbg, &LuauDebugger::sigOnDebugActionExec, this,
             [this]() { updateRunDebugMode(); });
 }
 
@@ -283,12 +284,12 @@ bool ScriptingDialog::about2Close() {
 
 void ScriptingDialog::saveDockLayout() {
     auto &set = SettingManager::instance();
-    set.setScriptDockLayout(_savedLayout);
+    set.setScriptDockLayout(m_savedLayout);
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
-    m_Tbtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
+    m_tbtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
     buildFilePage(m_ribbon->addTab(tr("File")));
     m_editStateWidgets << buildEditPage(m_ribbon->addTab(tr("Edit")));
     buildViewPage(m_ribbon->addTab(tr("View")));
@@ -297,23 +298,23 @@ void ScriptingDialog::buildUpRibbonBar() {
     buildSettingPage(m_ribbon->addTab(tr("Settings")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
 
-    connect(
-        m_ribbon, &Ribbon::onDragDropFiles, this,
-        [this](const QStringList &files) {
-            for (const auto &file : files) {
-                if (ScriptManager::isScriptFile(file)) {
-                    if (auto e = openFile(file)) {
-                        addRecentFile(e, file);
-                        m_lastusedpath = Utilities::getAbsoluteDirPath(file);
+    connect(m_ribbon, &Ribbon::sigOnDragDropFiles, this,
+            [this](const QStringList &files) {
+                for (const auto &file : files) {
+                    if (ScriptManager::isScriptFile(file)) {
+                        if (auto e = openFile(file)) {
+                            addRecentFile(e, file);
+                            m_lastusedpath =
+                                Utilities::getAbsoluteDirPath(file);
+                        }
+                    } else {
+                        Toast::toast(this,
+                                     ThemeManager::instance().standardPixmap(
+                                         ThemeManager::StandardIcon::Script),
+                                     tr("Unsupported script file"));
                     }
-                } else {
-                    Toast::toast(this,
-                                 ThemeManager::instance().standardPixmap(
-                                     ThemeManager::StandardIcon::Script),
-                                 tr("Unsupported script file"));
                 }
-            }
-        });
+            });
 }
 
 RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
@@ -345,13 +346,13 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
         auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Save,
                                  tr("Save"), &ScriptingDialog::on_save,
                                  QKeySequence::Save);
-        m_Tbtneditors[ToolButtonIndex::SAVE_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::SAVE_ACTION] = a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::SaveAs,
                             tr("Save as"), &ScriptingDialog::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
-        m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::SAVEAS_ACTION] = a;
         m_editStateWidgets << a;
     }
     return tab;
@@ -365,12 +366,12 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, ThemeManager::StandardIcon::Undo,
                                  tr("Undo"), &ScriptingDialog::on_undofile);
-        m_Tbtneditors[ToolButtonIndex::UNDO_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::UNDO_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Undo);
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::Redo,
                             tr("Redo"), &ScriptingDialog::on_redofile);
-        m_Tbtneditors[ToolButtonIndex::REDO_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::REDO_ACTION] = a;
         setPannelActionToolTip(a,
                                shortcuts.keySequence(QKeySequences::Key::REDO));
 
@@ -380,7 +381,7 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::Copy,
                             tr("Copy"), &ScriptingDialog::on_copyfile);
-        m_Tbtneditors[ToolButtonIndex::COPY_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::COPY_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Copy);
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::Paste,
@@ -422,10 +423,10 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
     updateUI();
     {
         auto pannel = tab->addGroup(tr("Window"));
-        m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS] =
+        m_tbtneditors[ToolButtonIndex::EDITOR_VIEWS] =
             addPannelAction(pannel, ThemeManager::StandardIcon::File,
                             tr("Editor"), EMPTY_FUNC, {}, new QMenu(this));
-        m_Tbtneditors[ToolButtonIndex::TOOL_VIEWS] =
+        m_tbtneditors[ToolButtonIndex::TOOL_VIEWS] =
             addPannelAction(pannel, ThemeManager::StandardIcon::Tools,
                             tr("Tools"), EMPTY_FUNC, {}, new QMenu(this));
     }
@@ -452,16 +453,16 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         auto a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugRun,
                                  tr("Run"), &ScriptingDialog::on_runscript);
         addPerformClickShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_F5));
-        m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_RUN_ACTION] = a;
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::Debug,
                             tr("Debug"), &ScriptingDialog::on_rundbgscript, {},
                             nullptr,
                             tr("Run the current script in the debugger"));
         setPannelActionToolTip(a, dbgkey);
-        m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
 
-        m_Tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION] =
+        m_tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION] =
             addPannelAction(pannel, ThemeManager::StandardIcon::DebugPause,
                             tr("Pause"), &ScriptingDialog::on_pausescript);
 
@@ -469,31 +470,31 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
                             tr("Continue"),
                             &ScriptingDialog::on_continuescript);
         setPannelActionToolTip(a, dbgkey);
-        m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION] = a;
 
-        m_Tbtneditors[ToolButtonIndex::DBG_STOP_ACTION] =
+        m_tbtneditors[ToolButtonIndex::DBG_STOP_ACTION] =
             addPannelAction(pannel, ThemeManager::StandardIcon::DebugStop,
                             tr("Stop"), &ScriptingDialog::on_stopscript);
 
-        m_Tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION] =
+        m_tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION] =
             addPannelAction(pannel, ThemeManager::StandardIcon::DebugRestart,
                             tr("Restart"), &ScriptingDialog::on_restartscript);
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepInto,
                             tr("Step into"), &ScriptingDialog::on_stepinscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F11));
-        m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION] = a;
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepOver,
                             tr("Step over"),
                             &ScriptingDialog::on_stepoverscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F10));
-        m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION] = a;
 
         a = addPannelAction(pannel, ThemeManager::StandardIcon::DebugStepOut,
                             tr("Step out"), &ScriptingDialog::on_stepoutscript);
         addPerformClickShortcut(a, QKeySequence(Qt::SHIFT | Qt::Key_F11));
-        m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION] = a;
+        m_tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION] = a;
 
         m_editStateWidgets << pannel;
     }
@@ -526,9 +527,9 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         }
 
         if (isRun && isDbg && isPaused) {
-            m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
+            m_tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
         } else {
-            m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->animateClick();
+            m_tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->animateClick();
         }
     });
 
@@ -748,25 +749,25 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
                                     ads::DockWidgetArea area,
                                     ads::CDockAreaWidget *areaw) {
     auto dview = new QListView(this);
-    _squinfoModel = new WingSquiggleInfoModel(this);
+    m_squinfoModel = new WingSquiggleInfoModel(this);
     auto &theme = ThemeManager::instance();
-    _squinfoModel->setSeverityLevelIcon(
+    m_squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Error,
         theme.resourceIcon(
             QStringLiteral(":/completion/images/completion/error.svg")));
-    _squinfoModel->setSeverityLevelIcon(
+    m_squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Hint,
         theme.resourceIcon(
             QStringLiteral(":/completion/images/completion/hint.svg")));
-    _squinfoModel->setSeverityLevelIcon(
+    m_squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Information,
         QIcon(
             QStringLiteral(":/completion/images/completion/information.svg")));
-    _squinfoModel->setSeverityLevelIcon(
+    m_squinfoModel->setSeverityLevelIcon(
         WingSquiggleInfoModel::SeverityLevel::Warning,
         theme.resourceIcon(
             QStringLiteral(":/completion/images/completion/warn.svg")));
-    dview->setModel(_squinfoModel);
+    dview->setModel(m_squinfoModel);
     dview->setItemDelegate(new WrappingItemDelegate(dview));
     dview->setWordWrap(true);
     dview->setTextElideMode(Qt::ElideNone);
@@ -774,11 +775,12 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
     dview->setUniformItemSizes(false);
     dview->setSpacing(3);
     dview->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    connect(dview, &QListView::doubleClicked, _squinfoModel,
+    connect(dview, &QListView::doubleClicked, m_squinfoModel,
             [this](const QModelIndex &index) {
                 auto editor = currentEditor();
                 if (editor) {
-                    auto pos = _squinfoModel->squiggleInfoPosStart(index.row());
+                    auto pos =
+                        m_squinfoModel->squiggleInfoPosStart(index.row());
                     editorGotoPos(editor, pos.first, pos.second);
                 }
             });
@@ -791,7 +793,7 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
             auto r = idx.row();
             if (r >= 0) {
                 auto clip = qApp->clipboard();
-                clip->setText(_squinfoModel->squiggleInfoText(r));
+                clip->setText(m_squinfoModel->squiggleInfoText(r));
                 Toast::toast(this,
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::Copy),
@@ -809,22 +811,22 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
             auto e =
                 QMetaEnum::fromType<WingSquiggleInfoModel::SeverityLevel>();
             json.insert(QLatin1String("level"),
-                        e.valueToKey(
-                            uint(_squinfoModel->squiggleInfoSeverityLevel(r))));
-            auto pos = _squinfoModel->squiggleInfoPosStart(r);
+                        e.valueToKey(uint(
+                            m_squinfoModel->squiggleInfoSeverityLevel(r))));
+            auto pos = m_squinfoModel->squiggleInfoPosStart(r);
             QJsonObject startpos;
             startpos.insert(QLatin1String("line"), pos.first);
             startpos.insert(QLatin1String("column"), pos.second);
             json.insert(QLatin1String("start"), startpos);
 
-            pos = _squinfoModel->squiggleInfoPosStop(r);
+            pos = m_squinfoModel->squiggleInfoPosStop(r);
             QJsonObject endpos;
             endpos.insert(QLatin1String("line"), pos.first);
             endpos.insert(QLatin1String("column"), pos.second);
             json.insert(QLatin1String("end"), endpos);
 
             json.insert(QLatin1String("message"),
-                        _squinfoModel->squiggleInfoText(r));
+                        m_squinfoModel->squiggleInfoText(r));
 
             QJsonDocument doc(json);
             auto clip = qApp->clipboard();
@@ -888,16 +890,16 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
         label->setPicture(background);
     };
     refreshBackground();
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, label,
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, label,
             refreshBackground);
 
     label->setAlignment(Qt::AlignCenter);
-    CDockWidget *CentralDockWidget =
+    CDockWidget *centralDockWidget =
         m_dock->createDockWidget(QStringLiteral("CentralWidget"));
-    CentralDockWidget->setWidget(label);
-    CentralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
-    CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
-    m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
+    centralDockWidget->setWidget(label);
+    centralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
+    centralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
+    m_editorViewArea = m_dock->setCentralWidget(centralDockWidget);
 
     // build up basic docking widgets
     auto bottomArea = buildDiagnosisDock(m_dock, ads::BottomDockWidgetArea);
@@ -957,7 +959,7 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
                     CDockWidget::DockWidgetPinnable);
 
     dw->setWidget(content);
-    m_Tbtneditors[index]->menu()->addAction(dw->toggleViewAction());
+    m_tbtneditors[index]->menu()->addAction(dw->toggleViewAction());
     return dw;
 }
 
@@ -1015,13 +1017,14 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         destoryEditor(editor);
     });
 
-    connect(editor, &ScriptEditor::onToggleMark, this, [this](int lineIndex) {
-        auto editor = qobject_cast<ScriptEditor *>(sender());
-        Q_ASSERT(editor);
-        toggleBreakPoint(editor, lineIndex);
-    });
+    connect(editor, &ScriptEditor::sigOnToggleMark, this,
+            [this](int lineIndex) {
+                auto editor = qobject_cast<ScriptEditor *>(sender());
+                Q_ASSERT(editor);
+                toggleBreakPoint(editor, lineIndex);
+            });
 
-    connect(editor, &ScriptEditor::navigateToLocation, this,
+    connect(editor, &ScriptEditor::sigOnNavigateToLocation, this,
             [this](const QString &path, int line, int character) {
                 auto target = findEditorView(path);
                 if (!target) {
@@ -1032,7 +1035,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
                 }
             });
 
-    connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
+    connect(editor, &ScriptEditor::sigOnReloadNeeded, this, [editor, this]() {
         auto e = editor->editor();
         e->setContentModified(true);
         auto dbg = ScriptMachine::instance().debugger();
@@ -1044,7 +1047,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         }
     });
 
-    auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
+    auto ev = m_tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
     auto menu = ev->menu();
     Q_ASSERT(menu);
     auto ta = editor->toggleViewAction();
@@ -1065,9 +1068,9 @@ void ScriptingDialog::updateEditModeEnabled() {
     }
 
     if (b) {
-        if (editor == _fakeEditor) {
-            m_Tbtneditors[ToolButtonIndex::SAVE_ACTION]->setEnabled(false);
-            m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION]->setEnabled(false);
+        if (editor == m_fakeEditor) {
+            m_tbtneditors[ToolButtonIndex::SAVE_ACTION]->setEnabled(false);
+            m_tbtneditors[ToolButtonIndex::SAVEAS_ACTION]->setEnabled(false);
         }
 
         auto fn = editor->fileName();
@@ -1075,7 +1078,7 @@ void ScriptingDialog::updateEditModeEnabled() {
         m_status->setToolTip(fn);
     } else {
         setWindowFilePath({});
-        _squinfoModel->setEditor(nullptr);
+        m_squinfoModel->setEditor(nullptr);
         m_status->clearMessage();
         m_status->setToolTip({});
     }
@@ -1102,21 +1105,21 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     auto editor = cur->editor();
-    m_Tbtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
+    m_tbtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
         editor->document()->isUndoAvailable());
-    m_Tbtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(
+    m_tbtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(
         editor->document()->isRedoAvailable());
-    m_Tbtneditors[ToolButtonIndex::COPY_ACTION]->setEnabled(
+    m_tbtneditors[ToolButtonIndex::COPY_ACTION]->setEnabled(
         editor->textCursor().hasSelection());
 
     m_curConnections << connect(editor, &CodeEdit::copyAvailable,
-                                m_Tbtneditors[ToolButtonIndex::COPY_ACTION],
+                                m_tbtneditors[ToolButtonIndex::COPY_ACTION],
                                 &QToolButton::setEnabled);
     m_curConnections << connect(editor, &CodeEdit::undoAvailable,
-                                m_Tbtneditors[ToolButtonIndex::UNDO_ACTION],
+                                m_tbtneditors[ToolButtonIndex::UNDO_ACTION],
                                 &QToolButton::setEnabled);
     m_curConnections << connect(editor, &CodeEdit::redoAvailable,
-                                m_Tbtneditors[ToolButtonIndex::REDO_ACTION],
+                                m_tbtneditors[ToolButtonIndex::REDO_ACTION],
                                 &QToolButton::setEnabled);
 
     m_curConnections << connect(editor, &CodeEdit::cursorPositionChanged, this,
@@ -1125,7 +1128,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
                                 &ScriptingDialog::updateCursorPosition);
 
     m_curEditor = cur;
-    _squinfoModel->setEditor(editor);
+    m_squinfoModel->setEditor(editor);
     updateCursorPosition();
 
     auto dbg = ScriptMachine::instance().debugger();
@@ -1181,30 +1184,32 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
         isPaused = debugger->isDebugBreak();
     }
 
-    m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION]->setEnabled(!isRun);
-    m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->setEnabled(!isRun);
-    m_Tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION]->setEnabled(isRun &&
+    m_tbtneditors[ToolButtonIndex::DBG_RUN_ACTION]->setEnabled(!isRun);
+    m_tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->setEnabled(!isRun);
+    m_tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION]->setEnabled(isRun &&
                                                                    isDbg);
-    m_Tbtneditors[ToolButtonIndex::DBG_STOP_ACTION]->setEnabled(isRun);
-    m_Tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION]->setEnabled(
+    m_tbtneditors[ToolButtonIndex::DBG_STOP_ACTION]->setEnabled(isRun);
+    m_tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION]->setEnabled(
         isRun && isDbg && !isPaused);
 
     auto dbgop = isRun && isDbg && isPaused && enable;
-    m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->setEnabled(dbgop);
-    m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION]->setEnabled(dbgop);
-    m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION]->setEnabled(dbgop);
-    m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION]->setEnabled(dbgop);
+    m_tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->setEnabled(dbgop);
+    m_tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION]->setEnabled(dbgop);
+    m_tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION]->setEnabled(dbgop);
+    m_tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION]->setEnabled(dbgop);
 
     if (isRun) {
         if (isDbg) {
-            _status->setText(QStringLiteral("<font color=\"gold\">") +
-                             tr("Debugging...") + QStringLiteral("</font>"));
+            m_statusLabel->setText(QStringLiteral("<font color=\"gold\">") +
+                                   tr("Debugging...") +
+                                   QStringLiteral("</font>"));
         } else {
-            _status->setText(QStringLiteral("<font color=\"green\">") +
-                             tr("Running...") + QStringLiteral("</font>"));
+            m_statusLabel->setText(QStringLiteral("<font color=\"green\">") +
+                                   tr("Running...") +
+                                   QStringLiteral("</font>"));
         }
     } else {
-        _status->setText({});
+        m_statusLabel->setText({});
     }
 }
 
@@ -1358,7 +1363,7 @@ void ScriptingDialog::goRunFileLine(const QString &file, int lineNr) {
             e = openFile(file);
             if (e) {
                 e->setReadOnly(true);
-                _reditors.append(e);
+                m_reditors.append(e);
                 e->setFocus();
                 e->raise();
 
@@ -1380,16 +1385,16 @@ void ScriptingDialog::goRunFileLine(const QString &file, int lineNr) {
     const auto hitCur = QStringLiteral("curbp");
 
     // remove the last mark
-    if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-        auto lastCur = findEditorView(_lastCurLine.first);
+    if (!m_lastCurLine.first.isEmpty() && m_lastCurLine.second >= 0) {
+        auto lastCur = findEditorView(m_lastCurLine.first);
         if (lastCur) {
             auto e = lastCur->editor();
-            auto symID = e->symbolMark(_lastCurLine.second);
+            auto symID = e->symbolMark(m_lastCurLine.second);
 
             if (symID == curSym) {
-                e->removeSymbolMark(_lastCurLine.second);
+                e->removeSymbolMark(m_lastCurLine.second);
             } else if (symID == hitCur) {
-                e->addSymbolMark(_lastCurLine.second, bpMark);
+                e->addSymbolMark(m_lastCurLine.second, bpMark);
             }
         }
     }
@@ -1406,11 +1411,11 @@ void ScriptingDialog::goRunFileLine(const QString &file, int lineNr) {
 
     editor->ensureLineVisible(lineNr);
 
-    _lastCurLine = {file, lineNr};
+    m_lastCurLine = {file, lineNr};
     updateRunDebugMode();
 
-    if (_fakeEditor) {
-        if (file != _fakeEditor->windowFilePath()) {
+    if (m_fakeEditor) {
+        if (file != m_fakeEditor->windowFilePath()) {
             destoryFakeEditor();
         }
     }
@@ -1439,14 +1444,14 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
                                      std::move(breakpoints));
         }
         editor->setReadOnly(true);
-        _reditors.append(editor);
+        m_reditors.append(editor);
     }
 
     this->updateRunDebugMode();
     ScriptMachine::instance().executeScript(
         ScriptMachine::Scripting, fileName, true,
         [this, fileName](bool isNotBusy) {
-            for (const auto &e : std::as_const(_reditors)) {
+            for (const auto &e : std::as_const(m_reditors)) {
                 e->setReadOnly(false);
             }
 
@@ -1455,37 +1460,38 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             m_watchModel->attachDebugger(nullptr);
 
             // clean up
-            if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
+            if (!(m_lastCurLine.first.isEmpty() || m_lastCurLine.second < 0)) {
                 // remove the last mark
-                if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                    auto lastCur = findEditorView(_lastCurLine.first);
+                if (!m_lastCurLine.first.isEmpty() &&
+                    m_lastCurLine.second >= 0) {
+                    auto lastCur = findEditorView(m_lastCurLine.first);
                     if (!lastCur) {
-                        _lastCurLine.first.clear();
-                        _lastCurLine.second = -1;
+                        m_lastCurLine.first.clear();
+                        m_lastCurLine.second = -1;
                     } else {
                         auto e = lastCur->editor();
-                        auto symID = e->symbolMark(_lastCurLine.second);
+                        auto symID = e->symbolMark(m_lastCurLine.second);
 
                         const auto bpMark = QStringLiteral("bp");
                         const auto curSym = QStringLiteral("cur");
                         const auto hitCur = QStringLiteral("curbp");
 
                         if (symID == curSym) {
-                            e->removeSymbolMark(_lastCurLine.second);
+                            e->removeSymbolMark(m_lastCurLine.second);
                         } else if (symID == hitCur) {
-                            e->addSymbolMark(_lastCurLine.second, bpMark);
+                            e->addSymbolMark(m_lastCurLine.second, bpMark);
                         }
                     }
                 }
-                _lastCurLine.first.clear();
-                _lastCurLine.second = -1;
+                m_lastCurLine.first.clear();
+                m_lastCurLine.second = -1;
             }
-            _reditors.clear();
+            m_reditors.clear();
             destoryFakeEditor();
 
             if (isNotBusy) {
-                if (_needRestart) {
-                    _needRestart = false;
+                if (m_needRestart) {
+                    m_needRestart = false;
                     startDebugScript(fileName);
                 }
             } else {
@@ -1928,7 +1934,7 @@ void ScriptingDialog::on_fullScreen() {
 void ScriptingDialog::on_restoreLayout() {
     const auto &views = ScriptEditor::instances();
     if (views.isEmpty()) {
-        m_dock->restoreState(_defaultLayout);
+        m_dock->restoreState(m_defaultLayout);
         return;
     }
 
@@ -1961,7 +1967,7 @@ void ScriptingDialog::on_restoreLayout() {
         m_dock->removeDockWidget(view);
     }
 
-    m_dock->restoreState(_defaultLayout);
+    m_dock->restoreState(m_defaultLayout);
 
     // add back
     auto centeralWidget = m_dock->centralWidget();
@@ -2047,7 +2053,7 @@ void ScriptingDialog::on_stopscript() {
 
 void ScriptingDialog::on_restartscript() {
     on_stopscript();
-    _needRestart = true;
+    m_needRestart = true;
 }
 
 void ScriptingDialog::on_stepinscript() {
@@ -2118,7 +2124,7 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         return;
     }
 
-    _savedLayout = m_dock->saveState();
+    m_savedLayout = m_dock->saveState();
     auto &set = SettingManager::instance();
     if (m_recentmanager->isDirty()) {
         set.setRecentScriptFiles(m_recentmanager->saveRecent());
@@ -2170,44 +2176,44 @@ bool ScriptingDialog::eventFilter(QObject *watched, QEvent *event) {
 
 ScriptEditor *ScriptingDialog::createFakeEditor(const QString &fileName,
                                                 const QString &text) {
-    if (_fakeEditor == nullptr) {
-        _fakeEditor = new ScriptEditor(this);
-        _fakeEditor->setReadOnly(true);
-        _fakeEditor->setFeature(
+    if (m_fakeEditor == nullptr) {
+        m_fakeEditor = new ScriptEditor(this);
+        m_fakeEditor->setReadOnly(true);
+        m_fakeEditor->setFeature(
             ads::CDockWidget::DockWidgetFeature::DockWidgetClosable, false);
-        _fakeEditor->editor()->disconnect(); // disconnect all
+        m_fakeEditor->editor()->disconnect(); // disconnect all
 
-        auto tab = _fakeEditor->tabWidget();
+        auto tab = m_fakeEditor->tabWidget();
         tab->setStyleSheet(
             QStringLiteral("QLabel{text-decoration:line-through;}"));
 
-        auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
+        auto ev = m_tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
         auto menu = ev->menu();
         Q_ASSERT(menu);
-        auto ta = _fakeEditor->toggleViewAction();
+        auto ta = m_fakeEditor->toggleViewAction();
         menu->addAction(ta);
         ev->setEnabled(true);
-        m_dock->addDockWidget(ads::CenterDockWidgetArea, _fakeEditor,
+        m_dock->addDockWidget(ads::CenterDockWidgetArea, m_fakeEditor,
                               m_dock->centralWidget()->dockAreaWidget());
     }
 
     QFileInfo finfo(fileName);
     auto name = finfo.fileName();
-    _fakeEditor->setWindowTitle(name);
-    _fakeEditor->setWindowFilePath(fileName);
-    _fakeEditor->setTabToolTip(QStringLiteral("[?] ") + fileName);
+    m_fakeEditor->setWindowTitle(name);
+    m_fakeEditor->setWindowFilePath(fileName);
+    m_fakeEditor->setTabToolTip(QStringLiteral("[?] ") + fileName);
 
-    auto editor = _fakeEditor->editor();
+    auto editor = m_fakeEditor->editor();
     editor->setPlainText(text);
 
-    return _fakeEditor;
+    return m_fakeEditor;
 }
 
 void ScriptingDialog::destoryFakeEditor() {
-    if (_fakeEditor) {
-        m_dock->removeDockWidget(_fakeEditor);
-        delete _fakeEditor;
-        _fakeEditor = nullptr;
+    if (m_fakeEditor) {
+        m_dock->removeDockWidget(m_fakeEditor);
+        delete m_fakeEditor;
+        m_fakeEditor = nullptr;
     }
 }
 
@@ -2217,7 +2223,7 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
     if (currentEditor() == editor) {
         m_curEditor = nullptr;
     }
-    m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(views.size() != 0);
+    m_tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(views.size() != 0);
 
     if (m_dock->focusedDockWidget() == editor) {
         if (!views.isEmpty()) {
@@ -2229,7 +2235,7 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
         }
     }
 
-    if (editor != _fakeEditor) {
+    if (editor != m_fakeEditor) {
         updateRecentFile(editor);
     }
     editor->deleteDockWidget();

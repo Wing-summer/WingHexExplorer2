@@ -1,13 +1,16 @@
 // Copyright (C) 2026 WingSummer
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#include "luau/luauutil.h"
-#include "luau/wingluaurequire.h"
-#include <Luau/Compiler.h>
+#include <iostream>
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
-#include <iostream>
+
+#include <Luau/Compiler.h>
+
+#include "luau/luauutil.h"
+#include "luau/wingluaurequire.h"
 
 static bool run(lua_State *L, const QByteArray &source, const char *name) {
     const auto bytecode = Luau::compile(source.toStdString());

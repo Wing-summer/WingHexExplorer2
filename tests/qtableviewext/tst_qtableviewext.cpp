@@ -1,11 +1,5 @@
-#include "control/delegate/richtextitemdelegate.h"
-#include "control/delegate/wrappingitemdelegate.h"
-#include "control/qtableviewext.h"
-#include "control/searchabletextbrowser.h"
-#include "control/searchabletreewidget.h"
-#include "control/searchbar.h"
-#include "control/tablecolumnwidthcontroller.h"
-#include "model/asynctableproxymodel.h"
+#include <cmath>
+#include <limits>
 
 #include <QAbstractItemModelTester>
 #include <QAction>
@@ -26,8 +20,15 @@
 #include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
-#include <cmath>
-#include <limits>
+
+#include "control/delegate/richtextitemdelegate.h"
+#include "control/delegate/wrappingitemdelegate.h"
+#include "control/qtableviewext.h"
+#include "control/searchabletextbrowser.h"
+#include "control/searchabletreewidget.h"
+#include "control/searchbar.h"
+#include "control/tablecolumnwidthcontroller.h"
+#include "model/asynctableproxymodel.h"
 
 struct GuiText {
     QString text;
@@ -39,12 +40,15 @@ class TableModel : public QAbstractTableModel {
 public:
     int count = 1000;
     mutable bool wrongThread = false;
+
     int rowCount(const QModelIndex &p = {}) const override {
         return p.isValid() ? 0 : count;
     }
+
     int columnCount(const QModelIndex &p = {}) const override {
         return p.isValid() ? 0 : 4;
     }
+
     QVariant data(const QModelIndex &i, int role) const override {
         wrongThread |= QThread::currentThread() != thread();
         if (!i.isValid() || role != Qt::DisplayRole) {
@@ -58,6 +62,7 @@ public:
         }
         return QStringLiteral("row %1").arg(i.row());
     }
+
     void resetCount(int n) {
         beginResetModel();
         count = n;
@@ -105,6 +110,7 @@ private slots:
     void performance_data();
     void performance();
 };
+
 void TableTests::sorting() {
     TableModel source;
     QTableViewExt view;
@@ -135,6 +141,7 @@ void TableTests::sorting() {
     QCOMPARE(view.model(), &source);
     QVERIFY(!source.wrongThread);
 }
+
 void TableTests::superseded() {
     TableModel source;
     source.count = 100000;
@@ -160,6 +167,7 @@ void TableTests::superseded() {
     QTRY_VERIFY(!view.isSorting());
     QCOMPARE(view.model()->rowCount(), 0);
 }
+
 void TableTests::headerClicks() {
     TableModel source;
     QTableViewExt view;
@@ -189,6 +197,7 @@ void TableTests::headerClicks() {
     QVERIFY(!view.horizontalHeader()->isSortIndicatorShown());
     QCOMPARE(view.mapToSource(view.model()->index(1, 0)).row(), 1);
 }
+
 void TableTests::sourceChanges() {
     QStandardItemModel source(3, 2);
     for (int i = 0; i < 3; ++i) {
@@ -228,6 +237,7 @@ void TableTests::sourceChanges() {
     delete view;
     QTest::qWait(10);
 }
+
 void TableTests::numericLimits() {
     QStandardItemModel source(5, 1);
     source.setData(source.index(0, 0),
@@ -248,6 +258,7 @@ void TableTests::numericLimits() {
         QCOMPARE(proxy.mapToSource(proxy.index(r, 0)).row(), expected.at(r));
     }
 }
+
 void TableTests::mixedNumericPrecision() {
     const QList<QVariant> values{
         QVariant::fromValue(std::numeric_limits<quint64>::max()),
@@ -280,6 +291,7 @@ void TableTests::mixedNumericPrecision() {
                  expected.at(expected.size() - r - 1));
     }
 }
+
 void TableTests::textSorting() {
     QStandardItemModel source(3, 2);
     source.setData(source.index(0, 0), QStringLiteral("zebra"));
@@ -292,7 +304,7 @@ void TableTests::textSorting() {
     QCOMPARE(proxy.mapToSource(proxy.index(0, 0)).row(), 0);
     QCOMPARE(proxy.mapToSource(proxy.index(1, 0)).row(), 1);
     QCOMPARE(proxy.mapToSource(proxy.index(2, 0)).row(), 2);
-    QSignalSpy busy(&proxy, &AsyncTableProxyModel::sortingChanged);
+    QSignalSpy busy(&proxy, &AsyncTableProxyModel::sigOnSortingChanged);
     source.setData(source.index(1, 1), QStringLiteral("unrelated"));
     QVERIFY(!proxy.isSorting());
     QVERIFY(busy.isEmpty());
@@ -300,6 +312,7 @@ void TableTests::textSorting() {
     QTRY_VERIFY(!proxy.isSorting());
     QCOMPARE(proxy.index(0, 0).data().toString(), QStringLiteral("apple"));
 }
+
 void TableTests::customKeyConversion() {
     QMetaType::registerConverter<GuiText, QString>([](const GuiText &value) {
         if (QThread::currentThread() != qApp->thread()) {
@@ -319,6 +332,7 @@ void TableTests::customKeyConversion() {
     QCOMPARE(proxy.mapToSource(proxy.index(0, 0)).row(), 1);
     QVERIFY(!wrongConversionThread.load());
 }
+
 void TableTests::modelState() {
     TableModel first, second;
     QTableViewExt view;
@@ -342,6 +356,7 @@ void TableTests::modelState() {
     QTRY_VERIFY(!view.isSorting());
     QCOMPARE(view.mapToSource(view.currentIndex()).row(), 500);
 }
+
 void TableTests::extremeWeights() {
     QStandardItemModel source(2, 3);
     QTableViewExt view;
@@ -365,11 +380,12 @@ void TableTests::extremeWeights() {
     QTRY_COMPARE(view.columnWidth(2), 100);
     QTRY_VERIFY(
         std::abs(view.columnWidth(1) - (view.viewport()->width() - 200)) <= 1);
-    QSignalSpy adjusted(&view, &QTableViewExt::columnWidthsAdjusted);
+    QSignalSpy adjusted(&view, &QTableViewExt::sigOnColumnWidthsAdjusted);
     QTest::qWait(50);
     QVERIFY2(adjusted.size() < 5,
              "Column allocation must settle instead of looping");
 }
+
 void TableTests::searchOptions() {
     QStandardItemModel source(3, 2);
     source.setData(source.index(0, 0), QStringLiteral("Alpha"));
@@ -397,7 +413,7 @@ void TableTests::searchOptions() {
             view.findChild<QWidget *>(QStringLiteral("tableSearchBar"))
                 ->geometry()
                 .top());
-    QSignalSpy found(&view, &QTableViewExt::searchFinished);
+    QSignalSpy found(&view, &QTableViewExt::sigOnSearchFinished);
     view.findChild<QAction *>(QStringLiteral("matchCase"))->setChecked(true);
     view.setSearchText(QStringLiteral("alpha"));
     view.findNext();
@@ -441,6 +457,7 @@ void TableTests::searchOptions() {
     QVERIFY(view.findChild<QWidget *>(QStringLiteral("tableSearchBar"))
                 ->isHidden());
 }
+
 void TableTests::shortcutPrecedence() {
     QWidget window;
     QVBoxLayout layout(&window);
@@ -465,7 +482,7 @@ void TableTests::shortcutPrecedence() {
     QVERIFY(!globalFind);
     view.setSearchText(QStringLiteral("match"));
     view.setCurrentIndex({});
-    QSignalSpy found(&view, &QTableViewExt::searchFinished);
+    QSignalSpy found(&view, &QTableViewExt::sigOnSearchFinished);
     auto input = view.findChild<QLineEdit *>();
     QTest::keyClick(input, Qt::Key_F3);
     QTRY_COMPARE(found.size(), 1);
@@ -481,6 +498,7 @@ void TableTests::shortcutPrecedence() {
     QTest::keyClick(&view, Qt::Key_F, Qt::ControlModifier);
     QVERIFY(globalFind);
 }
+
 void TableTests::search() {
     QStandardItemModel source(3, 2);
     source.setData(source.index(0, 0), QStringLiteral("Alpha"));
@@ -492,7 +510,7 @@ void TableTests::search() {
     view.resize(420, 220);
     view.show();
     view.showSearch();
-    QSignalSpy found(&view, &QTableViewExt::searchFinished);
+    QSignalSpy found(&view, &QTableViewExt::sigOnSearchFinished);
     view.setSearchText(QStringLiteral("alpha"));
     view.findNext();
     QTRY_COMPARE(found.size(), 1);
@@ -531,6 +549,7 @@ void TableTests::search() {
     QVERIFY(view.findChild<QWidget *>(QStringLiteral("tableSearchBar"))
                 ->isHidden());
 }
+
 void TableTests::resultColumnsFill() {
     QStandardItemModel source(0, 5);
     QTableViewExt view;
@@ -566,6 +585,7 @@ void TableTests::resultColumnsFill() {
     view.setColumnHidden(4, false);
     QTRY_VERIFY(std::abs(view.columnWidth(3) - view.columnWidth(4)) <= 1);
 }
+
 void TableTests::emptyResultColumnsFill() {
     QStandardItemModel source(0, 5);
     QTableViewExt view;
@@ -616,6 +636,7 @@ void TableTests::emptyResultColumnsFill() {
     QTRY_COMPARE(totalWidth(), view.viewport()->width());
     QVERIFY(std::abs(view.columnWidth(3) - view.columnWidth(4)) <= 1);
 }
+
 void TableTests::searchBarPresentation() {
     QStandardItemModel source(2, 2);
     source.setData(source.index(0, 0), QStringLiteral("Alpha"));
@@ -645,7 +666,7 @@ void TableTests::searchBarPresentation() {
         QCOMPARE(button->geometry().center().y(),
                  buttons.first()->geometry().center().y());
     }
-    QSignalSpy found(&view, &QTableViewExt::searchFinished);
+    QSignalSpy found(&view, &QTableViewExt::sigOnSearchFinished);
     view.setSearchText(QStringLiteral("missing"));
     view.findNext();
     QTRY_COMPARE(found.size(), 1);
@@ -671,6 +692,7 @@ void TableTests::searchBarPresentation() {
     QTest::qWait(10);
     QCOMPARE(bar->height(), baselineHeight);
 }
+
 void TableTests::searchWithScrollBars() {
     QStandardItemModel source(200, 3);
     QTableViewExt view;
@@ -718,6 +740,7 @@ void TableTests::searchWithScrollBars() {
     QTest::mouseClick(close, Qt::LeftButton);
     QVERIFY(bar->isHidden());
 }
+
 void TableTests::treeColumnRatios() {
     QStandardItemModel source(0, 2);
     QTreeView tree;
@@ -768,6 +791,7 @@ void TableTests::treeColumnRatios() {
     QTRY_VERIFY(std::abs(tree.columnWidth(0) * 3 - tree.columnWidth(1) * 2) <=
                 5);
 }
+
 void TableTests::searchBarHeightConsistency() {
     const QString paths[] = {QFINDTESTDATA("../../theme/light/stylesheet.qss"),
                              QFINDTESTDATA("../../theme/dark/stylesheet.qss")};
@@ -898,6 +922,7 @@ void TableTests::centeredHeaders() {
         }
     }
 }
+
 void TableTests::uniformIconInk() {
     QTableViewExt view;
     view.setSearchEnabled(true);
@@ -928,6 +953,7 @@ void TableTests::uniformIconInk() {
         QVERIFY(std::abs(ink.center().y() - reference.center().y()) <= 1);
     }
 }
+
 void TableTests::wrappingDiagnostics() {
     QStandardItemModel source;
     source.appendRow(new QStandardItem(
@@ -956,11 +982,13 @@ void TableTests::wrappingDiagnostics() {
     QTRY_VERIFY(view.visualRect(source.index(1, 0)).width() <=
                 view.viewport()->width());
 }
+
 namespace {
 class LazySymbolTree : public SearchableTreeWidget {
 public:
     int loads = 0;
     QTreeWidgetItem *module;
+
     LazySymbolTree() {
         setColumnCount(2);
         auto category =
@@ -998,6 +1026,7 @@ protected:
             hidden->setHidden(true);
         }
     }
+
     bool isSearchableItem(const QTreeWidgetItem *item) const override {
         return item->data(0, Qt::UserRole).toString() !=
                QStringLiteral("category");
@@ -1014,7 +1043,7 @@ void TableTests::lazyTreeSearch() {
     auto bar = tree.searchBar();
     QVERIFY(bar->isVisible());
     QCOMPARE(tree.loads, 0);
-    QSignalSpy found(&tree, &SearchableTreeWidget::searchFinished);
+    QSignalSpy found(&tree, &SearchableTreeWidget::sigOnSearchFinished);
     bar->setSearchText(QStringLiteral("Alpha"));
     tree.findNext();
     QTRY_COMPARE(found.size(), 1);
@@ -1072,6 +1101,7 @@ void TableTests::lazyTreeSearch() {
     delete pending;
     QCoreApplication::processEvents();
 }
+
 void TableTests::treeSearchScrollBars() {
     SearchableTreeWidget tree;
     tree.setColumnCount(2);
@@ -1107,8 +1137,8 @@ void TableTests::reusableSearchBar() {
     window.resize(420, 120);
     window.show();
     bar.activate();
-    QSignalSpy requested(&bar, &SearchBar::searchRequested);
-    QSignalSpy close(&bar, &SearchBar::closeRequested);
+    QSignalSpy requested(&bar, &SearchBar::sigOnSearchRequested);
+    QSignalSpy close(&bar, &SearchBar::sigOnCloseRequested);
     bar.setSearchText(QStringLiteral("first"));
     bar.setSearchText(QStringLiteral("second"));
     QTRY_COMPARE(requested.size(), 1);
@@ -1141,6 +1171,7 @@ void TableTests::reusableSearchBar() {
     QTest::keyClick(bar.lineEdit(), Qt::Key_Escape);
     QCOMPARE(close.size(), 1);
 }
+
 void TableTests::decodedTextSearch() {
     SearchableTextBrowser browser;
     browser.setSearchEnabled(true);
@@ -1154,7 +1185,7 @@ void TableTests::decodedTextSearch() {
     QTest::keyClick(&browser, Qt::Key_F, Qt::ControlModifier);
     QVERIFY(browser.searchBar()->isVisible());
     browser.setSearchText(QStringLiteral("alpha"));
-    QSignalSpy found(&browser, &SearchableTextBrowser::searchFinished);
+    QSignalSpy found(&browser, &SearchableTextBrowser::sigOnSearchFinished);
     browser.findNext();
     QTRY_COMPARE(found.size(), 1);
     QCOMPARE(browser.textCursor().selectedText(), QStringLiteral("Alpha"));
@@ -1203,6 +1234,7 @@ void TableTests::decodedTextSearch() {
     QTest::keyClick(browser.searchBar()->lineEdit(), Qt::Key_Escape);
     QVERIFY(browser.searchBar()->isHidden());
 }
+
 void TableTests::textSearchScrollBars() {
     SearchableTextBrowser browser;
     browser.setLineWrapMode(QTextEdit::NoWrap);
@@ -1231,6 +1263,7 @@ void TableTests::textSearchScrollBars() {
     browser.setLayoutDirection(Qt::RightToLeft);
     QTRY_VERIFY(uncovered());
 }
+
 void TableTests::rapidEmptyResize() {
     QStandardItemModel source(0, 5);
     QTableViewExt view;
@@ -1260,6 +1293,7 @@ void TableTests::rapidEmptyResize() {
     QVERIFY(!verticalRange);
     QVERIFY(!view.horizontalScrollBar()->isVisible());
 }
+
 void TableTests::widths() {
     QStandardItemModel source(4, 3);
     QTableViewExt view;
@@ -1306,6 +1340,7 @@ void TableTests::widths() {
     contents.weight = 0;
     QVERIFY(!view.setColumnWidthPolicy(0, contents));
 }
+
 void TableTests::widthConstraints() {
     QStandardItemModel source(2, 3);
     QTableViewExt view;
@@ -1344,6 +1379,7 @@ void TableTests::widthConstraints() {
     p.weight = -1;
     QVERIFY(!view.setColumnWidthPolicy(2, p));
 }
+
 void TableTests::manualWidths() {
     QStandardItemModel source(2, 2), other(2, 2);
     QTableViewExt view;
@@ -1380,6 +1416,7 @@ void TableTests::manualWidths() {
     view.clearColumnWidthPolicy(0);
     QVERIFY(!view.columnWidthPolicy(0).has_value());
 }
+
 void TableTests::deferredWidths() {
     QStandardItemModel source(0, 3);
     QTableViewExt view;
@@ -1413,11 +1450,13 @@ void TableTests::deferredWidths() {
     source.clear();
     QCOMPARE(view.columnWidthPolicy(0)->value, qreal(140));
 }
+
 void TableTests::contentSampling() {
     class SamplingDelegate : public QStyledItemDelegate {
     public:
         mutable QSet<int> rows;
         mutable int calls = 0;
+
         QSize sizeHint(const QStyleOptionViewItem &,
                        const QModelIndex &index) const override {
             if (index.column() == 0) {
@@ -1427,6 +1466,7 @@ void TableTests::contentSampling() {
             return QSize(150, 20);
         }
     };
+
     QStandardItemModel source(2001, 2);
     QTableViewExt view;
     SamplingDelegate delegate;
@@ -1445,6 +1485,7 @@ void TableTests::contentSampling() {
     QTest::qWait(30);
     QCOMPARE(delegate.calls, measuredCalls);
 }
+
 void TableTests::richTextWidths() {
     QStandardItemModel source(2, 1);
     source.setData(source.index(0, 0),
@@ -1461,6 +1502,7 @@ void TableTests::richTextWidths() {
     QTRY_VERIFY(view.columnWidth(0) > 100);
     QVERIFY(view.columnWidth(0) < 350);
 }
+
 void TableTests::performance_data() {
     QTest::addColumn<int>("rows");
     QTest::addColumn<int>("column");
@@ -1471,6 +1513,7 @@ void TableTests::performance_data() {
             << count << 2;
     }
 }
+
 void TableTests::performance() {
     QFETCH(int, rows);
     QFETCH(int, column);
@@ -1483,7 +1526,7 @@ void TableTests::performance() {
     view.show();
     QTest::qWait(10);
     QSignalSpy timing(qobject_cast<AsyncTableProxyModel *>(view.model()),
-                      &AsyncTableProxyModel::sortingMeasured);
+                      &AsyncTableProxyModel::sigOnSortingMeasured);
     QElapsedTimer elapsed, gap;
     elapsed.start();
     gap.start();

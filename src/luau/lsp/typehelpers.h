@@ -18,10 +18,11 @@
 #ifndef LUAU_LSP_TYPEHELPERS_H
 #define LUAU_LSP_TYPEHELPERS_H
 
-#include "Luau/Type.h"
-
-#include <qobject.h>
 #include <vector>
+
+#include <QString>
+
+#include "Luau/Type.h"
 
 struct PropLookup {
     Luau::TypeId baseTableTy;

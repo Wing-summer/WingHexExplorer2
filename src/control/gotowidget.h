@@ -28,7 +28,7 @@ class GotoWidget : public QWidget {
     Q_OBJECT
 
 public:
-    enum class SEEKPOS { Invaild, Start, End, RelativeAdd, RelativeMin };
+    enum class SeekPos { Invaild, Start, End, RelativeAdd, RelativeMin };
 
 public:
     explicit GotoWidget(QWidget *parent = nullptr);
@@ -45,14 +45,14 @@ public slots:
     void jumpConfirm();
 
 signals:
-    void jumpToLine(qsizetype pos, bool isline);
-    void pressEsc();
+    void sigOnJumpToLine(qsizetype pos, bool isline);
+    void sigOnEscapePressed();
 
 private slots:
     void on_btnClose_clicked();
 
 private:
-    qsizetype convert2Pos(const QString &value, SEEKPOS &ps, bool isline);
+    qsizetype convert2Pos(const QString &value, SeekPos &ps, bool isline);
 
 private:
     Ui::GotoWidget *ui;

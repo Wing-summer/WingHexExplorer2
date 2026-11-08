@@ -182,7 +182,7 @@ void ScriptManager::refreshUsrScriptsDbCats() {
             auto meta = ensureDirMeta(info);
             meta.isSys = false;
             meta.isEmptyDir = files.isEmpty();
-            _usrDirMetas.insert(info.baseName(), meta);
+            m_usrDirMetas.insert(info.baseName(), meta);
         }
     }
 }
@@ -201,7 +201,7 @@ void ScriptManager::refreshSysScriptsDbCats() {
             auto meta = ensureDirMeta(info);
             meta.isSys = true;
             meta.isEmptyDir = files.isEmpty();
-            _sysDirMetas.insert(info.baseName(), meta);
+            m_sysDirMetas.insert(info.baseName(), meta);
         }
     }
 }
@@ -312,12 +312,12 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
 
 ScriptManager::ScriptDirMeta
 ScriptManager::usrDirMeta(const QString &cat) const {
-    return _usrDirMetas.value(cat);
+    return m_usrDirMetas.value(cat);
 }
 
 ScriptManager::ScriptDirMeta
 ScriptManager::sysDirMeta(const QString &cat) const {
-    return _sysDirMetas.value(cat);
+    return m_sysDirMetas.value(cat);
 }
 
 QList<QMenu *>

@@ -19,6 +19,7 @@
 #define LUAUCOMPLETION_H
 
 #include "WingCodeEdit/wingcompleter.h"
+
 #include "class/util/resettabletimer.h"
 #include "lspeditorinterface.h"
 
@@ -45,9 +46,9 @@ private slots:
     void onActivatedCodeComplete(const QModelIndex &index);
 
 private:
-    ResettableTimer *_timer = nullptr;
-    LspEditorInterace *_inter = nullptr;
-    bool _ok = true;
+    ResettableTimer *m_timer = nullptr;
+    LspEditorInterace *m_inter = nullptr;
+    bool m_ok = true;
 };
 
 #endif // LUAUCOMPLETION_H

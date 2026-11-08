@@ -15,13 +15,13 @@
 ** =============================================================================
 */
 
-#include "legacyworkspace.h"
-
 #include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
+
+#include "legacyworkspace.h"
 
 #ifdef Q_OS_UNIX
 #include <sys/stat.h>

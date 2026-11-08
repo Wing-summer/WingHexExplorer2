@@ -18,12 +18,13 @@
 #ifndef QEDITCONFIG_H
 #define QEDITCONFIG_H
 
-#include "WingPlugin/settingpage.h"
-#include "wingcodeedit.h"
-
 #include <QIcon>
 #include <QString>
 #include <QWidget>
+
+#include "WingPlugin/settingpage.h"
+
+#include "wingcodeedit.h"
 
 namespace Ui {
 class QEditConfig;
@@ -52,12 +53,12 @@ private:
 private:
     Ui::QEditConfig *ui;
 
-    WingCodeEdit *_edit;
+    WingCodeEdit *m_edit;
     bool m_isConsole;
 
-    QString _name;
-    QString _id;
-    QIcon _icon;
+    QString m_name;
+    QString m_id;
+    QIcon m_icon;
 };
 
 #endif // QEDITCONFIG_H

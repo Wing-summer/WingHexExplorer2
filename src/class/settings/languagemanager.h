@@ -56,9 +56,9 @@ private:
                   LanguageData &data);
 
 private:
-    LanguageData _data;
+    LanguageData m_data;
 
-    QLocale _defaultLocale;
+    QLocale m_defaultLocale;
 
     QStringList m_langs;
     QHash<QString, QString> m_langMap;

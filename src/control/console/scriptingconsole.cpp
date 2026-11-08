@@ -16,15 +16,6 @@
 */
 
 #include "scriptingconsole.h"
-#include "QConsoleWidget/QConsoleIODevice.h"
-#include "class/settings/thememanager.h"
-#include "control/editor/editorlspevent.h"
-#include "control/editor/luaucompletion.h"
-#include "control/editor/luauindentation.h"
-#include "luau/lsp/luaulanguageserver.h"
-#include "luau/runtime/scriptmachine.h"
-#include "luau/runtime/scriptsettings.h"
-#include "model/codecompletionmodel.h"
 
 #include <QApplication>
 #include <QColor>
@@ -37,15 +28,26 @@
 #include <QTemporaryFile>
 #include <QTextBlock>
 
+#include "QConsoleWidget/QConsoleIODevice.h"
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
+#include "class/settings/thememanager.h"
+#include "control/editor/editorlspevent.h"
+#include "control/editor/luaucompletion.h"
+#include "control/editor/luauindentation.h"
+#include "luau/lsp/luaulanguageserver.h"
+#include "luau/runtime/scriptmachine.h"
+#include "luau/runtime/scriptsettings.h"
+#include "model/codecompletionmodel.h"
+
 ScriptingConsole::ScriptingConsole(QWidget *parent)
     : ScriptingConsoleBase(parent) {
-    connect(&ScriptSettings::instance(), &ScriptSettings::consoleSettingUpdate,
-            this, &ScriptingConsole::applyScriptSettings);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+    connect(&ScriptSettings::instance(),
+            &ScriptSettings::sigOnConsoleSettingUpdate, this,
+            &ScriptingConsole::applyScriptSettings);
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
             &ScriptingConsole::applyScriptSettings);
     applyScriptSettings();
     setIndentationStrategy(
@@ -54,17 +56,17 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
             const bool currentLine =
                 context.trigger == WingCodeEdit::IndentationTrigger::TextInput;
             auto cursor = context.cursor;
-            if (cursor.position() < inpos_ || _isWaitingRead) {
+            if (cursor.position() < m_inpos || m_isWaitingRead) {
                 return std::nullopt;
             }
             if (currentLine) {
                 cursor.movePosition(QTextCursor::EndOfBlock);
             }
-            cursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+            cursor.setPosition(m_inpos, QTextCursor::KeepAnchor);
             auto source = cursor.selectedText();
             source.replace(QChar::ParagraphSeparator, QChar::LineFeed);
-            if (!_codes.isEmpty()) {
-                source.prepend(_codes.join('\n') + '\n');
+            if (!m_codes.isEmpty()) {
+                source.prepend(m_codes.join('\n') + '\n');
             }
             return currentLine ? LuauIndentation::forCurrentLine(source, *this)
                                : LuauIndentation::forNewLine(source, *this);
@@ -72,7 +74,7 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
 }
 
 ScriptingConsole::~ScriptingConsole() {
-    if (_isTerminal) {
+    if (m_isTerminal) {
         // assuming we enable lsp after setting the terminal flag
         auto &lsp = LuauLanguageServer::instance();
         auto url = lspURL();
@@ -85,8 +87,8 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
 
     setEditMode(Output);
-    if (_isWaitingRead && !code.isEmpty()) {
-        history_.add(code);
+    if (m_isWaitingRead && !code.isEmpty()) {
+        m_history.add(code);
     }
 
     newLine();
@@ -95,31 +97,31 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     textCursor.movePosition(QTextCursor::End);
     setTextCursor(textCursor);
 
-    if (_isWaitingRead) {
-        Q_EMIT inputSubmitted(code);
+    if (m_isWaitingRead) {
+        Q_EMIT sigOnInputSubmitted(code);
         return;
     }
 
     // append the newline char and
     // send signal / update iodevice
-    if (iodevice_->isOpen()) {
-        iodevice_->consoleWidgetInput(code);
+    if (m_iodevice->isOpen()) {
+        m_iodevice->consoleWidgetInput(code);
     }
 
     if (mod == Qt::ControlModifier) {
-        _codes.append(code);
+        m_codes.append(code);
         appendContinuationPrompt();
     } else {
-        if (!_isWaitingRead) {
-            Q_EMIT consoleCommand(code);
+        if (!m_isWaitingRead) {
+            Q_EMIT sigOnConsoleCommand(code);
         }
     }
 }
 
 void ScriptingConsole::appendContinuationPrompt() {
     const auto indent =
-        autoIndent() && !_isWaitingRead
-            ? LuauIndentation::forNewLine(_codes.join('\n'), *this)
+        autoIndent() && !m_isWaitingRead
+            ? LuauIndentation::forNewLine(m_codes.join('\n'), *this)
             : QString();
     appendCommandPrompt(true);
     // Establish the editable boundary before inserting automatic whitespace.
@@ -129,9 +131,9 @@ void ScriptingConsole::appendContinuationPrompt() {
 }
 
 void ScriptingConsole::init() {
-    _getInputFn = [this]() { return getInput(); };
+    m_getInputFn = [this]() { return getInput(); };
 
-    connect(this, &QConsoleWidget::consoleCommand, this,
+    connect(this, &QConsoleWidget::sigOnConsoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
 
     auto cm = new LuauCompletion(this, this);
@@ -141,7 +143,7 @@ void ScriptingConsole::init() {
 
 bool ScriptingConsole::handleBackspaceAtInputStart() {
     auto cursor = textCursor();
-    if (cursor.position() > inpos_) {
+    if (cursor.position() > m_inpos) {
         const auto start = cursor.position();
         cursor.movePosition(QTextCursor::PreviousBlock);
         cursor.movePosition(QTextCursor::EndOfBlock);
@@ -150,22 +152,22 @@ bool ScriptingConsole::handleBackspaceAtInputStart() {
         setTextCursor(cursor);
         return true;
     }
-    if (_isWaitingRead || _codes.isEmpty()) {
+    if (m_isWaitingRead || m_codes.isEmpty()) {
         return false;
     }
-    if (_codes.last().contains('\n') ||
-        !restorePreviousCommandPrompt(_codes.size() > 1)) {
+    if (m_codes.last().contains('\n') ||
+        !restorePreviousCommandPrompt(m_codes.size() > 1)) {
         // A recalled or pasted command may itself contain multiple blocks.
         prepareInputNavigation();
         return handleBackspaceAtInputStart();
     }
-    _codes.removeLast();
+    m_codes.removeLast();
     setEditMode(Input);
     return true;
 }
 
 void ScriptingConsole::prepareInputNavigation() {
-    if (_isWaitingRead || _codes.isEmpty()) {
+    if (m_isWaitingRead || m_codes.isEmpty()) {
         return;
     }
 
@@ -195,10 +197,10 @@ void ScriptingConsole::prepareInputNavigation() {
     cursor.movePosition(QTextCursor::End);
     cursor.setPosition(inputStart, QTextCursor::KeepAnchor);
     cursor.insertText(code);
-    _codes.clear();
+    m_codes.clear();
     setLastCommandPrompt(false);
     setMode(Input);
-    inpos_ = inputStart;
+    m_inpos = inputStart;
     cursor.setPosition(inputStart + anchor);
     cursor.setPosition(inputStart + position, QTextCursor::KeepAnchor);
     setTextCursor(cursor);
@@ -213,13 +215,13 @@ void ScriptingConsole::clearConsole() {
 
     clear();
 
-    if (!_codes.isEmpty()) {
-        auto pl = _codes.begin();
+    if (!m_codes.isEmpty()) {
+        auto pl = m_codes.begin();
         appendCommandPrompt(false);
         write(*pl);
 
         pl++;
-        for (; pl != _codes.end(); pl++) {
+        for (; pl != m_codes.end(); pl++) {
             appendCommandPrompt(true);
             write(*pl);
         }
@@ -236,7 +238,7 @@ void ScriptingConsole::clearConsole() {
 }
 
 void ScriptingConsole::clear() {
-    _lastOutputType = ScriptMachine::MessageType::Unknown;
+    m_lastOutputType = ScriptMachine::MessageType::Unknown;
     ScriptingConsoleBase::clear();
 }
 
@@ -278,8 +280,8 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
 
     auto msgtype = message.type;
 
-    if (_lastOutputType == ScriptMachine::MessageType::Unknown) {
-        _lastOutputType = msgtype;
+    if (m_lastOutputType == ScriptMachine::MessageType::Unknown) {
+        m_lastOutputType = msgtype;
     }
 
     switch (msgtype) {
@@ -307,7 +309,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         break;
     case ScriptMachine::MessageType::Print:
         if (isNotBlockStart &&
-            _lastOutputType != ScriptMachine::MessageType::Print) {
+            m_lastOutputType != ScriptMachine::MessageType::Print) {
             newLine();
         }
         stdOutLine(message.message);
@@ -319,15 +321,15 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         break;
     }
 
-    _lastOutputType = msgtype;
+    m_lastOutputType = msgtype;
 }
 
 void ScriptingConsole::abortCurrentCode() {
     setEditMode(Output);
-    if (_codes.isEmpty()) {
+    if (m_codes.isEmpty()) {
         replaceCommandLine({});
     } else {
-        _codes.clear();
+        m_codes.clear();
         appendCommandPrompt();
     }
     setEditMode(Input);
@@ -366,18 +368,18 @@ void ScriptingConsole::applyScriptSettings() {
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     hideHelpTooltip();
     setEditMode(Output);
-    _codes.append(code);
+    m_codes.append(code);
     ScriptMachine::instance().executeCode(
-        ScriptMachine::Interactive, _codes.join('\n'), [this](bool finished) {
+        ScriptMachine::Interactive, m_codes.join('\n'), [this](bool finished) {
             if (finished) {
-                const auto code = _codes.join('\n');
+                const auto code = m_codes.join('\n');
                 if (!code.trimmed().isEmpty()) {
-                    history_.add(code);
+                    m_history.add(code);
                 }
-                _codes.clear();
+                m_codes.clear();
                 appendCommandPrompt(false);
                 setEditMode(Input);
-                Q_EMIT consoleScriptRunFinished();
+                Q_EMIT sigOnConsoleScriptRunFinished();
             } else {
                 appendContinuationPrompt();
             }
@@ -385,33 +387,34 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
 }
 
 QString ScriptingConsole::getInput(ScriptMachine::ConsoleMode mode) {
-    if (_isWaitingRead) {
+    if (m_isWaitingRead) {
         return QString();
     }
     QEventLoop loop;
     QString result;
     QPointer<ScriptingConsole> guard(this);
-    connect(this, &ScriptingConsole::inputSubmitted, &loop,
+    connect(this, &ScriptingConsole::sigOnInputSubmitted, &loop,
             [&result, &loop](const QString &text) {
                 result = text;
                 loop.quit();
             });
     connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
-    connect(this, &ScriptingConsole::inputClosed, &loop, &QEventLoop::quit);
-    connect(&ScriptMachine::instance(), &ScriptMachine::inputCancelled, &loop,
-            [&loop, mode](ScriptMachine::ConsoleMode cancelled) {
+    connect(this, &ScriptingConsole::sigOnInputClosed, &loop,
+            &QEventLoop::quit);
+    connect(&ScriptMachine::instance(), &ScriptMachine::sigOnInputCancelled,
+            &loop, [&loop, mode](ScriptMachine::ConsoleMode cancelled) {
                 if (cancelled == mode) {
                     loop.quit();
                 }
             });
     appendCommandPrompt(true);
-    _isWaitingRead = true;
+    m_isWaitingRead = true;
     setEditMode(Input);
     auto block = textCursor().block();
     consoleHighligher()->setBlockAsTextOnly(block);
     loop.exec();
     if (guard) {
-        _isWaitingRead = false;
+        m_isWaitingRead = false;
         setEditMode(Output);
     }
     return result;
@@ -444,9 +447,9 @@ void ScriptingConsole::wheelEvent(QWheelEvent *e) {
 }
 
 bool ScriptingConsole::event(QEvent *event) {
-    if (_isWaitingRead &&
+    if (m_isWaitingRead &&
         (event->type() == QEvent::Hide || event->type() == QEvent::Close)) {
-        Q_EMIT inputClosed();
+        Q_EMIT sigOnInputClosed();
     }
     if (EditorLspEvent::processEvent(event, this)) {
         return true;
@@ -478,8 +481,8 @@ void ScriptingConsole::paste() {
 
 void ScriptingConsole::syncDocChange() {
     const auto source = currentCodes();
-    _lspDocument.setPlainText(source);
-    LuauLanguageServer::instance().onUpdateDocument(lspURL(), &_lspDocument);
+    m_lspDocument.setPlainText(source);
+    LuauLanguageServer::instance().onUpdateDocument(lspURL(), &m_lspDocument);
 }
 
 void ScriptingConsole::syncSemanticTokens() {
@@ -497,7 +500,7 @@ lsp::DocumentUri ScriptingConsole::lspURL() {
 
 void ScriptingConsole::setEditMode(ConsoleMode mode) {
     setMode(mode);
-    if (mode == Input && !_isWaitingRead) {
+    if (mode == Input && !m_isWaitingRead) {
         completer()->setEnabled(true);
         Q_EMIT textChanged();
     } else {
@@ -508,7 +511,7 @@ void ScriptingConsole::setEditMode(ConsoleMode mode) {
 
 LspEditorInterace::CursorPos
 ScriptingConsole::cursorPosition(const QTextCursor &cursor) const {
-    if (mode() != Input || _isWaitingRead) {
+    if (mode() != Input || m_isWaitingRead) {
         return {};
     }
     const auto block = cursor.block();
@@ -521,17 +524,17 @@ ScriptingConsole::cursorPosition(const QTextCursor &cursor) const {
 }
 
 int ScriptingConsole::sourceFirstBlock() const {
-    auto precedingLines = _codes.size();
-    for (const auto &code : _codes) {
+    auto precedingLines = m_codes.size();
+    for (const auto &code : m_codes) {
         precedingLines += code.count('\n');
     }
-    return document()->findBlock(inpos_).blockNumber() - precedingLines;
+    return document()->findBlock(m_inpos).blockNumber() - precedingLines;
 }
 
 int ScriptingConsole::sourceLineStart(const QTextBlock &block) const {
-    const auto inputBlock = document()->findBlock(inpos_);
+    const auto inputBlock = document()->findBlock(m_inpos);
     if (block == inputBlock) {
-        return inpos_ - block.position();
+        return m_inpos - block.position();
     }
     return consoleHighligher()->blockPrefixLength(block);
 }
@@ -568,10 +571,10 @@ void ScriptingConsole::showFunctionTip(
 
 void ScriptingConsole::clearFunctionTip() { hideHelpTooltip(); }
 
-bool ScriptingConsole::isTerminal() const { return _isTerminal; }
+bool ScriptingConsole::isTerminal() const { return m_isTerminal; }
 
 void ScriptingConsole::setIsTerminal(bool newIsTerminal) {
-    _isTerminal = newIsTerminal;
+    m_isTerminal = newIsTerminal;
 }
 
 QList<QTextBlock> ScriptingConsole::visibleTextBlocks() const {
@@ -609,22 +612,22 @@ lsp::DocumentUri ScriptingConsole::lspFileNameURL() const { return lspURL(); }
 
 QString ScriptingConsole::currentCodes() const {
     const auto code = currentCommandLine();
-    if (_codes.isEmpty()) {
+    if (m_codes.isEmpty()) {
         return code;
     }
-    return _codes.join('\n') + '\n' + code;
+    return m_codes.join('\n') + '\n' + code;
 }
 
 void ScriptingConsole::enableLSP() {
-    if (!_isTerminal) {
+    if (!m_isTerminal) {
         return;
     }
 
     auto lsp = &LuauLanguageServer::instance();
     connect(
-        lsp, &LuauLanguageServer::onPublishDiagnostic, this,
+        lsp, &LuauLanguageServer::sigOnPublishDiagnostic, this,
         [this](const QUrl &url, const QVector<lsp::Diagnostic> &diagnostics) {
-            if (url == lspURL() && mode() == Input && !_isWaitingRead) {
+            if (url == lspURL() && mode() == Input && !m_isWaitingRead) {
                 auto lsps = [](lsp::DiagnosticSeverity s)
                     -> WingCodeEdit::SeverityLevel {
                     switch (s) {
@@ -657,9 +660,9 @@ void ScriptingConsole::enableLSP() {
             }
         });
 
-    lsp->onOpenDocument(lspURL(), &_lspDocument);
+    lsp->onOpenDocument(lspURL(), &m_lspDocument);
     connect(this, &ScriptingConsole::textChanged, this, [this]() {
-        if (mode_ == Output || _isWaitingRead) {
+        if (m_mode == Output || m_isWaitingRead) {
             return;
         }
         syncDocChange();
@@ -687,7 +690,7 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     a->setShortcutContext(Qt::WidgetShortcut);
     a->setEnabled(mode() == Input && canPaste());
 
-    if (_isTerminal) {
+    if (m_isTerminal) {
         a = menu.addAction(
             theme.standardIcon(ThemeManager::StandardIcon::Delete), tr("Clear"),
             QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
@@ -699,7 +702,7 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
             tr("Terminate script"),
             QKeySequence(Qt::ControlModifier | Qt::Key_Q), this, [this]() {
                 auto &m = ScriptMachine::instance();
-                if (_isTerminal) {
+                if (m_isTerminal) {
                     if (m.isRunning(ScriptMachine::Interactive)) {
                         m.abortScript(ScriptMachine::Interactive);
                     } else {

@@ -100,7 +100,7 @@ QString LspSettingDialog::name() const { return QStringLiteral("Luau"); }
 QString LspSettingDialog::id() const { return QStringLiteral("Luau"); }
 
 void LspSettingDialog::restore() {
-    ScriptSettings::instance().reset(ScriptSettings::FORMAT);
+    ScriptSettings::instance().reset(ScriptSettings::Format);
 }
 
 void LspSettingDialog::reload() {

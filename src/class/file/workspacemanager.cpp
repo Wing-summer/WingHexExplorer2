@@ -17,14 +17,14 @@
 
 #include "workspacemanager.h"
 
-#include "workspaceformat.h"
+#include <limits>
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
 
-#include <limits>
+#include "workspaceformat.h"
 
 namespace {
 

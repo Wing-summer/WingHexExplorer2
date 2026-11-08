@@ -40,13 +40,14 @@ InsertCommand::InsertCommand(QHexDocument *doc, QHexCursor *cursor,
 }
 
 void InsertCommand::undo() {
-    m_doc->_remove(m_offset, m_length);
+    m_doc->removeInternal(m_offset, m_length);
     m_doc->insertBookMarkAdjustRevert(m_offset, m_length);
     m_doc->metadata()->insertAdjustRevert(m_offset, m_length);
     m_cursor->setPos(m_offset, m_nibbleindex);
 }
+
 void InsertCommand::redo() {
-    if (!m_doc->_insert(m_offset, m_data)) {
+    if (!m_doc->insertInternal(m_offset, m_data)) {
         setObsolete(true);
         return;
     }

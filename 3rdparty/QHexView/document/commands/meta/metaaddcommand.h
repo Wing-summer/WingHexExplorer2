@@ -22,8 +22,9 @@
 #ifndef METAADDCOMMAND_H
 #define METAADDCOMMAND_H
 
-#include "metacommand.h"
 #include <QObject>
+
+#include "metacommand.h"
 
 class MetaAddCommand : public MetaCommand {
 public:
@@ -39,7 +40,7 @@ public:
     virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
-    QVector<QHexMetadataItem> _brokenMetas;
+    QVector<QHexMetadataItem> m_brokenMetas;
 };
 
 #endif // METAADDCOMMAND_H

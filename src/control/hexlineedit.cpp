@@ -58,7 +58,7 @@ void HexLineEdit::setMode(Mode m) {
         setText(formatRawToDisplay(m_raw));
         setCursorPosition(displayPosFromLogicalPos(m_raw.size()));
     }
-    Q_EMIT modeChanged(m_mode);
+    Q_EMIT sigOnModeChanged(m_mode);
 }
 
 void HexLineEdit::setHexText(const QString &hexish) {
@@ -105,8 +105,8 @@ void HexLineEdit::undo() {
     }
 
     m_undoIndex--;
-    Q_EMIT undoAvailable(m_undoIndex >= 0);
-    Q_EMIT redoAvailable(m_undoIndex < m_undoStack.size() - 1);
+    Q_EMIT sigOnUndoAvailable(m_undoIndex >= 0);
+    Q_EMIT sigOnRedoAvailable(m_undoIndex < m_undoStack.size() - 1);
 
     m_isUndoing = false;
 }
@@ -131,8 +131,8 @@ void HexLineEdit::redo() {
         setSelection(selStart, selEnd - selStart);
     }
 
-    Q_EMIT undoAvailable(true);
-    Q_EMIT redoAvailable(m_undoIndex < m_undoStack.size() - 1);
+    Q_EMIT sigOnUndoAvailable(true);
+    Q_EMIT sigOnRedoAvailable(m_undoIndex < m_undoStack.size() - 1);
 
     m_isRedoing = false;
 }
@@ -140,8 +140,8 @@ void HexLineEdit::redo() {
 void HexLineEdit::clearUndoHistory() {
     m_undoStack.clear();
     m_undoIndex = -1;
-    Q_EMIT undoAvailable(false);
-    Q_EMIT redoAvailable(false);
+    Q_EMIT sigOnUndoAvailable(false);
+    Q_EMIT sigOnRedoAvailable(false);
 }
 
 void HexLineEdit::setUndoLimit(qsizetype limit) {
@@ -166,14 +166,14 @@ void HexLineEdit::contextMenuEvent(QContextMenuEvent *event) {
         undoAction->setShortcut(QKeySequence::Undo);
         undoAction->setEnabled(m_undoIndex >= 0);
         connect(undoAction, &QAction::triggered, this, &HexLineEdit::undo);
-        connect(this, &HexLineEdit::undoAvailable, undoAction,
+        connect(this, &HexLineEdit::sigOnUndoAvailable, undoAction,
                 &QAction::setEnabled);
 
         QAction *redoAction = new QAction(tr("Redo"), menu);
         redoAction->setShortcut(QKeySequence::Redo);
         redoAction->setEnabled(m_undoIndex < m_undoStack.size() - 1);
         connect(redoAction, &QAction::triggered, this, &HexLineEdit::redo);
-        connect(this, &HexLineEdit::redoAvailable, redoAction,
+        connect(this, &HexLineEdit::sigOnRedoAvailable, redoAction,
                 &QAction::setEnabled);
 
         menu->addAction(undoAction);
@@ -514,8 +514,8 @@ void HexLineEdit::saveUndoRecord(const UndoRecord &newRecord) {
 
         if (lastRecord.canMergeWith(newRecord)) {
             lastRecord.mergeWith(newRecord);
-            Q_EMIT undoAvailable(true);
-            Q_EMIT redoAvailable(false);
+            Q_EMIT sigOnUndoAvailable(true);
+            Q_EMIT sigOnRedoAvailable(false);
             return;
         }
     }
@@ -532,8 +532,8 @@ void HexLineEdit::saveUndoRecord(const UndoRecord &newRecord) {
         m_undoIndex--;
     }
 
-    Q_EMIT undoAvailable(true);
-    Q_EMIT redoAvailable(false);
+    Q_EMIT sigOnUndoAvailable(true);
+    Q_EMIT sigOnRedoAvailable(false);
 }
 
 bool HexLineEdit::isHexOrWildcard(QChar c) {

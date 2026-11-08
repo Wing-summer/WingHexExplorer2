@@ -52,13 +52,13 @@ public:
     void removeButton(QToolButton *button);
 
 signals:
-    void emptyStatusChanged(bool isEmpty);
+    void sigOnEmptyStatusChanged(bool isEmpty);
 
 private:
     Ui::RibbonButtonGroup *ui;
     QString m_title; ///< Title of the button group
 
-    QList<QToolButton *> _buttons;
+    QList<QToolButton *> m_buttons;
 };
 
 #endif // RIBBONBUTTONGROUP_H

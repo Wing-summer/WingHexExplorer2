@@ -24,7 +24,7 @@
 #include <QVBoxLayout>
 
 MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
-    : FramelessDialogBase(parent), _result(origin) {
+    : FramelessDialogBase(parent), m_result(origin) {
     QStringList header{tr("Begin"), tr("End"), tr("Foreground"),
                        tr("Background"), tr("Comment")};
     auto total = header.size();
@@ -36,14 +36,14 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     auto l = new QLabel(tr("Select columns to show"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
-    headerlist = new QListWidget(this);
+    m_headerlist = new QListWidget(this);
 
     for (qsizetype i = 0; i < total; ++i) {
-        auto w = new QListWidgetItem(header.at(i), headerlist);
+        auto w = new QListWidgetItem(header.at(i), m_headerlist);
         w->setCheckState(origin.at(i) ? Qt::Unchecked : Qt::Checked);
     }
 
-    layout->addWidget(headerlist);
+    layout->addWidget(m_headerlist);
     layout->addSpacing(10);
     auto dbbox = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -60,12 +60,12 @@ MetaHeaderDialog::MetaHeaderDialog(const QVector<bool> &origin, QWidget *parent)
     this->setWindowTitle(tr("Annotation columns"));
 }
 
-const QVector<bool> &MetaHeaderDialog::getResults() { return _result; }
+const QVector<bool> &MetaHeaderDialog::getResults() { return m_result; }
 
 void MetaHeaderDialog::on_accept() {
-    for (int i = 0; i < headerlist->count(); ++i) {
-        auto item = headerlist->item(i);
-        _result[i] = (item->checkState() == Qt::Unchecked);
+    for (int i = 0; i < m_headerlist->count(); ++i) {
+        auto item = m_headerlist->item(i);
+        m_result[i] = (item->checkState() == Qt::Unchecked);
     }
     done(1);
 }

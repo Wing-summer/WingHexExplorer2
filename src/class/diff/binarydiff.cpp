@@ -17,18 +17,20 @@
 
 #include "binarydiff.h"
 
-#include <QElapsedTimer>
-#include <QMutexLocker>
 #include <algorithm>
 #include <cstring>
 #include <limits>
+
+#include <QElapsedTimer>
+#include <QMutexLocker>
 
 namespace WingDiff {
 
 Q_LOGGING_CATEGORY(lcBinaryDiff, "wing.diff")
 
 void Options::normalize() {
-    fileLimit = std::clamp(fileLimit, Limits::MinimumFileSize, Limits::MaximumFileSize);
+    fileLimit =
+        std::clamp(fileLimit, Limits::MinimumFileSize, Limits::MaximumFileSize);
     if (!Limits::isMemoryBudget(memoryLimit)) {
         memoryLimit = Limits::DefaultMemoryBudget;
     }
@@ -228,9 +230,13 @@ struct ReadSpan {
     QByteArray storage;
     qsizetype start = 0;
     qsizetype count = 0;
+
     qsizetype size() const { return count; }
+
     const char *constData() const { return storage.constData() + start; }
+
     char operator[](qsizetype index) const { return constData()[index]; }
+
     operator QByteArrayView() const {
         return QByteArrayView(constData(), count);
     }
@@ -245,6 +251,7 @@ struct Reader {
     QByteArray cache;
     quint64 cacheOffset = 0;
     quint64 cacheSize = 2 * MiB;
+
     ReadSpan read(quint64 offset, quint64 length, bool window = false) {
         if (!length) {
             return {};
@@ -329,6 +336,7 @@ public:
                              (a.hash == b.hash && a.offset < b.offset);
                   });
     }
+
     template <typename Verify>
     bool find(QByteArrayView bytes, quint64 minimum, quint64 *old,
               quint64 *position, const Verify &verify,
@@ -478,6 +486,7 @@ bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
     }
     return true;
 }
+
 constexpr quint64 FastFrontierUpdates = 2'000'000;
 constexpr quint64 PreciseFrontierUpdates = 8'000'000;
 
@@ -511,6 +520,7 @@ struct ResultWriter {
         results.processed = x + y;
         return true;
     }
+
     bool emitGap(quint64 endX, quint64 endY, bool coarse) {
         if (x == endX && y == endY) {
             return true;

@@ -16,6 +16,7 @@
 */
 
 #include "wingfiledialog.h"
+
 #include "class/settings/settingmanager.h"
 #include "dialog/framelessdialogbase.h"
 

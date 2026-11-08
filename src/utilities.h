@@ -66,6 +66,7 @@ template <class Key, class T>
 class Cache {
     struct Chain {
         Chain() noexcept : prev(this), next(this) {}
+
         Chain *prev;
         Chain *next;
     };
@@ -100,10 +101,10 @@ class Cache {
 
     using Data = QHashPrivate::Data<Node>;
 
-    mutable Chain chain;
-    Data d;
-    qsizetype mx = 0;
-    qsizetype total = 0;
+    mutable Chain m_chain;
+    Data m_d;
+    qsizetype m_mx = 0;
+    qsizetype m_total = 0;
 
     inline static void unlinkChain(Node *n) noexcept {
         n->prev->next = n->next;
@@ -111,33 +112,33 @@ class Cache {
     }
 
     inline void linkFront(Node *n) noexcept {
-        n->prev = &chain;
-        n->next = chain.next;
-        chain.next->prev = n;
-        chain.next = n;
+        n->prev = &m_chain;
+        n->next = m_chain.next;
+        m_chain.next->prev = n;
+        m_chain.next = n;
     }
 
     inline void moveToFront(Node *n) const noexcept {
-        if (chain.next == n) {
+        if (m_chain.next == n) {
             return;
         }
         unlinkChain(n);
-        n->prev = const_cast<Chain *>(&chain);
-        n->next = chain.next;
-        chain.next->prev = n;
-        chain.next = n;
+        n->prev = const_cast<Chain *>(&m_chain);
+        n->next = m_chain.next;
+        m_chain.next->prev = n;
+        m_chain.next = n;
     }
 
     inline void unlink(Node *n) {
         unlinkChain(n);
-        --total;
-        auto it = d.findBucket(n->key);
-        d.erase(it);
+        --m_total;
+        auto it = m_d.findBucket(n->key);
+        m_d.erase(it);
     }
 
     inline void trim(qsizetype m) {
-        while (chain.prev != &chain && total > m) {
-            Node *n = static_cast<Node *>(chain.prev);
+        while (m_chain.prev != &m_chain && m_total > m) {
+            Node *n = static_cast<Node *>(m_chain.prev);
             unlink(n);
         }
     }
@@ -145,7 +146,7 @@ class Cache {
     Q_DISABLE_COPY(Cache)
 
 public:
-    inline explicit Cache(qsizetype maxCost) noexcept : mx(maxCost) {}
+    inline explicit Cache(qsizetype maxCost) noexcept : m_mx(maxCost) {}
 
     inline ~Cache() {
         static_assert(std::is_nothrow_destructible_v<Key>,
@@ -157,45 +158,47 @@ public:
         clear();
     }
 
-    inline qsizetype maxCost() const noexcept { return mx; }
+    inline qsizetype maxCost() const noexcept { return m_mx; }
 
     inline void setMaxCost(qsizetype m) {
-        mx = m;
-        trim(mx);
+        m_mx = m;
+        trim(m_mx);
     }
 
-    inline qsizetype totalCost() const noexcept { return total; }
+    inline qsizetype totalCost() const noexcept { return m_total; }
 
-    inline qsizetype size() const noexcept { return qsizetype(d.size); }
-    inline qsizetype count() const noexcept { return qsizetype(d.size); }
-    inline bool isEmpty() const noexcept { return !d.size; }
+    inline qsizetype size() const noexcept { return qsizetype(m_d.size); }
+
+    inline qsizetype count() const noexcept { return qsizetype(m_d.size); }
+
+    inline bool isEmpty() const noexcept { return !m_d.size; }
 
     inline void clear() {
-        d.clear();
-        total = 0;
-        chain.next = &chain;
-        chain.prev = &chain;
+        m_d.clear();
+        m_total = 0;
+        m_chain.next = &m_chain;
+        m_chain.prev = &m_chain;
     }
 
     inline bool insert(const Key &key, T object) {
-        if (mx < 1) {
+        if (m_mx < 1) {
             remove(key);
             return false;
         }
 
-        if (Node *existing = d.findNode(key)) {
+        if (Node *existing = m_d.findNode(key)) {
             existing->emplace(object);
             moveToFront(existing);
             return true;
         }
 
-        trim(mx - 1);
+        trim(m_mx - 1);
 
-        auto result = d.findOrInsert(key);
+        auto result = m_d.findOrInsert(key);
         Node *n = result.it.node();
         Node::createInPlace(n, key, object);
         linkFront(n);
-        ++total;
+        ++m_total;
         return true;
     }
 
@@ -204,7 +207,7 @@ public:
             return T{};
         }
 
-        Node *n = d.findNode(key);
+        Node *n = m_d.findNode(key);
         if (!n) {
             return T{};
         }
@@ -214,7 +217,7 @@ public:
     }
 
     inline bool contains(const Key &key) const {
-        return !isEmpty() && d.findNode(key) != nullptr;
+        return !isEmpty() && m_d.findNode(key) != nullptr;
     }
 
     inline bool remove(const Key &key) {
@@ -222,7 +225,7 @@ public:
             return false;
         }
 
-        Node *n = d.findNode(key);
+        Node *n = m_d.findNode(key);
         if (!n) {
             return false;
         }

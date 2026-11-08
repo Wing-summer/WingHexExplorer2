@@ -16,15 +16,16 @@
 */
 
 #include "diffsource.h"
-#include "binarydiff.h"
+
+#include <algorithm>
+#include <cstring>
 
 #include <QCoreApplication>
 #include <QFile>
 #include <QMutex>
 #include <QWaitCondition>
 
-#include <algorithm>
-#include <cstring>
+#include "binarydiff.h"
 
 namespace WingDiff {
 namespace {
@@ -44,14 +45,18 @@ public:
         setObjectName(description);
         QIODevice::open(QIODevice::ReadOnly | QIODevice::Unbuffered);
     }
+
     qint64 size() const override { return m_length; }
+
     bool isSequential() const override { return false; }
+
     bool seek(qint64 offset) override {
         return offset >= 0 && offset <= m_length && QIODevice::seek(offset);
     }
 
 protected:
     qint64 writeData(const char *, qint64) override { return -1; }
+
     qint64 readData(char *out, qint64 maximum) override {
         const auto count =
             std::min({maximum, m_length - pos(), qint64(256 * 1024)});

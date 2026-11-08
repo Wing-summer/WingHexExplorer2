@@ -15,17 +15,20 @@
 ** =============================================================================
 */
 
-#include "luaulanguageserver.h"
+#include <algorithm>
 
-#include "Luau/ToString.h"
-#include "Luau/TypeUtils.h"
-#include "typehelpers.h"
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <algorithm>
+
+#include "Luau/ToString.h"
+#include "Luau/TypeUtils.h"
+
+#include "luaulanguageserver.h"
+#include "typehelpers.h"
 
 static void collectSymbolProperties(Luau::TypeId type,
                                     Luau::TableType::Props &properties,
@@ -245,15 +248,17 @@ LuauLanguageServer::Symbol catalogSymbol(const QJsonObject &object) {
         symbol.overloads.append(signature.toString());
     }
     const auto kind = object.value(QStringLiteral("kind")).toString();
-    symbol.item.kind =
-        kind == QStringLiteral("interface") ? lsp::CompletionItemKind::Interface
-        : kind == QStringLiteral("constant") ? lsp::CompletionItemKind::Constant
-        : kind == QStringLiteral("property") ? lsp::CompletionItemKind::Property
-        : kind == QStringLiteral("class")    ? lsp::CompletionItemKind::Class
-        : kind == QStringLiteral("module") ? lsp::CompletionItemKind::Module
-                                           : lsp::CompletionItemKind::Function;
+    static const QHash<QString, lsp::CompletionItemKind> kindMap = {
+        {QStringLiteral("interface"), lsp::CompletionItemKind::Interface},
+        {QStringLiteral("constant"), lsp::CompletionItemKind::Constant},
+        {QStringLiteral("property"), lsp::CompletionItemKind::Property},
+        {QStringLiteral("class"), lsp::CompletionItemKind::Class},
+        {QStringLiteral("module"), lsp::CompletionItemKind::Module},
+    };
+    symbol.item.kind = kindMap.value(kind, lsp::CompletionItemKind::Function);
     return symbol;
 }
+
 QJsonObject readSymbolPage(const QString &path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -281,10 +286,10 @@ void LuauLanguageServer::configureTypeDisplay(
         }
         if (name && module) {
             const auto found =
-                typeDisplayNames.constFind(QString::fromStdString(*name));
-            if (found != typeDisplayNames.cend() &&
+                m_typeDisplayNames.constFind(QString::fromStdString(*name));
+            if (found != m_typeDisplayNames.cend() &&
                 QFileInfo(QString::fromStdString(*module)).absolutePath() ==
-                    QFileInfo(symbolCatalogFile).absolutePath()) {
+                    QFileInfo(m_symbolCatalogFile).absolutePath()) {
                 return found->toStdString();
             }
         }
@@ -294,22 +299,22 @@ void LuauLanguageServer::configureTypeDisplay(
 
 void LuauLanguageServer::initializeSymbolCatalog(
     const WingScriptBind::ScriptSymbolCatalog &plugins) {
-    symbolPages.clear();
-    builtinRoots.reset();
-    catalogRoots.clear();
-    pluginRoots.clear();
-    pluginPages.clear();
-    typeDisplayNames.clear();
-    if (!symbolCatalogFile.isEmpty()) {
-        const auto catalog = readSymbolPage(symbolCatalogFile);
+    m_symbolPages.clear();
+    m_builtinRoots.reset();
+    m_catalogRoots.clear();
+    m_pluginRoots.clear();
+    m_pluginPages.clear();
+    m_typeDisplayNames.clear();
+    if (!m_symbolCatalogFile.isEmpty()) {
+        const auto catalog = readSymbolPage(m_symbolCatalogFile);
         const auto displayNames =
             catalog.value(QStringLiteral("type_display_names")).toObject();
         for (auto it = displayNames.begin(); it != displayNames.end(); ++it) {
-            typeDisplayNames.insert(it.key(), it.value().toString());
+            m_typeDisplayNames.insert(it.key(), it.value().toString());
         }
         const auto roots = catalog.value(QStringLiteral("roots")).toArray();
         for (const auto &entry : roots) {
-            catalogRoots.append(catalogSymbol(entry.toObject()));
+            m_catalogRoots.append(catalogSymbol(entry.toObject()));
         }
     }
     QSet<QString> parents;
@@ -344,32 +349,32 @@ void LuauLanguageServer::initializeSymbolCatalog(
         }
         symbol.hasChildren = parents.contains(entry.id);
         if (symbol.moduleRoot) {
-            pluginRoots.append(std::move(symbol));
+            m_pluginRoots.append(std::move(symbol));
         } else {
-            pluginPages[entry.parent].append(std::move(symbol));
+            m_pluginPages[entry.parent].append(std::move(symbol));
         }
     }
 }
 
 QList<LuauLanguageServer::Symbol> LuauLanguageServer::builtinSymbols() {
-    if (!isReady) {
+    if (!m_isReady) {
         return {};
     }
-    if (builtinRoots) {
-        return *builtinRoots;
+    if (m_builtinRoots) {
+        return *m_builtinRoots;
     }
     QList<Symbol> result;
     QSet<QString> names;
-    for (const auto &symbol : std::as_const(catalogRoots)) {
+    for (const auto &symbol : std::as_const(m_catalogRoots)) {
         names.insert(symbol.item.label);
         result.append(symbol);
     }
-    for (auto symbol : std::as_const(pluginRoots)) {
+    for (auto symbol : std::as_const(m_pluginRoots)) {
         names.insert(symbol.item.label);
         symbol.path = {symbol.item.label};
         result.append(symbol);
     }
-    const auto scope = frontend.globals.globalScope;
+    const auto scope = m_frontend.globals.globalScope;
     LuauLsp::TypeDisplayOptions options;
     options.scope = scope;
     options.hideTableAliasExpansions = true;
@@ -391,14 +396,14 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::builtinSymbols() {
         symbol.moduleRoot = symbol.item.kind == lsp::CompletionItemKind::Module;
         result.append(std::move(symbol));
     }
-    builtinRoots = result;
+    m_builtinRoots = result;
     return result;
 }
 
 QList<LuauLanguageServer::Symbol>
 LuauLanguageServer::symbolChildren(const Symbol &symbol) {
-    if (symbolPages.contains(symbol.id)) {
-        return symbolPages.value(symbol.id);
+    if (m_symbolPages.contains(symbol.id)) {
+        return m_symbolPages.value(symbol.id);
     }
     QList<Symbol> result;
     if (!symbol.membersFile.isEmpty()) {
@@ -406,13 +411,13 @@ LuauLanguageServer::symbolChildren(const Symbol &symbol) {
             return {};
         }
         const auto page = readSymbolPage(
-            QFileInfo(symbolCatalogFile).dir().filePath(symbol.membersFile));
+            QFileInfo(m_symbolCatalogFile).dir().filePath(symbol.membersFile));
         const auto children = page.value(QStringLiteral("children")).toArray();
         for (const auto &entry : children) {
             result.append(catalogSymbol(entry.toObject()));
         }
     } else if (symbol.source == SymbolSource::Plugin) {
-        result = pluginPages.value(symbol.id);
+        result = m_pluginPages.value(symbol.id);
         if (!symbol.path.isEmpty()) {
             Symbol declaration = symbol;
             declaration.id = symbol.id + QStringLiteral("/definitions");
@@ -445,7 +450,7 @@ LuauLanguageServer::symbolChildren(const Symbol &symbol) {
         if (path.isEmpty()) {
             return {};
         }
-        const auto scope = frontend.globals.globalScope;
+        const auto scope = m_frontend.globals.globalScope;
         const auto binding =
             scope->lookup(Luau::AstName(path.front().toUtf8().constData()));
         if (binding) {
@@ -497,6 +502,6 @@ LuauLanguageServer::symbolChildren(const Symbol &symbol) {
             }
         }
     }
-    symbolPages.insert(symbol.id, result);
+    m_symbolPages.insert(symbol.id, result);
     return result;
 }

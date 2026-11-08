@@ -1,9 +1,9 @@
-#include "control/toast.h"
-
 #include <QEnterEvent>
 #include <QLineEdit>
 #include <QTest>
 #include <QWindow>
+
+#include "control/toast.h"
 
 class ToastTest : public QObject {
     Q_OBJECT
@@ -21,6 +21,7 @@ private:
     }
 
 private slots:
+
     void overlayAndFocus() {
         QWidget host;
         host.resize(640, 480);
@@ -48,7 +49,7 @@ private slots:
         host.show();
         auto toast = showToast(host, QString(500, QLatin1Char('W')));
         QVERIFY(toast);
-        for (auto position : {Toast::TOP, Toast::CENTER, Toast::BOTTOM}) {
+        for (auto position : {Toast::Top, Toast::Center, Toast::Bottom}) {
             toast->setToastPos(position);
             for (const auto size :
                  {QSize(800, 600), QSize(180, 90), QSize(12, 10)}) {

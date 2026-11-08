@@ -18,12 +18,12 @@
 #ifndef IDBTREEMODEL_H
 #define IDBTREEMODEL_H
 
-#include "luau/luauvariable.h"
+#include <memory>
+#include <unordered_map>
 
 #include <QAbstractItemModel>
 
-#include <memory>
-#include <unordered_map>
+#include "luau/luauvariable.h"
 
 class IDBTreeModel : public QAbstractItemModel {
     Q_OBJECT
@@ -39,11 +39,15 @@ protected:
     static inline void *encodeProxy(ProxyNode *p) {
         return (void *)(uintptr_t(((uintptr_t)p) | 1));
     }
+
     static inline void *encodeVar(LuauVariable *v) { return (void *)v; }
+
     static inline bool isProxy(void *p) { return (((uintptr_t)p) & 1) != 0; }
+
     static inline ProxyNode *decodeProxy(void *p) {
         return (ProxyNode *)(uintptr_t(((uintptr_t)p) & ~uintptr_t(1)));
     }
+
     static inline LuauVariable *decodeVar(void *p) { return (LuauVariable *)p; }
 
 public:
@@ -91,20 +95,22 @@ public:
     int getPageSize() const;
 
 private:
-    LuauVariableRegistry *root = nullptr;
-    LuauScope rootScope;
-    int pageSize = 100;
+    LuauVariableRegistry *m_root = nullptr;
+    LuauScope m_rootScope;
+    int m_pageSize = 100;
 
 private:
     struct ProxyKey {
         LuauVariable *owner;
         int scopeKey;
         int pageIndex;
+
         inline bool operator==(const ProxyKey &o) const {
             return owner == o.owner && scopeKey == o.scopeKey &&
                    pageIndex == o.pageIndex;
         }
     };
+
     struct KeyHash {
         inline std::size_t operator()(const ProxyKey &k) const noexcept {
             return std::hash<LuauVariable *>{}(k.owner) ^
@@ -112,8 +118,9 @@ private:
                    (std::hash<int>{}(k.pageIndex) << 2);
         }
     };
+
     mutable std::unordered_map<ProxyKey, std::shared_ptr<ProxyNode>, KeyHash>
-        proxyMap;
+        m_proxyMap;
 
 protected:
     std::shared_ptr<ProxyNode> getOrCreateProxy(const LuauScope &scope,

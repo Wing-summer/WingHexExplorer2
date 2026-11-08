@@ -18,11 +18,12 @@
 #ifndef SCRIPTWINDOWFACTORY_H
 #define SCRIPTWINDOWFACTORY_H
 
-#include "dialog/framelessdialogbase.h"
-#include "dialog/framelessmainwindow.h"
 #include "qtluau/bindings.hpp"
 #include "qtluau/ui_notifications.hpp"
 #include "qtluau/window_menu.hpp"
+
+#include "dialog/framelessdialogbase.h"
+#include "dialog/framelessmainwindow.h"
 #ifdef WINGHEX_USE_FRAMELESS
 #include "class/settings/settingmanager.h"
 #endif
@@ -39,6 +40,7 @@ class ScriptWindowFactory {
         QList<QPointer<QWidget>> uiChildren;
         bool ready = false;
     };
+
     class Window : public FramelessMainWindow {
     public:
         explicit Window(QWidget *parent) : FramelessMainWindow(parent) {
@@ -46,6 +48,7 @@ class ScriptWindowFactory {
             nativeTitleBar = SettingManager::instance().useNativeTitleBar();
 #endif
         }
+
         QPointer<QWidget> payload;
         QPointer<QWidget> container;
         QPointer<QWidget> menu;
@@ -65,6 +68,7 @@ class ScriptWindowFactory {
             }
             setCentralWidget(container);
         }
+
         void replaceContent(QWidget *next) {
             if (payload == next) {
                 return;
@@ -84,6 +88,7 @@ class ScriptWindowFactory {
             }
             payload = next;
         }
+
         QWidget *takeContent() {
             QWidget *previous = payload;
             if (!container) {
@@ -95,6 +100,7 @@ class ScriptWindowFactory {
             payload.clear();
             return previous;
         }
+
         void replaceMenu(QWidget *next) {
             if (nativeTitleBar) {
                 setMenuWidget(next);
@@ -115,6 +121,7 @@ class ScriptWindowFactory {
             }
             menu = next;
         }
+
         QWidget *getMenu(bool create) {
             if (nativeTitleBar) {
                 return create ? menuBar() : menuWidget();
@@ -125,6 +132,7 @@ class ScriptWindowFactory {
             return menu;
         }
     };
+
     static void finish(QWidget *widget) {
         if (auto *dialog = dynamic_cast<Dialog *>(widget)) {
             if (dialog->ready) {
@@ -183,6 +191,7 @@ public:
             }
         }
     }
+
     static qtluau::UiWidgetResult
     create(const qtluau::UiWidgetRequest &request) {
         QWidget *widget = nullptr;
@@ -198,6 +207,7 @@ public:
         }
         return {qtluau::UiWidgetAction::Use, widget};
     }
+
     static void finalize(QWidget *root) {
         const auto widgets = root->findChildren<QWidget *>();
         for (auto *widget : widgets) {
@@ -205,6 +215,7 @@ public:
         }
         finish(root);
     }
+
     static void setContent(QWidget *widget, QWidget *content) {
         if (auto *window = dynamic_cast<Window *>(widget)) {
             window->replaceContent(content);
@@ -214,6 +225,7 @@ public:
             throw std::runtime_error("Unsupported host content target");
         }
     }
+
     static QWidget *takeContent(QWidget *widget) {
         if (auto *window = dynamic_cast<Window *>(widget)) {
             return window->takeContent();
@@ -223,6 +235,7 @@ public:
         }
         throw std::runtime_error("Unsupported host content target");
     }
+
     static QWidget *menu(QWidget *widget, bool create) {
         if (auto *window = dynamic_cast<Window *>(widget)) {
             return window->getMenu(create);
@@ -232,6 +245,7 @@ public:
         }
         throw std::runtime_error("Unsupported host menu target");
     }
+
     static void setMenu(QWidget *widget, QWidget *menu) {
         if (auto *window = dynamic_cast<Window *>(widget)) {
             window->replaceMenu(menu);
@@ -241,6 +255,7 @@ public:
             throw std::runtime_error("Unsupported host menu target");
         }
     }
+
     static QWidget *content(QWidget *widget) {
         if (auto *dialog = dynamic_cast<Dialog *>(widget)) {
             return dialog->ready ? dialog->payload.data() : widget;

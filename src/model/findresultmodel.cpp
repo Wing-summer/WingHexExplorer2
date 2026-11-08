@@ -16,6 +16,7 @@
 */
 
 #include "findresultmodel.h"
+
 #include "utilities.h"
 
 FindResultModel::FindResultModel(QObject *parent)

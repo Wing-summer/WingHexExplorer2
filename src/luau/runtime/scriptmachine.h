@@ -18,13 +18,13 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
+#include <QObject>
+
 #include "luau/luaudebugger.h"
 #include "luau/luauinspector.h"
 #include "luau/scriptbindingengine.h"
 #include "luau/wingluaurequire.h"
 #include "luauscheduler.h"
-
-#include <QObject>
 
 class ScriptMachine : public QObject {
     Q_OBJECT
@@ -144,25 +144,25 @@ private:
     static int debugElapsedTime(lua_State *L);
 
 signals:
-    void inputCancelled(ScriptMachine::ConsoleMode mode);
+    void sigOnInputCancelled(ScriptMachine::ConsoleMode mode);
 
 private:
     static void onLuauInterrupt(lua_State *L, int gc);
-    static void onLuauThreadCreated(lua_State *LP, lua_State *L);
+    static void onLuauThreadCreated(lua_State *lp, lua_State *L);
 
 private:
-    bool _inited = false;
-    bool _scriptRegistrationFinished = false;
-    lua_State *_main = nullptr;
-    std::unique_ptr<WingScriptBind::ScriptBindingEngine> _bindings;
-    LuauDebugger *_debugger = nullptr;
-    mutable LuauThread _ctx[ConsoleModeCount]{};
-    mutable LuauThreadData _tdata[ConsoleModeCount]{};
+    bool m_inited = false;
+    bool m_scriptRegistrationFinished = false;
+    lua_State *m_main = nullptr;
+    std::unique_ptr<WingScriptBind::ScriptBindingEngine> m_bindings;
+    LuauDebugger *m_debugger = nullptr;
+    mutable LuauThread m_ctx[ConsoleModeCount]{};
+    mutable LuauThreadData m_tdata[ConsoleModeCount]{};
 
-    WingLuauRequire _luaReq;
+    WingLuauRequire m_luaReq;
 
-    inline static InspectOptions _printOptions;
-    QVector<RegCallBacks> _regcalls;
+    inline static InspectOptions m_printOptions;
+    QVector<RegCallBacks> m_regcalls;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

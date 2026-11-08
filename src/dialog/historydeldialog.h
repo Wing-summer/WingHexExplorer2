@@ -48,10 +48,10 @@ private slots:
 
 private:
     Ui::HistoryDelDialog *ui;
-    FramelessDialogBase *_dialog;
+    FramelessDialogBase *m_dialog;
 
-    QList<RecentFileManager::RecentInfo> _infos;
-    bool _isScriptFile;
+    QList<RecentFileManager::RecentInfo> m_infos;
+    bool m_isScriptFile;
 };
 
 #endif // HISTORYDELDIALOG_H

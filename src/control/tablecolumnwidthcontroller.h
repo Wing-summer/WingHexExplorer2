@@ -63,11 +63,13 @@ private:
         QHash<int, int> measured;
         void clear(int column);
     };
+
     struct Measurement {
         int column;
         int sample = 0;
         int width = 0;
     };
+
     QAbstractItemView *m_view;
     QTableViewExt *m_table;
     QPointer<QHeaderView> m_header;

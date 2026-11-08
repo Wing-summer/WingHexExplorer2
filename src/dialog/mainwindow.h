@@ -18,12 +18,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "class/settings/thememanager.h"
-#include "control/searchabletextbrowser.h"
-#include "dialog/diffdialog.h"
-#include "dialog/splashdialog.h"
-#include "framelessmainwindow.h"
-
 #include <QFutureWatcher>
 #include <QMainWindow>
 #include <QPixmap>
@@ -42,12 +36,18 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingplugin.h"
+
 #include "class/file/recentfilemanager.h"
+#include "class/settings/thememanager.h"
 #include "control/console/consolehighlighanim.h"
 #include "control/console/scriptingconsole.h"
 #include "control/editorview.h"
 #include "control/idbtreeview.h"
 #include "control/qtableviewext.h"
+#include "control/searchabletextbrowser.h"
+#include "dialog/diffdialog.h"
+#include "dialog/splashdialog.h"
+#include "framelessmainwindow.h"
 #include "model/bookmarksmodel.h"
 #include "model/checksummodel.h"
 #include "model/metadatamodel.h"
@@ -315,7 +315,8 @@ private:
                     const QKeySequence &shortcut = QKeySequence(),
                     QMenu *menu = nullptr,
                     const QString &description = QString()) {
-        return addPannelAction(pannel, ThemeManager::instance().standardIcon(icon),
+        return addPannelAction(pannel,
+                               ThemeManager::instance().standardIcon(icon),
                                title, slot, shortcut, menu, description);
     }
 
@@ -483,12 +484,12 @@ private:
     }
 
 signals:
-    void closed();
+    void sigOnClosed();
 
 private:
     QVector<QToolButton *> m_toolBtneditors;
     QList<QWidget *> m_editStateWidgets;
-    QReadWriteLock _editorLock;
+    QReadWriteLock m_editorLock;
     EditorView *m_curEditor = nullptr;
     QList<QMetaObject::Connection> m_curConnections;
 
@@ -496,11 +497,11 @@ private:
     bool m_unsignedHex = false;
 
     ads::CDockManager *m_dock = nullptr;
-    QLabel *_editArea = nullptr;
-    QLabel *_status = nullptr;
+    QLabel *m_editArea = nullptr;
+    QLabel *m_statusLabel = nullptr;
     QTextBrowser *m_logbrowser = nullptr;
     SearchableTextBrowser *m_txtDecode = nullptr;
-    QUndoView *_undoView = nullptr;
+    QUndoView *m_undoView = nullptr;
 
     QLabel *m_lblloc = nullptr;
     QLabel *m_lblsellen = nullptr;
@@ -521,31 +522,31 @@ private:
     QToolButton *m_sCanOver = nullptr;
 
     // cache icon
-    QIcon _infoSaved, _infoUnsaved;
-    QIcon _infoWriteable, _infoReadonly;
-    QIcon _infoLock, _infoUnLock;
-    QIcon _infoCanOver, _infoCannotOver;
+    QIcon m_infoSaved, m_infoUnsaved;
+    QIcon m_infoWriteable, m_infoReadonly;
+    QIcon m_infoLock, m_infoUnLock;
+    QIcon m_infoCanOver, m_infoCannotOver;
 
-    QPixmap _pixLock;
-    QPixmap _pixReadonly;
-    QPixmap _pixCanOver, _pixCannotOver;
+    QPixmap m_pixLock;
+    QPixmap m_pixReadonly;
+    QPixmap m_pixCanOver, m_pixCannotOver;
 
     QTableViewExt *m_findresult = nullptr;
-    FindResultModel *_findResultModel = nullptr;
+    FindResultModel *m_findResultModel = nullptr;
     QTableViewExt *m_hash = nullptr;
-    CheckSumModel *_hashModel = nullptr;
+    CheckSumModel *m_hashModel = nullptr;
     QTableViewExt *m_bookMark = nullptr;
-    BookMarksModel *_bookMarkModel = nullptr;
+    BookMarksModel *m_bookMarkModel = nullptr;
     QTableViewExt *m_metadata = nullptr;
-    MetaDataModel *_metadataModel = nullptr;
+    MetaDataModel *m_metadataModel = nullptr;
 
     QTableViewExt *m_numshowtable = nullptr;
-    NumShowModel *_numsitem = nullptr;
+    NumShowModel *m_numsitem = nullptr;
     QMenu *m_menuFind = nullptr;
     ads::CDockWidget *m_find = nullptr;
     ads::CDockWidget *m_hashtable = nullptr;
 
-    ScriptMachine::MessageType _lastOutputType =
+    ScriptMachine::MessageType m_lastOutputType =
         ScriptMachine::MessageType::Unknown;
     QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
         m_findEncoding;
@@ -555,19 +556,19 @@ private:
     ScriptingConsole *m_scriptConsole = nullptr;
     QPlainTextEdit *m_bgScriptOutput = nullptr;
 
-    ConsoleHighlighAnim *_hlAnim = nullptr;
+    ConsoleHighlighAnim *m_hlAnim = nullptr;
     Ribbon *m_ribbon = nullptr;
     size_t m_newIndex = 1;
     ads::CDockWidget *m_console = nullptr;
 
-    IDBTreeView *_scriptObjView = nullptr;
-    LuauVariableRegistry _scriptObjReg;
+    IDBTreeView *m_scriptObjView = nullptr;
+    LuauVariableRegistry m_scriptObjReg;
 
     QAction *m_aDelBookMark = nullptr;
     QAction *m_aDelMetaData = nullptr;
 
-    qsizetype _decstrlim = 10;
-    QByteArray _defaultLayout;
+    qsizetype m_decstrlim = 10;
+    QByteArray m_defaultLayout;
     QString m_lastusedpath;
 
     bool m_initializing = true;
@@ -577,7 +578,7 @@ private:
     QMenu *m_recentMenu = nullptr;
 
     RibbonButtonGroup *m_pluginSettingsGroup = nullptr;
-    QList<QMenu *> _scriptContexts;
+    QList<QMenu *> m_scriptContexts;
 
     // for plugin system use
     QHash<QString, RibbonTabContent *> m_ribbonMaps;

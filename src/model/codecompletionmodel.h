@@ -18,9 +18,9 @@
 #ifndef CODECOMPLETIONMODEL_H
 #define CODECOMPLETIONMODEL_H
 
-#include "control/editor/codeinfotip.h"
-
 #include <QAbstractListModel>
+
+#include "control/editor/codeinfotip.h"
 
 namespace Qt {
 constexpr int SelfDataRole = Qt::UserRole + 1;
@@ -38,7 +38,7 @@ public:
     virtual QVariant data(const QModelIndex &index, int role) const override;
 
 private:
-    QList<CodeInfoTip> _infos;
+    QList<CodeInfoTip> m_infos;
 };
 
 #endif // CODECOMPLETIONMODEL_H

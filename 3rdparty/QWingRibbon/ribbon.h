@@ -53,7 +53,7 @@ public:
     QHBoxLayout *conerLayout() const;
 
 signals:
-    void onDragDropFiles(const QStringList &filenames);
+    void sigOnDragDropFiles(const QStringList &filenames);
 
 protected:
     // —— events ———————————————————————————

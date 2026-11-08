@@ -18,12 +18,14 @@
 #ifndef SCRIPTBINDINGENGINE_H
 #define SCRIPTBINDINGENGINE_H
 
+#include <functional>
+#include <memory>
+
+#include <QStringList>
+
 #include "WingPlugin/binding/registrationapi.h"
 
 #include "scriptsymbol.h"
-#include <QStringList>
-#include <functional>
-#include <memory>
 
 struct lua_State;
 
@@ -51,7 +53,7 @@ public:
 
 private:
     class Impl;
-    std::unique_ptr<Impl> impl_;
+    std::unique_ptr<Impl> m_impl;
 
     Q_DISABLE_COPY_MOVE(ScriptBindingEngine)
 };

@@ -155,8 +155,8 @@ private:
     QStringList m_usrScriptsDbCats;
     QStringList m_sysScriptsDbCats;
 
-    QHash<QString, ScriptDirMeta> _usrDirMetas;
-    QHash<QString, ScriptDirMeta> _sysDirMetas;
+    QHash<QString, ScriptDirMeta> m_usrDirMetas;
+    QHash<QString, ScriptDirMeta> m_sysDirMetas;
 };
 
 Q_DECLARE_METATYPE(ScriptManager::ScriptDirMeta)

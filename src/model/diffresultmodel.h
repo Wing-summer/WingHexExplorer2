@@ -18,9 +18,9 @@
 #ifndef DIFFRESULTMODEL_H
 #define DIFFRESULTMODEL_H
 
-#include "class/diff/binarydiff.h"
-
 #include <QAbstractTableModel>
+
+#include "class/diff/binarydiff.h"
 
 class DiffResultModel final : public QAbstractTableModel {
     Q_OBJECT

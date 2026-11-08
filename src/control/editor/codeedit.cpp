@@ -16,12 +16,6 @@
 */
 
 #include "codeedit.h"
-#include "class/settings/thememanager.h"
-#include "class/util/qkeysequences.h"
-#include "luau/runtime/scriptsettings.h"
-#include "model/codecompletionmodel.h"
-#include "searchreplacewidget.h"
-#include "wingcompleter.h"
 
 #include <QAbstractItemView>
 #include <QIcon>
@@ -35,15 +29,23 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
+#include "class/settings/thememanager.h"
+#include "class/util/qkeysequences.h"
+#include "luau/runtime/scriptsettings.h"
+#include "model/codecompletionmodel.h"
+#include "searchreplacewidget.h"
+#include "wingcompleter.h"
+
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     connect(this->document(), &QTextDocument::modificationChanged, this,
-            &CodeEdit::contentModified);
+            &CodeEdit::sigOnContentModified);
     addEditorBasicShortcut();
     addMoveLineShortcut();
 
-    connect(&ScriptSettings::instance(), &ScriptSettings::editorSettingsUpdate,
-            this, &CodeEdit::applyEditorSetStyle);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+    connect(&ScriptSettings::instance(),
+            &ScriptSettings::sigOnEditorSettingsUpdate, this,
+            &CodeEdit::applyEditorSetStyle);
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
             &CodeEdit::applyEditorSetStyle);
     applyEditorSetStyle();
     setShowSymbolMark(true);
@@ -58,17 +60,18 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     m_gotoWidget = new GotoLineWidget(this);
     connect(this, &CodeEdit::blockCountChanged, m_gotoWidget,
             &GotoLineWidget::setTotalLines);
-    connect(m_gotoWidget, &GotoLineWidget::onGotoLine, this, [this](int line) {
-        auto doc = document();
-        auto block = doc->findBlockByNumber(line - 1);
+    connect(m_gotoWidget, &GotoLineWidget::sigOnGotoLine, this,
+            [this](int line) {
+                auto doc = document();
+                auto block = doc->findBlockByNumber(line - 1);
 
-        if (block.isValid()) {
-            QTextCursor cursor(block);
-            cursor.movePosition(QTextCursor::StartOfBlock);
-            setTextCursor(cursor);
-            ensureCursorVisible();
-        }
-    });
+                if (block.isValid()) {
+                    QTextCursor cursor(block);
+                    cursor.movePosition(QTextCursor::StartOfBlock);
+                    setTextCursor(cursor);
+                    ensureCursorVisible();
+                }
+            });
 
     showSearchReplaceBar(false, false);
     showGotoBar(false);
@@ -129,9 +132,10 @@ void CodeEdit::addEditorBasicShortcut() {
     connect(replace, &QShortcut::activated, this,
             [this]() { showSearchReplaceBar(true, true); });
 
-    auto Goto = new QShortcut(
+    auto gotoShortcut = new QShortcut(
         QKeySequences::instance().keySequence(QKeySequences::Key::GOTO), this);
-    connect(Goto, &QShortcut::activated, this, [this]() { showGotoBar(true); });
+    connect(gotoShortcut, &QShortcut::activated, this,
+            [this]() { showGotoBar(true); });
 }
 
 void CodeEdit::addMoveLineShortcut() {
@@ -225,7 +229,7 @@ void CodeEdit::toggleComment() {
 
 SearchReplaceWidget *CodeEdit::searchWidget() const { return m_searchWidget; }
 
-void CodeEdit::setContentModified(bool b) { Q_EMIT contentModified(b); }
+void CodeEdit::setContentModified(bool b) { Q_EMIT sigOnContentModified(b); }
 
 void CodeEdit::resizeEvent(QResizeEvent *event) {
     if (event) {
@@ -344,10 +348,10 @@ void CodeEdit::contextMenuEvent(QContextMenuEvent *event) {
         [this]() { showGotoBar(true); });
     menu.addSeparator();
     menu.addAction(tr("Go to definition"), QKeySequence(Qt::Key_F12), this,
-                   [this]() { navigationRequested(false); });
+                   [this]() { sigOnNavigationRequested(false); });
     menu.addAction(tr("Go to type definition"),
                    QKeySequence(Qt::SHIFT | Qt::Key_F12), this,
-                   [this]() { navigationRequested(true); });
+                   [this]() { sigOnNavigationRequested(true); });
     menu.addSeparator();
 
     menu.addAction(tr("Toggle comment"),

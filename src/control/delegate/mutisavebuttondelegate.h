@@ -39,7 +39,7 @@ private:
     static QRect getFileIconRect(const QRect &rect);
 
 signals:
-    void buttonClicked(const QModelIndex &index);
+    void sigOnButtonClicked(const QModelIndex &index);
 };
 
 #endif // MUTISAVEBUTTONDELEGATE_H

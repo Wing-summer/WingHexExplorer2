@@ -18,19 +18,23 @@
 #ifndef QTLUAU_INTEGRATIONS_WINGHEX_SCRIPTMACHINEBINDINGS_H
 #define QTLUAU_INTEGRATIONS_WINGHEX_SCRIPTMACHINEBINDINGS_H
 
+#include <limits>
+
+#include <QDialog>
+#include <QMainWindow>
+#include <QUrl>
+
 #include "Luau/Common.h"
-#include "generated_bindings.hpp"
+
 #include "qtluau/value_conversion.hpp"
 #include "qtluau/value_ref.hpp"
 #include "qtluau/widget_wrappers.hpp"
+
+#include "generated_bindings.hpp"
 #include "scriptfilesystem.h"
 #include "scriptmachine.h"
 #include "scriptwindowfactory.h"
 #include "src/class/settings/settingmanager.h"
-#include <QDialog>
-#include <QMainWindow>
-#include <QUrl>
-#include <limits>
 
 LUAU_FASTFLAG(LuauIntegerType2)
 
@@ -44,6 +48,7 @@ class ScriptMachineBindings {
         auto storage = std::make_shared<T>(std::move(value));
         return {WingScriptBind::typeInfo<T>(), storage, storage.get()};
     }
+
     template <class T>
     static bool readObject(const luabridge::LuaRef &value,
                            ObjectValue &result) {
@@ -53,6 +58,7 @@ class ScriptMachineBindings {
         }
         return false;
     }
+
     template <class T>
     static bool pushObject(lua_State *L, const ObjectValue &value) {
         if (WingScriptBind::sameType(value.type,
@@ -62,6 +68,7 @@ class ScriptMachineBindings {
         }
         return false;
     }
+
     static void adaptText(Value &value) {
         if (value.kind == Value::Kind::Bytes) {
             value.object = object<QString>(
@@ -196,9 +203,11 @@ public:
         };
         return codec;
     }
+
     static QHash<QString, QString> moduleFiles() {
         return bindings::moduleFiles();
     }
+
     static QHash<QString, QString> definitions() {
         return bindings::definitionFiles();
     }

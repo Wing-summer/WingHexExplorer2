@@ -23,11 +23,11 @@
 #include "luau/luauutil.h"
 #include "luau/luauvariableregistry.h"
 
-LuauScope LuauVariable::getScope() const { return scope_; }
+LuauScope LuauVariable::getScope() const { return m_scope; }
 
-bool LuauVariable::isTable() const { return type_ == LUA_TTABLE; }
+bool LuauVariable::isTable() const { return m_type == LUA_TTABLE; }
 
-bool LuauVariable::isUserData() const { return type_ == LUA_TUSERDATA; }
+bool LuauVariable::isUserData() const { return m_type == LUA_TUSERDATA; }
 
 bool LuauVariable::hasFields() const { return isTable() || isUserData(); }
 
@@ -36,38 +36,38 @@ bool LuauVariable::hasContent() const {
         return false;
     }
 
-    auto *L = scope_.getLuaState();
+    auto *L = m_scope.getLuaState();
     if (L == nullptr) {
         return false;
     }
 
     LuauUtil::StackGuard guard(L);
 
-    if (!scope_.pushRef()) {
+    if (!m_scope.pushRef()) {
         return false;
     }
 
-    const int value_idx = lua_absindex(L, -1);
+    const int valueIdx = lua_absindex(L, -1);
 
-    if (luaL_getmetafield(L, value_idx, "__iter")) {
+    if (luaL_getmetafield(L, valueIdx, "__iter")) {
         // stack:
         //   value
         //   __iter
 
-        lua_pushvalue(L, value_idx);
+        lua_pushvalue(L, valueIdx);
 
         // __iter(value) -> next, state, initial
         if (lua_pcall(L, 1, 3, 0) != LUA_OK) {
             return false;
         }
 
-        const int next_idx = lua_absindex(L, -3);
-        const int state_idx = lua_absindex(L, -2);
-        const int init_idx = lua_absindex(L, -1);
+        const int nextIdx = lua_absindex(L, -3);
+        const int stateIdx = lua_absindex(L, -2);
+        const int initIdx = lua_absindex(L, -1);
 
-        lua_pushvalue(L, next_idx);
-        lua_pushvalue(L, state_idx);
-        lua_pushvalue(L, init_idx);
+        lua_pushvalue(L, nextIdx);
+        lua_pushvalue(L, stateIdx);
+        lua_pushvalue(L, initIdx);
 
         if (lua_pcall(L, 2, 2, 0) != LUA_OK) {
             return false;
@@ -77,7 +77,7 @@ bool LuauVariable::hasContent() const {
         return !lua_isnil(L, -2);
     }
 
-    if (luaL_getmetafield(L, value_idx, "__getters")) {
+    if (luaL_getmetafield(L, valueIdx, "__getters")) {
         if (lua_istable(L, -1)) {
             lua_pushnil(L);
             return lua_next(L, -2) != 0;
@@ -87,86 +87,86 @@ bool LuauVariable::hasContent() const {
     }
 
     // table
-    if (!scope_.isTable()) {
+    if (!m_scope.isTable()) {
         return false;
     }
 
     lua_pushnil(L);
-    if (lua_next(L, value_idx) != 0) {
+    if (lua_next(L, valueIdx) != 0) {
         return true;
     }
 
     // dectect metatable
-    if (lua_getmetatable(L, value_idx)) {
+    if (lua_getmetatable(L, valueIdx)) {
         return true;
     }
 
     return false;
 }
 
-QString LuauVariable::getName() const { return name_; }
+QString LuauVariable::getName() const { return m_name; }
 
-QString LuauVariable::getValue() const { return value_; }
+QString LuauVariable::getValue() const { return m_value; }
 
-QString LuauVariable::getType() const { return LuauTypes::getTypeName(type_); }
+QString LuauVariable::getType() const { return LuauTypes::getTypeName(m_type); }
 
 QString LuauVariable::setValue(LuauScope scope, const QString &value) {
-    if (!LuauUtil::pushBreakEnv(L_, level_)) {
+    if (!LuauUtil::pushBreakEnv(m_state, m_level)) {
         throw std::runtime_error("Failed to push break environment");
     }
 
-    auto result = LuauUtil::eval(L_, preprocess(value), -1);
+    auto result = LuauUtil::eval(m_state, preprocess(value), -1);
     if (!result.has_value()) {
-        auto error = LuauTypes::toString(L_, -1);
-        lua_pop(L_, 2);
+        auto error = LuauTypes::toString(m_state, -1);
+        lua_pop(m_state, 2);
         throw std::runtime_error(error.toStdString());
     }
 
-    auto ret_count = result.value();
-    if (ret_count == 0) {
-        lua_pop(L_, 1);
-        return value_;
+    auto retCount = result.value();
+    if (retCount == 0) {
+        lua_pop(m_state, 1);
+        return m_value;
     }
 
-    if (ret_count > 1) {
-        lua_pop(L_, ret_count - 1);
+    if (retCount > 1) {
+        lua_pop(m_state, retCount - 1);
     }
 
-    auto name = name_.toUtf8();
-    auto new_value = LuauTypes::toDbgString(L_, -1);
+    auto name = m_name.toUtf8();
+    auto newValue = LuauTypes::toDbgString(m_state, -1);
     if (scope.isTable() || scope.isUserData()) {
         if (scope.pushRef()) {
             // -1: key
             // -2: table | userdata
             // -3: value
             // -4: env
-            lua_checkstack(L_, 2);
-            if (index_.has_value()) {
-                lua_pushinteger(L_, index_.value());
+            lua_checkstack(m_state, 2);
+            if (m_index.has_value()) {
+                lua_pushinteger(m_state, m_index.value());
             } else {
-                lua_pushstring(L_, name_.toUtf8());
+                lua_pushstring(m_state, m_name.toUtf8());
             }
-            lua_pushvalue(L_, -3);
-            lua_settable(L_, -3);
-            lua_pop(L_, 3);
+            lua_pushvalue(m_state, -3);
+            lua_settable(m_state, -3);
+            lua_pop(m_state, 3);
         }
     } else if (scope.isLocal()) {
-        if (!LuauUtil::setLocal(L_, level_, name, -1)) {
-            lua_pop(L_, 2);
+        if (!LuauUtil::setLocal(m_state, m_level, name, -1)) {
+            lua_pop(m_state, 2);
             throw std::runtime_error("Failed to set local variable");
         }
     } else if (scope.isUpvalue()) {
-        if (!LuauUtil::setUpvalue(L_, level_, name, -1)) {
-            lua_pop(L_, 2);
+        if (!LuauUtil::setUpvalue(m_state, m_level, name, -1)) {
+            lua_pop(m_state, 2);
             throw std::runtime_error("Failed to set upvalue");
         }
     } else {
-        lua_pop(L_, 2);
+        lua_pop(m_state, 2);
         throw std::runtime_error("Invalid scope");
     }
 
-    lua_pop(L_, 2);
-    return new_value;
+    lua_pop(m_state, 2);
+    return newValue;
 }
 
 void LuauVariable::loadFields(LuauVariableRegistry *registry,
@@ -180,23 +180,23 @@ void LuauVariable::loadFields(LuauVariableRegistry *registry,
         return;
     }
 
-    int value_idx = lua_absindex(L, -1);
+    int valueIdx = lua_absindex(L, -1);
 
     // https://github.com/luau-lang/rfcs/blob/master/docs/generalized-iteration.md
-    if (luaL_getmetafield(L, value_idx, "__iter")) {
-        addIterFields(registry, L, scope, value_idx);
-    } else if (hasGetters(L, value_idx)) {
-        addCustomFields(registry, L, scope, value_idx);
+    if (luaL_getmetafield(L, valueIdx, "__iter")) {
+        addIterFields(registry, L, scope, valueIdx);
+    } else if (hasGetters(L, valueIdx)) {
+        addCustomFields(registry, L, scope, valueIdx);
     } else if (scope.isTable()) {
-        addRawFields(registry, L, scope, value_idx);
+        addRawFields(registry, L, scope, valueIdx);
     }
 }
 
 LuauVariable::LuauVariable(LuauVariableRegistry *registry, lua_State *L,
                            const QString &name, int level)
-    : L_(L), level_(level), name_(name) {
-    type_ = lua_type(L, -1);
-    value_ = LuauTypes::toDbgString(L, -1);
+    : m_state(L), m_level(level), m_name(name) {
+    m_type = lua_type(L, -1);
+    m_value = LuauTypes::toDbgString(L, -1);
     addScope(registry, L);
 }
 
@@ -206,21 +206,21 @@ void LuauVariable::addScope(LuauVariableRegistry *registry, lua_State *L) {
     }
 
     if (isTable()) {
-        scope_ = LuauScope::createTable(L);
+        m_scope = LuauScope::createTable(L);
     } else if (isUserData()) {
-        scope_ = LuauScope::createUserData(L);
+        m_scope = LuauScope::createUserData(L);
     }
 
-    scope_.setName(name_);
-    scope_.setLevel(level_);
+    m_scope.setName(m_name);
+    m_scope.setLevel(m_level);
 
-    if (!registry->isRegistered(scope_)) {
-        registry->registerVariables(scope_, LuauVariableList::create());
+    if (!registry->isRegistered(m_scope)) {
+        registry->registerVariables(m_scope, LuauVariableList::create());
     }
 }
 
 void LuauVariable::addRawFields(LuauVariableRegistry *registry, lua_State *L,
-                                const LuauScope &scope, int value_idx) {
+                                const LuauScope &scope, int valueIdx) {
     auto variables = registry->getVariables(scope, false);
     if (!variables) {
         return;
@@ -229,19 +229,19 @@ void LuauVariable::addRawFields(LuauVariableRegistry *registry, lua_State *L,
     variables->clear();
 
     lua_pushnil(L);
-    while (lua_next(L, value_idx)) {
+    while (lua_next(L, valueIdx)) {
         variables->emplace_back(addField(L, registry, scope));
         lua_pop(L, 1);
     }
 
     lua_pushliteral(L, "__metatable");
-    if (lua_getmetatable(L, value_idx)) {
+    if (lua_getmetatable(L, valueIdx)) {
         variables->emplace_back(addField(L, registry, scope));
     }
 }
 
 void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
-                                 const LuauScope &scope, int value_idx) {
+                                 const LuauScope &scope, int valueIdx) {
     auto variables = registry->getVariables(scope, false);
     if (!variables) {
         return;
@@ -249,9 +249,9 @@ void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
 
     variables->clear();
 
-    lua_pushvalue(L, value_idx);
-    int call_result = lua_pcall(L, 1, 3, 0);
-    if (call_result != LUA_OK) {
+    lua_pushvalue(L, valueIdx);
+    int callResult = lua_pcall(L, 1, 3, 0);
+    if (callResult != LUA_OK) {
         qCritical("[Variable::registryFields] Failed to call __iter "
                   "for %s, error: %s",
                   qUtf8Printable(scope.getName()), lua_tostring(L, -1));
@@ -290,7 +290,7 @@ void LuauVariable::addIterFields(LuauVariableRegistry *registry, lua_State *L,
 }
 
 void LuauVariable::addCustomFields(LuauVariableRegistry *registry, lua_State *L,
-                                   const LuauScope &scope, int value_idx) {
+                                   const LuauScope &scope, int valueIdx) {
     auto variables = registry->getVariables(scope, false);
     if (!variables) {
         return;
@@ -300,7 +300,7 @@ void LuauVariable::addCustomFields(LuauVariableRegistry *registry, lua_State *L,
 
     lua_pushnil(L);
     while (lua_next(L, -2)) {
-        lua_pushvalue(L, value_idx);
+        lua_pushvalue(L, valueIdx);
 
         // call getter to retrieve the value
         lua_pcall(L, 1, 1, 0);
@@ -312,25 +312,24 @@ void LuauVariable::addCustomFields(LuauVariableRegistry *registry, lua_State *L,
 LuauVariable::Ptr LuauVariable::addField(lua_State *L,
                                          LuauVariableRegistry *registry,
                                          const LuauScope &scope) {
-    int key_type = lua_type(L, -2);
-    auto field_name = LuauTypes::toString(L, -2);
-    if (key_type == LUA_TNUMBER) {
-        field_name = QStringLiteral("[%1]").arg(lua_tointeger(L, -2));
-    } else if (key_type == LUA_TINTEGER) {
-        field_name =
-            QStringLiteral("[%1]").arg(lua_tointeger64(L, -2, nullptr));
+    int keyType = lua_type(L, -2);
+    auto fieldName = LuauTypes::toString(L, -2);
+    if (keyType == LUA_TNUMBER) {
+        fieldName = QStringLiteral("[%1]").arg(lua_tointeger(L, -2));
+    } else if (keyType == LUA_TINTEGER) {
+        fieldName = QStringLiteral("[%1]").arg(lua_tointeger64(L, -2, nullptr));
     }
-    auto variable = registry->createVariable(L, field_name, scope.getLevel());
-    if (key_type == LUA_TNUMBER) {
-        variable->index_ = lua_tointeger(L, -2);
-    } else if (key_type == LUA_TINTEGER) {
-        variable->index_ = static_cast<int>(lua_tointeger64(L, -2, nullptr));
+    auto variable = registry->createVariable(L, fieldName, scope.getLevel());
+    if (keyType == LUA_TNUMBER) {
+        variable->m_index = lua_tointeger(L, -2);
+    } else if (keyType == LUA_TINTEGER) {
+        variable->m_index = static_cast<int>(lua_tointeger64(L, -2, nullptr));
     }
     return variable;
 }
 
-bool LuauVariable::hasGetters(lua_State *L, int value_idx) {
-    if (luaL_getmetafield(L, value_idx, "__getters") != 1) {
+bool LuauVariable::hasGetters(lua_State *L, int valueIdx) {
+    if (luaL_getmetafield(L, valueIdx, "__getters") != 1) {
         return false;
     }
 
@@ -342,12 +341,12 @@ bool LuauVariable::hasGetters(lua_State *L, int value_idx) {
     return true;
 }
 
-QString LuauVariable::preprocess(const QString &input_value) {
-    if (type_ == LUA_TSTRING) {
-        return QStringLiteral("[[") + input_value + ("]]");
-    } else if (type_ == LUA_TVECTOR) {
-        return QStringLiteral("vector.create") + input_value;
+QString LuauVariable::preprocess(const QString &inputValue) {
+    if (m_type == LUA_TSTRING) {
+        return QStringLiteral("[[") + inputValue + ("]]");
+    } else if (m_type == LUA_TVECTOR) {
+        return QStringLiteral("vector.create") + inputValue;
     }
 
-    return input_value;
+    return inputValue;
 }

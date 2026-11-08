@@ -26,15 +26,16 @@ class EventFilter : public QObject {
 public:
     EventFilter(QEvent::Type eventType, QObject *parent = nullptr)
         : QObject(parent), m_event(eventType) {}
+
     virtual ~EventFilter() override {}
 
 signals:
-    void eventTriggered(QObject *obj, QEvent *event);
+    void sigOnEventTriggered(QObject *obj, QEvent *event);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override {
         if (event->type() == m_event) {
-            Q_EMIT eventTriggered(obj, event);
+            Q_EMIT sigOnEventTriggered(obj, event);
         }
         return QObject::eventFilter(obj, event);
     }

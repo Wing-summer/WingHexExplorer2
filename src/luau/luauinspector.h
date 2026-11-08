@@ -20,6 +20,7 @@
 
 #include <QByteArray>
 #include <QString>
+
 #include <lua.h>
 
 enum class InspectMode { Compact, Pretty };
@@ -32,25 +33,26 @@ struct InspectOptions {
     InspectOptions(InspectMode m = InspectMode::Pretty) { setMode(m); }
 
     void setMode(InspectMode m) {
-        mode = m;
-        if (mode == InspectMode::Compact) {
-            newline = {};
-            indent = {};
+        m_mode = m;
+        if (m_mode == InspectMode::Compact) {
+            m_newline = {};
+            m_indent = {};
         } else {
-            newline = QByteArray(1, '\n');
-            indent = QByteArray(2, ' ');
+            m_newline = QByteArray(1, '\n');
+            m_indent = QByteArray(2, ' ');
         }
     }
 
-    QByteArray getIndent() const { return indent; }
-    QByteArray getNewline() const { return newline; }
+    QByteArray getIndent() const { return m_indent; }
 
-    InspectMode getMode() const { return mode; }
+    QByteArray getNewline() const { return m_newline; }
+
+    InspectMode getMode() const { return m_mode; }
 
 private:
-    InspectMode mode = InspectMode::Pretty;
-    QByteArray newline;
-    QByteArray indent;
+    InspectMode m_mode = InspectMode::Pretty;
+    QByteArray m_newline;
+    QByteArray m_indent;
 };
 
 class LuauInspector {

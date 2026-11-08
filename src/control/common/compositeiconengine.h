@@ -34,8 +34,8 @@ public:
                    QIcon::State state) override;
 
 private:
-    QIcon mainIcon;
-    QIcon overlayIcon;
+    QIcon m_mainIcon;
+    QIcon m_overlayIcon;
 };
 
 #endif // COMPOSITEICONENGINE_H

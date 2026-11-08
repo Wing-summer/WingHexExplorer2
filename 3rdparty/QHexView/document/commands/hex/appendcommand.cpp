@@ -38,7 +38,7 @@ AppendCommand::AppendCommand(QHexDocument *doc, QHexCursor *cursor,
 
 void AppendCommand::undo() {
     auto offset = m_doc->length() - m_length;
-    m_doc->_remove(offset, m_length);
+    m_doc->removeInternal(offset, m_length);
     m_doc->insertBookMarkAdjustRevert(offset, m_length);
     m_doc->metadata()->insertAdjustRevert(offset, m_length);
     m_cursor->setPos(offset, m_nibbleindex);
@@ -46,7 +46,7 @@ void AppendCommand::undo() {
 
 void AppendCommand::redo() {
     auto offset = m_doc->length();
-    if (!m_doc->_insert(offset, m_data)) {
+    if (!m_doc->insertInternal(offset, m_data)) {
         setObsolete(true);
         return;
     }

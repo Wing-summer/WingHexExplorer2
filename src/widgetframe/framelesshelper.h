@@ -18,8 +18,9 @@
 #ifndef FRAMELESSHELPER_H
 #define FRAMELESSHELPER_H
 
-#include "windowbar.h"
 #include <QObject>
+
+#include "windowbar.h"
 
 class FramelessHelper : public QObject {
     Q_OBJECT

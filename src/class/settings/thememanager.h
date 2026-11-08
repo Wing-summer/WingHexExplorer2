@@ -18,8 +18,6 @@
 #ifndef THEMEMANAGER_H
 #define THEMEMANAGER_H
 
-#include "WingPlugin/wingplugin_global.h"
-
 #include <QByteArray>
 #include <QHash>
 #include <QIcon>
@@ -28,6 +26,8 @@
 #include <QPixmap>
 #include <QPointer>
 #include <QString>
+
+#include "WingPlugin/wingplugin_global.h"
 
 class QStyle;
 
@@ -61,7 +61,7 @@ public:
     static QList<StandardIcon> standardIcons();
 
 signals:
-    void themeChanged(ThemeManager::Theme theme);
+    void sigOnThemeChanged(ThemeManager::Theme theme);
 
 private:
     explicit ThemeManager();

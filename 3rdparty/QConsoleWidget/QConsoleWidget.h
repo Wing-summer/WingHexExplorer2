@@ -30,20 +30,25 @@ class QConsoleWidget : public WingCodeEdit {
 
 public:
     struct History {
-        QStringList strings_;
-        int pos_;
-        QString token_; // Draft restored after browsing the newest entry.
-        bool active_;
-        int maxsize_;
+        QStringList strings;
+        int pos;
+        QString token; // Draft restored after browsing the newest entry.
+        bool active;
+        int maxSize;
         History(void);
         ~History(void);
         void add(const QString &str);
+
         const QString &currentValue() const {
-            return pos_ == -1 ? token_ : strings_.at(pos_);
+            return pos == -1 ? token : strings.at(pos);
         }
+
         void activate(const QString &tk = QString());
-        void deactivate() { active_ = false; }
-        bool isActive() const { return active_; }
+
+        void deactivate() { active = false; }
+
+        bool isActive() const { return active; }
+
         bool move(bool dir);
         int indexOf(bool dir, int from) const;
     };
@@ -84,9 +89,9 @@ public:
 
 signals:
     // fired when user hits the return key
-    void consoleCommand(const QString &code);
+    void sigOnConsoleCommand(const QString &code);
     // fired when user enters a Ctrl-Q
-    void abortEvaluation();
+    void sigOnAbortEvaluation();
 
 protected:
     bool canPaste() const;
@@ -118,10 +123,10 @@ protected:
     virtual void insertFromMimeData(const QMimeData *source) override;
 
 protected:
-    static History history_;
-    ConsoleMode mode_;
-    int inpos_;
-    QConsoleIODevice *iodevice_;
+    static History m_history;
+    ConsoleMode m_mode;
+    int m_inpos;
+    QConsoleIODevice *m_iodevice;
 };
 
 QTextStream &waitForInput(QTextStream &s);

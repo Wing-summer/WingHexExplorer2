@@ -15,10 +15,11 @@
 ** =============================================================================
 */
 
-#include "QConsoleWidget/QConsoleWidget.h"
-#include "control/editor/luauindentation.h"
-
 #include <QtTest>
+
+#include "QConsoleWidget/QConsoleWidget.h"
+
+#include "control/editor/luauindentation.h"
 
 namespace {
 void configure(WingCodeEdit &editor) {
@@ -56,7 +57,7 @@ public:
             if (context.trigger == IndentationTrigger::TextInput) {
                 cursor.movePosition(QTextCursor::EndOfBlock);
             }
-            cursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+            cursor.setPosition(m_inpos, QTextCursor::KeepAnchor);
             observedSource = cursor.selectedText();
             observedSource.replace(QChar::ParagraphSeparator, QChar::LineFeed);
             observedSource.prepend(previous + QLatin1Char('\n'));
@@ -91,6 +92,7 @@ private slots:
 void LuauIndentationTests::newLine_data() {
     QTest::addColumn<QString>("source");
     QTest::addColumn<QString>("expected");
+
     const struct {
         const char *name;
         const char *source;
@@ -134,6 +136,7 @@ void LuauIndentationTests::newLine_data() {
         {"unfinished-interpolation", "    local s = `unfinished {", 4},
         {"unicode-string", "local s = '中文😀'", 0},
     };
+
     for (const auto &test : cases) {
         QTest::newRow(test.name) << QString::fromUtf8(test.source)
                                  << QString(test.columns, QLatin1Char(' '));
@@ -195,6 +198,7 @@ void LuauIndentationTests::currentLine_data() {
     QTest::addColumn<QString>("source");
     QTest::addColumn<bool>("handled");
     QTest::addColumn<QString>("expected");
+
     const struct {
         const char *name;
         const char *source;
@@ -217,6 +221,7 @@ void LuauIndentationTests::currentLine_data() {
         {"expression-else", "local x = if a then 1\n    else 2", -1},
         {"ordinary-line", "    work()", -1},
     };
+
     for (const auto &test : cases) {
         QTest::newRow(test.name)
             << QString::fromUtf8(test.source) << (test.columns >= 0)
@@ -241,6 +246,7 @@ void LuauIndentationTests::typedClosing_data() {
     QTest::addColumn<QString>("before");
     QTest::addColumn<QString>("key");
     QTest::addColumn<QString>("after");
+
     const struct {
         const char *name;
         const char *before;
@@ -258,6 +264,7 @@ void LuauIndentationTests::typedClosing_data() {
         {"comment", "for i = 1, 2 do\n    -- en", "d",
          "for i = 1, 2 do\n    -- end"},
     };
+
     for (const auto &test : cases) {
         QTest::newRow(test.name)
             << QString::fromUtf8(test.before) << QString::fromUtf8(test.key)

@@ -62,7 +62,7 @@ private:
     QKeySequences();
 
 private:
-    QMap<Key, QKeySequence> _kseqs;
+    QMap<Key, QKeySequence> m_kseqs;
 };
 
 #endif // QKEYSEQUENCES_H

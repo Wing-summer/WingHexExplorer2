@@ -16,13 +16,14 @@
 */
 
 #include "wingmessagebox.h"
-#include "control/common/eventfilter.h"
-#include "dialog/framelessdialogbase.h"
-#include "utilities.h"
 
 #include <QApplication>
 #include <QPushButton>
 #include <QResizeEvent>
+
+#include "control/common/eventfilter.h"
+#include "dialog/framelessdialogbase.h"
+#include "utilities.h"
 
 WingMessageBox::WingMessageBox() {}
 
@@ -80,7 +81,7 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
     d->setWindowTitle(title.isEmpty() ? QMessageBox::tr("About Qt") : title);
 
     auto e = new EventFilter(QEvent::Resize, d);
-    QObject::connect(e, &EventFilter::eventTriggered, d,
+    QObject::connect(e, &EventFilter::sigOnEventTriggered, d,
                      [d] { Utilities::moveToCenter(d); });
     d->installEventFilter(e);
 
@@ -154,7 +155,7 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
     // when a new dialog is shown, the QEvent::Resize will be
     // triggered before the window showing
     auto e = new EventFilter(QEvent::Resize, &d);
-    QObject::connect(e, &EventFilter::eventTriggered, &d, [&d, e] {
+    QObject::connect(e, &EventFilter::sigOnEventTriggered, &d, [&d, e] {
         Utilities::moveToCenter(&d);
         e->deleteLater();
     });

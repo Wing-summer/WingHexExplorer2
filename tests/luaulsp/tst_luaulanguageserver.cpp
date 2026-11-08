@@ -16,9 +16,13 @@
 */
 
 #include "Luau/Common.h"
+
 #include "luau/lsp/luaulanguageserver.h"
 #include "luau/wingluaurequire.h"
 LUAU_FASTFLAG(LuauIntegerType2)
+
+#include <iostream>
+#include <stdexcept>
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -28,9 +32,6 @@ LUAU_FASTFLAG(LuauIntegerType2)
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
-
-#include <iostream>
-#include <stdexcept>
 
 static void require(bool condition, const char *message) {
     if (!condition) {
@@ -104,7 +105,8 @@ static void testLanguageFeatures() {
     require(directory.isValid(), "temporary directory unavailable");
     const auto uri = QUrl::fromLocalFile(directory.filePath("main.luau"));
     QVector<lsp::Diagnostic> diagnostics;
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
+                     &server,
                      [&](const lsp::DocumentUri &document,
                          const QVector<lsp::Diagnostic> &items) {
                          if (document == uri) {
@@ -193,7 +195,8 @@ static void testTypeFunctionsAndNonstrictInference() {
     server.initialize({});
     const auto uri = QUrl::fromLocalFile("/tmp/wing-type-functions.luau");
     QVector<lsp::Diagnostic> diagnostics;
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
+                     &server,
                      [&](const lsp::DocumentUri &document,
                          const QVector<lsp::Diagnostic> &items) {
                          if (document == uri) {
@@ -515,7 +518,8 @@ static void testGeneratedBindings() {
     QElapsedTimer timer;
     timer.start();
     bool definitionErrors = false;
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
+                     &server,
                      [&](const lsp::DocumentUri &uri,
                          const QVector<lsp::Diagnostic> &items) {
                          definitionErrors |= !items.isEmpty();
@@ -574,7 +578,8 @@ static void testGeneratedBindings() {
     QTemporaryDir directory;
     const auto uri = QUrl::fromLocalFile(directory.filePath("main.luau"));
     QVector<lsp::Diagnostic> diagnostics;
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
+                     &server,
                      [&](const lsp::DocumentUri &document,
                          const QVector<lsp::Diagnostic> &items) {
                          if (document == uri) {
@@ -700,7 +705,8 @@ static void testHexdocModule() {
         definitions.filePath(model.value("symbol_catalog").toString());
     LuauLanguageServer server;
     QVector<lsp::Diagnostic> diagnostics;
-    QObject::connect(&server, &LuauLanguageServer::onPublishDiagnostic, &server,
+    QObject::connect(&server, &LuauLanguageServer::sigOnPublishDiagnostic,
+                     &server,
                      [&](const lsp::DocumentUri &diagnosticUri,
                          const QVector<lsp::Diagnostic> &items) {
                          diagnostics = items;

@@ -18,11 +18,12 @@
 #ifndef DIFFSOURCE_H
 #define DIFFSOURCE_H
 
-#include "QHexView/document/qhexdocument.h"
-
-#include <QPointer>
 #include <atomic>
 #include <memory>
+
+#include <QPointer>
+
+#include "QHexView/document/qhexdocument.h"
 
 namespace WingDiff {
 

@@ -30,7 +30,7 @@ public:
     virtual void showPopup() override;
 
 signals:
-    void aboutToShowPopup();
+    void sigOnAboutToShowPopup();
 };
 
 #endif // DOCUMENTCHOICE_H

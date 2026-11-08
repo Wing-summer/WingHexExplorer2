@@ -42,7 +42,7 @@ qsizetype advanceUtf16Offset(const QByteArray &text, size_t targetByteOffset,
 }
 } // namespace
 
-LuauFormat::LuauFormat(const FormatOptions &options) : options_(options) {}
+LuauFormat::LuauFormat(const FormatOptions &options) : m_options(options) {}
 
 // ============ Low-level output ============
 
@@ -50,56 +50,56 @@ void LuauFormat::write(const QByteArray &str) {
     if (str.isEmpty()) {
         return;
     }
-    if (atLineStart_) {
+    if (m_atLineStart) {
         writeIndent();
-        atLineStart_ = false;
+        m_atLineStart = false;
     }
-    output_ += str;
+    m_output += str;
 }
 
 void LuauFormat::writeIndent() {
-    if (options_.useTabs) {
-        output_ += QByteArray(indentLevel_, '\t');
+    if (m_options.useTabs) {
+        m_output += QByteArray(m_indentLevel, '\t');
     } else {
-        output_ += QByteArray(indentLevel_ * options_.indentSize, ' ');
+        m_output += QByteArray(m_indentLevel * m_options.indentSize, ' ');
     }
 }
 
 void LuauFormat::newline() {
     // trim trailing spaces on current line
-    while (!output_.isEmpty() &&
-           (output_.back() == ' ' || output_.back() == '\t')) {
-        output_.chop(1);
+    while (!m_output.isEmpty() &&
+           (m_output.back() == ' ' || m_output.back() == '\t')) {
+        m_output.chop(1);
     }
-    output_ += '\n';
-    atLineStart_ = true;
+    m_output += '\n';
+    m_atLineStart = true;
 }
 
 void LuauFormat::space() {
-    if (!output_.isEmpty() && output_.back() != '\n' && output_.back() != ' ' &&
-        output_.back() != '\t') {
-        output_.append(' ');
+    if (!m_output.isEmpty() && m_output.back() != '\n' &&
+        m_output.back() != ' ' && m_output.back() != '\t') {
+        m_output.append(' ');
     }
 }
 
 void LuauFormat::writeKeyword(const QByteArray &kw) {
     // Add a space before keyword if the previous char is an identifier char
-    if (!output_.isEmpty() && !atLineStart_) {
-        char last = output_.back();
+    if (!m_output.isEmpty() && !m_atLineStart) {
+        char last = m_output.back();
         bool needSpace = std::isalnum(last) || last == '_';
         if (needSpace) {
-            output_.append(' ');
+            m_output.append(' ');
         }
     }
     write(kw);
 }
 
 void LuauFormat::writeIdentifier(const QByteArray &ident) {
-    if (!output_.isEmpty() && !atLineStart_) {
-        char last = output_.back();
+    if (!m_output.isEmpty() && !m_atLineStart) {
+        char last = m_output.back();
         bool needSpace = std::isalnum(last) || last == '_';
         if (needSpace) {
-            output_.append(' ');
+            m_output.append(' ');
         }
     }
     write(ident);
@@ -109,12 +109,12 @@ void LuauFormat::writeSymbol(const QByteArray &sym) { write(sym); }
 
 void LuauFormat::writeLiteral(const QByteArray &lit) {
     // Prevent merging with previous identifier chars (e.g., `1` after `x`)
-    if (!output_.isEmpty() && !atLineStart_) {
-        char last = output_.back();
+    if (!m_output.isEmpty() && !m_atLineStart) {
+        char last = m_output.back();
         bool lastIsIdent = std::isalnum(last) || last == '_';
         bool firstIsDigit = !lit.isEmpty() && !std::isdigit(lit[0]);
         if (lastIsIdent && firstIsDigit) {
-            output_.append(' ');
+            m_output.append(' ');
         }
     }
     write(lit);
@@ -124,7 +124,7 @@ void LuauFormat::writeString(
     const QString &value,
     Luau::CstExprConstantString::QuoteStyle originalQuoteStyle,
     unsigned blockDepth) {
-    if (options_.quoteStyle == QuoteStyle::Preserve &&
+    if (m_options.quoteStyle == QuoteStyle::Preserve &&
         originalQuoteStyle ==
             Luau::CstExprConstantString::QuoteStyle::QuotedRaw) {
         const QByteArray blocks(blockDepth, '=');
@@ -138,7 +138,7 @@ void LuauFormat::writeString(
                           Luau::CstExprConstantString::QuoteStyle::QuotedSingle
                       ? QLatin1Char('\'')
                       : QLatin1Char('"');
-    switch (options_.quoteStyle) {
+    switch (m_options.quoteStyle) {
     case QuoteStyle::Preserve:
         if (originalQuoteStyle ==
             Luau::CstExprConstantString::QuoteStyle::QuotedInterp) {
@@ -214,24 +214,25 @@ void LuauFormat::writeString(
 // ============ CST helpers ============
 
 QByteArray LuauFormat::getIndentString() const {
-    if (options_.useTabs) {
-        return QByteArray(indentLevel_, '\t');
+    if (m_options.useTabs) {
+        return QByteArray(m_indentLevel, '\t');
     }
-    return QByteArray(indentLevel_ * options_.indentSize, ' ');
+    return QByteArray(m_indentLevel * m_options.indentSize, ' ');
 }
 
 QByteArray LuauFormat::sourceText(const Luau::Location &location) const {
     const size_t begin = sourceOffset(location.begin);
     const size_t end = std::max(begin, sourceOffset(location.end));
-    return source_.sliced(begin, end - begin);
+    return m_source.sliced(begin, end - begin);
 }
 
 size_t LuauFormat::sourceOffset(const Luau::Position &position) const {
-    if (position.line >= sourceLineOffsets_.size()) {
-        return size_t(source_.size());
+    if (position.line >= m_sourceLineOffsets.size()) {
+        return size_t(m_source.size());
     }
-    return std::min(size_t(source_.size()), sourceLineOffsets_[position.line] +
-                                                size_t(position.column));
+    return std::min(size_t(m_source.size()),
+                    m_sourceLineOffsets[position.line] +
+                        size_t(position.column));
 }
 
 void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
@@ -250,12 +251,12 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
             tokens.push_back(lexeme.location);
         }
     };
-    collectTokens(source_, sourceTokens);
-    collectTokens(output_, outputTokens);
+    collectTokens(m_source, sourceTokens);
+    collectTokens(m_output, outputTokens);
 
     std::vector<size_t> outputLineOffsets{0};
-    for (size_t i = 0; i < static_cast<size_t>(output_.size()); ++i) {
-        if (output_[static_cast<qsizetype>(i)] == '\n') {
+    for (size_t i = 0; i < static_cast<size_t>(m_output.size()); ++i) {
+        if (m_output[static_cast<qsizetype>(i)] == '\n') {
             outputLineOffsets.push_back(i + 1);
         }
     }
@@ -271,7 +272,7 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
 
     const size_t tokenCount =
         std::min(sourceTokens.size(), outputTokens.size());
-    tokenAnchors_.reserve(tokenCount);
+    m_tokenAnchors.reserve(tokenCount);
     size_t sourceByteOffset = 0;
     qsizetype sourceUtf16Offset = 0;
     size_t outputByteOffset = 0;
@@ -281,18 +282,18 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
         const size_t sourceEnd = sourceOffset(sourceTokens[i].end);
         const size_t outputBegin =
             offsetForPosition(outputTokens[i].begin, outputLineOffsets,
-                              static_cast<size_t>(output_.size()));
+                              static_cast<size_t>(m_output.size()));
         const size_t outputEnd =
             offsetForPosition(outputTokens[i].end, outputLineOffsets,
-                              static_cast<size_t>(output_.size()));
-        tokenAnchors_.push_back({
-            advanceUtf16Offset(source_, sourceBegin, sourceByteOffset,
+                              static_cast<size_t>(m_output.size()));
+        m_tokenAnchors.push_back({
+            advanceUtf16Offset(m_source, sourceBegin, sourceByteOffset,
                                sourceUtf16Offset),
-            advanceUtf16Offset(source_, sourceEnd, sourceByteOffset,
+            advanceUtf16Offset(m_source, sourceEnd, sourceByteOffset,
                                sourceUtf16Offset),
-            advanceUtf16Offset(output_, outputBegin, outputByteOffset,
+            advanceUtf16Offset(m_output, outputBegin, outputByteOffset,
                                outputUtf16Offset),
-            advanceUtf16Offset(output_, outputEnd, outputByteOffset,
+            advanceUtf16Offset(m_output, outputEnd, outputByteOffset,
                                outputUtf16Offset),
         });
     }
@@ -300,7 +301,7 @@ void LuauFormat::buildTokenAnchors(Luau::AstNameTable &names) {
 
 qsizetype LuauFormat::mapCursorPosition(qsizetype sourcePosition) const {
     const TokenAnchor *previousToken = nullptr;
-    for (const TokenAnchor &anchor : tokenAnchors_) {
+    for (const TokenAnchor &anchor : m_tokenAnchors) {
         if (sourcePosition >= anchor.sourceBegin &&
             sourcePosition < anchor.sourceEnd) {
             const qsizetype relativePosition =
@@ -321,15 +322,15 @@ qsizetype LuauFormat::mapCursorPosition(qsizetype sourcePosition) const {
     if (previousToken) {
         return previousToken->outputEnd;
     }
-    if (!tokenAnchors_.empty()) {
-        return tokenAnchors_.front().outputBegin;
+    if (!m_tokenAnchors.empty()) {
+        return m_tokenAnchors.front().outputBegin;
     }
     return 0;
 }
 
 template <typename T>
 T *LuauFormat::getCstNode(Luau::AstNode *node) const {
-    Luau::CstNode *const *cstPtr = cstNodeMap_.find(node);
+    Luau::CstNode *const *cstPtr = m_cstNodeMap.find(node);
     if (cstPtr && *cstPtr) {
         return (*cstPtr)->as<T>();
     }
@@ -337,7 +338,7 @@ T *LuauFormat::getCstNode(Luau::AstNode *node) const {
 }
 
 bool LuauFormat::hasCstNode(Luau::AstNode *node) const {
-    Luau::CstNode *const *cstPtr = cstNodeMap_.find(node);
+    Luau::CstNode *const *cstPtr = m_cstNodeMap.find(node);
     return cstPtr != nullptr && *cstPtr != nullptr;
 }
 
@@ -381,15 +382,15 @@ LuauFormat::formatWithCursor(const QString &source, qsizetype cursorAnchor,
     }
 
     LuauFormat formatter(options);
-    formatter.source_ = sourceUtf8;
-    formatter.comments_ = std::move(parseResult.commentLocations);
-    formatter.sourceLineOffsets_.push_back(0);
+    formatter.m_source = sourceUtf8;
+    formatter.m_comments = std::move(parseResult.commentLocations);
+    formatter.m_sourceLineOffsets.push_back(0);
     for (size_t i = 0; i < sourceUtf8.size(); ++i) {
         if (sourceUtf8[i] == '\n') {
-            formatter.sourceLineOffsets_.push_back(i + 1);
+            formatter.m_sourceLineOffsets.push_back(i + 1);
         }
     }
-    formatter.cstNodeMap_ = parseResult.cstNodeMap;
+    formatter.m_cstNodeMap = parseResult.cstNodeMap;
     auto r = formatter.format(parseResult.root, parseResult.cstNodeMap);
     if (!r) {
         return std::nullopt;
@@ -402,7 +403,7 @@ LuauFormat::formatWithCursor(const QString &source, qsizetype cursorAnchor,
     bool processPos = cursorPosition >= 0;
 
     if (processAchor || processPos) {
-        formatter.tokenAnchors_.clear();
+        formatter.m_tokenAnchors.clear();
         formatter.buildTokenAnchors(names);
         const auto srcLen = source.size();
         if (processAchor) {
@@ -423,31 +424,31 @@ LuauFormat::formatWithCursor(const QString &source, qsizetype cursorAnchor,
 
 std::optional<QString> LuauFormat::format(Luau::AstStatBlock *root,
                                           const Luau::CstNodeMap &cstNodeMap) {
-    cstNodeMap_ = cstNodeMap;
+    m_cstNodeMap = cstNodeMap;
 
-    output_.clear();
-    atLineStart_ = true;
-    indentLevel_ = 0;
-    nextComment_ = 0;
-    hasFmtError_ = false;
-    lastSourceLine_ = 0;
-    hasSourceLine_ = false;
+    m_output.clear();
+    m_atLineStart = true;
+    m_indentLevel = 0;
+    m_nextComment = 0;
+    m_hasFmtError = false;
+    m_lastSourceLine = 0;
+    m_hasSourceLine = false;
 
     formatBlock(root);
-    if (hasFmtError_) {
+    if (m_hasFmtError) {
         return std::nullopt;
     }
     emitRemainingComments();
 
     // strip trailing newlines, then add exactly one
-    while (output_.endsWith(QByteArrayLiteral("\n"))) {
-        output_.chop(1);
-        if (output_.endsWith(QByteArrayLiteral("\r"))) {
-            output_.chop(1);
+    while (m_output.endsWith(QByteArrayLiteral("\n"))) {
+        m_output.chop(1);
+        if (m_output.endsWith(QByteArrayLiteral("\r"))) {
+            m_output.chop(1);
         }
     }
-    output_ += '\n';
-    return QString::fromUtf8(output_);
+    m_output += '\n';
+    return QString::fromUtf8(m_output);
 }
 
 // ============ Blocks / Statements ============
@@ -455,21 +456,22 @@ std::optional<QString> LuauFormat::format(Luau::AstStatBlock *root,
 void LuauFormat::formatBlock(Luau::AstStatBlock *block) {
     for (size_t i = 0; i < block->body.size; i++) {
         Luau::AstStat *stat = block->body.data[i];
-        const size_t commentsBefore = nextComment_;
+        const size_t commentsBefore = m_nextComment;
         const bool isFirstStatement = i == 0;
         const bool removeLeadingGap =
-            isFirstStatement && !options_.preserveBlockNewlineGaps;
+            isFirstStatement && !m_options.preserveBlockNewlineGaps;
         const bool preserveLeadingGap =
-            isFirstStatement && options_.preserveBlockNewlineGaps;
+            isFirstStatement && m_options.preserveBlockNewlineGaps;
         emitCommentsBefore(stat->location.begin, removeLeadingGap,
                            preserveLeadingGap);
         prepareSourceLine(stat->location.begin.line, i > 0,
-                          removeLeadingGap && commentsBefore == nextComment_,
+                          removeLeadingGap && commentsBefore == m_nextComment,
                           preserveLeadingGap);
-        lastSourceLine_ = std::max(lastSourceLine_, stat->location.begin.line);
-        hasSourceLine_ = true;
+        m_lastSourceLine =
+            std::max(m_lastSourceLine, stat->location.begin.line);
+        m_hasSourceLine = true;
         formatStat(stat);
-        lastSourceLine_ = std::max(lastSourceLine_, stat->location.end.line);
+        m_lastSourceLine = std::max(m_lastSourceLine, stat->location.end.line);
     }
 }
 
@@ -477,36 +479,36 @@ void LuauFormat::emitCommentsBefore(const Luau::Position &position,
                                     bool suppressLeadingGap,
                                     bool preserveLeadingGap) {
     bool firstComment = true;
-    while (nextComment_ < comments_.size() &&
-           comments_[nextComment_].location.begin < position) {
-        const Luau::Comment &comment = comments_[nextComment_++];
+    while (m_nextComment < m_comments.size() &&
+           m_comments[m_nextComment].location.begin < position) {
+        const Luau::Comment &comment = m_comments[m_nextComment++];
         prepareCommentLine(comment.location.begin.line,
                            suppressLeadingGap && firstComment,
                            preserveLeadingGap && firstComment);
         writeComment(comment, false);
-        lastSourceLine_ = comment.location.end.line;
-        hasSourceLine_ = true;
+        m_lastSourceLine = comment.location.end.line;
+        m_hasSourceLine = true;
         firstComment = false;
     }
 }
 
 void LuauFormat::emitTrailingComments(unsigned int line) {
-    while (nextComment_ < comments_.size() &&
-           comments_[nextComment_].location.begin.line == line) {
-        const Luau::Comment &comment = comments_[nextComment_++];
+    while (m_nextComment < m_comments.size() &&
+           m_comments[m_nextComment].location.begin.line == line) {
+        const Luau::Comment &comment = m_comments[m_nextComment++];
         writeComment(comment, true);
-        lastSourceLine_ = comment.location.end.line;
-        hasSourceLine_ = true;
+        m_lastSourceLine = comment.location.end.line;
+        m_hasSourceLine = true;
     }
 }
 
 void LuauFormat::emitRemainingComments() {
-    while (nextComment_ < comments_.size()) {
-        const Luau::Comment &comment = comments_[nextComment_++];
+    while (m_nextComment < m_comments.size()) {
+        const Luau::Comment &comment = m_comments[m_nextComment++];
         prepareCommentLine(comment.location.begin.line);
         writeComment(comment, false);
-        lastSourceLine_ = comment.location.end.line;
-        hasSourceLine_ = true;
+        m_lastSourceLine = comment.location.end.line;
+        m_hasSourceLine = true;
     }
 }
 
@@ -514,49 +516,49 @@ void LuauFormat::writeComment(const Luau::Comment &comment,
                               bool inlineComment) {
     const QByteArray text = sourceText(comment.location);
 
-    if (inlineComment && !output_.isEmpty() && !atLineStart_) {
-        output_.append(' ');
+    if (inlineComment && !m_output.isEmpty() && !m_atLineStart) {
+        m_output.append(' ');
     } else {
-        while (!output_.isEmpty() &&
-               (output_.back() == ' ' || output_.back() == '\t')) {
-            output_.chop(1);
+        while (!m_output.isEmpty() &&
+               (m_output.back() == ' ' || m_output.back() == '\t')) {
+            m_output.chop(1);
         }
         writeIndent();
     }
-    output_ += text;
-    atLineStart_ = false;
+    m_output += text;
+    m_atLineStart = false;
     newline();
 }
 
 void LuauFormat::prepareSourceLine(unsigned int line, bool forceNewLine,
                                    bool suppressLeadingGap, bool preserveGap) {
-    if (!hasSourceLine_) {
+    if (!m_hasSourceLine) {
         return;
     }
 
-    const unsigned int lineGap = !suppressLeadingGap && line > lastSourceLine_
-                                     ? line - lastSourceLine_
+    const unsigned int lineGap = !suppressLeadingGap && line > m_lastSourceLine
+                                     ? line - m_lastSourceLine
                                      : 0;
     unsigned int newlines = std::max(
         forceNewLine ? 1u : 0u, preserveGap ? lineGap : std::min(lineGap, 2u));
-    if (atLineStart_ && newlines > 0) {
+    if (m_atLineStart && newlines > 0) {
         --newlines;
     }
     while (newlines-- > 0) {
         newline();
     }
-    hasSourceLine_ = true;
+    m_hasSourceLine = true;
 }
 
 void LuauFormat::prepareCommentLine(unsigned int line, bool suppressLeadingGap,
                                     bool preserveGap) {
     const unsigned int lineGap =
-        !suppressLeadingGap && hasSourceLine_ && line > lastSourceLine_
-            ? line - lastSourceLine_
+        !suppressLeadingGap && m_hasSourceLine && line > m_lastSourceLine
+            ? line - m_lastSourceLine
             : 0;
     unsigned int newlines =
         std::max(1u, preserveGap ? lineGap : std::min(lineGap, 2u));
-    if (atLineStart_) {
+    if (m_atLineStart) {
         --newlines;
     }
     while (newlines-- > 0) {
@@ -565,7 +567,7 @@ void LuauFormat::prepareCommentLine(unsigned int line, bool suppressLeadingGap,
 }
 
 void LuauFormat::prepareBlockCloseLine(unsigned int line) {
-    if (options_.preserveBlockNewlineGaps) {
+    if (m_options.preserveBlockNewlineGaps) {
         prepareSourceLine(line, false, false, true);
     }
 }
@@ -620,7 +622,7 @@ void LuauFormat::formatStat(Luau::AstStat *stat) {
 }
 
 void LuauFormat::formatPanic(Luau::AstNode *stat) {
-    hasFmtError_ = true;
+    m_hasFmtError = true;
     auto &loc = stat->location.begin;
     auto line = loc.line + 1;
     auto end = loc.column + 1;
@@ -654,7 +656,7 @@ void LuauFormat::formatIf(Luau::AstStatIf *stmt) {
     formatIfChain(stmt);
     emitCommentsBefore(stmt->location.end);
     prepareBlockCloseLine(stmt->location.end.line);
-    if (!atLineStart_) {
+    if (!m_atLineStart) {
         newline();
     }
     writeKeyword(QByteArrayLiteral("end"));
@@ -673,10 +675,10 @@ void LuauFormat::formatIfChain(Luau::AstStatIf *stmt) {
 
     if (stmt->elsebody) {
         emitCommentsBefore(stmt->elsebody->location.begin);
-        lastSourceLine_ =
-            std::max(lastSourceLine_, stmt->elsebody->location.begin.line);
-        hasSourceLine_ = true;
-        if (!atLineStart_) {
+        m_lastSourceLine =
+            std::max(m_lastSourceLine, stmt->elsebody->location.begin.line);
+        m_hasSourceLine = true;
+        if (!m_atLineStart) {
             newline();
         }
 
@@ -711,10 +713,10 @@ void LuauFormat::formatIfChainInner(Luau::AstStatIf *stmt) {
 
     if (stmt->elsebody) {
         emitCommentsBefore(stmt->elsebody->location.begin);
-        lastSourceLine_ =
-            std::max(lastSourceLine_, stmt->elsebody->location.begin.line);
-        hasSourceLine_ = true;
-        if (!atLineStart_) {
+        m_lastSourceLine =
+            std::max(m_lastSourceLine, stmt->elsebody->location.begin.line);
+        m_hasSourceLine = true;
+        if (!m_atLineStart) {
             newline();
         }
 
@@ -1109,7 +1111,7 @@ void LuauFormat::formatConstantInteger(Luau::AstExprConstantInteger *expr) {
 
 void LuauFormat::formatConstantString(Luau::AstExprConstantString *expr) {
     auto cst = getCstNode<Luau::CstExprConstantString>(expr);
-    if (cst && options_.quoteStyle == QuoteStyle::Preserve) {
+    if (cst && m_options.quoteStyle == QuoteStyle::Preserve) {
         write(sourceText(expr->location));
     } else {
         const QByteArray valueBytes(expr->value.data,
@@ -1446,7 +1448,7 @@ void LuauFormat::formatType(Luau::AstType *type) {
         writeKeyword(t->value ? QByteArrayLiteral("true")
                               : QByteArrayLiteral("false"));
     } else if (auto t = type->as<Luau::AstTypeSingletonString>()) {
-        if (options_.quoteStyle == QuoteStyle::Preserve) {
+        if (m_options.quoteStyle == QuoteStyle::Preserve) {
             write(sourceText(t->location));
         } else {
             const QByteArray original = sourceText(t->location);

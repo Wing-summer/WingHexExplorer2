@@ -1,3 +1,6 @@
+#include <cstdio>
+#include <memory>
+
 #include <QAbstractButton>
 #include <QApplication>
 #include <QDir>
@@ -7,8 +10,6 @@
 #include <QTabWidget>
 #include <QTranslator>
 #include <QUiLoader>
-#include <cstdio>
-#include <memory>
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);

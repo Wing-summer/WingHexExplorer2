@@ -19,11 +19,7 @@
 */
 
 #include "testform.h"
-#include "WingPlugin/iwingpluginbase.h"
 #include "ui_testform.h"
-
-#include "ctltestform.h"
-#include "readertestform.h"
 
 #include <QAbstractTableModel>
 #include <QFileSystemModel>
@@ -31,6 +27,11 @@
 #include <QScrollArea>
 #include <QStandardItemModel>
 #include <QStringListModel>
+
+#include "WingPlugin/iwingpluginbase.h"
+
+#include "ctltestform.h"
+#include "readertestform.h"
 
 TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
     : WingHex::WingPluginWidget(plg, parent), ui(new Ui::TestForm) {

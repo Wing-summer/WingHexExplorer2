@@ -26,25 +26,25 @@ LayoutManager &LayoutManager::instance() {
 }
 
 const QHash<QString, QByteArray> &LayoutManager::layouts() const {
-    return _layouts;
+    return m_layouts;
 }
 
-QStringList LayoutManager::layoutNames() const { return _caches; }
+QStringList LayoutManager::layoutNames() const { return m_caches; }
 
 void LayoutManager::addLayout(const QString &name, const QByteArray &data) {
-    _layouts.insert(name, data);
-    _caches.append(name);
+    m_layouts.insert(name, data);
+    m_caches.append(name);
 }
 
 bool LayoutManager::contains(const QString &name) {
-    return _caches.contains(name, Qt::CaseInsensitive);
+    return m_caches.contains(name, Qt::CaseInsensitive);
 }
 
 QByteArray LayoutManager::layout(const QString &v) const {
-    return _layouts.value(v);
+    return m_layouts.value(v);
 }
 
-qsizetype LayoutManager::layoutCount() const { return _layouts.size(); }
+qsizetype LayoutManager::layoutCount() const { return m_layouts.size(); }
 
 QDir LayoutManager::layoutDir() {
     QDir pdir(Utilities::getAppDataPath());
@@ -77,8 +77,8 @@ void LayoutManager::process(const QDir &dir) {
             auto b = f.readAll();
             if (!b.isEmpty()) {
                 auto n = k.trimmed();
-                _caches.append(n);
-                _layouts.insert(n, b);
+                m_caches.append(n);
+                m_layouts.insert(n, b);
             }
         }
     }

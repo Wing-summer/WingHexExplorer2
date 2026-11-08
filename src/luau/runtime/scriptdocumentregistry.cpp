@@ -17,46 +17,47 @@
 
 #include "scriptdocumentregistry.h"
 
-#include "qtluau/callback.hpp"
 #include <limits>
 #include <stdexcept>
 #include <utility>
+
+#include "qtluau/callback.hpp"
 
 ScriptDocumentRegistry::ScriptDocumentRegistry(
     ScriptDocumentContext::CurrentView current,
     ScriptDocumentContext::OpenView open,
     ScriptDocumentContext::CloseView close)
-    : _current(std::move(current)), _open(std::move(open)),
-      _close(std::move(close)) {}
+    : m_current(std::move(current)), m_open(std::move(open)),
+      m_close(std::move(close)) {}
 
 ScriptDocumentRegistry::~ScriptDocumentRegistry() {
-    for (const auto &context : std::as_const(_contexts)) {
+    for (const auto &context : std::as_const(m_contexts)) {
         delete context.data();
     }
 }
 
 ScriptDocumentContext *ScriptDocumentRegistry::findCaller(lua_State *L) const {
-    return _contexts.value(qtluau::luaContextKey(L)).data();
+    return m_contexts.value(qtluau::luaContextKey(L)).data();
 }
 
 ScriptDocumentContext *ScriptDocumentRegistry::forCaller(lua_State *L) {
     const auto key = qtluau::luaContextKey(L);
-    auto context = _contexts.value(key);
+    auto context = m_contexts.value(key);
     if (!context) {
-        if (_ids->context == std::numeric_limits<int>::max()) {
+        if (m_ids->context == std::numeric_limits<int>::max()) {
             throw std::runtime_error("Script document context limit reached");
         }
-        for (auto it = _contexts.begin(); it != _contexts.end();) {
+        for (auto it = m_contexts.begin(); it != m_contexts.end();) {
             if (!it.value()) {
-                it = _contexts.erase(it);
+                it = m_contexts.erase(it);
             } else {
                 ++it;
             }
         }
-        context = new ScriptDocumentContext(_current, _open, _close, _ids,
-                                            ++_ids->context);
+        context = new ScriptDocumentContext(m_current, m_open, m_close, m_ids,
+                                            ++m_ids->context);
         qtluau::trackContextObject(L, context);
-        _contexts.insert(key, context);
+        m_contexts.insert(key, context);
     }
     return context.data();
 }

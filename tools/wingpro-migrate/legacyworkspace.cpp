@@ -17,6 +17,8 @@
 
 #include "legacyworkspace.h"
 
+#include <limits>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -24,8 +26,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
-
-#include <limits>
 
 namespace {
 

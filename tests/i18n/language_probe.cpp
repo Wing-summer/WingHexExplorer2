@@ -1,11 +1,12 @@
-#include "languagemanager.h"
-#include "localizedmetadata.h"
+#include <cstdio>
 
 #include <QApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QResource>
-#include <cstdio>
+
+#include "languagemanager.h"
+#include "localizedmetadata.h"
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);

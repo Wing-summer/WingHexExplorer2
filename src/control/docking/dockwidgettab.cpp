@@ -17,14 +17,13 @@
 
 #include "dockwidgettab.h"
 
-#include "class/settings/thememanager.h"
-
 #include <QMenu>
 
 #include "DockAreaWidget.h"
 
 #include "class/application/appmanager.h"
 #include "class/file/showinshell.h"
+#include "class/settings/thememanager.h"
 #include "control/editor/scripteditor.h"
 #include "control/editorview.h"
 #include "dialog/fileinfodialog.h"
@@ -144,8 +143,8 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     menu->addMenu(cmenu);
 }
 
-DockWidgetTab::DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent)
-    : ads::CDockWidgetTab(DockWidget, parent) {}
+DockWidgetTab::DockWidgetTab(ads::CDockWidget *dockWidget, QWidget *parent)
+    : ads::CDockWidgetTab(dockWidget, parent) {}
 
 QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     if (menu == nullptr) {
@@ -228,11 +227,11 @@ void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
     }
 }
 
-QAction *DockWidgetTab::createAutoHideToAction(const QString &Title,
-                                               ads::SideBarLocation Location,
-                                               QMenu *Menu) {
-    auto a = Menu->addAction(Title);
-    a->setProperty(ads::internal::LocationProperty, Location);
+QAction *DockWidgetTab::createAutoHideToAction(const QString &title,
+                                               ads::SideBarLocation location,
+                                               QMenu *menu) {
+    auto a = menu->addAction(title);
+    a->setProperty(ads::internal::LocationProperty, location);
     connect(a, SIGNAL(triggered(bool)), this,
             SLOT(onAutoHideToActionClicked()));
     return a;

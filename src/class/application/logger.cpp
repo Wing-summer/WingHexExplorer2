@@ -16,6 +16,7 @@
 */
 
 #include "logger.h"
+
 #include <QApplication>
 #include <QDateTime>
 #include <QDir>
@@ -35,8 +36,8 @@
      QStringLiteral("</font>"))
 
 Logger::Logger(QObject *parent)
-    : QObject(parent), _stream(new QTextStream(stdout)) {
-    _stream->device()->setTextModeEnabled(true);
+    : QObject(parent), m_stream(new QTextStream(stdout)) {
+    m_stream->device()->setTextModeEnabled(true);
 
     QString newFileName = QStringLiteral("%1_%2_%3.log")
                               .arg(APP_NAME, WINGHEX_VERSION,
@@ -58,9 +59,9 @@ Logger::Logger(QObject *parent)
     }
 
     auto path = logDir.absoluteFilePath(newFileName);
-    _file = QSharedPointer<QFile>(new QFile(path));
-    if (_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
-        _stream->setDevice(_file.get());
+    m_file = QSharedPointer<QFile>(new QFile(path));
+    if (m_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        m_stream->setDevice(m_file.get());
     }
 
     if (qEnvironmentVariableBool("WINGHEX_DEBUG", false)) {
@@ -75,21 +76,21 @@ Logger::Logger(QObject *parent)
 }
 
 Logger::~Logger() {
-    _stream->flush();
-    _file->close();
+    m_stream->flush();
+    m_file->close();
 }
 
-void Logger::__log(const QString &message) { *_stream << message << Qt::endl; }
+void Logger::__log(const QString &message) { *m_stream << message << Qt::endl; }
 
 Logger &Logger::instance() {
     static Logger ins;
     return ins;
 }
 
-Logger::Level Logger::logLevel() const { return _level; }
+Logger::Level Logger::logLevel() const { return m_level; }
 
 void Logger::logPrint(const QString &message) {
-    Q_EMIT instance().log(message);
+    Q_EMIT instance().sigOnLogMessage(message);
 }
 
 void Logger::newLine() { logPrint({}); }
@@ -98,8 +99,8 @@ void Logger::trace(const QString &message) {
     auto &ins = instance();
     QString msg = tr("[Trace]") + message;
     ins.__log(msg);
-    if (ins._level >= q5TRACE) {
-        Q_EMIT ins.log(packDebugStr(msg));
+    if (ins.m_level >= q5TRACE) {
+        Q_EMIT ins.sigOnLogMessage(packDebugStr(msg));
     }
 }
 
@@ -107,8 +108,8 @@ void Logger::warning(const QString &message) {
     auto &ins = instance();
     QString msg = tr("[Warn]") + message;
     ins.__log(msg);
-    if (ins._level >= q2WARN) {
-        Q_EMIT ins.log(packWarnStr(msg));
+    if (ins.m_level >= q2WARN) {
+        Q_EMIT ins.sigOnLogMessage(packWarnStr(msg));
     }
 }
 
@@ -116,8 +117,8 @@ void Logger::info(const QString &message) {
     auto &ins = instance();
     QString msg = tr("[Info]") + message;
     ins.__log(msg);
-    if (ins._level >= q3INFO) {
-        Q_EMIT ins.log(packInfoStr(msg));
+    if (ins.m_level >= q3INFO) {
+        Q_EMIT ins.sigOnLogMessage(packInfoStr(msg));
     }
 }
 
@@ -125,8 +126,8 @@ void Logger::debug(const QString &message) {
     auto &ins = instance();
     QString msg = tr("[Debug]") + message;
     ins.__log(msg);
-    if (ins._level >= q4DEBUG) {
-        Q_EMIT ins.log(packDebugStr(msg));
+    if (ins.m_level >= q4DEBUG) {
+        Q_EMIT ins.sigOnLogMessage(packDebugStr(msg));
     }
 }
 
@@ -134,12 +135,12 @@ void Logger::critical(const QString &message) {
     auto &ins = instance();
     QString msg = tr("[Error]") + message;
     ins.__log(msg);
-    if (ins._level >= q0FATAL) {
-        Q_EMIT ins.log(packErrorStr(msg));
+    if (ins.m_level >= q0FATAL) {
+        Q_EMIT ins.sigOnLogMessage(packErrorStr(msg));
     }
 }
 
-void Logger::setLogLevel(Level level) { _level = level; }
+void Logger::setLogLevel(Level level) { m_level = level; }
 
 QString Logger::packInfoStr(QString msg) {
     return INFOLOG(msg.replace("\n", "<br />"));

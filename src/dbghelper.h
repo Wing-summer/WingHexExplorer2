@@ -28,8 +28,6 @@
 #include <QDebug>
 #include <QFileInfo>
 
-#include <qnamespace.h>
-
 #ifdef QT_DEBUG
 #include <ctime>
 static clock_t m_clock;

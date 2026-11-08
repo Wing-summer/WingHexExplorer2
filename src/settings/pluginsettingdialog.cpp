@@ -103,8 +103,8 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto total = plugins.size();
 
     const auto deps = plgsys.generatePluginsDepMap();
-    host = deps.host;
-    dep = deps.dep;
+    m_host = deps.host;
+    m_dep = deps.dep;
 
     for (qsizetype i = 0; i < total; ++i) {
         auto p = plugins.at(i);
@@ -199,30 +199,30 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                 switch (item->checkState()) {
                 case Qt::Unchecked: {
                     const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
-                    const auto deps = this->dep.at(idx);
+                    const auto deps = this->m_dep.at(idx);
                     for (const auto &idx : deps) {
                         auto item = ui->plglist->item(idx);
                         Q_ASSERT(item);
                         item->setCheckState(Qt::Unchecked);
                     }
-                    _plgChanged.pushRemoveItem(id);
+                    m_plgChanged.pushRemoveItem(id);
                 } break;
                 case Qt::Checked: {
                     const auto idx = item->data(PLUGIN_DEPENDENCY_IDX).toInt();
-                    const auto deps = this->host.at(idx);
+                    const auto deps = this->m_host.at(idx);
                     for (const auto &idx : deps) {
                         auto item = ui->plglist->item(idx);
                         Q_ASSERT(item);
                         item->setCheckState(Qt::Checked);
                     }
 
-                    _plgChanged.pushAddItem(id);
+                    m_plgChanged.pushAddItem(id);
                 } break;
                 case Qt::PartiallyChecked:
                     break;
                 }
 
-                ui->btnplgSave->setEnabled(_plgChanged.containChanges());
+                ui->btnplgSave->setEnabled(m_plgChanged.containChanges());
             });
     connect(ui->plglist, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem *current, QListWidgetItem *previous) {
@@ -230,7 +230,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                 if (previous) {
                     const auto idx =
                         previous->data(PLUGIN_DEPENDENCY_IDX).toInt();
-                    auto deps = this->host.at(idx);
+                    auto deps = this->m_host.at(idx);
                     for (const auto &idx : std::as_const(deps)) {
                         auto d = ui->plglist->item(idx);
                         if (d) {
@@ -241,7 +241,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                         }
                     }
 
-                    deps = this->dep.at(idx);
+                    deps = this->m_dep.at(idx);
                     for (const auto &idx : std::as_const(deps)) {
                         auto d = ui->plglist->item(idx);
                         if (d) {
@@ -267,7 +267,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
                 // highlight deps
                 const auto idx = current->data(PLUGIN_DEPENDENCY_IDX).toInt();
-                auto deps = this->host.at(idx);
+                auto deps = this->m_host.at(idx);
                 for (const auto &idx : std::as_const(deps)) {
                     auto d = ui->plglist->item(idx);
                     auto font = d->font();
@@ -276,7 +276,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     d->setFont(font);
                 }
 
-                deps = this->dep.at(idx);
+                deps = this->m_dep.at(idx);
                 for (const auto &idx : std::as_const(deps)) {
                     auto d = ui->plglist->item(idx);
                     auto font = d->font();
@@ -297,16 +297,16 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                 auto id = info.id;
                 switch (item->checkState()) {
                 case Qt::Unchecked:
-                    _devChanged.pushRemoveItem(id);
+                    m_devChanged.pushRemoveItem(id);
                     break;
                 case Qt::Checked:
-                    _devChanged.pushAddItem(id);
+                    m_devChanged.pushAddItem(id);
                     break;
                 case Qt::PartiallyChecked:
                     break;
                 }
 
-                ui->btndevSave->setEnabled(_devChanged.containChanges());
+                ui->btndevSave->setEnabled(m_devChanged.containChanges());
             });
     connect(ui->devlist, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem *current, QListWidgetItem *) {
@@ -325,15 +325,15 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     connect(ui->btnplgSave, &QPushButton::clicked, set, [this]() {
         SettingManager::instance().setEnabledExtPlugins(
-            _plgChanged.getContents());
-        _plgChanged.clear();
+            m_plgChanged.getContents());
+        m_plgChanged.clear();
         ui->btnplgSave->setEnabled(false);
         Q_EMIT optionNeedRestartChanged();
     });
     connect(ui->btndevSave, &QPushButton::clicked, set, [this]() {
         SettingManager::instance().setEnabledDevPlugins(
-            _devChanged.getContents());
-        _devChanged.clear();
+            m_devChanged.getContents());
+        m_devChanged.clear();
         ui->btndevSave->setEnabled(false);
         Q_EMIT optionNeedRestartChanged();
     });
@@ -354,7 +354,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         auto lwi = new QListWidgetItem(cicon, name);
         lwi->setData(CERT_CERT, QVariant::fromValue(c));
         if (s) {
-            _sysCertItem = lwi;
+            m_sysCertItem = lwi;
         }
         if (!ct.isValidFingerPrint(c)) {
             auto font = lwi->font();
@@ -377,7 +377,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             });
 
     auto ev = new EventFilter(QEvent::EnabledChange, this);
-    connect(ev, &EventFilter::eventTriggered, this,
+    connect(ev, &EventFilter::sigOnEventTriggered, this,
             [this](QObject *obj, QEvent *) {
                 if (obj == ui->btnplgSave) {
                     auto tabName = QCoreApplication::translate(
@@ -449,7 +449,7 @@ void PluginSettingDialog::discard() {
 }
 
 void PluginSettingDialog::restore() {
-    SettingManager::instance().reset(SettingManager::SETTING::PLUGIN);
+    SettingManager::instance().reset(SettingManager::Setting::Plugin);
     reload();
 }
 
@@ -489,8 +489,8 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
 
 void PluginSettingDialog::resetChangedList() {
     auto &set = SettingManager::instance();
-    _plgChanged.setContents(set.enabledExtPlugins());
-    _devChanged.setContents(set.enabledDevPlugins());
+    m_plgChanged.setContents(set.enabledExtPlugins());
+    m_devChanged.setContents(set.enabledDevPlugins());
 }
 
 void PluginSettingDialog::resetUIChanged() {
@@ -503,7 +503,7 @@ void PluginSettingDialog::resetUIChanged() {
         if (flags.testFlag(Qt::ItemIsUserCheckable)) {
             auto info = item->data(PLUIGN_META).value<PluginInfo>();
             auto id = info.id;
-            if (_plgChanged.containChanges(id)) {
+            if (m_plgChanged.containChanges(id)) {
                 item->setCheckState(Qt::Checked);
             } else {
                 item->setCheckState(Qt::Unchecked);
@@ -517,7 +517,7 @@ void PluginSettingDialog::resetUIChanged() {
         if (flags.testFlag(Qt::ItemIsUserCheckable)) {
             auto info = item->data(PLUIGN_META).value<PluginInfo>();
             auto id = info.id;
-            if (_devChanged.containChanges(id)) {
+            if (m_devChanged.containChanges(id)) {
                 item->setCheckState(Qt::Checked);
             } else {
                 item->setCheckState(Qt::Unchecked);
@@ -625,8 +625,8 @@ void PluginSettingDialog::onAnchorClicked(const QUrl &url) {
     } else {
         if (url.scheme() == QLatin1String("cert")) {
             ui->tabWidget->setCurrentWidget(ui->tabCert);
-            if (_sysCertItem) {
-                ui->certlist->setCurrentItem(_sysCertItem);
+            if (m_sysCertItem) {
+                ui->certlist->setCurrentItem(m_sysCertItem);
             }
         } else {
             QDesktopServices::openUrl(url);

@@ -93,7 +93,7 @@ struct QHexRegionObject {
     using Super = QHexRegionObject<T, P>;
 
 private:
-    bool _valid = true;
+    bool m_valid = true;
 
 public:
     inline static T next(const T &obj) {
@@ -211,7 +211,7 @@ public:
                     ++this->begin;
                 } else {
                     // makes it invalid, delete later
-                    _valid = false;
+                    m_valid = false;
                 }
                 result = true;
             }
@@ -263,7 +263,7 @@ public:
         return true;
     };
 
-    inline bool isValid() const { return _valid; }
+    inline bool isValid() const { return m_valid; }
 
     inline bool operator<(const Super &item) const {
         return begin < item.begin;
@@ -397,6 +397,7 @@ private:
             P item;
             bool inserted;
         };
+
         QVector<Node> leftFrag, rightFrag;
 
         for (qsizetype i = carveLeft; i < carveRight; ++i) {

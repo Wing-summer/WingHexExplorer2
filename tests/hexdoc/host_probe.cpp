@@ -1,6 +1,21 @@
 // Copyright (C) 2026 WingSummer
 // SPDX-License-Identifier: AGPL-3.0-or-later
+#include <cstring>
+#include <iostream>
+#include <thread>
+
+#include <QApplication>
+#include <QEventLoop>
+#include <QFile>
+#include <QTemporaryDir>
+#include <QTimer>
+#include <QTreeWidgetItemIterator>
+#include <QUndoStack>
+
+#include <Luau/Compiler.h>
+
 #include "WingPlugin/iwingplugin.h"
+
 #include "class/application/appmanager.h"
 #include "class/file/workspacemanager.h"
 #include "class/plugin/pluginsystem.h"
@@ -11,17 +26,6 @@
 #include "luau/runtime/scriptdocumentregistry.h"
 #include "luau/runtime/scriptmachine.h"
 #include "luau/wingluaurequire.h"
-#include <Luau/Compiler.h>
-#include <QApplication>
-#include <QEventLoop>
-#include <QFile>
-#include <QTemporaryDir>
-#include <QTimer>
-#include <QTreeWidgetItemIterator>
-#include <QUndoStack>
-#include <cstring>
-#include <iostream>
-#include <thread>
 using namespace WingHex;
 #define REQUIRE(expression)                                                    \
     do {                                                                       \
@@ -31,26 +35,34 @@ using namespace WingHex;
             return false;                                                      \
         }                                                                      \
     } while (false)
+
 class QueryPlugin final : public IWingPlugin {
     Q_OBJECT
     Q_INTERFACES(WingHex::IWingPlugin)
 public:
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("query");
     }
+
     const QString pluginComment() const override { return {}; }
 };
 
 class ProbeDevice final : public WingIODevice {
 public:
     QByteArray bytes = QByteArrayLiteral("device-data");
+
     qint64 size() const override { return bytes.size(); }
+
     bool isSequential() const override { return false; }
+
     bool seek(qint64 offset) override {
         return offset >= 0 && offset <= size() && QIODevice::seek(offset);
     }
+
     bool defaultIsLocked() const override { return false; }
 
 protected:
@@ -59,6 +71,7 @@ protected:
         std::memcpy(data, bytes.constData() + pos(), size_t(count));
         return count;
     }
+
     qint64 writeData(const char *data, qint64 length) override {
         const auto count = std::min(length, size() - pos());
         std::memcpy(bytes.data() + pos(), data, size_t(count));
@@ -74,20 +87,27 @@ public:
     int opens = 0;
     int closes = 0;
     QString lastPath;
+
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("driver");
     }
+
     const QString pluginComment() const override { return {}; }
+
     QString supportedFileExtDisplayName() const override {
         return QStringLiteral("driver");
     }
+
     WingIODevice *onOpenFile(const QString &path) override {
         ++opens;
         lastPath = path;
         return new ProbeDevice;
     }
+
     bool onCloseFile(WingIODevice *) override {
         ++closes;
         return allowClose;
@@ -96,11 +116,13 @@ public:
 
 struct LuaOwner {
     lua_State *state = luaL_newstate();
+
     ~LuaOwner() {
         qtluau::clearLuaCallbacks(state);
         lua_close(state);
     }
 };
+
 static bool runLua(lua_State *L, const char *source) {
     const auto bytecode = Luau::compile(source);
     if (luau_load(L, "=hexdoc-host", bytecode.data(), bytecode.size(), 0) !=
@@ -111,6 +133,7 @@ static bool runLua(lua_State *L, const char *source) {
     }
     return true;
 }
+
 class PluginDocumentHostProbe {
     static EditorView *findView(const QString &path) {
         for (auto *view : EditorView::instances()) {
@@ -291,8 +314,8 @@ public:
         ProbeDriver driver;
         PluginInfo driverInfo;
         driverInfo.id = QStringLiteral("probedriver");
-        host._loadeddevs.append(&driver);
-        host._pinfos.insert(&driver, driverInfo);
+        host.m_loadeddevs.append(&driver);
+        host.m_pinfos.insert(&driver, driverInfo);
         QTemporaryDir directory;
         REQUIRE(directory.isValid());
         const auto path = directory.filePath(QStringLiteral("中文 # %.bin"));
@@ -605,12 +628,13 @@ public:
         REQUIRE(findView(path));
         machine.destoryMachine();
         REQUIRE(window.closeEditor(findView(path), true) == ErrFile::Success);
-        host._loadeddevs.removeAll(&driver);
-        host._pinfos.remove(&driver);
+        host.m_loadeddevs.removeAll(&driver);
+        host.m_pinfos.remove(&driver);
         std::cout << "hexdoc host integration passed\n";
         return true;
     }
 };
+
 int main(int argc, char **argv) {
     qputenv("WINGHEX_DISABLE_PLUGIN_SYSTEM", "1");
     QCoreApplication::setApplicationName(QStringLiteral("HexdocScriptProbe"));
@@ -618,4 +642,5 @@ int main(int argc, char **argv) {
     AppManager application(argc, argv);
     return PluginDocumentHostProbe::run() ? 0 : 1;
 }
+
 #include "host_probe.moc"

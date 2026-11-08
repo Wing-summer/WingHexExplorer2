@@ -18,8 +18,9 @@
 #ifndef GENERALSETTINGDIALOG_H
 #define GENERALSETTINGDIALOG_H
 
-#include "WingPlugin/settingpage.h"
 #include <QWidget>
+
+#include "WingPlugin/settingpage.h"
 
 namespace Ui {
 class GeneralSettingDialog;

@@ -29,7 +29,7 @@ void LuauScheduler::start() {
     if (!lua_isfunction(m_th->state, -1)) {
         m_executeError =
             QStringLiteral("thread stack does not contain a function");
-        Q_EMIT finished(LUA_ERRRUN);
+        Q_EMIT sigOnFinished(LUA_ERRRUN);
         deleteLater();
         return;
     }
@@ -44,7 +44,7 @@ void LuauScheduler::step() {
         auto L = m_th->state;
         if (m_th->requestStop) {
             m_th->isRunning = false;
-            Q_EMIT finished(LUA_OK);
+            Q_EMIT sigOnFinished(LUA_OK);
             deleteLater();
             return;
         }
@@ -69,13 +69,13 @@ void LuauScheduler::step() {
             }
 
             m_th->isRunning = false;
-            Q_EMIT finished(status);
+            Q_EMIT sigOnFinished(status);
             deleteLater();
         }
     } catch (const std::exception &ex) {
         m_executeError = QString::fromUtf8(ex.what());
         m_th->isRunning = false;
-        Q_EMIT finished(LUA_ERRRUN);
+        Q_EMIT sigOnFinished(LUA_ERRRUN);
         deleteLater();
     }
 }

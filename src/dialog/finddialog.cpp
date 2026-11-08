@@ -17,9 +17,6 @@
 
 #include "finddialog.h"
 
-#include "class/settings/thememanager.h"
-#include "utilities.h"
-
 #include <QButtonGroup>
 #include <QDialogButtonBox>
 #include <QLabel>
@@ -27,7 +24,9 @@
 #include <QShortcut>
 #include <QVBoxLayout>
 
+#include "class/settings/thememanager.h"
 #include "control/toast.h"
+#include "utilities.h"
 
 FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     : FramelessDialogBase(parent) {
@@ -81,7 +80,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
-            _result.dir = SearchDirection::None;
+            m_result.dir = SearchDirection::None;
         }
     });
     group->addButton(b, id++);
@@ -95,7 +94,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
-            _result.dir = SearchDirection::Foreword;
+            m_result.dir = SearchDirection::Foreword;
         }
     });
     group->addButton(b, id++);
@@ -105,7 +104,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
-            _result.dir = SearchDirection::Backword;
+            m_result.dir = SearchDirection::Backword;
         }
     });
     group->addButton(b, id++);
@@ -116,7 +115,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     if (info.isSel) {
         connect(b, &QPushButton::toggled, this, [this](bool b) {
             if (b) {
-                _result.dir = SearchDirection::Selection;
+                m_result.dir = SearchDirection::Selection;
             }
         });
     } else {
@@ -147,7 +146,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     m_lineeditor->setFocus();
 }
 
-FindDialog::Result FindDialog::getResult() const { return _result; }
+FindDialog::Result FindDialog::getResult() const { return m_result; }
 
 void FindDialog::on_accept() {
     // check the last byte nibbles
@@ -159,15 +158,15 @@ void FindDialog::on_accept() {
         return;
     }
 
-    _result.isStringFind = m_findMode->currentIndex() > 0;
+    m_result.isStringFind = m_findMode->currentIndex() > 0;
 
-    if (_result.isStringFind) {
-        _result.value = m_lineeditor->text();
-        _result.encoding =
+    if (m_result.isStringFind) {
+        m_result.value = m_lineeditor->text();
+        m_result.encoding =
             QStringConverter::Encoding(m_findMode->currentIndex() - 1);
     } else {
-        _result.value = m_lineeditor->rawHexText();
-        _result.encoding = {};
+        m_result.value = m_lineeditor->rawHexText();
+        m_result.encoding = {};
     }
 
     done(1);

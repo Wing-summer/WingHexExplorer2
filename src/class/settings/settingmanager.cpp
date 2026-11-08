@@ -17,15 +17,14 @@
 
 #include "settingmanager.h"
 
-#include "class/application/logger.h"
-#include "settings/settings.h"
-#include "thememanager.h"
-
-#include "utilities.h"
-
 #include <QApplication>
 #include <QFileInfo>
 #include <QMetaEnum>
+
+#include "class/application/logger.h"
+#include "settings/settings.h"
+#include "thememanager.h"
+#include "utilities.h"
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_DOCK_LAYOUT, ("script.layout"))
@@ -93,7 +92,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_VERTICAL, ("diff.vertical"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_SYNC_SCROLL, ("diff.syncScroll"))
 
 SettingManager::SettingManager() {
-    _defaultFont = qApp->font();
+    m_defaultFont = qApp->font();
     qRegisterMetaType<RecentFileManager::RecentInfo>();
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     qRegisterMetaTypeStreamOperators<RecentFileManager::RecentInfo>();
@@ -124,7 +123,7 @@ void SettingManager::setLastUsedScriptPath(const QString &newLastUsedPath) {
 }
 
 void SettingManager::load() {
-    auto defaultFontSize = _defaultFont.pointSize();
+    auto defaultFontSize = m_defaultFont.pointSize();
     Q_ASSERT(defaultFontSize > 0);
     HANDLE_CONFIG;
 
@@ -136,12 +135,12 @@ void SettingManager::load() {
 
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, {}).toByteArray();
     m_scriptDockLayout = READ_CONFIG(SCRIPT_DOCK_LAYOUT, {}).toByteArray();
-    READ_CONFIG_STRING(m_appFontFamily, APP_FONTFAMILY, _defaultFont.family());
+    READ_CONFIG_STRING(m_appFontFamily, APP_FONTFAMILY, m_defaultFont.family());
 
     // check font
     QFont fm(m_appFontFamily);
     if (!QFontInfo(fm).exactMatch()) {
-        m_appFontFamily = _defaultFont.family();
+        m_appFontFamily = m_defaultFont.family();
     }
     READ_CONFIG_INT_POSITIVE(m_appfontSize, APP_FONTSIZE, defaultFontSize);
     this->setDefaultWinState(READ_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized)
@@ -278,10 +277,10 @@ void SettingManager::load() {
         qBound(WingDiff::Limits::MinimumDetailedRanges, m_diffDetailLimit,
                WingDiff::Limits::MaximumDetailedRanges);
 
-    Q_EMIT sigEditorfontSizeChanged(m_editorfontSize);
-    Q_EMIT sigCopylimitChanged(m_copylimit);
-    Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
-    Q_EMIT sigDiffSettingsChanged();
+    Q_EMIT sigOnEditorFontSizeChanged(m_editorfontSize);
+    Q_EMIT sigOnCopyLimitChanged(m_copylimit);
+    Q_EMIT sigOnDecodeStrLimitChanged(m_decodeStrlimit);
+    Q_EMIT sigOnDiffSettingsChanged();
 }
 
 QList<RecentFileManager::RecentInfo>
@@ -319,7 +318,7 @@ void SettingManager::setEditorCursorSync(bool newEditorCursorSync) {
         HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_CURSOR_SYNC, newEditorCursorSync);
         m_editorCursorSync = newEditorCursorSync;
-        Q_EMIT sigHexCursorSync(newEditorCursorSync);
+        Q_EMIT sigOnHexCursorSync(newEditorCursorSync);
     }
 }
 
@@ -682,27 +681,27 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
     }
 }
 
-void SettingManager::reset(SETTINGS cat) {
+void SettingManager::reset(Settings cat) {
     __reset(cat);
     load();
 }
 
-void SettingManager::__reset(SETTINGS cat) {
+void SettingManager::__reset(Settings cat) {
     HANDLE_CONFIG;
-    if (cat.testFlag(SETTING::APP)) {
+    if (cat.testFlag(Setting::App)) {
         WRITE_CONFIG(SKIN_THEME, 0);
         WRITE_CONFIG(APP_LANGUAGE, QString());
-        WRITE_CONFIG(APP_FONTFAMILY, _defaultFont.family());
-        WRITE_CONFIG(APP_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG(APP_FONTFAMILY, m_defaultFont.family());
+        WRITE_CONFIG(APP_FONTSIZE, m_defaultFont.pointSize());
         WRITE_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized);
     }
-    if (cat.testFlag(SETTING::PLUGIN)) {
+    if (cat.testFlag(Setting::Plugin)) {
         WRITE_CONFIG(PLUGIN_ENABLE, true);
         WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
     }
-    if (cat.testFlag(SETTING::DIFF)) {
+    if (cat.testFlag(Setting::Diff)) {
         WRITE_CONFIG(DIFF_FILE_LIMIT, WingDiff::Limits::DefaultFileSize);
         WRITE_CONFIG(DIFF_MEMORY_LIMIT, WingDiff::Limits::DefaultMemoryBudget);
         WRITE_CONFIG(DIFF_DETAIL_LIMIT,
@@ -711,8 +710,8 @@ void SettingManager::__reset(SETTINGS cat) {
         WRITE_CONFIG(DIFF_VERTICAL, false);
         WRITE_CONFIG(DIFF_SYNC_SCROLL, true);
     }
-    if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());
+    if (cat.testFlag(Setting::Editor)) {
+        WRITE_CONFIG(EDITOR_FONTSIZE, m_defaultFont.pointSize());
         WRITE_CONFIG(EDITOR_HEXLINE, 16);
         WRITE_CONFIG(EDITOR_SHOW_ADDR, true);
         WRITE_CONFIG(EDITOR_SHOW_COL, true);
@@ -721,7 +720,7 @@ void SettingManager::__reset(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
     }
-    if (cat.testFlag(SETTING::SCRIPT)) {
+    if (cat.testFlag(Setting::Script)) {
         WRITE_CONFIG(SCRIPT_ENABLE, true);
         WRITE_CONFIG(SCRIPT_TIMEOUT, 10);
         WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
@@ -730,7 +729,7 @@ void SettingManager::__reset(SETTINGS cat) {
         WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
         WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());
     }
-    if (cat.testFlag(SETTING::OTHER)) {
+    if (cat.testFlag(Setting::Other)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
 #ifdef WINGHEX_USE_FRAMELESS
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
@@ -751,7 +750,7 @@ void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
         HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, newDecodeStrlimit);
         m_decodeStrlimit = newDecodeStrlimit;
-        Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
+        Q_EMIT sigOnDecodeStrLimitChanged(m_decodeStrlimit);
     }
 }
 
@@ -763,7 +762,7 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
         HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_COPY_LIMIT, newCopylimit);
         m_copylimit = newCopylimit;
-        Q_EMIT sigCopylimitChanged(m_copylimit);
+        Q_EMIT sigOnCopyLimitChanged(m_copylimit);
     }
 }
 
@@ -794,7 +793,7 @@ void SettingManager::setEditorfontSize(int newEditorfontSize) {
         HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_FONTSIZE, newEditorfontSize);
         m_editorfontSize = newEditorfontSize;
-        Q_EMIT sigEditorfontSizeChanged(newEditorfontSize);
+        Q_EMIT sigOnEditorFontSizeChanged(newEditorfontSize);
     }
 }
 
@@ -868,7 +867,7 @@ void SettingManager::setDiffFileLimit(quint64 value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_FILE_LIMIT, value);
         m_diffFileLimit = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }
 
@@ -882,7 +881,7 @@ void SettingManager::setDiffMemoryLimit(quint64 value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_MEMORY_LIMIT, value);
         m_diffMemoryLimit = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }
 
@@ -895,7 +894,7 @@ void SettingManager::setDiffDetailLimit(quint64 value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_DETAIL_LIMIT, value);
         m_diffDetailLimit = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }
 
@@ -906,7 +905,7 @@ void SettingManager::setDiffPrecise(bool value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_PRECISE, value);
         m_diffPrecise = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }
 
@@ -917,7 +916,7 @@ void SettingManager::setDiffVertical(bool value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_VERTICAL, value);
         m_diffVertical = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }
 
@@ -928,6 +927,6 @@ void SettingManager::setDiffSyncScroll(bool value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_SYNC_SCROLL, value);
         m_diffSyncScroll = value;
-        Q_EMIT sigDiffSettingsChanged();
+        Q_EMIT sigOnDiffSettingsChanged();
     }
 }

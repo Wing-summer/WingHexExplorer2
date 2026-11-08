@@ -86,8 +86,8 @@ int QCheckList::globalCheckState() {
                                    : Qt::PartiallyChecked;
 }
 
-bool QCheckList::eventFilter(QObject *_object, QEvent *_event) {
-    if (_object == lineEdit() && _event->type() == QEvent::MouseButtonPress) {
+bool QCheckList::eventFilter(QObject *object, QEvent *event) {
+    if (object == lineEdit() && event->type() == QEvent::MouseButtonPress) {
         showPopup();
         return true;
     }
@@ -131,7 +131,7 @@ void QCheckList::updateText() {
 
 void QCheckList::on_modelDataChanged() {
     updateText();
-    Q_EMIT globalCheckStateChanged(globalCheckState());
+    Q_EMIT sigOnGlobalCheckStateChanged(globalCheckState());
 }
 
 void QCheckList::on_itemPressed(const QModelIndex &index) {

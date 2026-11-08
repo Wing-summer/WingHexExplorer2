@@ -43,7 +43,7 @@ public:
                                 int role) const override;
 
 private:
-    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
+    QMap<CryptographicHash::Algorithm, QString> m_checkSumData;
 };
 
 #endif // CHECKSUMMODEL_H

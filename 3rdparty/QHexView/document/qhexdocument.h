@@ -21,14 +21,14 @@
 #ifndef QHEXDOCUMENT_H
 #define QHEXDOCUMENT_H
 
+#include <QBuffer>
+#include <QFile>
+#include <QMap>
+
 #include "buffer/qfilebuffer.h"
 #include "qhexcursor.h"
 #include "qhexmetadata.h"
 #include "qhexundostack.h"
-
-#include <QBuffer>
-#include <QFile>
-#include <QMap>
 
 class QHexDocument : public QObject {
     Q_OBJECT
@@ -199,11 +199,11 @@ public slots:
     bool replace(qsizetype offset, const QByteArray &data);
     bool remove(qsizetype offset, qsizetype len);
 
-    bool _insert(qsizetype offset, uchar b);
-    bool _insert(qsizetype offset, const QByteArray &data);
-    bool _replace(qsizetype offset, uchar b);
-    bool _replace(qsizetype offset, const QByteArray &data);
-    bool _remove(qsizetype offset, qsizetype len);
+    bool insertInternal(qsizetype offset, uchar b);
+    bool insertInternal(qsizetype offset, const QByteArray &data);
+    bool replaceInternal(qsizetype offset, uchar b);
+    bool replaceInternal(qsizetype offset, const QByteArray &data);
+    bool removeInternal(qsizetype offset, qsizetype len);
 
 private:
     // PatternByte: represents a byte in the pattern, with nibble-level wildcard
@@ -247,26 +247,26 @@ signals:
     /*================================*/
     // added by wingsummer
 
-    void documentSaved(bool saved);
+    void sigOnDocumentSaved(bool saved);
 
-    void bookMarkChanged();
+    void sigOnBookmarkChanged();
 
-    void metafgVisibleChanged(bool b);
-    void metabgVisibleChanged(bool b);
-    void metaCommentVisibleChanged(bool b);
+    void sigOnMetaFgVisibleChanged(bool b);
+    void sigOnMetaBgVisibleChanged(bool b);
+    void sigOnMetaCommentVisibleChanged(bool b);
 
-    void documentLockedFile(bool locked);
-    void documentKeepSize(bool keep);
+    void sigOnDocumentLockedFile(bool locked);
+    void sigOnDocumentKeepSize(bool keep);
 
-    void hexLineWidthChanged();
+    void sigOnHexLineWidthChanged();
 
     /*================================*/
 
-    void canUndoChanged(bool canUndo);
-    void canRedoChanged(bool canRedo);
-    void documentChanged();
-    void metaDataChanged();
-    void contentsChanged();
+    void sigOnCanUndoChanged(bool canUndo);
+    void sigOnCanRedoChanged(bool canRedo);
+    void sigOnDocumentChanged();
+    void sigOnMetaDataChanged();
+    void sigOnContentsChanged();
 
 private:
     QFileBuffer *m_buffer;
@@ -285,7 +285,7 @@ private:
     bool m_keepsize;
     bool m_islocked;
     bool m_lockKeepSize = false;
-    QMap<qsizetype, QString> _bookmarks;
+    QMap<qsizetype, QString> m_bookmarks;
 
     bool m_metafg = true;
     bool m_metabg = true;

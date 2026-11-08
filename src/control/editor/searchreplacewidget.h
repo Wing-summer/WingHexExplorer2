@@ -53,6 +53,7 @@ private:
                          const QRegularExpressionMatch &regexMatch);
 
     enum ReplaceAllMode { WholeDocument, InSelection };
+
     void replaceCurrent();
     void performReplaceAll(ReplaceAllMode mode);
 

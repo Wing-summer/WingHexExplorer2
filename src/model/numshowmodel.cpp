@@ -19,16 +19,16 @@
 
 static auto UNKNOWN_NUM = QStringLiteral("-");
 
-static QStringList _numHeader{
-    "byte",  "char",    "ushort",   "short", "uint32", "int32",  "uint64",
-    "int64", "float32", "double64", "ASCII", "UTF-8",  "UTF-16", "UTF-32"};
+static QStringList numHeader{"byte",  "char",   "ushort", "short",   "uint32",
+                             "int32", "uint64", "int64",  "float32", "double64",
+                             "ASCII", "UTF-8",  "UTF-16", "UTF-32"};
 
 NumShowModel::NumShowModel(QObject *parent) : QAbstractTableModel(parent) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    m_num.fill(QString(), _numHeader.size());
+    m_num.fill(QString(), numHeader.size());
 #else
-    m_num.reserve(_numHeader.size());
-    std::fill_n(std::back_inserter(m_num), _numHeader.size(), QString());
+    m_num.reserve(numHeader.size());
+    std::fill_n(std::back_inserter(m_num), numHeader.size(), QString());
 #endif
 }
 
@@ -50,14 +50,14 @@ void NumShowModel::clear() {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     m_num.fill(QString());
 #else
-    std::fill_n(std::back_inserter(m_num), _numHeader.size(), QString());
+    std::fill_n(std::back_inserter(m_num), numHeader.size(), QString());
 #endif
     endResetModel();
 }
 
 int NumShowModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return _numHeader.size();
+    return numHeader.size();
 }
 
 int NumShowModel::columnCount(const QModelIndex &parent) const {
@@ -86,7 +86,7 @@ QVariant NumShowModel::headerData(int section, Qt::Orientation orientation,
         if (orientation == Qt::Horizontal) {
             return tr("Value");
         } else {
-            return _numHeader.at(section);
+            return numHeader.at(section);
         }
     }
     return QVariant();

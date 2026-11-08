@@ -25,20 +25,20 @@
 #include <QTableView>
 #include <QTextBrowser>
 
-#include "class/settings/thememanager.h"
-#include "control/console/scriptingconsole.h"
-#include "control/idbtreeview.h"
-#include "control/objtreewidget.h"
-#include "dialog/settingdialog.h"
-#include "framelessmainwindow.h"
-
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingCodeEdit/wingsquiggleinfomodel.h"
+
 #include "class/file/recentfilemanager.h"
+#include "class/settings/thememanager.h"
+#include "control/console/scriptingconsole.h"
 #include "control/editor/scripteditor.h"
+#include "control/idbtreeview.h"
+#include "control/objtreewidget.h"
+#include "dialog/settingdialog.h"
+#include "framelessmainwindow.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/idbwatchmodel.h"
 
@@ -318,14 +318,14 @@ private:
     QStatusBar *m_status = nullptr;
     ScriptEditor *m_curEditor = nullptr;
     QList<QMetaObject::Connection> m_curConnections;
-    WingSquiggleInfoModel *_squinfoModel = nullptr;
+    WingSquiggleInfoModel *m_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
 
     ads::CDockWidget *m_outConsole = nullptr;
     ads::CDockWidget *m_dbgVarView = nullptr;
     ads::CDockWidget *m_dbgWatchView = nullptr;
 
-    QVector<QToolButton *> m_Tbtneditors;
+    QVector<QToolButton *> m_tbtneditors;
 
     QMenu *m_recentMenu = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
@@ -333,12 +333,12 @@ private:
     SettingDialog *m_setdialog = nullptr;
 
     size_t m_newIndex = 1;
-    QPair<QString, int> _lastCurLine = {QString(), -1};
-    bool _needRestart = false;
+    QPair<QString, int> m_lastCurLine = {QString(), -1};
+    bool m_needRestart = false;
 
     QString m_lastusedpath;
 
-    QVector<ScriptEditor *> _reditors;
+    QVector<ScriptEditor *> m_reditors;
 
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;
@@ -348,12 +348,12 @@ private:
     IDBWatchModel *m_watchModel = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
     ObjTreeWidget *m_sym = nullptr;
-    ScriptEditor *_fakeEditor = nullptr;
+    ScriptEditor *m_fakeEditor = nullptr;
 
-    QLabel *_status = nullptr;
+    QLabel *m_statusLabel = nullptr;
 
-    QByteArray _defaultLayout;
-    QByteArray _savedLayout;
+    QByteArray m_defaultLayout;
+    QByteArray m_savedLayout;
 
     // EditorsCtl interface
 public:

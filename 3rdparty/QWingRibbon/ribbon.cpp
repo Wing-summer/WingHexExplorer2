@@ -9,18 +9,18 @@
  */
 
 #include "ribbon.h"
-#include "ribbontabcontent.h"
 
 #include <QApplication>
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
 #include <QLayout>
+#include <QMimeData>
 #include <QStackedWidget>
 #include <QStyleOption>
 #include <QToolButton>
 
-#include <QDragEnterEvent>
-#include <QDragLeaveEvent>
-#include <QDragMoveEvent>
-#include <QMimeData>
+#include "ribbontabcontent.h"
 
 Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     auto w = new QWidget(this);
@@ -46,9 +46,9 @@ Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     m_conerLayout = layout;
 
     connect(hideBtn, &QToolButton::toggled, this, [this](bool checked) {
-        auto *tab_pane = this->findChild<QStackedWidget *>();
-        Q_ASSERT(tab_pane);
-        tab_pane->setVisible(!checked);
+        auto *tabPane = this->findChild<QStackedWidget *>();
+        Q_ASSERT(tabPane);
+        tabPane->setVisible(!checked);
         if (checked) {
             this->setMaximumHeight(this->tabBar()->height() + 1);
         } else {
@@ -131,7 +131,7 @@ void Ribbon::dropEvent(QDropEvent *event) {
             pathList.append(urlList.at(i).toLocalFile());
         }
 
-        Q_EMIT onDragDropFiles(pathList);
+        Q_EMIT sigOnDragDropFiles(pathList);
         event->acceptProposedAction();
     }
 }

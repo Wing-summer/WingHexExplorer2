@@ -140,7 +140,7 @@ void ScriptSettingDialog::loadData() {
                 buffer.append(cat);
             }
         }
-        _usrHideCats = buffer;
+        m_originalUsrHideCats = buffer;
         m_usrHideCats.setContents(buffer);
 
         buffer.clear();
@@ -151,7 +151,7 @@ void ScriptSettingDialog::loadData() {
                 buffer.append(cat);
             }
         }
-        _sysHideCats = buffer;
+        m_originalSysHideCats = buffer;
         m_sysHideCats.setContents(buffer);
     } else {
         ui->cbAllowUsrScript->setEnabled(false);
@@ -224,13 +224,13 @@ bool ScriptSettingDialog::containUnsavedChanges() const {
 
 void ScriptSettingDialog::restore() {
     auto &set = SettingManager::instance();
-    set.reset(SettingManager::SCRIPT);
+    set.reset(SettingManager::Script);
     loadData();
 }
 
 void ScriptSettingDialog::discard() {
-    m_usrHideCats.setContents(_usrHideCats);
-    m_sysHideCats.setContents(_sysHideCats);
+    m_usrHideCats.setContents(m_originalUsrHideCats);
+    m_sysHideCats.setContents(m_originalSysHideCats);
 
     ui->listWidget->blockSignals(true);
     for (int i = 0; i < ui->listWidget->count(); ++i) {
@@ -239,13 +239,13 @@ void ScriptSettingDialog::discard() {
         if (var.isValid()) {
             auto meta = var.value<ScriptManager::ScriptDirMeta>();
             if (meta.isSys) {
-                if (_sysHideCats.contains(meta.rawName)) {
+                if (m_originalSysHideCats.contains(meta.rawName)) {
                     item->setCheckState(Qt::Unchecked);
                 } else {
                     item->setCheckState(Qt::Checked);
                 }
             } else {
-                if (_usrHideCats.contains(meta.rawName)) {
+                if (m_originalUsrHideCats.contains(meta.rawName)) {
                     item->setCheckState(Qt::Unchecked);
                 } else {
                     item->setCheckState(Qt::Checked);

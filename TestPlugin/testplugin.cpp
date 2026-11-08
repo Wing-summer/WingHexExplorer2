@@ -19,13 +19,14 @@
 */
 
 #include "testplugin.h"
-#include "testform.h"
-#include "testsettingpage.h"
-#include "testwingeditorviewwidget.h"
 
 #include <QApplication>
 #include <QMenu>
 #include <QPainter>
+
+#include "testform.h"
+#include "testsettingpage.h"
+#include "testwingeditorviewwidget.h"
 
 // 注意：所有提供的脚本接口函数都不是线程安全的，只是测试
 
@@ -46,12 +47,12 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     qDebug() << v;
 
     // 和日志与 UI 相关的接口此时可用，剩余的 API 初始化成功才可用
-    _tform = createDialog(new TestForm(this));
-    if (_tform == nullptr) {
+    m_tform = createDialog(new TestForm(this));
+    if (m_tform == nullptr) {
         return false;
     }
 
-    _tform->setMaximumHeight(500);
+    m_tform->setMaximumHeight(500);
 
     using TBInfo = WingHex::WingRibbonToolBoxInfo;
     auto tb = new QToolButton;
@@ -63,15 +64,15 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     tb->setIcon(standardIcon(WingHex::StandardIcon::Plugin));
     tb->setText(tr("Test"));
     connect(tb, &QToolButton::clicked, this, [=] {
-        if (_tform) {
-            _tform->show();
-            _tform->raise();
+        if (m_tform) {
+            m_tform->show();
+            m_tform->raise();
         }
     });
 
     const QIcon btnIcon = standardIcon(WingHex::StandardIcon::Settings);
 
-    _rtbinfo << createRibbonToolBox(
+    m_rtbinfo << createRibbonToolBox(
         WingHex::WingRibbonCatagories::PLUGIN,
         WingHex::createToolBox(tr("TestPlugin"), tb));
 
@@ -91,42 +92,43 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         }
         rtb.toolboxs.append(tbtb);
     }
-    _rtbinfo.append(rtb);
+    m_rtbinfo.append(rtb);
 
-    _setpages = {new TestSettingPage(QStringLiteral("Test1"),
-                                     QStringLiteral("This is a Test1"), true),
-                 new TestSettingPage(QStringLiteral("Test2"),
-                                     QStringLiteral("This is a Test2"), false)};
+    m_setpages = {new TestSettingPage(QStringLiteral("Test1"),
+                                      QStringLiteral("This is a Test1"), true),
+                  new TestSettingPage(QStringLiteral("Test2"),
+                                      QStringLiteral("This is a Test2"),
+                                      false)};
 
     // DockWidget test
     auto lbl = new QLabel(QStringLiteral("DockTest1"));
     lbl->setAlignment(Qt::AlignCenter);
-    _winfo << WingHex::createWingDockWidget(QStringLiteral("DockTest1"), lbl,
-                                            Qt::LeftDockWidgetArea);
+    m_winfo << WingHex::createWingDockWidget(QStringLiteral("DockTest1"), lbl,
+                                             Qt::LeftDockWidgetArea);
 
     auto ev = QSharedPointer<TestWingEditorViewWidget::Creator>::create();
-    _evws.append(ev);
+    m_evws.append(ev);
 
-    _tmenu = new QMenu(QStringLiteral("TestPlugin"));
+    m_tmenu = new QMenu(QStringLiteral("TestPlugin"));
     auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/device.svg"));
-    _tmenu->setIcon(micon);
-    _tmenu->addAction(QStringLiteral("Raise Plugin View"), this, [this]() {
-        if (_curContext) {
-            auto ws = _curContext->currentPluginEditorWidgets();
+    m_tmenu->setIcon(micon);
+    m_tmenu->addAction(QStringLiteral("Raise Plugin View"), this, [this]() {
+        if (m_curContext) {
+            auto ws = m_curContext->currentPluginEditorWidgets();
             if (!ws.isEmpty()) {
                 auto w = ws.first();
                 w->raiseView();
             }
         }
     });
-    _tmenu->addSeparator();
+    m_tmenu->addSeparator();
     for (int i = 0; i < 5; ++i) {
         auto a = new QAction(
-            micon, QStringLiteral("Test - ") + QString::number(i), _tmenu);
+            micon, QStringLiteral("Test - ") + QString::number(i), m_tmenu);
         connect(a, &QAction::triggered, this, [this, a]() {
             msgInformation(nullptr, QStringLiteral("Test"), a->text());
         });
-        _tmenu->addAction(a);
+        m_tmenu->addAction(a);
     }
 
     return true;
@@ -136,16 +138,16 @@ void TestPlugin::unload(std::unique_ptr<QSettings> &set) {
     // 设个数字，那就是 5 测试一下配置是否正常工作
     set->setValue("Test", 5);
 
-    for (auto &p : _setpages) {
+    for (auto &p : m_setpages) {
         p->deleteLater();
     }
 
-    for (auto &item : _winfo) {
+    for (auto &item : m_winfo) {
         item.widget->deleteLater();
     }
 
-    _tform->close();
-    _tform->deleteLater();
+    m_tform->close();
+    m_tform->deleteLater();
 }
 
 const QString TestPlugin::pluginName() const { return tr("TestPlugin"); }
@@ -159,23 +161,23 @@ QString TestPlugin::retranslate(const QString &str) {
 }
 
 QList<WingHex::WingDockWidgetInfo> TestPlugin::registeredDockWidgets() const {
-    return _winfo;
+    return m_winfo;
 }
 
-QMenu *TestPlugin::registeredHexContextMenu() const { return _tmenu; }
+QMenu *TestPlugin::registeredHexContextMenu() const { return m_tmenu; }
 
 QList<WingHex::WingRibbonToolBoxInfo>
 TestPlugin::registeredRibbonTools() const {
-    return _rtbinfo;
+    return m_rtbinfo;
 }
 
 QList<WingHex::SettingPage *> TestPlugin::registeredSettingPages() const {
-    return _setpages;
+    return m_setpages;
 }
 
 QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>
 TestPlugin::registeredEditorViewWidgets() const {
-    return _evws;
+    return m_evws;
 }
 
 QVector<QColor> TestPlugin::colorTable() {
@@ -271,7 +273,7 @@ QString TestPlugin::test_j(const WingHex::SenderInfo &sender, int a, int b) {
 }
 
 bool TestPlugin::createTestShareMem(const QString &nameID) {
-    if (_tsharemem) {
+    if (m_tsharemem) {
         return false;
     }
 
@@ -279,12 +281,12 @@ bool TestPlugin::createTestShareMem(const QString &nameID) {
         return false;
     }
 
-    _tsharemem = new QSharedMemory(nameID, this);
+    m_tsharemem = new QSharedMemory(nameID, this);
 
-    if (!_tsharemem->create(20)) {
+    if (!m_tsharemem->create(20)) {
         return false;
     }
-    auto buffer = _tsharemem->data();
+    auto buffer = m_tsharemem->data();
     std::memset(buffer, 0, 20);
     const char data[] = "WingSummer";
     std::memcpy(buffer, data, sizeof(data));
@@ -292,7 +294,7 @@ bool TestPlugin::createTestShareMem(const QString &nameID) {
 }
 
 bool TestPlugin::destoryTestShareMem() {
-    if (_tsharemem) {
+    if (m_tsharemem) {
         // don't try to destory the share memory
         // if it's opened, it will cause freeze
         // but it's ok with `shmem`
@@ -300,9 +302,9 @@ bool TestPlugin::destoryTestShareMem() {
         auto ret = invokeService(QStringLiteral("shmem"), "isShareMemUsed",
                                  qReturnArg(used));
         if (!ret || ret && !used) {
-            _tsharemem->detach();
-            delete _tsharemem;
-            _tsharemem = nullptr;
+            m_tsharemem->detach();
+            delete m_tsharemem;
+            m_tsharemem = nullptr;
             return true;
         }
     }
@@ -310,20 +312,20 @@ bool TestPlugin::destoryTestShareMem() {
 }
 
 void TestPlugin::printLogTestSharedMemData() {
-    logWarn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
+    logWarn(QByteArray(reinterpret_cast<const char *>(m_tsharemem->data()), 20)
                 .toHex(' '));
 }
 
 void TestPlugin::setPluginMetaTestEnabled(bool b) {
-    if (b != ENABLE_META) {
-        ENABLE_META = b;
+    if (b != m_enableMeta) {
+        m_enableMeta = b;
         for (auto &i : TestWingEditorViewWidget::instances()) {
             i->setEnableMeta(b);
         }
     }
 }
 
-bool TestPlugin::pluginMetaTestEnabled() { return ENABLE_META; }
+bool TestPlugin::pluginMetaTestEnabled() { return m_enableMeta; }
 
 void TestPlugin::testCrash() {
     // if you want to reproduce nullptr deferenced,
@@ -386,14 +388,18 @@ void TestPlugin::onRegisterScriptObj(WingScriptBind::ScopeBuilder scope) {
 
     struct TestObj {
         TestObj() = default;
-        explicit TestObj(int value) : _v(value) {}
-        int getV() const { return _v; }
-        int _v = 0;
+
+        explicit TestObj(int value) : m_v(value) {}
+
+        int getV() const { return m_v; }
+
+        int m_v = 0;
     };
+
     scope.beginClass<TestObj>("TestObj")
         .addConstructor<void (*)(), void (*)(int)>()
         .addFunction("getV", &TestObj::getV)
-        .addData("value", &TestObj::_v);
+        .addData("value", &TestObj::m_v);
 
     // Exercise resource definitions and duplicate-file registration.
     const auto definitions =
@@ -422,9 +428,9 @@ void TestPlugin::onPaintHexEditorView(QPainter *painter, QWidget *w,
 }
 
 void TestPlugin::prepareCallEditorContext(WingHex::HexEditorContext *context) {
-    _curContext = context;
+    m_curContext = context;
 }
 
 void TestPlugin::finishCallEditorContext(WingHex::HexEditorContext *) {
-    _curContext = nullptr;
+    m_curContext = nullptr;
 }

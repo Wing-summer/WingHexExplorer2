@@ -1,7 +1,7 @@
 {
   "preamble": [
     "// Generated body of the host API registration function.",
-    "const QPointer<MainWindow> window(_win);",
+    "const QPointer<MainWindow> window(m_win);",
     "auto scriptContexts = std::make_shared<ScriptDocumentRegistry>([window]() -> EditorView * { return window ? window->currentEditor() : nullptr; }, [this](const QUrl &file, EditorView **view) -> int { return openDocument(file, view); }, [this](EditorView *view, bool force) -> int { return closeDocument(view, force); });"
   ],
   "default_body": "auto *view = scriptContext->view(); if (!view) { return $fallback; } return view->$native(this$comma_arguments);",

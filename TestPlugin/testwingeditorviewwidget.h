@@ -21,9 +21,9 @@
 #ifndef TESTWINGEDITORVIEWWIDGET_H
 #define TESTWINGEDITORVIEWWIDGET_H
 
-#include "WingPlugin/wingeditorviewwidget.h"
-
 #include <QLabel>
+
+#include "WingPlugin/wingeditorviewwidget.h"
 
 class TestWingEditorViewWidget : public WingHex::WingEditorViewWidget {
     Q_OBJECT
@@ -65,7 +65,7 @@ public slots:
     virtual void onWorkSpaceNotify(bool isWorkSpace) override;
 
 private:
-    QLabel *_lbl = nullptr;
+    QLabel *m_lbl = nullptr;
 
     bool m_unSaved = false;
     static QList<TestWingEditorViewWidget *> m_instances;

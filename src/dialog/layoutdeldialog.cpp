@@ -37,11 +37,11 @@ LayoutDelDialog::LayoutDelDialog(const QStringList &layouts, QWidget *parent)
         ui->lwLayouts->addItem(lw);
     }
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->buildUpContent(this);
-    _dialog->setWindowTitle(this->windowTitle());
-    _dialog->setMinimumSize(300, 400);
-    Utilities::moveToCenter(_dialog);
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->buildUpContent(this);
+    m_dialog->setWindowTitle(this->windowTitle());
+    m_dialog->setMinimumSize(300, 400);
+    Utilities::moveToCenter(m_dialog);
 }
 
 LayoutDelDialog::~LayoutDelDialog() { delete ui; }
@@ -59,8 +59,8 @@ QStringList LayoutDelDialog::getResult() const {
     return ret;
 }
 
-void LayoutDelDialog::on_buttonBox_accepted() { _dialog->accept(); }
+void LayoutDelDialog::on_buttonBox_accepted() { m_dialog->accept(); }
 
-void LayoutDelDialog::on_buttonBox_rejected() { _dialog->reject(); }
+void LayoutDelDialog::on_buttonBox_rejected() { m_dialog->reject(); }
 
-int LayoutDelDialog::exec() { return _dialog->exec(); }
+int LayoutDelDialog::exec() { return m_dialog->exec(); }

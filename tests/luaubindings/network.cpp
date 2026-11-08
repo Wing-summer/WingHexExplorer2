@@ -2,14 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
-#include "Luau/Common.h"
-#include "Luau/Compiler.h"
-#include "generated_bindings.hpp"
-#include "lualib.h"
-#include "qtluau/callback.hpp"
-#include "qtluau/execution.hpp"
-#include "src/luau/runtime/scriptfilesystem.h"
-#include "src/luau/wingluaurequire.h"
+#include <iostream>
+#include <stdexcept>
+#include <thread>
+
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QFile>
@@ -21,9 +17,18 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <QUuid>
-#include <iostream>
-#include <stdexcept>
-#include <thread>
+
+#include "lualib.h"
+
+#include "Luau/Common.h"
+#include "Luau/Compiler.h"
+
+#include "qtluau/callback.hpp"
+#include "qtluau/execution.hpp"
+
+#include "generated_bindings.hpp"
+#include "src/luau/runtime/scriptfilesystem.h"
+#include "src/luau/wingluaurequire.h"
 
 LUAU_FASTFLAG(LuauIntegerType2)
 
@@ -35,6 +40,7 @@ void run(lua_State *L, const QString &code) {
                                  code.toStdString());
     }
 }
+
 void pump(int duration = 100) {
     QElapsedTimer timer;
     timer.start();
@@ -43,6 +49,7 @@ void pump(int duration = 100) {
         QThread::msleep(1);
     }
 }
+
 void waitFor(lua_State *L, const QString &expression, int duration = 3000) {
     QElapsedTimer timer;
     timer.start();
@@ -82,6 +89,7 @@ void waitFor(lua_State *L, const QString &expression, int duration = 3000) {
     run(L, QStringLiteral("assert(%1, 'network fixture timed out')")
                .arg(expression));
 }
+
 void check(bool qtFirst) {
     auto *L = luaL_newstate();
     luaL_openlibs(L);

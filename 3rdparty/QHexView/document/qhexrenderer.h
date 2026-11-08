@@ -27,7 +27,8 @@
  * Nibble Index:    1  0
  */
 
-#include "qhexdocument.h"
+#include <functional>
+
 #include <QCache>
 #include <QHash>
 #include <QPainter>
@@ -35,7 +36,7 @@
 #include <QStringConverter>
 #include <QVector>
 
-#include <functional>
+#include "qhexdocument.h"
 
 class QHexRenderer : public QObject {
     Q_OBJECT
@@ -124,8 +125,8 @@ public:
     void setCacheLineCount(qsizetype count);
 
 signals:
-    void layoutChanged();
-    void repaintRequested();
+    void sigOnLayoutChanged();
+    void sigOnRepaintRequested();
 
 private:
     QByteArray getLine(qsizetype line) const;
@@ -258,6 +259,7 @@ private:
         QHash<QString, QRawFont> families;
         QCache<quint32, QRawFont> characters{1024};
     };
+
     mutable QCache<QString, CellFonts> m_cellFonts{8};
     mutable QHash<int, QStringList> m_scriptFamilies;
     mutable QCache<qsizetype,

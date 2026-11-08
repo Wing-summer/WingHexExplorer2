@@ -19,6 +19,7 @@
 #define SCRIPTINGCONSOLEBASE_H
 
 #include "QConsoleWidget/QConsoleWidget.h"
+
 #include "wingconsolehighligher.h"
 
 class ScriptingConsoleBase : public QConsoleWidget {
@@ -51,9 +52,11 @@ public slots:
 protected:
     void changeEvent(QEvent *event) override;
     bool restorePreviousCommandPrompt(bool storeOnly);
+
     void setLastCommandPrompt(bool storeOnly) {
-        _lastCommandPrompt = storeOnly;
+        m_lastCommandPrompt = storeOnly;
     }
+
     QString currentCommandLine() const override;
     int inputStartForBlock(const QTextBlock &block) const override;
     void refreshInputBlocks();
@@ -62,12 +65,12 @@ private:
     static QString commandPrompt(bool storeOnly);
 
 private:
-    QTextStream _s;
-    QTextCharFormat _warnCharFmt;
-    QTextCharFormat _errCharFmt;
+    QTextStream m_s;
+    QTextCharFormat m_warnCharFmt;
+    QTextCharFormat m_errCharFmt;
 
-    bool _lastCommandPrompt = false;
-    bool _refreshingInput = false;
+    bool m_lastCommandPrompt = false;
+    bool m_refreshingInput = false;
 };
 
 #endif // SCRIPTINGCONSOLEBASE_H

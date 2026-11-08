@@ -18,6 +18,8 @@
 #ifndef PLUGINSYSTEM_H
 #define PLUGINSYSTEM_H
 
+#include <memory>
+
 #include <QDockWidget>
 #include <QHash>
 #include <QList>
@@ -33,11 +35,11 @@
 #include <QTimerEvent>
 #include <QToolButton>
 #include <QVariant>
-#include <memory>
 
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/iwingplugin.h"
 #include "WingPlugin/wingplugincalls_p.h"
+
 #include "control/editorview.h"
 
 using namespace WingHex;
@@ -57,22 +59,22 @@ public:
             pluginDir.absoluteFilePath(path.baseName() + QLatin1String("Dep")));
         if (dir.isDir() && dir.exists()) {
             auto path = dir.absoluteFilePath();
-            _cookie = AddDllDirectory((PCWSTR)path.utf16());
+            m_cookie = AddDllDirectory((PCWSTR)path.utf16());
         }
 #endif
     }
 
     ~PluginLoadGuard() {
 #ifdef Q_OS_WIN
-        if (_cookie) {
-            RemoveDllDirectory(_cookie);
+        if (m_cookie) {
+            RemoveDllDirectory(m_cookie);
         }
 #endif
     }
 
 private:
 #ifdef Q_OS_WIN
-    DLL_DIRECTORY_COOKIE _cookie{};
+    DLL_DIRECTORY_COOKIE m_cookie{};
 #endif
 };
 
@@ -116,8 +118,8 @@ private:
         void release(int handle);
 
     private:
-        int nextId = 0;
-        QQueue<int> releasedIds;
+        int m_nextId = 0;
+        QQueue<int> m_releasedIds;
     };
 
     struct PluginFileContext {
@@ -301,7 +303,7 @@ public:
     void setSwitchingContext(bool newSwitchingContext);
 
 signals:
-    void pluginLoading(const QString &plgName);
+    void sigOnPluginLoading(const QString &plgName);
 
 private:
     PluginSystem();
@@ -670,22 +672,22 @@ private:
     int closeDocument(EditorView *view, bool force);
 
 private:
-    WingPluginCallsCorePrivate _api;
+    WingPluginCallsCorePrivate m_api;
 
 private:
-    MainWindow *_win = nullptr;
-    QHash<IWingPluginBase *, PluginInfo> _pinfos;
-    QHash<QWidget *, ads::CDockWidget *> _raisedw;
+    MainWindow *m_win = nullptr;
+    QHash<IWingPluginBase *, PluginInfo> m_pinfos;
+    QHash<QWidget *, ads::CDockWidget *> m_raisedw;
 
-    QList<IWingPlugin *> _loadedplgs;
-    QList<IWingDevice *> _loadeddevs;
+    QList<IWingPlugin *> m_loadedplgs;
+    QList<IWingDevice *> m_loadeddevs;
 
-    QStringList _enabledExtIDs;
-    QStringList _enabledDevIDs;
-    QList<BlockInfo> _blkplgs;
-    QList<BlockInfo> _blkdevs;
+    QStringList m_enabledExtIDs;
+    QStringList m_enabledDevIDs;
+    QList<BlockInfo> m_blkplgs;
+    QList<BlockInfo> m_blkdevs;
 
-    QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
+    QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> m_evplgs;
 
     QHash<IWingPlugin *, PluginFile> m_plgviewMap;
     QHash<EditorView *, ViewBind> m_viewBindings;
@@ -694,15 +696,15 @@ private:
     QSharedPointer<DocumentHandlePool> m_documentHandlePool =
         QSharedPointer<DocumentHandlePool>::create();
 
-    QString preLoadedPlg;
+    QString m_preLoadedPlg;
     // Weak VM index for snapshots and cleanup of callback-local handles.
     QHash<lua_State *, std::weak_ptr<ScriptDocumentRegistry>>
         m_scriptDocumentRegistries;
-    bool _unloading = false;
-    bool _switchingContext = false;
+    bool m_unloading = false;
+    bool m_switchingContext = false;
 
 private:
-    QString _curLoadingPlg;
+    QString m_curLoadingPlg;
 
     Q_DISABLE_COPY_MOVE(PluginSystem)
 

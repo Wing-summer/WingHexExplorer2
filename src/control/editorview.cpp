@@ -17,10 +17,16 @@
 
 #include "editorview.h"
 
+#include <QFile>
+#include <QFileInfo>
+#include <QKeyEvent>
+#include <QScrollBar>
+#include <QVBoxLayout>
+
 #include "QHexView/document/buffer/qfilebuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
-
 #include "WingPlugin/wingplugincalls_p.h"
+
 #include "class/application/logger.h"
 #include "class/file/workspacemanager.h"
 #include "class/plugin/pluginsystem.h"
@@ -28,12 +34,6 @@
 #include "class/util/qkeysequences.h"
 #include "control/common/compositeiconengine.h"
 #include "utilities.h"
-
-#include <QFile>
-#include <QFileInfo>
-#include <QKeyEvent>
-#include <QScrollBar>
-#include <QVBoxLayout>
 
 constexpr auto CLONE_LIMIT = 3;
 
@@ -55,9 +55,9 @@ EditorView::EditorView(QWidget *parent)
     hexLayout->setSpacing(0);
     hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView(this);
-    _context = new EditorViewContext(this);
+    m_context = new EditorViewContext(this);
 
-    connect(m_hex, &QHexView::headerAreaClicked, this,
+    connect(m_hex, &QHexView::sigOnHeaderAreaClicked, this,
             [this](QHexRenderer::Areas area) {
                 switch (area) {
                 case QHexRenderer::Areas::AddressArea:
@@ -72,24 +72,24 @@ EditorView::EditorView(QWidget *parent)
                     break;
                 }
             });
-    connect(m_hex, &QHexView::onPaintCustomEvent, this,
-            [this](int XOffset, qsizetype firstVisible, qsizetype begin,
+    connect(m_hex, &QHexView::sigOnPaintCustomEvent, this,
+            [this](int xOffset, qsizetype firstVisible, qsizetype begin,
                    qsizetype end) {
                 auto vp = m_hex->viewport();
                 QPainter painter(vp);
                 auto &plgsys = PluginSystem::instance();
 
-                _context->setCurrentHorizontalOffset(XOffset);
-                _context->setFirstVisibleLine(firstVisible);
-                _context->setBeginLine(begin);
-                _context->setEndLine(end);
+                m_context->setCurrentHorizontalOffset(xOffset);
+                m_context->setFirstVisibleLine(firstVisible);
+                m_context->setBeginLine(begin);
+                m_context->setEndLine(end);
 
-                plgsys.dispatchHexEditorViewPaintEvent(&painter, vp, _context);
+                plgsys.dispatchHexEditorViewPaintEvent(&painter, vp, m_context);
             });
 
     hexLayout->addWidget(m_hex, 1);
     m_goto = new GotoWidget(this);
-    connect(m_goto, &GotoWidget::jumpToLine, this,
+    connect(m_goto, &GotoWidget::sigOnJumpToLine, this,
             [this](qsizetype pos, bool isline) {
                 auto cur = m_hex->cursor();
                 isline ? cur->moveTo(pos, 0) : cur->moveTo(pos);
@@ -184,19 +184,19 @@ EditorView::EditorView(QWidget *parent)
             }
 #endif
 
-            _api._fnTable.insert(msig, m);
+            m_api._fnTable.insert(msig, m);
         }
     }
 
-    _api._fnCaller = this;
+    m_api._fnCaller = this;
 
     // checksum table data
-    _checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
+    m_checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
     const auto as = CryptographicHash::supportedHashAlgorithms();
     for (const auto &cs : as) {
-        _checkSumData.insert(cs, QString());
+        m_checkSumData.insert(cs, QString());
     }
-    _scrollPoints.assign(ScrollDataPoints::PreallocatedSize, QPoint{0, 0});
+    m_scrollPoints.assign(ScrollDataPoints::PreallocatedSize, QPoint{0, 0});
 
     this->tabWidget()->installEventFilter(this);
 
@@ -220,8 +220,8 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
         connect(view, &WingEditorViewWidget::savedStateChanged, this,
                 [this]() { updateDocSavedFlag(m_hex->isSaved()); });
 
-        if (_pluginData.contains(id)) {
-            view->loadState(_pluginData.value(id));
+        if (m_pluginData.contains(id)) {
+            view->loadState(m_pluginData.value(id));
         }
     }
     m_iconOrigin.insert(view, viewIcon);
@@ -270,9 +270,9 @@ void EditorView::registerQMenu(QMenu *menu) {
     if (menu == nullptr) {
         return;
     }
-    if (!_hasRegistered) {
+    if (!m_hasRegistered) {
         m_menu->addSeparator();
-        _hasRegistered = true;
+        m_hasRegistered = true;
     }
     m_menu->addMenu(menu);
 }
@@ -288,18 +288,18 @@ bool EditorView::isFindBusy() const {
 void EditorView::getCheckSum(const QVector<int> &algorithmID) {
     const auto hashes = CryptographicHash::supportedHashAlgorithms();
     for (const auto &cs : hashes) {
-        _checkSumData.insert(cs, QString());
+        m_checkSumData.insert(cs, QString());
     }
 
-    _checkSumVisible.assign(decltype(_checkSumVisible)::PreallocatedSize,
-                            false);
+    m_checkSumVisible.assign(decltype(m_checkSumVisible)::PreallocatedSize,
+                             false);
 
     if (m_hex->hasSelection()) {
         auto data = m_hex->selectedBytes();
         for (const auto &c : algorithmID) {
             auto h = hashes.at(c);
-            _checkSumVisible[c] = true;
-            _checkSumData.insert(
+            m_checkSumVisible[c] = true;
+            m_checkSumData.insert(
                 h,
                 QString::fromLatin1(
                     CryptographicHash::hash(data.join(), h).toHex().toUpper()));
@@ -308,8 +308,8 @@ void EditorView::getCheckSum(const QVector<int> &algorithmID) {
         auto io = m_hex->document()->buffer()->ioDevice();
         for (const auto &c : algorithmID) {
             auto h = hashes.at(c);
-            _checkSumVisible[c] = true;
-            _checkSumData.insert(
+            m_checkSumVisible[c] = true;
+            m_checkSumData.insert(
                 h, QString::fromLatin1(
                        CryptographicHash::hash(io, h).toHex().toUpper()));
         }
@@ -398,10 +398,10 @@ ErrFile EditorView::newFile(size_t index) {
     m_isNewFile = true;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
-    _pluginData.clear();
+    m_pluginData.clear();
     auto p = QHexDocument::fromInternalBuffer(false);
     p->setDocSaved();
-    connect(p, &QHexDocument::documentSaved, this,
+    connect(p, &QHexDocument::sigOnDocumentSaved, this,
             &EditorView::updateDocSavedFlag);
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
@@ -456,9 +456,9 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     m_isNewFile = false;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
-    _pluginData.clear();
+    m_pluginData.clear();
     p->setDocSaved();
-    connect(p, &QHexDocument::documentSaved, this,
+    connect(p, &QHexDocument::sigOnDocumentSaved, this,
             &EditorView::updateDocSavedFlag);
 
     setFileNameUrl(QUrl::fromLocalFile(fName));
@@ -531,15 +531,15 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     auto fileName = WingHex::deviceUrl(ext, file);
 
     // store the additional info to reload
-    _dev = d;
+    m_dev = d;
 
     m_docType = DocumentType::Extension;
     m_isNewFile = false;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
-    _pluginData.clear();
+    m_pluginData.clear();
     p->setDocSaved();
-    connect(p, &QHexDocument::documentSaved, this,
+    connect(p, &QHexDocument::sigOnDocumentSaved, this,
             &EditorView::updateDocSavedFlag);
 
     setFileNameUrl(fileName);
@@ -617,7 +617,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         doc->applyBookMarks(data.bookmarks);
         doc->setBaseAddress(data.infos.base);
         doc->metadata()->applyMetas(data.metas);
-        _pluginData = WorkSpaceManager::pluginData(data);
+        m_pluginData = WorkSpaceManager::pluginData(data);
         doc->setDocSaved();
 
         // checksum valid
@@ -695,7 +695,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         auto buffer = doc->buffer();
         infos.checkSum = computeFileFingerprint(buffer->ioDevice());
         savePluginData();
-        WorkSpaceManager::setPluginData(data, _pluginData);
+        WorkSpaceManager::setPluginData(data, m_pluginData);
         data.infos = infos;
 
         auto b = WorkSpaceManager::saveWorkSpace(workSpaceName, data);
@@ -874,7 +874,7 @@ ErrFile EditorView::closeFile(bool force) {
         if (dev == nullptr) {
             return ErrFile::Error;
         }
-        if (!dev->onCloseFile(_dev)) {
+        if (!dev->onCloseFile(m_dev)) {
             if (!force) {
                 return ErrFile::Permission;
             }
@@ -1016,9 +1016,9 @@ void EditorView::savePluginData() {
         if (p->second->hasUnsavedState()) {
             auto data = p->second->saveState();
             if (data.isEmpty()) {
-                _pluginData.remove(p->first);
+                m_pluginData.remove(p->first);
             } else {
-                _pluginData.insert(p->first, data);
+                m_pluginData.insert(p->first, data);
             }
         }
     }
@@ -1068,17 +1068,17 @@ EditorView::editorViewWidgets(const QStringList &ids) const {
 
 FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
                                                          qsizetype findSize) {
-    constexpr long DISPLAY_SIZE = 16;
-    constexpr long FIND_CONTENXT_LEN = 10;
-    constexpr long HT_SIZE = (DISPLAY_SIZE - FIND_CONTENXT_LEN) / 2;
+    constexpr long displaySize = 16;
+    constexpr long findContenxtLen = 10;
+    constexpr long htSize = (displaySize - findContenxtLen) / 2;
 
     auto doc = m_hex->document();
-    if (findSize <= FIND_CONTENXT_LEN) {
-        long leftsize = FIND_CONTENXT_LEN - findSize;
+    if (findSize <= findContenxtLen) {
+        long leftsize = findContenxtLen - findSize;
         auto rs = std::div(leftsize, 2l);
 
-        auto headerlen = HT_SIZE + rs.quot + rs.rem;
-        auto taillen = HT_SIZE + rs.quot;
+        auto headerlen = htSize + rs.quot + rs.rem;
+        auto taillen = htSize + rs.quot;
 
         auto begin = qMax(offset - headerlen, 0);
         auto end = qMin(offset + findSize + taillen, doc->length());
@@ -1093,28 +1093,28 @@ FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
         info.ctailer = buffer.sliced(boff + findSize);
         return info;
     } else {
-        constexpr long FIND_CONTENXT_HALF = FIND_CONTENXT_LEN / 2;
+        constexpr long findContenxtHalf = findContenxtLen / 2;
 
-        auto hbegin = qMax(offset - HT_SIZE, 0);
-        auto hlen = offset - hbegin + FIND_CONTENXT_HALF;
+        auto hbegin = qMax(offset - htSize, 0);
+        auto hlen = offset - hbegin + findContenxtHalf;
         auto header = doc->read(hbegin, hlen);
         auto toff = offset - hbegin;
 
-        auto tbegin = offset + findSize - FIND_CONTENXT_HALF;
-        auto tlen = HT_SIZE + FIND_CONTENXT_HALF;
+        auto tbegin = offset + findSize - findContenxtHalf;
+        auto tlen = htSize + findContenxtHalf;
         auto tailer = doc->read(tbegin, tlen);
 
         FindResultModel::FindInfo info;
         info.cheader = header.left(toff);
         info.hbuffer = header.sliced(toff);
-        info.tbuffer = tailer.left(FIND_CONTENXT_HALF);
-        info.ctailer = tailer.sliced(FIND_CONTENXT_HALF);
+        info.tbuffer = tailer.left(findContenxtHalf);
+        info.ctailer = tailer.sliced(findContenxtHalf);
         return info;
     }
 }
 
 void EditorView::applyFunctionTables(WingEditorViewWidget *view) {
-    CallTableEvent ev(&_api);
+    CallTableEvent ev(&m_api);
     QApplication::sendEvent(view, &ev);
 }
 
@@ -1132,11 +1132,11 @@ QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
         return {};
     }
 
-    constexpr qsizetype CHECKSUM_LIMIT = 1024ll * 1024 * 512; // 512MB
-    constexpr qsizetype CHECKSUM_LIMIT_QUATOR = CHECKSUM_LIMIT / 4;
+    constexpr qsizetype checksumLimit = 1024ll * 1024 * 512; // 512MB
+    constexpr qsizetype checksumLimitQuator = checksumLimit / 4;
 
-    constexpr static auto block_cacl = [](QIODevice *device,
-                                          qsizetype pos) -> QByteArray {
+    constexpr static auto blockCacl = [](QIODevice *device,
+                                         qsizetype pos) -> QByteArray {
         qint64 savedPos = device->pos();
         if (device->seek(pos)) {
             QCryptographicHash hash(QCryptographicHash::Md5);
@@ -1145,9 +1145,9 @@ QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
             QByteArrayView bufferView(buffer);
             int length;
 
-            static_assert(CHECKSUM_LIMIT_QUATOR % sizeof(buffer) == 0,
+            static_assert(checksumLimitQuator % sizeof(buffer) == 0,
                           "aligned buffer count");
-            constexpr auto total = CHECKSUM_LIMIT_QUATOR / sizeof(buffer);
+            constexpr auto total = checksumLimitQuator / sizeof(buffer);
             for (int i = 0; i < total; ++i) {
                 if ((length = device->read(buffer, sizeof(buffer))) > 0) {
                     hash.addData(bufferView);
@@ -1161,12 +1161,12 @@ QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
     };
 
     QByteArray finalResult;
-    if (fileSize <= CHECKSUM_LIMIT) {
+    if (fileSize <= checksumLimit) {
         finalResult =
             CryptographicHash::hash(device, CryptographicHash::Algorithm::Md5);
     } else {
         qint64 denom = 3;
-        qint64 span = fileSize - CHECKSUM_LIMIT_QUATOR;
+        qint64 span = fileSize - checksumLimitQuator;
         qint64 step = span / denom;
 
         QByteArray partDigests;
@@ -1174,7 +1174,7 @@ QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
 
         for (int i = 0; i < 4; ++i) {
             qint64 start = i * step;
-            partDigests.append(block_cacl(device, start));
+            partDigests.append(blockCacl(device, start));
         }
 
         QCryptographicHash finalHash(QCryptographicHash::Md5);
@@ -1528,7 +1528,7 @@ qint8 EditorView::readInt8(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<qint8>(this, offset, _rwlock);
+    return readBasicTypeContent<qint8>(this, offset, m_rwlock);
 }
 
 qint16 EditorView::readInt16(const QObject *caller, qsizetype offset) {
@@ -1539,7 +1539,7 @@ qint16 EditorView::readInt16(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<qint16>(this, offset, _rwlock);
+    return readBasicTypeContent<qint16>(this, offset, m_rwlock);
 }
 
 qint32 EditorView::readInt32(const QObject *caller, qsizetype offset) {
@@ -1550,7 +1550,7 @@ qint32 EditorView::readInt32(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<qint32>(this, offset, _rwlock);
+    return readBasicTypeContent<qint32>(this, offset, m_rwlock);
 }
 
 qint64 EditorView::readInt64(const QObject *caller, qsizetype offset) {
@@ -1561,7 +1561,7 @@ qint64 EditorView::readInt64(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<qint64>(this, offset, _rwlock);
+    return readBasicTypeContent<qint64>(this, offset, m_rwlock);
 }
 
 quint8 EditorView::readUInt8(const QObject *caller, qsizetype offset) {
@@ -1572,7 +1572,7 @@ quint8 EditorView::readUInt8(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<quint8>(this, offset, _rwlock);
+    return readBasicTypeContent<quint8>(this, offset, m_rwlock);
 }
 
 quint16 EditorView::readUInt16(const QObject *caller, qsizetype offset) {
@@ -1583,7 +1583,7 @@ quint16 EditorView::readUInt16(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<quint16>(this, offset, _rwlock);
+    return readBasicTypeContent<quint16>(this, offset, m_rwlock);
 }
 
 quint32 EditorView::readUInt32(const QObject *caller, qsizetype offset) {
@@ -1594,7 +1594,7 @@ quint32 EditorView::readUInt32(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<quint32>(this, offset, _rwlock);
+    return readBasicTypeContent<quint32>(this, offset, m_rwlock);
 }
 
 quint64 EditorView::readUInt64(const QObject *caller, qsizetype offset) {
@@ -1605,7 +1605,7 @@ quint64 EditorView::readUInt64(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<quint64>(this, offset, _rwlock);
+    return readBasicTypeContent<quint64>(this, offset, m_rwlock);
 }
 
 float EditorView::readFloat(const QObject *caller, qsizetype offset) {
@@ -1616,7 +1616,7 @@ float EditorView::readFloat(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<float>(this, offset, _rwlock);
+    return readBasicTypeContent<float>(this, offset, m_rwlock);
 }
 
 double EditorView::readDouble(const QObject *caller, qsizetype offset) {
@@ -1627,7 +1627,7 @@ double EditorView::readDouble(const QObject *caller, qsizetype offset) {
         }
     }
 
-    return readBasicTypeContent<double>(this, offset, _rwlock);
+    return readBasicTypeContent<double>(this, offset, m_rwlock);
 }
 
 QString EditorView::readString(const QObject *caller, qsizetype offset,
@@ -1639,7 +1639,7 @@ QString EditorView::readString(const QObject *caller, qsizetype offset,
         }
     }
 
-    QReadLocker locker(&_rwlock);
+    QReadLocker locker(&m_rwlock);
     auto doc = m_hex->document();
     auto pos = doc->findNext(offset, QByteArray(1, 0));
     if (pos < 0) {
@@ -1668,7 +1668,7 @@ QByteArray EditorView::readBytes(const QObject *caller, qsizetype offset,
     if (count > 1024 * 1024 * copyLimit()) {
         return {};
     }
-    QReadLocker locker(&_rwlock);
+    QReadLocker locker(&m_rwlock);
     return m_hex->document()->read(offset, count);
 }
 
@@ -1680,7 +1680,7 @@ qsizetype EditorView::findNext(const QObject *caller, qsizetype begin,
             return -1;
         }
     }
-    QReadLocker locker(&_rwlock);
+    QReadLocker locker(&m_rwlock);
     return m_hex->document()->findNext(begin, ba);
 }
 
@@ -1692,7 +1692,7 @@ qsizetype EditorView::findPrevious(const QObject *caller, qsizetype begin,
             return -1;
         }
     }
-    QReadLocker locker(&_rwlock);
+    QReadLocker locker(&m_rwlock);
     return m_hex->document()->findPrevious(begin, ba);
 }
 
@@ -1845,7 +1845,7 @@ bool EditorView::writeInt8(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeInt16(const QObject *caller, qsizetype offset,
@@ -1857,7 +1857,7 @@ bool EditorView::writeInt16(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeInt32(const QObject *caller, qsizetype offset,
@@ -1869,7 +1869,7 @@ bool EditorView::writeInt32(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeInt64(const QObject *caller, qsizetype offset,
@@ -1881,7 +1881,7 @@ bool EditorView::writeInt64(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeUInt8(const QObject *caller, qsizetype offset,
@@ -1893,7 +1893,7 @@ bool EditorView::writeUInt8(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeUInt16(const QObject *caller, qsizetype offset,
@@ -1905,7 +1905,7 @@ bool EditorView::writeUInt16(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeUInt32(const QObject *caller, qsizetype offset,
@@ -1917,7 +1917,7 @@ bool EditorView::writeUInt32(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeUInt64(const QObject *caller, qsizetype offset,
@@ -1929,7 +1929,7 @@ bool EditorView::writeUInt64(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeFloat(const QObject *caller, qsizetype offset,
@@ -1941,7 +1941,7 @@ bool EditorView::writeFloat(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeDouble(const QObject *caller, qsizetype offset,
@@ -1953,7 +1953,7 @@ bool EditorView::writeDouble(const QObject *caller, qsizetype offset,
         }
     }
 
-    return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return writeBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::writeString(const QObject *caller, qsizetype offset,
@@ -1970,7 +1970,7 @@ bool EditorView::writeString(const QObject *caller, qsizetype offset,
         Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeReplace(nullptr, m_hex->cursor(), offset, unicode);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -1989,7 +1989,7 @@ bool EditorView::writeBytes(const QObject *caller, qsizetype offset,
     auto doc = m_hex->document();
     auto cmd = doc->MakeReplace(nullptr, m_hex->cursor(), offset, data);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -2005,7 +2005,7 @@ bool EditorView::insertInt8(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertInt16(const QObject *caller, qsizetype offset,
@@ -2017,7 +2017,7 @@ bool EditorView::insertInt16(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertInt32(const QObject *caller, qsizetype offset,
@@ -2029,7 +2029,7 @@ bool EditorView::insertInt32(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertInt64(const QObject *caller, qsizetype offset,
@@ -2041,7 +2041,7 @@ bool EditorView::insertInt64(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertUInt8(const QObject *caller, qsizetype offset,
@@ -2053,7 +2053,7 @@ bool EditorView::insertUInt8(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertUInt16(const QObject *caller, qsizetype offset,
@@ -2065,7 +2065,7 @@ bool EditorView::insertUInt16(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertUInt32(const QObject *caller, qsizetype offset,
@@ -2077,7 +2077,7 @@ bool EditorView::insertUInt32(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertUInt64(const QObject *caller, qsizetype offset,
@@ -2089,7 +2089,7 @@ bool EditorView::insertUInt64(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertFloat(const QObject *caller, qsizetype offset,
@@ -2101,7 +2101,7 @@ bool EditorView::insertFloat(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertDouble(const QObject *caller, qsizetype offset,
@@ -2113,7 +2113,7 @@ bool EditorView::insertDouble(const QObject *caller, qsizetype offset,
         }
     }
 
-    return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
+    return insertBasicTypeContent(this, offset, value, nullptr, m_rwlock);
 }
 
 bool EditorView::insertString(const QObject *caller, qsizetype offset,
@@ -2130,7 +2130,7 @@ bool EditorView::insertString(const QObject *caller, qsizetype offset,
         Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeInsert(nullptr, m_hex->cursor(), offset, unicode);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -2149,7 +2149,7 @@ bool EditorView::insertBytes(const QObject *caller, qsizetype offset,
     auto doc = m_hex->document();
     auto cmd = doc->MakeInsert(nullptr, m_hex->cursor(), offset, data);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -2164,7 +2164,7 @@ bool EditorView::appendInt8(const QObject *caller, qint8 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendInt16(const QObject *caller, qint16 value) {
@@ -2175,7 +2175,7 @@ bool EditorView::appendInt16(const QObject *caller, qint16 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendInt32(const QObject *caller, qint32 value) {
@@ -2186,7 +2186,7 @@ bool EditorView::appendInt32(const QObject *caller, qint32 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendInt64(const QObject *caller, qint64 value) {
@@ -2197,7 +2197,7 @@ bool EditorView::appendInt64(const QObject *caller, qint64 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendUInt8(const QObject *caller, quint8 value) {
@@ -2208,7 +2208,7 @@ bool EditorView::appendUInt8(const QObject *caller, quint8 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendUInt16(const QObject *caller, quint16 value) {
@@ -2219,7 +2219,7 @@ bool EditorView::appendUInt16(const QObject *caller, quint16 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendUInt32(const QObject *caller, quint32 value) {
@@ -2230,7 +2230,7 @@ bool EditorView::appendUInt32(const QObject *caller, quint32 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendUInt64(const QObject *caller, quint64 value) {
@@ -2241,7 +2241,7 @@ bool EditorView::appendUInt64(const QObject *caller, quint64 value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendFloat(const QObject *caller, float value) {
@@ -2252,7 +2252,7 @@ bool EditorView::appendFloat(const QObject *caller, float value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendDouble(const QObject *caller, double value) {
@@ -2263,7 +2263,7 @@ bool EditorView::appendDouble(const QObject *caller, double value) {
         }
     }
 
-    return appendBasicTypeContent(this, value, nullptr, _rwlock);
+    return appendBasicTypeContent(this, value, nullptr, m_rwlock);
 }
 
 bool EditorView::appendString(const QObject *caller, const QString &value,
@@ -2280,7 +2280,7 @@ bool EditorView::appendString(const QObject *caller, const QString &value,
         Utilities::encodingString(value, Utilities::encodingForName(encoding));
     auto cmd = doc->MakeAppend(nullptr, m_hex->cursor(), unicode);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -2298,7 +2298,7 @@ bool EditorView::appendBytes(const QObject *caller, const QByteArray &data) {
     auto doc = m_hex->document();
     auto cmd = doc->MakeAppend(nullptr, m_hex->cursor(), data);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -2317,7 +2317,7 @@ bool EditorView::removeBytes(const QObject *caller, qsizetype offset,
     auto doc = m_hex->document();
     auto cmd = doc->MakeRemove(nullptr, m_hex->cursor(), offset, len);
     if (cmd) {
-        QWriteLocker l(&_rwlock);
+        QWriteLocker l(&m_rwlock);
         doc->pushMakeUndo(cmd);
         return true;
     }
@@ -3097,7 +3097,7 @@ bool EditorView::isSaved() const {
 FindResultModel::FindData &EditorView::findResult() { return m_findData; }
 
 QMap<CryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
-    return _checkSumData;
+    return m_checkSumData;
 }
 
 void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
@@ -3164,18 +3164,18 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
-QStringList EditorView::pluginDataNames() const { return _pluginData.keys(); }
+QStringList EditorView::pluginDataNames() const { return m_pluginData.keys(); }
 
 void EditorView::cleanUpPluginData() {
     QMap<QString, QByteArray> pluginData;
     for (auto p = m_others.keyBegin(); p != m_others.keyEnd(); ++p) {
         auto n = *p;
-        auto d = _pluginData.value(n);
+        auto d = m_pluginData.value(n);
         if (!d.isEmpty()) {
             pluginData.insert(n, d);
         }
     }
-    _pluginData = pluginData;
+    m_pluginData = pluginData;
     m_cleanUpedPluginData = true;
     updateDocSavedFlag(false);
 }
@@ -3184,7 +3184,7 @@ bool EditorView::needCleanUpPluginData() {
     if (!isWorkSpace()) {
         return false;
     }
-    for (auto p = _pluginData.keyBegin(); p != _pluginData.keyEnd(); ++p) {
+    for (auto p = m_pluginData.keyBegin(); p != m_pluginData.keyEnd(); ++p) {
         auto r = m_others.contains(*p);
         if (!r) {
             return true;
@@ -3203,20 +3203,20 @@ bool EditorView::isAllClosed() {
 }
 
 EditorView::ScrollDataPoints &EditorView::scrollPoints() {
-    return _scrollPoints;
+    return m_scrollPoints;
 }
 
 const CryptoAlgorithms &EditorView::checkSumVisible() const {
-    return _checkSumVisible;
+    return m_checkSumVisible;
 }
 
 void EditorView::resetCheckSumVisible() {
-    _checkSumVisible.assign(CryptoAlgorithms::PreallocatedSize, true);
+    m_checkSumVisible.assign(CryptoAlgorithms::PreallocatedSize, true);
 }
 
 QString EditorView::workSpaceName() const { return m_workSpaceName; }
 
-EditorViewContext *EditorView::editorContext() const { return _context; }
+EditorViewContext *EditorView::editorContext() const { return m_context; }
 
 bool EditorView::isNewFileUrl(const QUrl &url) {
     if (!url.isLocalFile()) {

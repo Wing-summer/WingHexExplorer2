@@ -19,7 +19,7 @@
 
 #include <QHash>
 
-LuauScope::LuauScope(int key) : key_(key) { type_ = Type::Unknown; }
+LuauScope::LuauScope(int key) : m_key(key) { m_type = Type::Unknown; }
 
 LuauScope LuauScope::createLocal(lua_State *L, const QString &name) {
     return createWithType(L, name, Type::Local);
@@ -37,7 +37,7 @@ LuauScope LuauScope::createTable(lua_State *L, int index) {
     const TValue *t = luaA_toobject(L, index);
     auto *address = hvalue(t);
     auto scope = createFromAddress(L, index, address);
-    scope.type_ = Type::Table;
+    scope.m_type = Type::Table;
     return scope;
 }
 
@@ -45,61 +45,61 @@ LuauScope LuauScope::createUserData(lua_State *L, int index) {
     const TValue *u = luaA_toobject(L, index);
     auto *address = uvalue(u);
     auto scope = createFromAddress(L, index, address);
-    scope.type_ = Type::UserData;
+    scope.m_type = Type::UserData;
     return scope;
 }
 
 bool LuauScope::operator==(const LuauScope &other) const {
-    return key_ == other.key_;
+    return m_key == other.m_key;
 }
 
 LuauScope &LuauScope::operator=(const LuauScope &other) {
-    L_ = other.L_;
-    key_ = other.key_;
-    name_ = other.name_;
-    type_ = other.type_;
-    newRef(other.ref_);
+    m_state = other.m_state;
+    m_key = other.m_key;
+    m_name = other.m_name;
+    m_type = other.m_type;
+    newRef(other.m_ref);
     return *this;
 }
 
-int LuauScope::getKey() const { return key_; }
+int LuauScope::getKey() const { return m_key; }
 
-QString LuauScope::getName() const { return name_; }
+QString LuauScope::getName() const { return m_name; }
 
-void LuauScope::setName(const QString &name) { name_ = name; }
+void LuauScope::setName(const QString &name) { m_name = name; }
 
-int LuauScope::getLevel() const { return level_; }
+int LuauScope::getLevel() const { return m_level; }
 
-void LuauScope::setLevel(int level) { level_ = level; }
+void LuauScope::setLevel(int level) { m_level = level; }
 
-lua_State *LuauScope::getLuaState() const { return L_; }
+lua_State *LuauScope::getLuaState() const { return m_state; }
 
-bool LuauScope::isLocal() const { return type_ == Type::Local; }
+bool LuauScope::isLocal() const { return m_type == Type::Local; }
 
-bool LuauScope::isUpvalue() const { return type_ == Type::UpValue; }
+bool LuauScope::isUpvalue() const { return m_type == Type::UpValue; }
 
-bool LuauScope::isTable() const { return type_ == Type::Table; }
+bool LuauScope::isTable() const { return m_type == Type::Table; }
 
-bool LuauScope::isUserData() const { return type_ == Type::UserData; }
+bool LuauScope::isUserData() const { return m_type == Type::UserData; }
 
 bool LuauScope::isLoaded() const {
     if (!isTable() && !isUserData()) {
         return true;
     }
-    return loaded_;
+    return m_loaded;
 }
 
-bool LuauScope::markLoaded() const { return loaded_ = true; }
+bool LuauScope::markLoaded() const { return m_loaded = true; }
 
-bool LuauScope::markUnloaded() const { return loaded_ = false; }
+bool LuauScope::markUnloaded() const { return m_loaded = false; }
 
 bool LuauScope::pushRef() const {
-    if (ref_ == LUA_REFNIL || L_ == nullptr) {
+    if (m_ref == LUA_REFNIL || m_state == nullptr) {
         return false;
     }
 
-    lua_checkstack(L_, 1);
-    lua_getref(L_, ref_);
+    lua_checkstack(m_state, 1);
+    lua_getref(m_state, m_ref);
     return true;
 }
 
@@ -107,23 +107,23 @@ LuauScope LuauScope::createWithType(lua_State *L, const QString &name,
                                     Type type) {
     LuauScope scope;
     scope.createKey(qHash(name));
-    scope.L_ = L;
-    scope.type_ = type;
-    scope.name_ = name;
+    scope.m_state = L;
+    scope.m_type = type;
+    scope.m_name = name;
     return scope;
 }
 
-void LuauScope::createKey(std::size_t hash) { key_ = hash & 0x7FFFFFFF; }
+void LuauScope::createKey(std::size_t hash) { m_key = hash & 0x7FFFFFFF; }
 
 void LuauScope::newRef(int ref) {
     if (ref == LUA_REFNIL) {
         return;
     }
 
-    lua_checkstack(L_, 1);
-    lua_getref(L_, ref);
-    ref_ = lua_ref(L_, -1);
-    lua_pop(L_, 1);
+    lua_checkstack(m_state, 1);
+    lua_getref(m_state, ref);
+    m_ref = lua_ref(m_state, -1);
+    lua_pop(m_state, 1);
 }
 
-LuauScope::Type LuauScope::getType() const { return type_; }
+LuauScope::Type LuauScope::getType() const { return m_type; }

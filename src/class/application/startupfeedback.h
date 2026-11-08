@@ -18,8 +18,9 @@
 #ifndef STARTUPFEEDBACK_H
 #define STARTUPFEEDBACK_H
 
-#include <QVariantList>
 #include <algorithm>
+
+#include <QVariantList>
 
 namespace StartupFeedback {
 // Leave time for widget creation/painting within the 200 ms feedback budget.

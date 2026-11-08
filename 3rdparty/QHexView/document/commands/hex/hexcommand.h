@@ -22,10 +22,9 @@
 #ifndef HEXCOMMAND_H
 #define HEXCOMMAND_H
 
+#include "document/commands/undocommandbase.h"
 #include "document/qhexcursor.h"
 #include "document/qhexdocument.h"
-
-#include "document/commands/undocommandbase.h"
 
 class HexCommand : public UndoCommandBase {
 public:

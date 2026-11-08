@@ -1,12 +1,3 @@
-#include "AutoHideDockContainer.h"
-#include "AutoHideSideBar.h"
-#include "AutoHideTab.h"
-#include "DockAreaWidget.h"
-#include "DockManager.h"
-#include "DockSplitter.h"
-#include "DockWidget.h"
-#include "DockingState.h"
-#include "FloatingDockContainer.h"
 #include <QAction>
 #include <QApplication>
 #include <QLabel>
@@ -22,6 +13,16 @@
 #include <QVBoxLayout>
 #include <QtTest>
 
+#include "AutoHideDockContainer.h"
+#include "AutoHideSideBar.h"
+#include "AutoHideTab.h"
+#include "DockAreaWidget.h"
+#include "DockManager.h"
+#include "DockSplitter.h"
+#include "DockWidget.h"
+#include "DockingState.h"
+#include "FloatingDockContainer.h"
+
 using namespace ads;
 
 namespace {
@@ -30,14 +31,17 @@ void drain() {
     QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     QApplication::processEvents();
 }
+
 CDockWidget *dock(CDockManager *manager, const QString &name) {
     auto widget = new CDockWidget(manager, name);
     widget->setWidget(new QLabel(name));
     return widget;
 }
+
 class PaintProbe : public QWidget {
 public:
     int paints = 0;
+
     PaintProbe() { setMinimumSize(100, 80); }
 
 protected:
@@ -47,14 +51,17 @@ protected:
         painter.fillRect(rect(), Qt::red);
     }
 };
+
 class ExcludedDock : public CDockWidget {
 public:
     explicit ExcludedDock(CDockManager *manager)
         : CDockWidget(manager, QStringLiteral("excluded")) {
         setWidget(new QLabel(QStringLiteral("Excluded")));
     }
+
     bool isStateSaveEnabled() const override { return false; }
 };
+
 state::Layout minimal() {
     state::Layout layout;
     state::Container container;
@@ -72,17 +79,20 @@ state::Layout minimal() {
 class DockingStateTests : public QObject {
     Q_OBJECT
 private slots:
+
     void init() {
         CDockManager::setConfigFlags(CDockManager::DefaultNonOpaqueConfig |
                                      CDockManager::FocusHighlighting);
         CDockManager::setAutoHideConfigFlags(
             CDockManager::DefaultAutoHideConfig);
     }
+
     void restoreWhileAncestorUpdatesDisabled_data() {
         QTest::addColumn<bool>("shown");
         QTest::newRow("startup-before-show") << false;
         QTest::newRow("shown-window") << true;
     }
+
     void restoreWhileAncestorUpdatesDisabled() {
         QFETCH(bool, shown);
         QWidget window;
@@ -115,6 +125,7 @@ private slots:
         QVERIFY(side->isVisible());
         QVERIFY(probe->paints > 0);
     }
+
     void secondProcessStartupPaintsPersistedLayout() {
         QTemporaryDir directory;
         QVERIFY(directory.isValid());
@@ -140,11 +151,13 @@ private slots:
                         .startsWith("ADSB"));
         }
     }
+
     void restoreKeepsInactiveContentsHidden_data() {
         QTest::addColumn<bool>("shown");
         QTest::newRow("during-startup") << false;
         QTest::newRow("visible-window") << true;
     }
+
     void restoreKeepsInactiveContentsHidden() {
         QFETCH(bool, shown);
         QMainWindow window;
@@ -183,6 +196,7 @@ private slots:
             QVERIFY(!tree->isVisible());
         }
     }
+
     void roundTripAndLifetime() {
         QMainWindow window;
         window.resize(1100, 800);
@@ -262,6 +276,7 @@ private slots:
         QVERIFY(extra->isClosed());
         QCOMPARE(extra->parentWidget(), manager);
     }
+
     void exclusionsAndMissingWidgets() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -291,6 +306,7 @@ private slots:
         QCOMPARE(c->dockAreaWidget()->parentSplitter()->count(), 1);
         QCOMPARE(c->dockAreaWidget()->currentDockWidget(), c);
     }
+
     void invalidInputDoesNotMutate() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -348,6 +364,7 @@ private slots:
         reject(state::encode(layout, 19));
         QCOMPARE(start.count(), 0);
     }
+
     void visibilityReentryAndCentralMismatch() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -369,6 +386,7 @@ private slots:
         QCOMPARE(manager->centralWidget(), central);
         QCOMPARE(central->dockAreaWidget()->currentDockWidget(), central);
     }
+
     void autoHideDisabledAndPerspectives() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -388,6 +406,7 @@ private slots:
         drain();
         QVERIFY(!a->isClosed());
     }
+
     void transitionsAndClosedCurrent() {
         QMainWindow window;
         window.resize(1000, 700);
@@ -430,6 +449,7 @@ private slots:
         QVERIFY(a->isClosed());
         QVERIFY(a->dockAreaWidget()->isHidden());
     }
+
     void consecutiveRestoresBeforeDeferredDeletion() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -449,6 +469,7 @@ private slots:
         QCOMPARE(manager->dockContainers().size(), 2);
         QVERIFY(b->dockContainer()->isFloating());
     }
+
     void sideBarOrderAndSize() {
         QMainWindow window;
         auto manager = new CDockManager(&window);
@@ -472,6 +493,7 @@ private slots:
         QCOMPARE(decoded.containers[0].sideBars[0].size, 210);
         QCOMPARE(decoded.containers[0].sideBars[1].size, 320);
     }
+
     void codecValidation() {
         auto layout = minimal();
         auto bytes = state::encode(layout, 31);
@@ -511,6 +533,7 @@ private slots:
             }
         }
     }
+
     void emptyLayout() {
         QMainWindow window;
         auto manager = new CDockManager(&window);

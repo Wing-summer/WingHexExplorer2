@@ -15,8 +15,7 @@
 ** =============================================================================
 */
 
-#include "class/file/workspaceformat.h"
-#include "legacyworkspace.h"
+#include <limits>
 
 #include <QDir>
 #include <QFile>
@@ -27,7 +26,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-#include <limits>
+#include "class/file/workspaceformat.h"
+#include "legacyworkspace.h"
 
 #ifdef Q_OS_UNIX
 #include <unistd.h>
@@ -104,6 +104,7 @@ class WorkspaceTests : public QObject {
     }
 
 private slots:
+
     void nativeLists() {
         const QList<WorkspaceFormat::BookMark> bookmarks{
             {quint64(1) << 48, QStringLiteral("bookmark")}, {0, QString()}};

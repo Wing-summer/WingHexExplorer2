@@ -17,6 +17,14 @@
 
 #include "luaulanguageserver.h"
 
+#include <QDebug>
+#include <QDir>
+#include <QRegularExpression>
+#include <QSet>
+#include <QUrl>
+
+#include "lua.h"
+
 #include "Luau/AstQuery.h"
 #include "Luau/BuiltinDefinitions.h"
 #include "Luau/Config.h"
@@ -31,18 +39,12 @@
 #include "Luau/TypeFunctionRuntime.h"
 #include "Luau/TypeUtils.h"
 #include "Luau/UnifierSharedState.h"
+
 #include "attachcommentsvisitor.h"
 #include "findnodetype.h"
-#include "lua.h"
 #include "luau/wingluaurequire.h"
 #include "semantictokensvisitor.h"
 #include "typehelpers.h"
-
-#include <QDebug>
-#include <QDir>
-#include <QRegularExpression>
-#include <QSet>
-#include <QUrl>
 
 struct LuauConfigInterruptInfo {
     Luau::TypeCheckLimits limits;
@@ -993,11 +995,11 @@ LuauLanguageServer &LuauLanguageServer::instance() {
 }
 
 LuauLanguageServer::LuauLanguageServer()
-    : frontend(Luau::Frontend(Luau::SolverMode::New, this, this,
-                              {/* retainFullTypeGraphs: */ true,
-                               /* forAutocomplete: */ false,
-                               /* runLintChecks: */ true})) {
-    defaultConfig.mode = Luau::Mode::Nonstrict;
+    : m_frontend(Luau::Frontend(Luau::SolverMode::New, this, this,
+                                {/* retainFullTypeGraphs: */ true,
+                                 /* forAutocomplete: */ false,
+                                 /* runLintChecks: */ true})) {
+    m_defaultConfig.mode = Luau::Mode::Nonstrict;
 }
 
 void LuauLanguageServer::onOpenDocument(const lsp::DocumentUri &uri,
@@ -1006,8 +1008,8 @@ void LuauLanguageServer::onOpenDocument(const lsp::DocumentUri &uri,
         return;
     }
     const auto moduleName = getModuleName(uri);
-    managedFiles.insert_or_assign(moduleName, document);
-    frontend.markDirty(moduleName);
+    m_managedFiles.insert_or_assign(moduleName, document);
+    m_frontend.markDirty(moduleName);
     documentDiagnostics(moduleName);
 }
 
@@ -1017,13 +1019,13 @@ void LuauLanguageServer::onSaveDocument(const lsp::DocumentUri &uri) {
 
 void LuauLanguageServer::onCloseDocument(const lsp::DocumentUri &uri) {
     auto moduleName = getModuleName(uri);
-    managedFiles.erase(moduleName);
-    frontend.markDirty(moduleName);
+    m_managedFiles.erase(moduleName);
+    m_frontend.markDirty(moduleName);
 
     clearDiagnosticsForFile(getUri(moduleName));
 }
 
-void LuauLanguageServer::clearConfigCache() { configCache.clear(); }
+void LuauLanguageServer::clearConfigCache() { m_configCache.clear(); }
 
 void LuauLanguageServer::onUpdateDocument(const lsp::DocumentUri &uri,
                                           QTextDocument *document) {
@@ -1032,8 +1034,8 @@ void LuauLanguageServer::onUpdateDocument(const lsp::DocumentUri &uri,
     }
 
     const auto moduleName = getModuleName(uri);
-    managedFiles.insert_or_assign(moduleName, document);
-    frontend.markDirty(moduleName);
+    m_managedFiles.insert_or_assign(moduleName, document);
+    m_frontend.markDirty(moduleName);
     documentDiagnostics(moduleName);
 }
 
@@ -1067,16 +1069,16 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
     Luau::AutocompleteResult result;
     bool fragmentWasSuccessful = false;
 
-    if (frontend.allModuleDependenciesValid(moduleName) &&
-        frontend.isDirty(moduleName)) {
+    if (m_frontend.allModuleDependenciesValid(moduleName) &&
+        m_frontend.isDirty(moduleName)) {
         Luau::FrontendOptions frontendOptions;
         frontendOptions.retainFullTypeGraphs = true;
         frontendOptions.forAutocomplete = false;
         frontendOptions.cancellationToken = cancellationToken;
 
         // Get parse information for this script
-        frontend.parse(moduleName);
-        const auto sourceModule = frontend.getSourceModule(moduleName);
+        m_frontend.parse(moduleName);
+        const auto sourceModule = m_frontend.getSourceModule(moduleName);
         if (!sourceModule) {
             return {};
         }
@@ -1098,7 +1100,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
         // completion step Otherwise the incremental module may de-allocate
         // leading to a use-after-free when accessing the result ancestry
         fragmentStatusResult =
-            Luau::tryFragmentAutocomplete(frontend, moduleName, position,
+            Luau::tryFragmentAutocomplete(m_frontend, moduleName, position,
                                           fragmentContext, stringCompletionCB);
         if (cancellationToken && cancellationToken->requested()) {
             return {};
@@ -1123,7 +1125,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
             return {};
         }
 
-        result = Luau::autocomplete(frontend, moduleName, position,
+        result = Luau::autocomplete(m_frontend, moduleName, position,
                                     stringCompletionCB);
     }
 
@@ -1158,7 +1160,7 @@ LuauLanguageServer::completion(const lsp::CompletionParams &params,
 
         item.kind = entryKind(item.label, entry);
         item.sortText = QString::fromLatin1(
-            sortText(frontend, item.label, item, entry, tags));
+            sortText(m_frontend, item.label, item, entry, tags));
 
         if (entry.kind == Luau::AutocompleteEntryKind::GeneratedFunction) {
             if (entry.type) {
@@ -1477,7 +1479,7 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         return std::nullopt;
     }
 
-    auto sourceModule = frontend.getSourceModule(moduleName);
+    auto sourceModule = m_frontend.getSourceModule(moduleName);
     if (!sourceModule) {
         return std::nullopt;
     }
@@ -1575,7 +1577,7 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
 
         if (std::optional<QString> docs;
             baseDocumentationSymbol &&
-            (docs = printDocumentation(this->documentation,
+            (docs = printDocumentation(this->m_documentation,
                                        *baseDocumentationSymbol)) &&
             docs) {
             documentation.value = *docs;
@@ -1614,7 +1616,7 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
             lsp::MarkupContent parameterDocumentation{lsp::MarkupKind::Markdown,
                                                       ""};
             if (baseDocumentationSymbol) {
-                if (auto docs = printDocumentation(this->documentation,
+                if (auto docs = printDocumentation(this->m_documentation,
                                                    *baseDocumentationSymbol +
                                                        "/param/" +
                                                        std::to_string(idx))) {
@@ -1657,9 +1659,9 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                     lsp::MarkupKind::Markdown, ""};
                 if (baseDocumentationSymbol) {
                     if (auto docs = printDocumentation(
-                            this->documentation, *baseDocumentationSymbol +
-                                                     "/param/" +
-                                                     std::to_string(idx))) {
+                            this->m_documentation, *baseDocumentationSymbol +
+                                                       "/param/" +
+                                                       std::to_string(idx))) {
                         parameterDocumentation.value = *docs;
                     }
                 }
@@ -1672,7 +1674,8 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
                 auto labelString = QStringLiteral("...: ");
 
                 if (vtp) {
-                    labelString += LuauLsp::displayType(vtp->ty, typeStringOpts);
+                    labelString +=
+                        LuauLsp::displayType(vtp->ty, typeStringOpts);
                 } else {
                     labelString += LuauLsp::displayType(*tp, typeStringOpts);
                 }
@@ -1695,7 +1698,7 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         // it as the active signature
         if (!activeSignature &&
             checkOverloadMatch(subTp, *ftv, Luau::NotNull{&*scope}, &typeArena,
-                               frontend.builtinTypes)) {
+                               m_frontend.builtinTypes)) {
             activeSignature = signatures.size();
         }
 
@@ -1763,7 +1766,7 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
         return std::nullopt;
     }
 
-    auto sourceModule = frontend.getSourceModule(moduleName);
+    auto sourceModule = m_frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return std::nullopt;
@@ -1971,7 +1974,7 @@ LuauLanguageServer::hover(const lsp::HoverParams &params,
     if (std::optional<QString> docs;
         documentationSymbol &&
         (docs =
-             printDocumentation(this->documentation, *documentationSymbol)) &&
+             printDocumentation(this->m_documentation, *documentationSymbol)) &&
         docs && !docs->isEmpty()) {
         typeString += kDocumentationBreaker;
         typeString += *docs;
@@ -2046,13 +2049,13 @@ QVector<SemanticToken> LuauLanguageServer::semanticTokens(
         return {};
     }
 
-    auto sourceModule = frontend.getSourceModule(moduleName);
+    auto sourceModule = m_frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return {};
     }
 
-    return getSemanticTokens(frontend, module, sourceModule);
+    return getSemanticTokens(m_frontend, module, sourceModule);
 }
 
 struct LocationInformation {
@@ -2194,7 +2197,7 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
         return {};
     }
 
-    auto sourceModule = frontend.getSourceModule(moduleName);
+    auto sourceModule = m_frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return result;
@@ -2316,8 +2319,9 @@ lsp::DefinitionResult LuauLanguageServer::gotoDefinition(
             if (auto call =
                     ancestry[ancestry.size() - 2]->as<Luau::AstExprCall>();
                 call && matchRequire(*call)) {
-                if (auto moduleInfo = frontend.moduleResolver.resolveModuleInfo(
-                        moduleName, *call)) {
+                if (auto moduleInfo =
+                        m_frontend.moduleResolver.resolveModuleInfo(moduleName,
+                                                                    *call)) {
                     result.emplace_back(lsp::Location{
                         getUri(moduleInfo->name), lsp::Range{{0, 0}, {0, 0}}});
                 }
@@ -2359,7 +2363,7 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
         return {};
     }
 
-    auto sourceModule = frontend.getSourceModule(moduleName);
+    auto sourceModule = m_frontend.getSourceModule(moduleName);
     auto module = getModule(moduleName);
     if (!sourceModule || !module) {
         return std::nullopt;
@@ -2447,11 +2451,11 @@ std::optional<lsp::Location> LuauLanguageServer::gotoTypeDefinition(
 }
 
 QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
-    if (!isReady) {
+    if (!m_isReady) {
         return {};
     }
 
-    const auto scope = frontend.globals.globalScope;
+    const auto scope = m_frontend.globals.globalScope;
     LuauLsp::TypeDisplayOptions options;
     options.useLineBreaks = false;
     options.hideTableKind = true;
@@ -2501,51 +2505,51 @@ QList<LuauLanguageServer::Symbol> LuauLanguageServer::globalSymbols() {
 }
 
 void LuauLanguageServer::initialize(const InitializationOptions &options) {
-    if (isReady) {
+    if (m_isReady) {
         return;
     }
 
-    builtinModuleFiles.clear();
+    m_builtinModuleFiles.clear();
     for (auto it = options.builtinModuleFiles.cbegin();
          it != options.builtinModuleFiles.cend(); ++it) {
-        builtinModuleFiles.insert(it.key().toLower(), it.value());
+        m_builtinModuleFiles.insert(it.key().toLower(), it.value());
     }
     WingLuauRequire::Options requireOptions;
     requireOptions.userRoot = options.userModuleRoot;
     requireOptions.systemRoot = options.systemModuleRoot;
     QSet<QString> names;
-    for (auto it = builtinModuleFiles.cbegin(); it != builtinModuleFiles.cend();
-         ++it) {
+    for (auto it = m_builtinModuleFiles.cbegin();
+         it != m_builtinModuleFiles.cend(); ++it) {
         names.insert(it.key());
     }
-    requireResolver = std::make_unique<WingLuauRequire::ResolutionSession>(
+    m_requireResolver = std::make_unique<WingLuauRequire::ResolutionSession>(
         requireOptions, names, options.readCfgRoots);
-    symbolCatalogFile = options.symbolCatalogFile;
-    pluginDefinitionFiles = options.pluginDefinitionFiles;
+    m_symbolCatalogFile = options.symbolCatalogFile;
+    m_pluginDefinitionFiles = options.pluginDefinitionFiles;
     initializeSymbolCatalog(options.pluginSymbols);
-    defaultConfig.mode = options.defaultMode;
-    readAllowedCfgRoots = options.readCfgRoots;
-    definitionsFiles.clear();
+    m_defaultConfig.mode = options.defaultMode;
+    m_readAllowedCfgRoots = options.readCfgRoots;
+    m_definitionsFiles.clear();
     for (auto it = options.definitionsFiles.cbegin();
          it != options.definitionsFiles.cend(); ++it) {
         const auto packageName = it.key().toUtf8();
-        definitionsFiles.insert_or_assign(packageName.toStdString(),
-                                          it.value());
+        m_definitionsFiles.insert_or_assign(packageName.toStdString(),
+                                            it.value());
     }
 
-    if (!appliedFirstTimeConfiguration) {
-        appliedFirstTimeConfiguration = true;
+    if (!m_appliedFirstTimeConfiguration) {
+        m_appliedFirstTimeConfiguration = true;
         registerTypes();
     }
 
-    isReady = true;
-    Q_EMIT initialized();
+    m_isReady = true;
+    Q_EMIT sigOnInitialized();
 }
 
 QTextDocument *
 LuauLanguageServer::getTextDocument(const Luau::ModuleName &moduleName) {
-    auto it = managedFiles.find(moduleName);
-    if (it != managedFiles.end()) {
+    auto it = m_managedFiles.find(moduleName);
+    if (it != m_managedFiles.end()) {
         return it->second;
     }
     return nullptr;
@@ -2558,8 +2562,8 @@ LuauLanguageServer::getOrCreateTextDocumentFromModuleName(
         return DocumentHandle(getUri(name), document);
     }
 
-    if (auto definition = definitionsFileState.find(name);
-        definition != definitionsFileState.end()) {
+    if (auto definition = m_definitionsFileState.find(name);
+        definition != m_definitionsFileState.end()) {
         return DocumentHandle(getUri(name),
                               definition->second.textDocument.get());
     }
@@ -2631,14 +2635,15 @@ LuauLanguageServer::resolveStringRequire(const Luau::ModuleInfo *context,
     if (!context || requiredString.empty()) {
         return std::nullopt;
     }
-    const auto result = requireResolver->resolve(
+    const auto result = m_requireResolver->resolve(
         QString::fromStdString(context->name),
         QString::fromUtf8(requiredString.data(),
                           qsizetype(requiredString.size())));
     if (result.kind == WingLuauRequire::FileModuleResolution::Kind::Builtin) {
-        return Luau::ModuleInfo(QFileInfo(builtinModuleFiles.value(result.path))
-                                    .absoluteFilePath()
-                                    .toStdString());
+        return Luau::ModuleInfo(
+            QFileInfo(m_builtinModuleFiles.value(result.path))
+                .absoluteFilePath()
+                .toStdString());
     }
     if (result.kind == WingLuauRequire::FileModuleResolution::Kind::File ||
         result.kind ==
@@ -2659,13 +2664,13 @@ Luau::LoadDefinitionFileResult LuauLanguageServer::registerDefinitions(
 Luau::LoadDefinitionFileResult
 LuauLanguageServer::loadDefinitionFile(const std::string &packageName,
                                        const std::string &source) {
-    auto result =
-        registerDefinitions(frontend, frontend.globals, packageName, source);
+    auto result = registerDefinitions(m_frontend, m_frontend.globals,
+                                      packageName, source);
 
     if (result.success) {
         auto textDocument = std::make_unique<QTextDocument>();
         textDocument->setPlainText(QString::fromStdString(source));
-        definitionsFileState.emplace(
+        m_definitionsFileState.emplace(
             packageName,
             DefinitionsFileState{std::move(textDocument), result.sourceModule,
                                  std::move(result.module)});
@@ -2676,7 +2681,7 @@ LuauLanguageServer::loadDefinitionFile(const std::string &packageName,
 
 const Luau::ModulePtr
 LuauLanguageServer::getModule(const Luau::ModuleName &moduleName) const {
-    return frontend.moduleResolver.getModule(moduleName);
+    return m_frontend.moduleResolver.getModule(moduleName);
 }
 
 bool LuauLanguageServer::isIgnoredFile(
@@ -2686,9 +2691,9 @@ bool LuauLanguageServer::isIgnoredFile(
 
 bool LuauLanguageServer::isDefinitionFile(
     const Luau::ModuleName &moduleName) const {
-    return definitionsFileState.find(moduleName) !=
-               definitionsFileState.end() ||
-           definitionsFiles.find(moduleName) != definitionsFiles.end();
+    return m_definitionsFileState.find(moduleName) !=
+               m_definitionsFileState.end() ||
+           m_definitionsFiles.find(moduleName) != m_definitionsFiles.end();
 }
 
 const Luau::Config &
@@ -2696,19 +2701,19 @@ LuauLanguageServer::getConfig(const Luau::ModuleName &name,
                               const Luau::TypeCheckLimits &limits) const {
     auto path = getParentPath(QString::fromStdString(name));
     if (path.isEmpty()) {
-        return defaultConfig;
+        return m_defaultConfig;
     }
-    for (const auto &entry : builtinModuleFiles) {
+    for (const auto &entry : m_builtinModuleFiles) {
         if (endsWith(name, ".d.luau") &&
             QFileInfo(entry).absolutePath() == path) {
             const auto key = QString::fromStdString(name);
-            auto found = configCache.find(key);
-            if (found != configCache.end()) {
+            auto found = m_configCache.find(key);
+            if (found != m_configCache.end()) {
                 return found->second;
             }
             auto config = readConfigRec(path, limits);
             config.parseOptions.allowDeclarationSyntax = true;
-            return configCache[key] = std::move(config);
+            return m_configCache[key] = std::move(config);
         }
     }
     return readConfigRec(path, limits);
@@ -2716,7 +2721,7 @@ LuauLanguageServer::getConfig(const Luau::ModuleName &name,
 
 void LuauLanguageServer::documentDiagnostics(
     const Luau::ModuleName &moduleName) {
-    if (managedFiles.find(moduleName) == managedFiles.end()) {
+    if (m_managedFiles.find(moduleName) == m_managedFiles.end()) {
         qCritical("[LuauLanguageServer] Cannot diagnose unopened document '%s'",
                   moduleName.c_str());
         return;
@@ -2727,7 +2732,7 @@ void LuauLanguageServer::documentDiagnostics(
     std::vector<Luau::ModuleName> markedDirty{};
 
     // Mark the module dirty for the typechecker
-    frontend.markDirty(moduleName, &markedDirty);
+    m_frontend.markDirty(moduleName, &markedDirty);
 
     // Convert the diagnostics report into a series of diagnostics published
     // for each relevant file
@@ -2756,7 +2761,7 @@ void LuauLanguageServer::documentDiagnostics(
 lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
     const lsp::DocumentDiagnosticParams &params,
     const LSPCancellationToken &cancellationToken, bool allowUnmanagedFiles) {
-    if (!isReady) {
+    if (!m_isReady) {
         return {};
     }
 
@@ -2775,9 +2780,10 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
 
     // Keep the active document's type graph for completion, hover and
     // navigation. Unmanaged dependency diagnostics can discard their graphs.
-    Luau::CheckResult cr = managedFiles.find(moduleName) != managedFiles.end()
-                               ? checkStrict(moduleName, cancellationToken)
-                               : checkSimple(moduleName, cancellationToken);
+    Luau::CheckResult cr =
+        m_managedFiles.find(moduleName) != m_managedFiles.end()
+            ? checkStrict(moduleName, cancellationToken)
+            : checkSimple(moduleName, cancellationToken);
 
     if (cancellationToken && cancellationToken->requested()) {
         return report;
@@ -2786,7 +2792,7 @@ lsp::DocumentDiagnosticReport LuauLanguageServer::documentDiagnostics(
     // If there was an error retrieving the source module
     // Bail early with an empty report - it is likely that the file was
     // closed
-    if (!frontend.getSourceModule(moduleName)) {
+    if (!m_frontend.getSourceModule(moduleName)) {
         return report;
     }
 
@@ -2847,7 +2853,7 @@ LuauLanguageServer::checkSimple(const Luau::ModuleName &moduleName,
                                       /* forAutocomplete: */ false,
                                       /* runLintChecks: */ true};
         options.cancellationToken = cancellationToken;
-        return frontend.check(moduleName, options);
+        return m_frontend.check(moduleName, options);
     } catch (Luau::InternalCompilerError &err) {
         qCritical("[LuauLanguageServer] Internal compiler error in '%s': %s",
                   moduleName.c_str(), err.what());
@@ -2867,7 +2873,7 @@ LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
     if (module && module->internalTypes->types
                       .empty()) { // If we didn't retain type graphs, then the
                                   // internalTypes arena is empty
-        frontend.markDirty(moduleName);
+        m_frontend.markDirty(moduleName);
     }
 
     Luau::FrontendOptions options{/* retainFullTypeGraphs: */ true,
@@ -2875,7 +2881,7 @@ LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
                                   /* runLintChecks: */ true};
     options.cancellationToken = cancellationToken;
     try {
-        return frontend.check(moduleName, options);
+        return m_frontend.check(moduleName, options);
     } catch (const Luau::InternalCompilerError &err) {
         qCritical("[LuauLanguageServer] Internal compiler error in '%s': %s",
                   moduleName.c_str(), err.what());
@@ -2886,7 +2892,7 @@ LuauLanguageServer::checkStrict(const Luau::ModuleName &moduleName,
 void LuauLanguageServer::publishDiagnostics(
     const lsp::DocumentUri &uri,
     const QVector<lsp::Diagnostic> &diagnostic) const {
-    Q_EMIT const_cast<LuauLanguageServer *>(this)->onPublishDiagnostic(
+    Q_EMIT const_cast<LuauLanguageServer *>(this)->sigOnPublishDiagnostic(
         uri, diagnostic);
 }
 
@@ -2895,8 +2901,8 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAutocompleteEntry(
     const std::vector<Luau::AstNode *> &ancestry,
     const Luau::ModulePtr &localModule, const Luau::Position &position) {
     if (entry.documentationSymbol) {
-        if (auto docs =
-                printDocumentation(documentation, *entry.documentationSymbol)) {
+        if (auto docs = printDocumentation(m_documentation,
+                                           *entry.documentationSymbol)) {
             return docs;
         }
     }
@@ -2994,13 +3000,13 @@ QStringList LuauLanguageServer::getComments(const Luau::ModuleName &moduleName,
     Luau::SourceModule *sourceModule;
     DocumentHandle textDocument;
 
-    if (auto it = definitionsFileState.find(moduleName);
-        it != definitionsFileState.end()) {
+    if (auto it = m_definitionsFileState.find(moduleName);
+        it != m_definitionsFileState.end()) {
         sourceModule = &it->second.sourceModule;
         textDocument =
             DocumentHandle(getUri(moduleName), it->second.textDocument.get());
     } else {
-        sourceModule = frontend.getSourceModule(moduleName);
+        sourceModule = m_frontend.getSourceModule(moduleName);
         if (!sourceModule) {
             return {};
         }
@@ -3173,21 +3179,22 @@ std::optional<QString> LuauLanguageServer::getDocumentationForAstNode(
 }
 
 void LuauLanguageServer::registerTypes() {
-    Luau::registerBuiltinGlobals(frontend, frontend.globals);
+    Luau::registerBuiltinGlobals(m_frontend, m_frontend.globals);
 
     std::vector<std::pair<std::string, Luau::TypeId>> builtinTables;
-    for (const auto &[name, binding] : frontend.globals.globalScope->bindings) {
+    for (const auto &[name, binding] :
+         m_frontend.globals.globalScope->bindings) {
         if (Luau::get<Luau::TableType>(Luau::follow(binding.typeId))) {
             builtinTables.emplace_back(name.c_str(), binding.typeId);
         }
     }
-    auto &tagRegisterGlobals = frontend.globals;
+    auto &tagRegisterGlobals = m_frontend.globals;
     Luau::attachTag(Luau::getGlobalBinding(tagRegisterGlobals, "require"),
                     "Require");
 
     std::vector<std::pair<std::string, QString>> definitionsFilesToProcess{};
-    definitionsFilesToProcess.reserve(definitionsFiles.size());
-    for (const auto &pair : definitionsFiles) {
+    definitionsFilesToProcess.reserve(m_definitionsFiles.size());
+    for (const auto &pair : m_definitionsFiles) {
         definitionsFilesToProcess.emplace_back(pair);
     }
     std::sort(definitionsFilesToProcess.begin(),
@@ -3196,7 +3203,7 @@ void LuauLanguageServer::registerTypes() {
                   return left.first < right.first;
               });
     // Plugin declarations depend on host types and keep registration order.
-    for (const auto &file : std::as_const(pluginDefinitionFiles)) {
+    for (const auto &file : std::as_const(m_pluginDefinitionFiles)) {
         definitionsFilesToProcess.emplace_back(file.toStdString(), file);
     }
 
@@ -3261,7 +3268,7 @@ void LuauLanguageServer::registerTypes() {
     }
 
     for (const auto &[name, originalType] : builtinTables) {
-        const auto type = Luau::getGlobalBinding(frontend.globals, name);
+        const auto type = Luau::getGlobalBinding(m_frontend.globals, name);
         auto *target = Luau::getMutable<Luau::TableType>(Luau::follow(type));
         const auto *original =
             Luau::get<Luau::TableType>(Luau::follow(originalType));
@@ -3270,7 +3277,7 @@ void LuauLanguageServer::registerTypes() {
                                  original->props.end());
         }
     }
-    Luau::freeze(frontend.globals.globalTypes);
+    Luau::freeze(m_frontend.globals.globalTypes);
 }
 
 Luau::SourceCode::Type
@@ -3322,17 +3329,18 @@ parseLuauConfig(const QString &configPath, const std::string &contents,
 const Luau::Config &
 LuauLanguageServer::readConfigRec(const QString &path,
                                   const Luau::TypeCheckLimits &limits) const {
-    Luau::Config result = defaultConfig;
-    if (!readAllowedCfgRoots.isEmpty() &&
-        std::none_of(readAllowedCfgRoots.cbegin(), readAllowedCfgRoots.cend(),
+    Luau::Config result = m_defaultConfig;
+    if (!m_readAllowedCfgRoots.isEmpty() &&
+        std::none_of(m_readAllowedCfgRoots.cbegin(),
+                     m_readAllowedCfgRoots.cend(),
                      [&path](const QString &root) {
                          return isPathSubdirectory(root, path);
                      })) {
-        return defaultConfig;
+        return m_defaultConfig;
     }
 
-    auto it = configCache.find(path);
-    if (it != configCache.end()) {
+    auto it = m_configCache.find(path);
+    if (it != m_configCache.end()) {
         return it->second;
     }
 
@@ -3363,7 +3371,7 @@ LuauLanguageServer::readConfigRec(const QString &path,
             });
     }
 
-    return configCache[path] = std::move(result);
+    return m_configCache[path] = std::move(result);
 }
 
 void LuauLanguageServer::loadConfig(

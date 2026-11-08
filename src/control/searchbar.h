@@ -34,12 +34,14 @@ class SearchBar : public QWidget {
     Q_OBJECT
 public:
     enum class State { Idle, Searching, NoMatch, InvalidPattern };
+
     struct Options {
         Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
         bool wholeWords = false;
         bool regularExpression = false;
         bool wrap = true;
     };
+
     // Immutable request snapshot shared by table, tree, and text adapters.
     // Plain text avoids regex matching unless a regex/word option requires it.
     struct Query {
@@ -48,6 +50,7 @@ public:
         QRegularExpression pattern;
         bool matches(const QString &candidate) const;
     };
+
     Query query() const;
     explicit SearchBar(QWidget *parent = nullptr,
                        const QString &objectPrefix = QStringLiteral("search"));
@@ -66,11 +69,11 @@ public:
     bool handleKeyEvent(QEvent *event);
     static QIcon busyIcon(const QPalette &palette);
 signals:
-    void queryChanged();
-    void searchRequested(bool backwards);
-    void showRequested();
-    void closeRequested();
-    void geometryChanged();
+    void sigOnQueryChanged();
+    void sigOnSearchRequested(bool backwards);
+    void sigOnShowRequested();
+    void sigOnCloseRequested();
+    void sigOnGeometryChanged();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -82,18 +85,21 @@ protected:
 private:
     void refreshAppearance();
     void updateStatus();
+
     struct Controls {
         QLineEdit *input = nullptr;
         QLabel *status = nullptr;
         QMenu *menu = nullptr;
         QList<QToolButton *> buttons;
     } m_controls;
+
     struct OptionActions {
         QAction *caseSensitive = nullptr;
         QAction *wholeWord = nullptr;
         QAction *regex = nullptr;
         QAction *wrap = nullptr;
     } m_options;
+
     QTimer m_debounce;
     State m_state = State::Idle;
     QString m_detail;

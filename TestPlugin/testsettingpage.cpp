@@ -24,21 +24,22 @@
 
 TestSettingPage::TestSettingPage(const QString &id, const QString &content,
                                  bool isShowInRibbon, QWidget *parent)
-    : WingHex::SettingPage(parent), _id(id), _isShownInRibbton(isShowInRibbon) {
+    : WingHex::SettingPage(parent), m_id(id),
+      m_isShownInRibbton(isShowInRibbon) {
     auto layout = new QVBoxLayout(this);
-    _lbl = new QLabel(content, this);
-    _lbl->setAlignment(Qt::AlignCenter);
-    layout->addWidget(_lbl);
+    m_lbl = new QLabel(content, this);
+    m_lbl->setAlignment(Qt::AlignCenter);
+    layout->addWidget(m_lbl);
 }
 
 QIcon TestSettingPage::categoryIcon() const {
     return QIcon(QStringLiteral(":/images/TestPlugin/images/device.svg"));
 }
 
-QString TestSettingPage::name() const { return _id; }
+QString TestSettingPage::name() const { return m_id; }
 
-QString TestSettingPage::id() const { return _id; }
+QString TestSettingPage::id() const { return m_id; }
 
-bool TestSettingPage::showInRibbon() const { return _isShownInRibbton; }
+bool TestSettingPage::showInRibbon() const { return m_isShownInRibbton; }
 
 void TestSettingPage::restore() {}

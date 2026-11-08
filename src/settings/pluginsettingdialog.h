@@ -18,12 +18,13 @@
 #ifndef PLUGINSETTINGDIALOG_H
 #define PLUGINSETTINGDIALOG_H
 
-#include "WingPlugin/settingpage.h"
-#include "class/util/changedstringlist.h"
-
 #include <QListWidget>
 #include <QTextBrowser>
 #include <QWidget>
+
+#include "WingPlugin/settingpage.h"
+
+#include "class/util/changedstringlist.h"
 
 namespace Ui {
 class PluginSettingDialog;
@@ -38,12 +39,12 @@ public:
 
 private:
     Ui::PluginSettingDialog *ui;
-    QListWidgetItem *_sysCertItem = nullptr;
+    QListWidgetItem *m_sysCertItem = nullptr;
 
-    QList<QList<int>> host;
-    QList<QList<int>> dep;
-    ChangedStringList _devChanged;
-    ChangedStringList _plgChanged;
+    QList<QList<int>> m_host;
+    QList<QList<int>> m_dep;
+    ChangedStringList m_devChanged;
+    ChangedStringList m_plgChanged;
 
 private:
     void reload();

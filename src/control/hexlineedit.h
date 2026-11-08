@@ -30,9 +30,11 @@ public:
         quint8 value = 0;
         bool isWildcard = false;
     };
+
     struct HexByte {
         HexNibble high;
         HexNibble low;
+
         bool isComplete() const { return high.hasValue && low.hasValue; }
     };
 
@@ -163,9 +165,9 @@ public slots:
     void setUndoLimit(qsizetype limit);
 
 signals:
-    void modeChanged(HexLineEdit::Mode);
-    void undoAvailable(bool available);
-    void redoAvailable(bool available);
+    void sigOnModeChanged(HexLineEdit::Mode);
+    void sigOnUndoAvailable(bool available);
+    void sigOnRedoAvailable(bool available);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;

@@ -23,7 +23,8 @@
 
 CtlTestForm::CtlTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
                          QWidget *parent)
-    : WingHex::WingPluginWidget(plg, parent), ui(new Ui::CtlTestForm), _br(br) {
+    : WingHex::WingPluginWidget(plg, parent), ui(new Ui::CtlTestForm),
+      m_br(br) {
     ui->setupUi(this);
 }
 
@@ -44,11 +45,11 @@ void CtlTestForm::on_btnInt8_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[Int8] (true) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int8] (true) ") %
+                         QString::number(buffer));
         } else {
-            _br->append(QStringLiteral("[Int8] (false) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int8] (false) ") %
+                         QString::number(buffer));
         }
     }
 }
@@ -68,11 +69,11 @@ void CtlTestForm::on_btnInt16_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[Int16] (true) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int16] (true) ") %
+                         QString::number(buffer));
         } else {
-            _br->append(QStringLiteral("[Int16] (false) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int16] (false) ") %
+                         QString::number(buffer));
         }
     }
 }
@@ -92,11 +93,11 @@ void CtlTestForm::on_btnInt32_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[Int32] (true) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int32] (true) ") %
+                         QString::number(buffer));
         } else {
-            _br->append(QStringLiteral("[Int32] (false) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Int32] (false) ") %
+                         QString::number(buffer));
         }
     }
 }
@@ -117,11 +118,11 @@ void CtlTestForm::on_btnInt64_clicked() {
             }
 
             if (ok) {
-                _br->append(QStringLiteral("[Int64] (true) ") %
-                            QString::number(buffer));
+                m_br->append(QStringLiteral("[Int64] (true) ") %
+                             QString::number(buffer));
             } else {
-                _br->append(QStringLiteral("[Int64] (false) ") %
-                            QString::number(buffer));
+                m_br->append(QStringLiteral("[Int64] (false) ") %
+                             QString::number(buffer));
             }
         }
     }
@@ -144,11 +145,11 @@ void CtlTestForm::on_btnFloat_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[Float] (true) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Float] (true) ") %
+                         QString::number(buffer));
         } else {
-            _br->append(QStringLiteral("[Float] (false) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Float] (false) ") %
+                         QString::number(buffer));
         }
     }
 }
@@ -170,11 +171,11 @@ void CtlTestForm::on_btnDouble_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[Double] (true) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Double] (true) ") %
+                         QString::number(buffer));
         } else {
-            _br->append(QStringLiteral("[Double] (false) ") %
-                        QString::number(buffer));
+            m_br->append(QStringLiteral("[Double] (false) ") %
+                         QString::number(buffer));
         }
     }
 }
@@ -215,9 +216,9 @@ void CtlTestForm::on_btnByteArray_clicked() {
         }
 
         if (ok) {
-            _br->append(QStringLiteral("[ByteArray] (true) ") % ret);
+            m_br->append(QStringLiteral("[ByteArray] (true) ") % ret);
         } else {
-            _br->append(QStringLiteral("[ByteArray] (false) ") % ret);
+            m_br->append(QStringLiteral("[ByteArray] (false) ") % ret);
         }
     }
 }

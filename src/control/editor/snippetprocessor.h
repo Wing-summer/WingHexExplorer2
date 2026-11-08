@@ -18,10 +18,10 @@
 #ifndef SNIPPETPROCESSOR_H
 #define SNIPPETPROCESSOR_H
 
+#include <functional>
+
 #include <QObject>
 #include <QString>
-
-#include <functional>
 
 class SnippetResult {
 public:
@@ -37,7 +37,7 @@ public:
 class SnippetProcessor {
     Q_GADGET
 public:
-    enum class TM_CODE {
+    enum class TmCode {
         TM_SELECTED_TEXT,
         TM_CURRENT_LINE,
         TM_CURRENT_WORD,
@@ -70,7 +70,7 @@ public:
         BLOCK_COMMENT_END,
         LINE_COMMENT
     };
-    Q_ENUM(TM_CODE)
+    Q_ENUM(TmCode)
 
 public:
     using Resolver = std::function<QString(const QString &)>;
@@ -82,7 +82,7 @@ public:
     SnippetResult process(const QString &snippet);
 
 private:
-    Resolver _resolver;
+    Resolver m_resolver;
 };
 
 #endif // SNIPPETPROCESSOR_H

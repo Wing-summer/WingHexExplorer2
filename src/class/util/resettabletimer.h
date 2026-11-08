@@ -19,8 +19,6 @@
 #define RESETTABLETIMER_H
 
 #include <QObject>
-
-#include <QObject>
 #include <QTimer>
 
 class ResettableTimer : public QObject {
@@ -52,7 +50,7 @@ public:
 
 signals:
     // Emitted when timeout happens.
-    void timeoutTriggered();
+    void sigOnTimeout();
 
 private slots:
     void onTimeout();

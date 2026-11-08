@@ -18,9 +18,9 @@
 #ifndef LUAUTYPES_H
 #define LUAUTYPES_H
 
-#include "lua.h"
-
 #include <QString>
+
+#include "lua.h"
 
 namespace LuauTypes {
 

@@ -77,5 +77,5 @@ void ResettableTimer::setInterval(int intervalMs) {
 
 void ResettableTimer::onTimeout() {
     // Timer single-shot -> it's stopped now.
-    Q_EMIT timeoutTriggered();
+    Q_EMIT sigOnTimeout();
 }

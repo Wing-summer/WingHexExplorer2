@@ -18,9 +18,10 @@
 #ifndef SEARCHABLETREEWIDGET_H
 #define SEARCHABLETREEWIDGET_H
 
-#include "searchbar.h"
 #include <QPersistentModelIndex>
 #include <QTreeWidget>
+
+#include "searchbar.h"
 
 // Navigates names in tree order without filtering or eagerly expanding nodes.
 // Lazy trees supply children through prepareSearchItem().
@@ -38,7 +39,7 @@ public slots:
     void findPrevious();
 
 signals:
-    void searchFinished(const QModelIndex &match);
+    void sigOnSearchFinished(const QModelIndex &match);
 
 protected:
     virtual void prepareSearchItem(QTreeWidgetItem *item);
@@ -56,6 +57,7 @@ private:
         bool wrapped = false;
         bool advanceFirst = false;
     };
+
     void startSearch(bool backwards);
     void scanSearch();
     void cancelSearch();

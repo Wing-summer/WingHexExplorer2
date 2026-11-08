@@ -18,9 +18,9 @@
 #ifndef COLORPICKERDIALOG_H
 #define COLORPICKERDIALOG_H
 
-#include "framelessdialogbase.h"
-
 #include <QAbstractButton>
+
+#include "framelessdialogbase.h"
 
 namespace Ui {
 class ColorPickerDialog;
@@ -28,7 +28,8 @@ class ColorPickerDialog;
 
 class ColorPickerDialog : public QWidget {
     Q_OBJECT
-    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
+    Q_PROPERTY(
+        QColor color READ color WRITE setColor NOTIFY sigOnColorChanged FINAL)
 
 public:
     explicit ColorPickerDialog(QWidget *parent = nullptr);
@@ -41,7 +42,7 @@ public slots:
     int exec();
 
 signals:
-    void colorChanged();
+    void sigOnColorChanged();
 
 private slots:
     void on_hueSlider_valueChanged(int value);
@@ -62,10 +63,10 @@ private:
 private:
     Ui::ColorPickerDialog *ui;
 
-    FramelessDialogBase *_dialog = nullptr;
+    FramelessDialogBase *m_dialog = nullptr;
 
-    QColor _color;
-    QColor _oldColor;
+    QColor m_color;
+    QColor m_oldColor;
 };
 
 #endif // COLORPICKERDIALOG_H

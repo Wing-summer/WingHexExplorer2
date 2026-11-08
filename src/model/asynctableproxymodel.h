@@ -18,13 +18,14 @@
 #ifndef ASYNCTABLEPROXYMODEL_H
 #define ASYNCTABLEPROXYMODEL_H
 
+#include <atomic>
+#include <memory>
+
 #include <QAbstractProxyModel>
 #include <QElapsedTimer>
 #include <QFutureWatcher>
 #include <QHash>
 #include <QTimer>
-#include <atomic>
-#include <memory>
 
 // Flat table proxy. Source access and mapping publication stay on the GUI
 // thread.
@@ -54,9 +55,10 @@ public:
     bool isSorting() const;
 
 signals:
-    void sortingChanged(bool busy);
-    void sortCleared();
-    void sortingMeasured(qint64 snapshotMs, qint64 workerMs, qint64 publishMs);
+    void sigOnSortingChanged(bool busy);
+    void sigOnSortCleared();
+    void sigOnSortingMeasured(qint64 snapshotMs, qint64 workerMs,
+                              qint64 publishMs);
 
 private:
     void invalidate();
@@ -72,6 +74,7 @@ private:
         quint64 generation = 0;
         qint64 workerMs = 0;
     };
+
     QList<int> m_rows;
     QList<int> m_inverse;
     QList<QVariant> m_keys;

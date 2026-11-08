@@ -40,7 +40,7 @@ public:
 
         Parser parser(expression);
         Value value = 0;
-        GotoWidget::SEEKPOS seekPos = GotoWidget::SEEKPOS::Start;
+        GotoWidget::SeekPos seekPos = GotoWidget::SeekPos::Start;
         if (!parser.parse(value, seekPos)) {
             return;
         }
@@ -50,22 +50,22 @@ public:
 
 public:
     Value lastAddr = 0;
-    GotoWidget::SEEKPOS lastPos = GotoWidget::SEEKPOS::Invaild;
+    GotoWidget::SeekPos lastPos = GotoWidget::SeekPos::Invaild;
 
 private:
     static constexpr int MaxShift = 64;
 
     void reset() {
         lastAddr = 0;
-        lastPos = GotoWidget::SEEKPOS::Invaild;
+        lastPos = GotoWidget::SeekPos::Invaild;
     }
 
 private:
     class Parser {
     public:
-        explicit Parser(QStringView text) : text_(text) {}
+        explicit Parser(QStringView text) : m_text(text) {}
 
-        bool parse(Value &result, GotoWidget::SEEKPOS &seekPos) {
+        bool parse(Value &result, GotoWidget::SeekPos &seekPos) {
             skipSpaces();
             if (atEnd()) {
                 return false;
@@ -145,7 +145,7 @@ private:
             /*
              *   assignmentExpression EOF
              */
-            seekPos = GotoWidget::SEEKPOS::Start;
+            seekPos = GotoWidget::SeekPos::Start;
             if (!parseAssignmentExpression(result)) {
                 return false;
             }
@@ -161,42 +161,42 @@ private:
             End,
         };
 
-        QStringView text_;
-        qsizetype pos_ = 0;
+        QStringView m_text;
+        qsizetype m_pos = 0;
 
     private:
-        bool atEnd() const noexcept { return pos_ >= text_.size(); }
+        bool atEnd() const noexcept { return m_pos >= m_text.size(); }
 
         QChar current() const noexcept {
-            return atEnd() ? QChar() : text_[pos_];
+            return atEnd() ? QChar() : m_text[m_pos];
         }
 
         QChar peek(qsizetype offset) const noexcept {
-            const qsizetype index = pos_ + offset;
-            return index < text_.size() ? text_[index] : QChar();
+            const qsizetype index = m_pos + offset;
+            return index < m_text.size() ? m_text[index] : QChar();
         }
 
         void skipSpaces() noexcept {
             while (!atEnd() && current().isSpace()) {
-                ++pos_;
+                ++m_pos;
             }
         }
 
         bool consume(QChar ch) noexcept {
             if (!atEnd() && current() == ch) {
-                ++pos_;
+                ++m_pos;
                 return true;
             }
             return false;
         }
 
         bool consumeOperator(QStringView op) noexcept {
-            if (pos_ + op.size() > text_.size()) {
+            if (m_pos + op.size() > m_text.size()) {
                 return false;
             }
 
-            if (text_.sliced(pos_, op.size()) == op) {
-                pos_ += op.size();
+            if (m_text.sliced(m_pos, op.size()) == op) {
+                m_pos += op.size();
                 return true;
             }
             return false;
@@ -208,31 +208,31 @@ private:
             }
             switch (current().unicode()) {
             case '+':
-                ++pos_;
+                ++m_pos;
                 return Prefix::Add;
             case '-':
-                ++pos_;
+                ++m_pos;
                 return Prefix::Sub;
             case '<':
-                ++pos_;
+                ++m_pos;
                 return Prefix::End;
             default:
                 return Prefix::None;
             }
         }
 
-        static GotoWidget::SEEKPOS toSeekPos(Prefix prefix) {
+        static GotoWidget::SeekPos toSeekPos(Prefix prefix) {
             switch (prefix) {
             case Prefix::Add:
-                return GotoWidget::SEEKPOS::RelativeAdd;
+                return GotoWidget::SeekPos::RelativeAdd;
             case Prefix::Sub:
-                return GotoWidget::SEEKPOS::RelativeMin;
+                return GotoWidget::SeekPos::RelativeMin;
             case Prefix::End:
-                return GotoWidget::SEEKPOS::End;
+                return GotoWidget::SeekPos::End;
             case Prefix::None:
-                return GotoWidget::SEEKPOS::Start;
+                return GotoWidget::SeekPos::Start;
             }
-            return GotoWidget::SEEKPOS::Invaild;
+            return GotoWidget::SeekPos::Invaild;
         }
 
     private:
@@ -501,19 +501,19 @@ private:
             if (!isNumberStart()) {
                 return false;
             }
-            const qsizetype begin = pos_;
+            const qsizetype begin = m_pos;
             while (!atEnd()) {
                 const QChar ch = current();
                 if (ch.isSpace() || ch == '(' || ch == ')' || ch == '[' ||
                     ch == ']' || ch == ':' || isOperatorCharacter(ch)) {
                     break;
                 }
-                ++pos_;
+                ++m_pos;
             }
-            if (begin == pos_) {
+            if (begin == m_pos) {
                 return false;
             }
-            const auto token = text_.sliced(begin, pos_ - begin);
+            const auto token = m_text.sliced(begin, m_pos - begin);
             bool ok = false;
             const Value value = token.toULongLong(&ok, 0);
             if (!ok) {
@@ -589,19 +589,19 @@ void GotoWidget::activeInput(qsizetype oldrow, qsizetype oldcolumn,
 
 void GotoWidget::handleLineChanged() {
     QString content = ui->lineEdit->text();
-    auto ps = SEEKPOS::Invaild;
+    auto ps = SeekPos::Invaild;
     auto isline = ui->rbLine->isChecked();
     auto p = convert2Pos(content, ps, isline);
-    if (ps != SEEKPOS::Invaild) {
+    if (ps != SeekPos::Invaild) {
         ui->lineEdit->setStyleSheet({});
     } else {
         ui->lineEdit->setStyleSheet(QStringLiteral("QLineEdit{color: red}"));
     }
-    Q_EMIT jumpToLine(p, isline);
+    Q_EMIT sigOnJumpToLine(p, isline);
 }
 
 void GotoWidget::jumpCancel() {
-    Q_EMIT jumpToLine(m_oldFileOffsetBeforeJump, false);
+    Q_EMIT sigOnJumpToLine(m_oldFileOffsetBeforeJump, false);
     hide();
 }
 
@@ -612,14 +612,14 @@ void GotoWidget::jumpConfirm() {
 
 void GotoWidget::on_btnClose_clicked() { this->hide(); }
 
-qsizetype GotoWidget::convert2Pos(const QString &value, SEEKPOS &ps,
+qsizetype GotoWidget::convert2Pos(const QString &value, SeekPos &ps,
                                   bool isline) {
     Calculator cal;
     cal.eval(value);
 
     const auto origin = isline ? m_rowBeforeJump : m_oldFileOffsetBeforeJump;
-    if (cal.lastPos == SEEKPOS::Invaild) {
-        ps = SEEKPOS::Invaild;
+    if (cal.lastPos == SeekPos::Invaild) {
+        ps = SeekPos::Invaild;
         return origin;
     }
 
@@ -631,44 +631,44 @@ qsizetype GotoWidget::convert2Pos(const QString &value, SEEKPOS &ps,
 
     quint64 result = 0;
     switch (cal.lastPos) {
-    case SEEKPOS::Start: {
+    case SeekPos::Start: {
         if (offset > maximum) {
-            ps = SEEKPOS::Invaild;
+            ps = SeekPos::Invaild;
             return origin;
         }
         result = offset;
         break;
     }
 
-    case SEEKPOS::End: {
+    case SeekPos::End: {
         if (offset > maximum) {
-            ps = SEEKPOS::Invaild;
+            ps = SeekPos::Invaild;
             return origin;
         }
         result = maximum - offset;
         break;
     }
 
-    case SEEKPOS::RelativeAdd: {
+    case SeekPos::RelativeAdd: {
         if (base > maximum || offset > maximum - base) {
-            ps = SEEKPOS::Invaild;
+            ps = SeekPos::Invaild;
             return origin;
         }
         result = base + offset;
         break;
     }
 
-    case SEEKPOS::RelativeMin: {
+    case SeekPos::RelativeMin: {
         if (offset > base) {
-            ps = SEEKPOS::Invaild;
+            ps = SeekPos::Invaild;
             return origin;
         }
         result = base - offset;
         break;
     }
 
-    case SEEKPOS::Invaild:
-        ps = SEEKPOS::Invaild;
+    case SeekPos::Invaild:
+        ps = SeekPos::Invaild;
         return origin;
     }
     ps = cal.lastPos;

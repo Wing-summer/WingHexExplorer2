@@ -18,13 +18,14 @@
 #ifndef SEMANTICTOKENSVISITOR_H
 #define SEMANTICTOKENSVISITOR_H
 
-#include "Luau/Ast.h"
-#include "Luau/Module.h"
-#include "lsp.h"
-
 #include <unordered_set>
 
 #include <QVector>
+
+#include "Luau/Ast.h"
+#include "Luau/Module.h"
+
+#include "lsp.h"
 
 struct SemanticToken {
     Luau::Position start;

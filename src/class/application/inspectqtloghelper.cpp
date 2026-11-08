@@ -1,13 +1,12 @@
 #include "inspectqtloghelper.h"
 
-#include "class/settings/thememanager.h"
-
-#include "class/settings/settingmanager.h"
-#include "utilities.h"
+#include <iostream>
 
 #include <QMenu>
 
-#include <iostream>
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 #define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"
 #define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"
@@ -19,34 +18,35 @@ InspectQtLogHelper &InspectQtLogHelper::instance() {
 }
 
 void InspectQtLogHelper::init() {
-    _logger = new FramelessDialogBase;
-    _ctx = new QTextBrowser(_logger);
-    _ctx->setContextMenuPolicy(Qt::CustomContextMenu);
-    _ctx->setUndoRedoEnabled(false);
-    _ctx->setOpenExternalLinks(true);
+    m_logger = new FramelessDialogBase;
+    m_ctx = new QTextBrowser(m_logger);
+    m_ctx->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_ctx->setUndoRedoEnabled(false);
+    m_ctx->setOpenExternalLinks(true);
 
-    auto menu = _ctx->createStandardContextMenu();
+    auto menu = m_ctx->createStandardContextMenu();
     const auto ma = menu->actions();
 
     menu->addSeparator();
     auto a = new QAction(tr("Clear"), menu);
-    QObject::connect(a, &QAction::triggered, qApp, [this]() { _ctx->clear(); });
+    QObject::connect(a, &QAction::triggered, qApp,
+                     [this]() { m_ctx->clear(); });
     menu->addAction(a);
 
     for (const auto &a : ma) {
         a->setEnabled(true);
     }
 
-    QObject::connect(_ctx, &QTextBrowser::customContextMenuRequested, qApp,
+    QObject::connect(m_ctx, &QTextBrowser::customContextMenuRequested, qApp,
                      [menu, this](const QPoint &pos) {
-                         menu->popup(_ctx->mapToGlobal(pos));
+                         menu->popup(m_ctx->mapToGlobal(pos));
                      });
 
-    _logger->buildUpContent(_ctx);
-    _logger->setWindowTitle(tr("Inspect"));
-    _logger->setWindowIcon(ThemeManager::instance().standardIcon(
+    m_logger->buildUpContent(m_ctx);
+    m_logger->setWindowTitle(tr("Inspect"));
+    m_logger->setWindowIcon(ThemeManager::instance().standardIcon(
         ThemeManager::StandardIcon::InspectQtLog));
-    _logger->setMinimumSize(400, 350);
+    m_logger->setMinimumSize(400, 350);
 
     qSetMessagePattern(QStringLiteral("%{if-debug}[Debug]%{endif}"
                                       "%{if-warning}[Warn]%{endif}"
@@ -59,13 +59,13 @@ void InspectQtLogHelper::init() {
 
 void InspectQtLogHelper::destory() {
     qInstallMessageHandler(nullptr);
-    delete _logger;
+    delete m_logger;
 }
 
-void InspectQtLogHelper::showLogWidget() { _logger->show(); }
+void InspectQtLogHelper::showLogWidget() { m_logger->show(); }
 
-InspectQtLogHelper::InspectQtLogHelper() : _stream(new QTextStream(stdout)) {
-    _stream->device()->setTextModeEnabled(true);
+InspectQtLogHelper::InspectQtLogHelper() : m_stream(new QTextStream(stdout)) {
+    m_stream->device()->setTextModeEnabled(true);
 
     QString newFileName = QStringLiteral("%1_%2_%3.log")
                               .arg(APP_NAME, WINGHEX_VERSION,
@@ -87,23 +87,23 @@ InspectQtLogHelper::InspectQtLogHelper() : _stream(new QTextStream(stdout)) {
     }
 
     auto path = logDir.absoluteFilePath(newFileName);
-    _file = QSharedPointer<QFile>(new QFile(path));
-    if (_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
-        _stream->setDevice(_file.get());
+    m_file = QSharedPointer<QFile>(new QFile(path));
+    if (m_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        m_stream->setDevice(m_file.get());
     }
 }
 
 InspectQtLogHelper::~InspectQtLogHelper() {
-    _stream->flush();
-    _file->close();
+    m_stream->flush();
+    m_file->close();
 }
 
 void InspectQtLogHelper::messageHandler(QtMsgType type,
                                         const QMessageLogContext &context,
                                         const QString &message) {
     auto &ins = InspectQtLogHelper::instance();
-    auto stream = ins._stream;
-    auto logger = ins._ctx;
+    auto stream = ins.m_stream;
+    auto logger = ins.m_ctx;
     Q_ASSERT(logger);
 
     auto msg = qFormatLogMessage(type, context, message);

@@ -27,8 +27,8 @@ ScriptInfoBroswer::ScriptInfoBroswer(QWidget *parent) : QTextBrowser(parent) {
 
 void ScriptInfoBroswer::updateData(const ScriptManager::ScriptDirMeta &meta) {
     this->clear();
-    _icon = meta.icon;
-    _isSys = meta.isSys;
+    m_icon = meta.icon;
+    m_isSys = meta.isSys;
 
     this->insertHtml(
         QStringLiteral(R"(<p align="center"><img src="scicon://%1"/></p><p />)")
@@ -59,14 +59,14 @@ QVariant ScriptInfoBroswer::loadResource(int type, const QUrl &name) {
         }
 
         constexpr auto wh = 48;
-        if (_icon.isNull()) {
+        if (m_icon.isNull()) {
             return ThemeManager::instance()
                 .standardIcon(
-                    _isSys ? ThemeManager::StandardIcon::ScriptFolder
-                           : ThemeManager::StandardIcon::UserScriptFolder)
+                    m_isSys ? ThemeManager::StandardIcon::ScriptFolder
+                            : ThemeManager::StandardIcon::UserScriptFolder)
                 .pixmap(wh, wh);
         } else {
-            return _icon.pixmap(wh, wh);
+            return m_icon.pixmap(wh, wh);
         }
     }
 

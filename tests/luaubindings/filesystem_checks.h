@@ -3,14 +3,18 @@
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 #ifndef LUAU_FILESYSTEM_CHECKS_H
 #define LUAU_FILESYSTEM_CHECKS_H
-#include "qtluau/execution.hpp"
-#include "qtluau/value_conversion.hpp"
-#include "src/luau/runtime/scriptfilesystem.h"
-#include <QDataStream>
-#include <QTemporaryDir>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
+
+#include <QDataStream>
+#include <QTemporaryDir>
+
+#include "qtluau/execution.hpp"
+#include "qtluau/value_conversion.hpp"
+
+#include "src/luau/runtime/scriptfilesystem.h"
+
 namespace FilesystemChecks {
 inline void run(lua_State *state, const QString &source) {
     QString error;
@@ -19,6 +23,7 @@ inline void run(lua_State *state, const QString &source) {
                                  "\nSource: " + source.toStdString());
     }
 }
+
 inline void check(lua_State *state,
                   const std::function<void(bool, bool)> &setPolicy) {
     const auto readMode =

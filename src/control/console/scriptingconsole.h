@@ -18,12 +18,12 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
+#include <QMutex>
+#include <QTextDocument>
+
 #include "control/editor/lspeditorinterface.h"
 #include "luau/runtime/scriptmachine.h"
 #include "scriptingconsolebase.h"
-
-#include <QMutex>
-#include <QTextDocument>
 
 class ScriptingConsole : public ScriptingConsoleBase, public LspEditorInterace {
     Q_OBJECT
@@ -89,9 +89,9 @@ private slots:
     void applyScriptSettings();
 
 signals:
-    void consoleScriptRunFinished();
-    void inputSubmitted(const QString &text);
-    void inputClosed();
+    void sigOnConsoleScriptRunFinished();
+    void sigOnInputSubmitted(const QString &text);
+    void sigOnInputClosed();
 
 private:
     void runConsoleCommand(const QString &code);
@@ -113,14 +113,14 @@ protected slots:
     virtual void paste() override;
 
 private:
-    QStringList _codes;
-    QTextDocument _lspDocument;
+    QStringList m_codes;
+    QTextDocument m_lspDocument;
 
-    bool _isTerminal = true;
-    bool _isWaitingRead = false;
-    ScriptMachine::MessageType _lastOutputType =
+    bool m_isTerminal = true;
+    bool m_isWaitingRead = false;
+    ScriptMachine::MessageType m_lastOutputType =
         ScriptMachine::MessageType::Unknown;
-    std::function<QString(void)> _getInputFn;
+    std::function<QString(void)> m_getInputFn;
 };
 
 #endif

@@ -20,33 +20,33 @@
 CheckSumModel::CheckSumModel(QObject *parent) : QAbstractTableModel(parent) {
     const auto as = CryptographicHash::supportedHashAlgorithms();
     for (const auto &cs : as) {
-        _checkSumData.insert(cs, QString());
+        m_checkSumData.insert(cs, QString());
     }
 }
 
 QString
 CheckSumModel::checkSumData(CryptographicHash::Algorithm algorithm) const {
-    return _checkSumData.value(algorithm);
+    return m_checkSumData.value(algorithm);
 }
 
 void CheckSumModel::updateCheckSumData(
     const QMap<CryptographicHash::Algorithm, QString> &data) {
     beginResetModel();
-    _checkSumData = data;
+    m_checkSumData = data;
     endResetModel();
 }
 
 void CheckSumModel::clearData() {
-    for (auto p = _checkSumData.begin(); p != _checkSumData.end(); ++p) {
+    for (auto p = m_checkSumData.begin(); p != m_checkSumData.end(); ++p) {
         p->clear();
     }
     Q_EMIT dataChanged(this->index(0, 0),
-                       this->index(_checkSumData.size() - 1, 0));
+                       this->index(m_checkSumData.size() - 1, 0));
 }
 
 int CheckSumModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return _checkSumData.size();
+    return m_checkSumData.size();
 }
 
 int CheckSumModel::columnCount(const QModelIndex &parent) const {
@@ -58,7 +58,8 @@ QVariant CheckSumModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
-        auto r = _checkSumData.value(CryptographicHash::Algorithm(index.row()));
+        auto r =
+            m_checkSumData.value(CryptographicHash::Algorithm(index.row()));
         if (index.column() == 0) {
             return r.isEmpty() ? QStringLiteral("-") : r;
         }

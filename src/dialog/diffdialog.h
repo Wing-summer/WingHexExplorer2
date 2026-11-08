@@ -18,15 +18,8 @@
 #ifndef DIFFDIALOG_H
 #define DIFFDIALOG_H
 
-#include "QWingRibbon/ribbon.h"
-#include "QWingRibbon/ribbonbuttongroup.h"
-#include "class/diff/binarydiff.h"
-#include "class/diff/diffsource.h"
-#include "class/settings/thememanager.h"
-#include "control/editorview.h"
-#include "control/qtableviewext.h"
-#include "framelessmainwindow.h"
-#include "model/diffresultmodel.h"
+#include <type_traits>
+#include <utility>
 
 #include <QElapsedTimer>
 #include <QFutureWatcher>
@@ -36,8 +29,17 @@
 #include <QShortcut>
 #include <QTimer>
 #include <QToolButton>
-#include <type_traits>
-#include <utility>
+
+#include "QWingRibbon/ribbon.h"
+#include "QWingRibbon/ribbonbuttongroup.h"
+
+#include "class/diff/binarydiff.h"
+#include "class/diff/diffsource.h"
+#include "class/settings/thememanager.h"
+#include "control/editorview.h"
+#include "control/qtableviewext.h"
+#include "framelessmainwindow.h"
+#include "model/diffresultmodel.h"
 
 class DiffDialog final : public FramelessMainWindow {
     Q_OBJECT
@@ -48,10 +50,11 @@ public:
     virtual ~DiffDialog() override;
 
 signals:
-    void settingsRequested();
+    void sigOnSettingsRequested();
 
 private:
     enum Side { Left, Right, SideCount };
+
     enum PaneLayout { SideBySide, Stacked, LayoutCount };
     enum class Phase {
         Idle,
@@ -63,6 +66,7 @@ private:
         Stale,
         Failed
     };
+
     static constexpr Side oppositeSide(Side side) {
         return side == Side::Left ? Side::Right : Side::Left;
     }

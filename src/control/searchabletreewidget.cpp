@@ -29,39 +29,45 @@ SearchableTreeWidget::SearchableTreeWidget(QWidget *parent)
     m_scanTimer.setSingleShot(true);
     connect(&m_scanTimer, &QTimer::timeout, this,
             &SearchableTreeWidget::scanSearch);
-    connect(m_searchBar, &SearchBar::queryChanged, this,
+    connect(m_searchBar, &SearchBar::sigOnQueryChanged, this,
             &SearchableTreeWidget::cancelSearch);
-    connect(m_searchBar, &SearchBar::searchRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnSearchRequested, this,
             &SearchableTreeWidget::startSearch);
-    connect(m_searchBar, &SearchBar::showRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnShowRequested, this,
             &SearchableTreeWidget::showSearch);
-    connect(m_searchBar, &SearchBar::closeRequested, this,
+    connect(m_searchBar, &SearchBar::sigOnCloseRequested, this,
             &SearchableTreeWidget::closeSearch);
-    connect(m_searchBar, &SearchBar::geometryChanged, this,
+    connect(m_searchBar, &SearchBar::sigOnGeometryChanged, this,
             &SearchableTreeWidget::updateGeometries);
-    const auto modelChanged = [this] {
+    const auto sigOnModelChanged = [this] {
         if (!m_traversing) {
             cancelSearch();
         }
     };
     connect(model(), &QAbstractItemModel::modelAboutToBeReset, this,
-            modelChanged);
+            sigOnModelChanged);
     connect(model(), &QAbstractItemModel::rowsAboutToBeRemoved, this,
-            modelChanged);
-    connect(model(), &QAbstractItemModel::rowsInserted, this, modelChanged);
-    connect(model(), &QAbstractItemModel::layoutChanged, this, modelChanged);
-    connect(model(), &QAbstractItemModel::dataChanged, this, modelChanged);
+            sigOnModelChanged);
+    connect(model(), &QAbstractItemModel::rowsInserted, this,
+            sigOnModelChanged);
+    connect(model(), &QAbstractItemModel::layoutChanged, this,
+            sigOnModelChanged);
+    connect(model(), &QAbstractItemModel::dataChanged, this, sigOnModelChanged);
 }
+
 SearchableTreeWidget::~SearchableTreeWidget() {
     m_scanTimer.stop();
     disconnect(model(), nullptr, this, nullptr);
     disconnect(m_searchBar, nullptr, this, nullptr);
 }
+
 SearchBar *SearchableTreeWidget::searchBar() const { return m_searchBar; }
+
 void SearchableTreeWidget::showSearch() {
     m_searchBar->activate();
     updateGeometries();
 }
+
 void SearchableTreeWidget::closeSearch() {
     cancelSearch();
     const bool hadFocus =
@@ -72,14 +78,18 @@ void SearchableTreeWidget::closeSearch() {
         setFocus();
     }
 }
+
 void SearchableTreeWidget::findNext() { startSearch(false); }
+
 void SearchableTreeWidget::findPrevious() { startSearch(true); }
+
 void SearchableTreeWidget::cancelSearch() {
     m_scanTimer.stop();
     m_session = {};
     m_searchBar->cancelPendingSearch();
     m_searchBar->setState(SearchBar::State::Idle);
 }
+
 void SearchableTreeWidget::startSearch(bool backwards) {
     cancelSearch();
     if (!m_searchBar->isVisible() || m_searchBar->searchText().isEmpty()) {
@@ -99,14 +109,18 @@ void SearchableTreeWidget::startSearch(bool backwards) {
     m_searchBar->setState(SearchBar::State::Searching);
     m_scanTimer.start(0);
 }
+
 void SearchableTreeWidget::prepareSearchItem(QTreeWidgetItem *) {}
+
 bool SearchableTreeWidget::isSearchableItem(const QTreeWidgetItem *) const {
     return true;
 }
+
 void SearchableTreeWidget::prepare(QTreeWidgetItem *item) {
     QScopedValueRollback<bool> guard(m_traversing, true);
     prepareSearchItem(item);
 }
+
 QTreeWidgetItem *SearchableTreeWidget::lastDescendant(QTreeWidgetItem *item) {
     while (item && !item->isHidden()) {
         prepare(item);
@@ -117,6 +131,7 @@ QTreeWidgetItem *SearchableTreeWidget::lastDescendant(QTreeWidgetItem *item) {
     }
     return item;
 }
+
 QTreeWidgetItem *SearchableTreeWidget::edge() {
     if (topLevelItemCount() == 0) {
         return nullptr;
@@ -125,6 +140,7 @@ QTreeWidgetItem *SearchableTreeWidget::edge() {
                ? lastDescendant(topLevelItem(topLevelItemCount() - 1))
                : topLevelItem(0);
 }
+
 QTreeWidgetItem *SearchableTreeWidget::adjacent(QTreeWidgetItem *item) {
     if (!item) {
         return nullptr;
@@ -149,6 +165,7 @@ QTreeWidgetItem *SearchableTreeWidget::adjacent(QTreeWidgetItem *item) {
     }
     return nullptr;
 }
+
 void SearchableTreeWidget::scanSearch() {
     // Lazy inserts can trigger pending tree sorting as indexes are read.
     // Keep those synchronous notifications inside the same search batch.
@@ -197,6 +214,7 @@ void SearchableTreeWidget::scanSearch() {
         m_session.advanceFirst = false;
     }
 }
+
 void SearchableTreeWidget::finishSearch(QTreeWidgetItem *item) {
     if (item) {
         for (auto parent = item->parent(); parent; parent = parent->parent()) {
@@ -209,8 +227,9 @@ void SearchableTreeWidget::finishSearch(QTreeWidgetItem *item) {
     }
     m_searchBar->setState(item ? SearchBar::State::Idle
                                : SearchBar::State::NoMatch);
-    Q_EMIT searchFinished(indexFromItem(item, 0));
+    Q_EMIT sigOnSearchFinished(indexFromItem(item, 0));
 }
+
 void SearchableTreeWidget::updateGeometries() {
     if (m_updatingGeometries) {
         return;
@@ -229,6 +248,7 @@ void SearchableTreeWidget::updateGeometries() {
         m_searchBar->raise();
     }
 }
+
 bool SearchableTreeWidget::eventFilter(QObject *watched, QEvent *event) {
     if (m_searchBar && m_searchBar->handleKeyEvent(event)) {
         return true;

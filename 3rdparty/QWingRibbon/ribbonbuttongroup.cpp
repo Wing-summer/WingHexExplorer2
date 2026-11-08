@@ -19,11 +19,11 @@ RibbonButtonGroup::RibbonButtonGroup(QWidget *parent)
 }
 
 RibbonButtonGroup::~RibbonButtonGroup() {
-    for (const auto &btn : std::as_const(_buttons)) {
+    for (const auto &btn : std::as_const(m_buttons)) {
         ui->horizontalLayout->removeWidget(btn);
         delete btn;
     }
-    _buttons.clear();
+    m_buttons.clear();
     delete ui;
 }
 
@@ -39,7 +39,7 @@ int RibbonButtonGroup::buttonCount() const {
 }
 
 void RibbonButtonGroup::addButton(QToolButton *button) {
-    if (_buttons.contains(button)) {
+    if (m_buttons.contains(button)) {
         return;
     }
 
@@ -60,20 +60,20 @@ void RibbonButtonGroup::addButton(QToolButton *button) {
     button->setFixedWidth(qMax(32 + 15, txtlen));
 #endif
 
-    _buttons << button;
+    m_buttons << button;
     ui->horizontalLayout->addWidget(button);
 
-    if (_buttons.size() == 1) {
-        Q_EMIT emptyStatusChanged(false);
+    if (m_buttons.size() == 1) {
+        Q_EMIT sigOnEmptyStatusChanged(false);
     }
 }
 
 void RibbonButtonGroup::removeButton(QToolButton *button) {
-    if (_buttons.contains(button)) {
+    if (m_buttons.contains(button)) {
         ui->horizontalLayout->removeWidget(button);
-        _buttons.removeOne(button);
-        if (_buttons.empty()) {
-            Q_EMIT emptyStatusChanged(true);
+        m_buttons.removeOne(button);
+        if (m_buttons.empty()) {
+            Q_EMIT sigOnEmptyStatusChanged(true);
         }
     }
 }

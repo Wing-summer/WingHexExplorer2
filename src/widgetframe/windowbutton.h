@@ -32,7 +32,7 @@ public:
     void setIconDisabled(const QIcon &icon);
 
 Q_SIGNALS:
-    void doubleClicked();
+    void sigOnDoubleClicked();
 
 protected:
     void checkStateSet() override;

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#include "settings/settings.h"
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 #include <QGlobalStatic>
 #include <QTemporaryDir>
 #include <QtTest>
-#include <memory>
-#include <type_traits>
-#include <utility>
+
+#include "settings/settings.h"
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, StaticConfigKey,
                           (QStringLiteral("static.key")))
@@ -32,6 +33,7 @@ static_assert(!IsConfigKey<std::unique_ptr<int>>::value);
 class SettingsKeyTests : public QObject {
     Q_OBJECT
 private slots:
+
     void supportedKeyTypes() {
         QString key = QStringLiteral("mutable.key");
         const QString fixed = QStringLiteral("const.key");

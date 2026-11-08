@@ -36,11 +36,11 @@ EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
     auto l = new QLabel(tr("Select text encoding"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
-    enclist = new QListWidget(this);
-    enclist->addItems(Utilities::getEncodings());
-    enclist->setCurrentRow(enc);
+    m_enclist = new QListWidget(this);
+    m_enclist->addItems(Utilities::getEncodings());
+    m_enclist->setCurrentRow(enc);
 
-    layout->addWidget(enclist);
+    layout->addWidget(m_enclist);
     layout->addSpacing(10);
     auto dbbox = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -59,12 +59,12 @@ EncodingDialog::EncodingDialog(QStringConverter::Encoding enc, QWidget *parent)
     this->setWindowTitle(tr("Encoding"));
 }
 
-QStringConverter::Encoding EncodingDialog::getResult() { return result; }
+QStringConverter::Encoding EncodingDialog::getResult() { return m_result; }
 
 void EncodingDialog::on_accept() {
-    auto row = enclist->currentRow();
+    auto row = m_enclist->currentRow();
     if (row >= 0) {
-        result = QStringConverter::Encoding(row);
+        m_result = QStringConverter::Encoding(row);
         done(1);
     } else {
         done(0);

@@ -114,14 +114,14 @@ public:
     EditorView *view() const;
 
 private:
-    EditorView *_view;
-    QHexView *_hex;
+    EditorView *m_view;
+    QHexView *m_hex;
 
-    QList<WingHex::WingEditorViewWidget *> _currentPluginEditorWidgets;
-    qsizetype _beginLine = 0;
-    qsizetype _endLine = 0;
-    qsizetype _firstVisibleLine = 0;
-    int _horizontalOffset = 0;
+    QList<WingHex::WingEditorViewWidget *> m_currentPluginEditorWidgets;
+    qsizetype m_beginLine = 0;
+    qsizetype m_endLine = 0;
+    qsizetype m_firstVisibleLine = 0;
+    int m_horizontalOffset = 0;
 };
 
 #endif // EDITORVIEWCONTEXT_H

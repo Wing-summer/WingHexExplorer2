@@ -18,10 +18,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <type_traits>
+
 #include <QApplication>
 #include <QSettings>
 #include <QString>
-#include <type_traits>
 
 inline QString getRealContent(const QString &value) { return value; }
 

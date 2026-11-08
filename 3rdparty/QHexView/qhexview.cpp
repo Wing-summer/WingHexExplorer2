@@ -20,6 +20,9 @@
 */
 
 #include "qhexview.h"
+
+#include <cmath>
+
 #include <QApplication>
 #include <QClipboard>
 #include <QFontDatabase>
@@ -32,8 +35,6 @@
 #include <QTextCursor>
 #include <QToolTip>
 
-#include <cmath>
-
 #define CURSOR_BLINK_INTERVAL 500 // ms
 #define DOCUMENT_WHEEL_LINES 3
 
@@ -43,18 +44,31 @@
 bool QHexView::isReadOnly() {
     return m_viewReadOnly || m_document->isReadOnly();
 }
+
 void QHexView::setReadOnly(bool readOnly) { m_viewReadOnly = readOnly; }
+
 bool QHexView::viewReadOnly() const { return m_viewReadOnly; }
+
 bool QHexView::isKeepSize() { return m_document->isKeepSize(); }
+
 bool QHexView::isLocked() { return m_document->isLocked(); }
+
 bool QHexView::setLockedFile(bool b) { return m_document->setLockedFile(b); }
+
 bool QHexView::setKeepSize(bool b) { return m_document->setKeepSize(b); }
+
 void QHexView::setLockKeepSize(bool b) { m_document->setLockKeepSize(b); }
+
 bool QHexView::lockKeepSize() const { return m_document->lockKeepSize(); }
+
 qsizetype QHexView::documentLines() { return m_renderer->documentLines(); }
+
 qsizetype QHexView::documentBytes() { return m_document->length(); }
+
 qsizetype QHexView::currentRow() { return m_cursor->currentLine(); }
+
 qsizetype QHexView::currentColumn() { return m_cursor->currentColumn(); }
+
 qsizetype QHexView::currentOffset() { return m_cursor->position().offset(); }
 
 qsizetype QHexView::currentSelectionLength() {
@@ -95,45 +109,47 @@ QFont QHexView::getHexeditorFont() {
 }
 
 void QHexView::getStatus() {
-    Q_EMIT canUndoChanged(m_document->canUndo());
-    Q_EMIT canRedoChanged(m_document->canRedo());
-    Q_EMIT cursorLocationChanged();
-    Q_EMIT documentSaved(m_document->isDocSaved());
-    Q_EMIT documentKeepSize(m_document->isKeepSize());
-    Q_EMIT documentLockedFile(m_document->isLocked());
-    Q_EMIT metafgVisibleChanged(m_document->metafgVisible());
-    Q_EMIT metabgVisibleChanged(m_document->metabgVisible());
-    Q_EMIT metaCommentVisibleChanged(m_document->metaCommentVisible());
-    Q_EMIT editableAreaClicked(m_renderer->selectedArea());
+    Q_EMIT sigOnCanUndoChanged(m_document->canUndo());
+    Q_EMIT sigOnCanRedoChanged(m_document->canRedo());
+    Q_EMIT sigOnCursorLocationChanged();
+    Q_EMIT sigOnDocumentSaved(m_document->isDocSaved());
+    Q_EMIT sigOnDocumentKeepSize(m_document->isKeepSize());
+    Q_EMIT sigOnDocumentLockedFile(m_document->isLocked());
+    Q_EMIT sigOnMetaFgVisibleChanged(m_document->metafgVisible());
+    Q_EMIT sigOnMetaBgVisibleChanged(m_document->metabgVisible());
+    Q_EMIT sigOnMetaCommentVisibleChanged(m_document->metaCommentVisible());
+    Q_EMIT sigOnEditableAreaClicked(m_renderer->selectedArea());
 }
 
 void QHexView::establishSignal(QHexDocument *doc) {
-    connect(doc, &QHexDocument::documentChanged, this, &QHexView::refresh);
+    connect(doc, &QHexDocument::sigOnDocumentChanged, this, &QHexView::refresh);
 
-    connect(doc, &QHexDocument::canUndoChanged, this,
-            &QHexView::canUndoChanged);
-    connect(doc, &QHexDocument::canRedoChanged, this,
-            &QHexView::canRedoChanged);
-    connect(doc, &QHexDocument::documentSaved, this, &QHexView::documentSaved);
-    connect(doc, &QHexDocument::metabgVisibleChanged, this, [=](bool b) {
-        Q_EMIT metabgVisibleChanged(b);
-        Q_EMIT metaStatusChanged();
+    connect(doc, &QHexDocument::sigOnCanUndoChanged, this,
+            &QHexView::sigOnCanUndoChanged);
+    connect(doc, &QHexDocument::sigOnCanRedoChanged, this,
+            &QHexView::sigOnCanRedoChanged);
+    connect(doc, &QHexDocument::sigOnDocumentSaved, this,
+            &QHexView::sigOnDocumentSaved);
+    connect(doc, &QHexDocument::sigOnMetaBgVisibleChanged, this, [=](bool b) {
+        Q_EMIT sigOnMetaBgVisibleChanged(b);
+        Q_EMIT sigOnMetaStatusChanged();
     });
-    connect(doc, &QHexDocument::metafgVisibleChanged, this, [=](bool b) {
-        Q_EMIT metafgVisibleChanged(b);
-        Q_EMIT metaStatusChanged();
+    connect(doc, &QHexDocument::sigOnMetaFgVisibleChanged, this, [=](bool b) {
+        Q_EMIT sigOnMetaFgVisibleChanged(b);
+        Q_EMIT sigOnMetaStatusChanged();
     });
-    connect(doc, &QHexDocument::metaCommentVisibleChanged, this, [=](bool b) {
-        Q_EMIT metaCommentVisibleChanged(b);
-        Q_EMIT metaStatusChanged();
-    });
-    connect(doc, &QHexDocument::metaDataChanged, this,
+    connect(doc, &QHexDocument::sigOnMetaCommentVisibleChanged, this,
+            [=](bool b) {
+                Q_EMIT sigOnMetaCommentVisibleChanged(b);
+                Q_EMIT sigOnMetaStatusChanged();
+            });
+    connect(doc, &QHexDocument::sigOnMetaDataChanged, this,
             [this] { viewport()->update(); });
-    connect(doc, &QHexDocument::documentKeepSize, this,
-            &QHexView::documentKeepSize);
-    connect(doc, &QHexDocument::documentLockedFile, this,
-            &QHexView::documentLockedFile);
-    connect(doc, &QHexDocument::hexLineWidthChanged, this, [this, doc] {
+    connect(doc, &QHexDocument::sigOnDocumentKeepSize, this,
+            &QHexView::sigOnDocumentKeepSize);
+    connect(doc, &QHexDocument::sigOnDocumentLockedFile, this,
+            &QHexView::sigOnDocumentLockedFile);
+    connect(doc, &QHexDocument::sigOnHexLineWidthChanged, this, [this, doc] {
         m_cursor->setLineWidth(doc->hexLineWidth());
         refresh();
     });
@@ -145,11 +161,11 @@ void QHexView::adjustLineVisible(qsizetype line) {
     }
 
     qsizetype pos = 0;
-    constexpr auto PADDING = 2;
+    constexpr auto padding = 2;
     if (line < firstVisibleLine()) {
-        pos = qMax(0, line - PADDING);
+        pos = qMax(0, line - padding);
     } else if (line > lastVisibleLine()) {
-        pos = qMax(0, line - visibleLines() + 1 + PADDING);
+        pos = qMax(0, line - visibleLines() + 1 + padding);
     } else {
         return;
     }
@@ -214,8 +230,9 @@ bool QHexView::setRenderer(QHexRenderer *renderer) {
     renderer->setCursor(m_cursor);
     renderer->updateMetrics(QFontMetricsF(font()));
     m_renderer = renderer;
-    connect(renderer, &QHexRenderer::layoutChanged, this, &QHexView::refresh);
-    connect(renderer, &QHexRenderer::repaintRequested, this,
+    connect(renderer, &QHexRenderer::sigOnLayoutChanged, this,
+            &QHexView::refresh);
+    connect(renderer, &QHexRenderer::sigOnRepaintRequested, this,
             [this] { viewport()->update(); });
 
     if (previous) {
@@ -258,16 +275,16 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
 
     establishSignal(m_document.data());
 
-    connect(m_cursor, &QHexCursor::positionChanged, this,
+    connect(m_cursor, &QHexCursor::sigOnPositionChanged, this,
             &QHexView::processPosChanged);
-    connect(m_cursor, &QHexCursor::selectionChanged, this, [this] {
+    connect(m_cursor, &QHexCursor::sigOnSelectionChanged, this, [this] {
         viewport()->update();
         processPosChanged();
-        Q_EMIT cursorSelectionChanged();
+        Q_EMIT sigOnCursorSelectionChanged();
     });
-    connect(m_cursor, &QHexCursor::insertionModeChanged, this, [this]() {
+    connect(m_cursor, &QHexCursor::sigOnInsertionModeChanged, this, [this]() {
         renderCurrentLine();
-        Q_EMIT insertionModeChanged();
+        Q_EMIT sigOnInsertionModeChanged();
     });
 
     refresh();
@@ -622,7 +639,7 @@ bool QHexView::copy(bool hex) {
 
     auto len = currentSelectionLength();
     if (len > 1024 * 1024 * m_copylimit) {
-        Q_EMIT copyLimitRaised();
+        Q_EMIT sigOnCopyLimitRaised();
         return false;
     }
 
@@ -649,7 +666,7 @@ void QHexView::setScaleRate(qreal rate) {
         setFontSize(fontSize());
         adjustScrollBars();
         update();
-        Q_EMIT scaleRateChanged();
+        Q_EMIT sigOnScaleRateChanged();
     }
 }
 
@@ -661,13 +678,13 @@ QColor QHexView::borderColor() const { return m_renderer->borderColor(); }
 
 void QHexView::setSelBackgroundColor(const QColor &newSelBackgroundColor) {
     m_renderer->setSelBackgroundColor(newSelBackgroundColor);
-    Q_EMIT selBackgroundColorChanged();
+    Q_EMIT sigOnSelBackgroundColorChanged();
     this->viewport()->update();
 }
 
 void QHexView::setBorderColor(const QColor &newBorderColor) {
     m_renderer->setBorderColor(newBorderColor);
-    Q_EMIT borderColorChanged();
+    Q_EMIT sigOnBorderColorChanged();
     this->viewport()->update();
 }
 
@@ -683,7 +700,7 @@ QColor QHexView::selectionColor() const { return m_renderer->selectionColor(); }
 
 void QHexView::setSelectionColor(const QColor &newSelectionColor) {
     m_renderer->setSelectionColor(newSelectionColor);
-    Q_EMIT selectionColorChanged();
+    Q_EMIT sigOnSelectionColorChanged();
     this->viewport()->update();
 }
 
@@ -693,7 +710,7 @@ QColor QHexView::bytesAlterBackground() const {
 
 void QHexView::setBytesAlterBackground(const QColor &newBytesAlterBackground) {
     m_renderer->setBytesAlterBackground(newBytesAlterBackground);
-    Q_EMIT bytesAlterBackgroundChanged();
+    Q_EMIT sigOnBytesAlterBackgroundChanged();
     this->viewport()->update();
 }
 
@@ -701,7 +718,7 @@ QColor QHexView::bytesColor() const { return m_renderer->bytesColor(); }
 
 void QHexView::setBytesColor(const QColor &newBytesColor) {
     m_renderer->setBytesColor(newBytesColor);
-    Q_EMIT bytesColorChanged();
+    Q_EMIT sigOnBytesColorChanged();
     this->viewport()->update();
 }
 
@@ -711,7 +728,7 @@ QColor QHexView::bytesBackground() const {
 
 void QHexView::setBytesBackground(const QColor &newBytesBackground) {
     m_renderer->setBytesBackground(newBytesBackground);
-    Q_EMIT bytesBackgroundChanged();
+    Q_EMIT sigOnBytesBackgroundChanged();
     this->viewport()->update();
 }
 
@@ -719,7 +736,7 @@ QColor QHexView::addressColor() const { return m_renderer->addressColor(); }
 
 void QHexView::setAddressColor(const QColor &newAddressColor) {
     m_renderer->setAddressColor(newAddressColor);
-    Q_EMIT addressColorChanged();
+    Q_EMIT sigOnAddressColorChanged();
     this->viewport()->update();
 }
 
@@ -727,7 +744,7 @@ QColor QHexView::headerColor() const { return m_renderer->headerColor(); }
 
 void QHexView::setHeaderColor(const QColor &newHeaderColor) {
     m_renderer->setHeaderColor(newHeaderColor);
-    Q_EMIT headerColorChanged();
+    Q_EMIT sigOnHeaderColorChanged();
     this->viewport()->update();
 }
 
@@ -759,7 +776,7 @@ void QHexView::mousePressEvent(QMouseEvent *e) {
         }
 
         m_cursor->moveTo(position, clearSelection);
-        Q_EMIT editableAreaClicked(area);
+        Q_EMIT sigOnEditableAreaClicked(area);
     }
 
     e->accept();
@@ -833,7 +850,7 @@ void QHexView::mouseDoubleClickEvent(QMouseEvent *e) {
     QPoint abspos = absolutePosition(e->pos());
     if (m_renderer->hitTestArea(abspos) == QHexRenderer::Areas::HeaderArea) {
         auto r = m_renderer->hitTestColArea(abspos);
-        emit headerAreaClicked(r);
+        emit sigOnHeaderAreaClicked(r);
     }
 }
 
@@ -919,7 +936,7 @@ void QHexView::paintEvent(QPaintEvent *e) {
     m_renderer->renderFrame(&painter);
     m_renderer->renderAdditonalFrame(&painter, m.top() > 0, m.left() > 0);
     painter.restore();
-    Q_EMIT onPaintCustomEvent(xOff, firstVisible, begin, end);
+    Q_EMIT sigOnPaintCustomEvent(xOff, firstVisible, begin, end);
 }
 
 void QHexView::ensureCurrentLineVisible() {
@@ -931,7 +948,7 @@ void QHexView::toggleArea() {
         return;
     }
     m_renderer->toggleArea();
-    emit editableAreaClicked(m_renderer->selectedArea());
+    emit sigOnEditableAreaClicked(m_renderer->selectedArea());
 }
 
 void QHexView::blinkCursor() {
@@ -1081,7 +1098,7 @@ void QHexView::renderCurrentLine() {
 void QHexView::processPosChanged() {
     adjustLineVisible(m_cursor->currentLine());
     renderCurrentLine();
-    Q_EMIT cursorLocationChanged();
+    Q_EMIT sigOnCursorLocationChanged();
 }
 
 bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
@@ -1270,7 +1287,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
         return false;
     }
     if (isReadOnly() || isLocked()) {
-        emit inputTextHitLimit();
+        emit sigOnInputTextHitLimit();
         return false;
     }
 
@@ -1288,7 +1305,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
 
         auto r = this->RemoveSelection();
         if (!r) {
-            emit inputTextHitLimit();
+            emit sigOnInputTextHitLimit();
             return false;
         }
         if (cur->currentNibble() &&
@@ -1297,7 +1314,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
                                    uchar(val << 4),
                                    1); // X0 byte
             if (!r) {
-                emit inputTextHitLimit();
+                emit sigOnInputTextHitLimit();
                 return false;
             }
             return true;
@@ -1314,7 +1331,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
         r = m_document->Replace(cur, cur->position().offset(), val,
                                 cur->currentNibble());
         if (!r) {
-            emit inputTextHitLimit();
+            emit sigOnInputTextHitLimit();
             return false;
         }
         return true;
@@ -1327,7 +1344,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
 
         auto r = this->RemoveSelection();
         if (!r) {
-            emit inputTextHitLimit();
+            emit sigOnInputTextHitLimit();
             return false;
         }
         if (cur->insertionMode() == QHexCursor::OverwriteMode) {
@@ -1338,7 +1355,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
                                    key.toLatin1(), 1);
         }
         if (!r) {
-            emit inputTextHitLimit();
+            emit sigOnInputTextHitLimit();
             return false;
         }
         QKeyEvent keyevent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
@@ -1404,6 +1421,7 @@ void QHexView::renderLine(qsizetype line) {
 qsizetype QHexView::firstVisibleLine() const {
     return qsizetype(this->verticalScrollBar()->value()) * documentSizeFactor();
 }
+
 qsizetype QHexView::lastVisibleLine() const {
     return this->firstVisibleLine() + this->visibleLines() - 1;
 }

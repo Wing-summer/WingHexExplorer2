@@ -16,30 +16,52 @@
  */
 
 #include "mainwindow.h"
-#include "settings/diffsettingdialog.h"
 
-#include "class/settings/thememanager.h"
+#include <initializer_list>
+
+#include <QAction>
+#include <QActionGroup>
+#include <QClipboard>
+#include <QDesktopServices>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QKeyEvent>
+#include <QPainter>
+#include <QPicture>
+#include <QPointer>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QScopeGuard>
+#include <QScrollBar>
+#include <QStatusBar>
+#include <QStringDecoder>
+#include <QTimer>
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockFocusController.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
+
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
 #include "class/application/appmanager.h"
-#include "class/application/startuptrace.h"
 #include "class/application/inspectqtloghelper.h"
 #include "class/application/logger.h"
+#include "class/application/startuptrace.h"
 #include "class/application/wingupdater.h"
 #include "class/file/workspacemanager.h"
 #include "class/layout/layoutmanager.h"
 #include "class/plugin/pluginsystem.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "class/util/qkeysequences.h"
 #include "control/delegate/richtextitemdelegate.h"
-#include "control/searchabletextbrowser.h"
 #include "control/docking/dockcomponentsfactory.h"
+#include "control/searchabletextbrowser.h"
 #include "control/toast.h"
 #include "define.h"
 #include "dialog/common/wingfiledialog.h"
@@ -54,6 +76,7 @@
 #include "luau/runtime/scriptmachine.h"
 #include "metadialog.h"
 #include "metaheaderdialog.h"
+#include "settings/diffsettingdialog.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
 #include "settings/lspsettingdialog.h"
@@ -61,29 +84,6 @@
 #include "settings/pluginsettingdialog.h"
 #include "settings/qeditconfig.h"
 #include "settings/scriptsettingdialog.h"
-
-#include <QAction>
-#include <QActionGroup>
-#include <QClipboard>
-#include <QDesktopServices>
-#include <QGridLayout>
-#include <QHeaderView>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QKeyEvent>
-#include <QPainter>
-#include <QPicture>
-#include <QPushButton>
-#include <QPointer>
-#include <QRadioButton>
-#include <QScopeGuard>
-#include <QScrollBar>
-#include <QStatusBar>
-#include <QTimer>
-
-#include <QStringDecoder>
-#include <initializer_list>
 
 constexpr auto EMPTY_FUNC = [] {};
 
@@ -101,8 +101,10 @@ void configureTableColumns(QTableViewExt *view,
         policy.source = QTableViewExt::WidthSource::Weight;
         policy.update = QTableViewExt::WidthUpdate::Continuous;
         policy.weight = share.weight;
-        policy.minimumPixels = view->fontMetrics().horizontalAdvance(QChar('0')) *
-                               share.minimumCharacters + 16;
+        policy.minimumPixels =
+            view->fontMetrics().horizontalAdvance(QChar('0')) *
+                share.minimumCharacters +
+            16;
         view->setColumnWidthPolicy(column++, policy);
     }
 }
@@ -146,14 +148,14 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
 
     // init statusbar
     {
-        _editArea = new QLabel(this);
-        auto font = _editArea->font();
+        m_editArea = new QLabel(this);
+        auto font = m_editArea->font();
         auto fm = QFontMetrics(font);
-        _editArea->setAlignment(Qt::AlignCenter);
+        m_editArea->setAlignment(Qt::AlignCenter);
         // STR or HEX
-        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 4);
-        _editArea->installEventFilter(this);
-        m_status->addWidget(_editArea);
+        m_editArea->setFixedWidth(fm.horizontalAdvance('A') * 4);
+        m_editArea->installEventFilter(this);
+        m_status->addWidget(m_editArea);
 
         auto separator = new QFrame(m_status);
         separator->setFrameShape(QFrame::VLine);
@@ -176,8 +178,8 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
 
-        _status = new QLabel(m_status);
-        m_status->addPermanentWidget(_status);
+        m_statusLabel = new QLabel(m_status);
+        m_status->addPermanentWidget(m_statusLabel);
 
         separator = new QFrame(m_status);
         separator->setFrameShape(QFrame::VLine);
@@ -191,7 +193,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         m_sSaved->setFocusPolicy(Qt::NoFocus);
         m_sSaved->setStyleSheet(disableStyle);
         m_sSaved->setToolTip(tr("Saved"));
-        m_sSaved->setIcon(_infoSaved);
+        m_sSaved->setIcon(m_infoSaved);
         m_sSaved->setToolButtonStyle(Qt::ToolButtonIconOnly);
         m_status->addPermanentWidget(m_sSaved);
         m_editStateWidgets << m_sSaved;
@@ -200,7 +202,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         m_sReadWrite->setFocusPolicy(Qt::NoFocus);
         m_sReadWrite->setStyleSheet(disableStyle);
         m_sReadWrite->setToolTip(tr("Access mode"));
-        m_sReadWrite->setIcon(_infoWriteable);
+        m_sReadWrite->setIcon(m_infoWriteable);
         m_sReadWrite->setToolButtonStyle(Qt::ToolButtonIconOnly);
         m_status->addPermanentWidget(m_sReadWrite);
         m_editStateWidgets << m_sReadWrite;
@@ -210,7 +212,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         m_sLocked->setFocusPolicy(Qt::NoFocus);
         m_sLocked->setStyleSheet(disableStyle);
         m_sLocked->setToolTip(tr("Editing lock"));
-        m_sLocked->setIcon(_infoUnLock);
+        m_sLocked->setIcon(m_infoUnLock);
         m_sLocked->setToolButtonStyle(Qt::ToolButtonIconOnly);
         m_sLocked->installEventFilter(this);
         m_status->addPermanentWidget(m_sLocked);
@@ -221,7 +223,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         m_sCanOver->setFocusPolicy(Qt::NoFocus);
         m_sCanOver->setStyleSheet(disableStyle);
         m_sCanOver->setToolTip(tr("File resizing"));
-        m_sCanOver->setIcon(_infoCannotOver);
+        m_sCanOver->setIcon(m_infoCannotOver);
         m_sCanOver->setToolButtonStyle(Qt::ToolButtonIconOnly);
         m_sCanOver->installEventFilter(this);
         m_status->addPermanentWidget(m_sCanOver);
@@ -251,7 +253,8 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
     }
     auto &log = Logger::instance();
     log.setLogLevel(Logger::Level(set.logLevel()));
-    connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
+    connect(&log, &Logger::sigOnLogMessage, m_logbrowser,
+            &QTextBrowser::append);
 
     // check config writable
     set.checkWriteableAndWarn();
@@ -261,7 +264,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         splash->setInfoText(tr("Initializing plugins"));
     }
     auto &plg = PluginSystem::instance();
-    connect(&plg, &PluginSystem::pluginLoading, this,
+    connect(&plg, &PluginSystem::sigOnPluginLoading, this,
             [=](const QString &plgName) {
                 // Plugin init may inspect or extend the application QSS.
                 // Finish the initial batch before handing control to it.
@@ -284,7 +287,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
     }
 
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
-    connect(m_recentmanager, &RecentFileManager::triggered, this,
+    connect(m_recentmanager, &RecentFileManager::sigOnRecentFileTriggered, this,
             [this](const RecentFileManager::RecentInfo &rinfo) {
                 EditorView *editor = nullptr;
                 ErrFile ret;
@@ -364,7 +367,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
                 connect(input, &QInputDialog::finished, &dialog,
                         &QDialog::done);
                 connect(&ScriptMachine::instance(),
-                        &ScriptMachine::inputCancelled, &dialog,
+                        &ScriptMachine::sigOnInputCancelled, &dialog,
                         [&dialog](ScriptMachine::ConsoleMode mode) {
                             if (mode == ScriptMachine::Background) {
                                 dialog.reject();
@@ -375,7 +378,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
             };
             backgroundCallbacks.clearFn = [this]() {
                 m_bgScriptOutput->clear();
-                _lastOutputType = ScriptMachine::MessageType::Unknown;
+                m_lastOutputType = ScriptMachine::MessageType::Unknown;
             };
             backgroundCallbacks.printMsgFn =
                 std::bind(&MainWindow::onOutputBgScriptOutput, this,
@@ -401,8 +404,8 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
             m_scriptConsole->enableLSP();
 
             // attach REPL env to display
-            auto *model = _scriptObjView->dataModel();
-            model->setRoot(&_scriptObjReg,
+            auto *model = m_scriptObjView->dataModel();
+            model->setRoot(&m_scriptObjReg,
                            LuauVariableRegistry::getGlobalScope(
                                ScriptMachine::instance().contextState(
                                    ScriptMachine::Interactive)));
@@ -418,28 +421,28 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
     startupPhases.checkpoint("mainwindow.scripting");
 
     // connect settings signals
-    connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
+    connect(&set, &SettingManager::sigOnEditorFontSizeChanged, this,
             [this](int v) {
                 const auto &views = EditorView::instances();
                 for (const auto &p : views) {
                     p->setFontSize(qreal(v));
                 }
             });
-    connect(&set, &SettingManager::sigHexCursorSync, this, [this](bool b) {
+    connect(&set, &SettingManager::sigOnHexCursorSync, this, [this](bool b) {
         const auto &views = EditorView::instances();
         for (const auto &p : views) {
             p->hexEditor()->setCursorSync(b);
         }
     });
-    connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
+    connect(&set, &SettingManager::sigOnCopyLimitChanged, this, [this](int v) {
         const auto &views = EditorView::instances();
         for (const auto &p : views) {
             p->setCopyLimit(v);
         }
     });
-    connect(&set, &SettingManager::sigDecodeStrlimitChanged, this,
+    connect(&set, &SettingManager::sigOnDecodeStrLimitChanged, this,
             [this](int v) {
-                _decstrlim = v;
+                m_decstrlim = v;
                 on_selectionChanged();
             });
 
@@ -466,7 +469,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
         splash->setInfoText(tr("Restoring layout"));
     }
 
-    _defaultLayout = m_dock->saveState();
+    m_defaultLayout = m_dock->saveState();
 
     m_leftViewArea = nullptr;
     m_rightViewArea = nullptr;
@@ -505,7 +508,7 @@ void MainWindow::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
 
     loadCacheIcon();
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
             &MainWindow::loadCacheIcon);
     m_toolBtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
 
@@ -534,7 +537,8 @@ void MainWindow::buildUpRibbonBar() {
     m_ribbonMaps[RibbonCatagories::ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
 
-    connect(m_ribbon, &Ribbon::onDragDropFiles, this, &MainWindow::openFiles);
+    connect(m_ribbon, &Ribbon::sigOnDragDropFiles, this,
+            &MainWindow::openFiles);
 
     // check update if set
     if (set.checkUpdate()) {
@@ -590,15 +594,15 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
             });
     connect(m_dock, &CDockManager::stateRestored, this, [this]() {
         // no allowing floating widgets
-        QList<CDockWidget *> _dws;
+        QList<CDockWidget *> dws;
         const auto map = m_dock->dockWidgetsMap();
         for (const auto &dw : map) {
             if (dw->dockAreaWidget() == nullptr) {
-                _dws.append(dw);
+                dws.append(dw);
             }
         }
 
-        if (_dws.isEmpty()) {
+        if (dws.isEmpty()) {
             return;
         }
 
@@ -615,9 +619,9 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         };
 
         auto darea = m_dock->centralWidget()->dockAreaWidget();
-        auto dw = _dws.takeFirst();
+        auto dw = dws.takeFirst();
         darea = replaceDW(dw, darea);
-        for (const auto &dw : _dws) {
+        for (const auto &dw : dws) {
             replaceDW(dw, darea);
         }
     });
@@ -640,17 +644,17 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         label->setPicture(background);
     };
     refreshBackground();
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, label,
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, label,
             refreshBackground);
 
     label->setAlignment(Qt::AlignCenter);
 
-    CDockWidget *CentralDockWidget =
+    CDockWidget *centralDockWidget =
         m_dock->createDockWidget(QStringLiteral("CentralWidget"));
-    CentralDockWidget->setWidget(label);
-    CentralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
-    CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
-    auto editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
+    centralDockWidget->setWidget(label);
+    centralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
+    centralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
+    auto editorViewArea = m_dock->setCentralWidget(centralDockWidget);
 
     // build up basic docking widgets
     auto bottomLeftArea =
@@ -756,7 +760,7 @@ ads::CDockAreaWidget *
 MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    _findResultModel = new FindResultModel(this);
+    m_findResultModel = new FindResultModel(this);
     m_findresult = new QTableViewExt(this);
 
     Utilities::applyTableViewProperty(m_findresult);
@@ -764,10 +768,10 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
         Qt::ContextMenuPolicy::CustomContextMenu);
 
     static auto se = [this]() {
-        if (_findResultModel->isValid()) {
+        if (m_findResultModel->isValid()) {
             m_find->setWindowTitle(
                 tr("Search results") + QStringLiteral(" (") +
-                Utilities::stringEncodingName(_findResultModel->encoding()) +
+                Utilities::stringEncodingName(m_findResultModel->encoding()) +
                 QStringLiteral(")"));
         } else {
             m_find->setWindowTitle(tr("Search results"));
@@ -785,7 +789,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
         auto l = QStringConverter::Encoding(e);
         auto a = newCheckableAction(menu, Utilities::stringEncodingName(l),
                                     [this, l]() {
-                                        _findResultModel->setEncoding(l);
+                                        m_findResultModel->setEncoding(l);
                                         se();
                                     });
         a->setActionGroup(aGroup);
@@ -794,11 +798,11 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     }
 
     connect(
-        _findResultModel, &FindResultModel::modelReset, menu, [this, menu]() {
-            auto r = _findResultModel->isValid();
+        m_findResultModel, &FindResultModel::modelReset, menu, [this, menu]() {
+            auto r = m_findResultModel->isValid();
             menu->setEnabled(r);
             if (r) {
-                m_findEncoding[_findResultModel->encoding()]->setChecked(true);
+                m_findEncoding[m_findResultModel->encoding()]->setChecked(true);
             }
             se();
         });
@@ -821,7 +825,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
         newAction(ThemeManager::StandardIcon::Copy, tr("Copy"), [this]() {
             auto idx = m_findresult->currentIndex();
             if (idx.isValid()) {
-                auto content = _findResultModel->copyContent(
+                auto content = m_findResultModel->copyContent(
                     m_findresult->mapToSource(idx));
                 qApp->clipboard()->setText(content);
                 Toast::toast(this,
@@ -851,23 +855,23 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setColumnSortRole(2, FindResultModel::SortValueRole);
     m_findresult->setColumnSearchRole(3, FindResultModel::PlainTextRole);
     m_findresult->setColumnSearchRole(4, FindResultModel::PlainTextRole);
-    m_findresult->setModel(_findResultModel);
+    m_findresult->setModel(m_findResultModel);
     m_findresult->horizontalHeader()->setSectionHidden(4, !fsds);
 
-    connect(m_findresult, &QTableView::doubleClicked, this,
-            [this](const QModelIndex &index) {
-                auto editor = currentEditor();
-                auto e = editor->hexEditor();
-                auto fm = editor->findResult();
-                auto cursor = e->cursor();
+    connect(
+        m_findresult, &QTableView::doubleClicked, this,
+        [this](const QModelIndex &index) {
+            auto editor = currentEditor();
+            auto e = editor->hexEditor();
+            auto fm = editor->findResult();
+            auto cursor = e->cursor();
 
-                cursor->moveTo(
-                    fm.results.at(m_findresult->mapToSource(index).row())
-                        .offset);
-                if (cursor->selectionCount() <= 1 && index.column() >= 3) {
-                    cursor->select(fm.lastFindData.second);
-                }
-            });
+            cursor->moveTo(
+                fm.results.at(m_findresult->mapToSource(index).row()).offset);
+            if (cursor->selectionCount() <= 1 && index.column() >= 3) {
+                cursor->select(fm.lastFindData.second);
+            }
+        });
 
     QTableViewExt::ColumnWidthPolicy contentWidth;
     const qreal numericLimits[] = {0.12, 0.10, 0.22};
@@ -884,7 +888,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                               tr("Search results") + QStringLiteral(" (ASCII)"),
                               m_findresult);
     m_find = dw;
-    connect(m_findresult, &QTableViewExt::modelChanged, this, se);
+    connect(m_findresult, &QTableViewExt::sigOnModelChanged, this, se);
 
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -893,12 +897,12 @@ ads::CDockAreaWidget *
 MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    _numsitem = new NumShowModel(this);
+    m_numsitem = new NumShowModel(this);
     m_numshowtable = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_numshowtable);
 
     m_numshowtable->setSearchEnabled(true);
-    m_numshowtable->setModel(_numsitem);
+    m_numshowtable->setModel(m_numsitem);
     configureTableColumns(m_numshowtable, {{1, 16}});
 
     auto a = new QAction(this);
@@ -908,7 +912,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     connect(a, &QAction::triggered, this, [this] {
         auto r = m_numshowtable->currentIndex().row();
         qApp->clipboard()->setText(
-            _numsitem->numData(NumShowModel::NumTableIndex(r)));
+            m_numsitem->numData(NumShowModel::NumTableIndex(r)));
         Toast::toast(this,
                      ThemeManager::instance().standardPixmap(
                          ThemeManager::StandardIcon::Copy),
@@ -980,9 +984,9 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     m_hash = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_hash);
 
-    _hashModel = new CheckSumModel(this);
+    m_hashModel = new CheckSumModel(this);
     m_hash->setSearchEnabled(true);
-    m_hash->setModel(_hashModel);
+    m_hash->setModel(m_hashModel);
     configureTableColumns(m_hash, {{1, 24}});
 
     m_hash->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
@@ -991,7 +995,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
         ThemeManager::instance().standardIcon(ThemeManager::StandardIcon::Copy),
         tr("Copy"), [this] {
             auto r = m_hash->currentIndex();
-            qApp->clipboard()->setText(_hashModel->checkSumData(
+            qApp->clipboard()->setText(m_hashModel->checkSumData(
                 CryptographicHash::Algorithm(r.row())));
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
@@ -1009,7 +1013,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
             cur->resetCheckSumVisible();
         }
 
-        _hashModel->clearData();
+        m_hashModel->clearData();
         auto header = m_hash->verticalHeader();
         auto total = int(CryptographicHash::Algorithm::NumAlgorithms);
         for (int i = 0; i < total; ++i) {
@@ -1032,13 +1036,13 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
-    _bookMarkModel = new BookMarksModel(nullptr);
+    m_bookMarkModel = new BookMarksModel(nullptr);
     m_bookMark = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_bookMark);
     m_bookMark->setSelectionMode(QTableViewExt::ExtendedSelection);
     m_bookMark->setSearchEnabled(true);
     m_bookMark->setAsyncSortingEnabled(true);
-    m_bookMark->setModel(_bookMarkModel);
+    m_bookMark->setModel(m_bookMarkModel);
     configureTableColumns(m_bookMark, {{1, 10}, {3, 16}});
 
     connect(m_bookMark, &QTableView::doubleClicked, this,
@@ -1048,7 +1052,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                     return;
                 }
                 hexeditor->renderer()->enableCursor(true);
-                QAbstractItemModel *model = _bookMarkModel;
+                QAbstractItemModel *model = m_bookMarkModel;
                 auto offIndex =
                     model->index(m_bookMark->mapToSource(index).row(), 0);
                 auto offset = model->data(offIndex).value<qsizetype>();
@@ -1057,7 +1061,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
     m_bookMark->addAction(
         newAction(ThemeManager::StandardIcon::Export, tr("Export results"),
-                  [this]() { saveTableContent(_bookMarkModel); }));
+                  [this]() { saveTableContent(m_bookMarkModel); }));
 
     auto &theme = ThemeManager::instance();
     auto sep = new QAction(m_bookMark);
@@ -1115,7 +1119,7 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
-    _metadataModel = new MetaDataModel(nullptr);
+    m_metadataModel = new MetaDataModel(nullptr);
     m_metadata = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_metadata);
     m_metadata->setSelectionMode(QTableViewExt::ExtendedSelection);
@@ -1126,8 +1130,9 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_metadata->setColumnSortable(3, false);
     m_metadata->setColumnSortRole(0, Qt::UserRole);
     m_metadata->setColumnSortRole(1, Qt::UserRole);
-    m_metadata->setModel(_metadataModel);
-    configureTableColumns(m_metadata, {{2, 10}, {2, 10}, {1, 9}, {1, 9}, {4, 16}});
+    m_metadata->setModel(m_metadataModel);
+    configureTableColumns(m_metadata,
+                          {{2, 10}, {2, 10}, {1, 9}, {1, 9}, {4, 16}});
 
     connect(m_metadata, &QTableView::doubleClicked, this,
             [this](const QModelIndex &index) {
@@ -1168,7 +1173,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
     m_metadata->addAction(
         newAction(ThemeManager::StandardIcon::Export, tr("Export results"),
-                  [this]() { saveTableContent(_metadataModel); }));
+                  [this]() { saveTableContent(m_metadataModel); }));
 
     auto &theme = ThemeManager::instance();
 
@@ -1248,7 +1253,7 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                                      ads::CDockAreaWidget *areaw) {
     m_scriptConsole = new ScriptingConsole(this);
     m_scriptConsole->setIsTerminal(true);
-    connect(m_scriptConsole, &ScriptingConsole::abortEvaluation, this,
+    connect(m_scriptConsole, &ScriptingConsole::sigOnAbortEvaluation, this,
             [this]() {
                 auto &sm = ScriptMachine::instance();
                 if (sm.isRunning(ScriptMachine::Interactive)) {
@@ -1263,7 +1268,7 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                               tr("Script console"), m_scriptConsole);
     m_console = dw;
 
-    connect(m_scriptConsole, &ScriptingConsole::consoleCommand, m_console,
+    connect(m_scriptConsole, &ScriptingConsole::sigOnConsoleCommand, m_console,
             [this]() {
                 if (m_scriptConsole->isVisible()) {
                     return;
@@ -1271,7 +1276,7 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                 m_console->setIcon(ThemeManager::instance().standardIcon(
                     ThemeManager::StandardIcon::DebugRun));
             });
-    connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished,
+    connect(m_scriptConsole, &ScriptingConsole::sigOnConsoleScriptRunFinished,
             m_console, [this]() { m_console->setIcon({}); });
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -1286,7 +1291,7 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
         tr("Background script output appears here."));
     m_bgScriptOutput->setReadOnly(true);
 
-    _hlAnim = new ConsoleHighlighAnim(m_bgScriptOutput);
+    m_hlAnim = new ConsoleHighlighAnim(m_bgScriptOutput);
 
     connect(m_bgScriptOutput, &QPlainTextEdit::customContextMenuRequested, this,
             [this](const QPoint &pos) {
@@ -1339,7 +1344,7 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
     auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
                               tr("Background script output"), m_bgScriptOutput);
     auto tab = dw->tabWidget();
-    _hlAnim->setWidget(tab);
+    m_hlAnim->setWidget(tab);
     ScriptManager::instance().setIndicator(tab);
 
     m_bgScriptOutput->installEventFilter(this);
@@ -1351,12 +1356,12 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                                  ads::DockWidgetArea area,
                                  ads::CDockAreaWidget *areaw) {
-    _scriptObjView = new IDBTreeView(this);
-    _scriptObjView->header()->setDefaultSectionSize(200);
-    connect(m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished,
-            _scriptObjView, &IDBTreeView::refreshData);
+    m_scriptObjView = new IDBTreeView(this);
+    m_scriptObjView->header()->setDefaultSectionSize(200);
+    connect(m_scriptConsole, &ScriptingConsole::sigOnConsoleScriptRunFinished,
+            m_scriptObjView, &IDBTreeView::refreshData);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleObj"),
-                              tr("Console script object"), _scriptObjView);
+                              tr("Console script object"), m_scriptObjView);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1364,9 +1369,9 @@ ads::CDockAreaWidget *
 MainWindow::buildUpUndoStackDock(ads::CDockManager *dock,
                                  ads::DockWidgetArea area,
                                  ads::CDockAreaWidget *areaw) {
-    _undoView = new QUndoView(this);
+    m_undoView = new QUndoView(this);
     auto dw = buildDockWidget(dock, QStringLiteral("UndoStack"),
-                              tr("Undo stack"), _undoView);
+                              tr("Undo stack"), m_undoView);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1630,20 +1635,21 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("File status"));
         auto disableStyle =
             QStringLiteral("border:none;background:transparent;");
-        m_iSaved = addPannelAction(pannel, _infoSaved, tr("Saved"), EMPTY_FUNC);
+        m_iSaved =
+            addPannelAction(pannel, m_infoSaved, tr("Saved"), EMPTY_FUNC);
         m_iSaved->setStyleSheet(disableStyle);
         m_editStateWidgets << m_iSaved;
 
         m_iReadWrite =
-            addPannelAction(pannel, _infoReadonly, tr("Access"), EMPTY_FUNC);
+            addPannelAction(pannel, m_infoReadonly, tr("Access"), EMPTY_FUNC);
         m_iReadWrite->setStyleSheet(disableStyle);
         m_editStateWidgets << m_iReadWrite;
 
-        m_iLocked = addPannelAction(pannel, _infoLock, tr("Editing lock"),
+        m_iLocked = addPannelAction(pannel, m_infoLock, tr("Editing lock"),
                                     &MainWindow::on_togglelocked);
         m_editStateWidgets << m_iLocked;
 
-        m_iCanOver = addPannelAction(pannel, _infoCanOver, tr("File resizing"),
+        m_iCanOver = addPannelAction(pannel, m_infoCanOver, tr("File resizing"),
                                      &MainWindow::on_toggleover);
         m_editStateWidgets << m_iCanOver;
     }
@@ -1723,9 +1729,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto &l = LayoutManager::instance().layouts();
 
         auto menu = new QMenu(this);
-        menu->addAction(newAction(ThemeManager::StandardIcon::Application,
-                                  tr("Default"),
-                                  [this]() { restoreLayout(_defaultLayout); }));
+        menu->addAction(
+            newAction(ThemeManager::StandardIcon::Application, tr("Default"),
+                      [this]() { restoreLayout(m_defaultLayout); }));
 
         if (!l.isEmpty()) {
             menu->addSeparator();
@@ -1763,9 +1769,9 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Scripts"));
         pannel->setVisible(false);
-        connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
+        connect(pannel, &RibbonButtonGroup::sigOnEmptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
-        _scriptContexts =
+        m_scriptContexts =
             ScriptManager::buildUpScriptRunnerContext(pannel, this);
     }
 
@@ -1786,7 +1792,7 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Plugin actions"));
         pannel->setVisible(false);
-        connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
+        connect(pannel, &RibbonButtonGroup::sigOnEmptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
         m_pluginSettingsGroup = pannel;
     }
@@ -1819,7 +1825,7 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
     if (set.enablePlugin()) {
         auto pannel = tab->addGroup(tr("Plugin settings"));
         pannel->setVisible(false);
-        connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
+        connect(pannel, &RibbonButtonGroup::sigOnEmptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
     }
 
@@ -1965,7 +1971,7 @@ void MainWindow::ensureSettingsDialog() {
     if (!ge.isEmpty()) {
         m_setdialog->restoreLayout(ge);
     }
-    connect(m_setdialog, &SettingDialog::onClosing, this, [this]() {
+    connect(m_setdialog, &SettingDialog::sigOnClosing, this, [this]() {
         SettingManager::instance().setSettingsLayout(m_setdialog->saveLayout());
     });
 
@@ -2001,7 +2007,7 @@ void MainWindow::ensureScriptSettingsDialog() {
     if (!ge.isEmpty()) {
         m_scriptsetdlg->restoreLayout(ge);
     }
-    connect(m_scriptsetdlg, &SettingDialog::onClosing, this, [this]() {
+    connect(m_scriptsetdlg, &SettingDialog::sigOnClosing, this, [this]() {
         SettingManager::instance().setSettingsScriptLayout(
             m_scriptsetdlg->saveLayout());
     });
@@ -2086,9 +2092,9 @@ void MainWindow::registerGlobalSwitchViewLoop() {
 void MainWindow::showStatus(const QString &status) {
     auto editor = currentEditor();
     if (status.isEmpty() && editor && editor->isFindBusy()) {
-        _status->setText(tr("Finding..."));
+        m_statusLabel->setText(tr("Finding..."));
     } else {
-        _status->setText(status);
+        m_statusLabel->setText(status);
     }
 }
 
@@ -2481,7 +2487,7 @@ void MainWindow::on_findfile() {
 
                 auto r = editor->findResult();
                 m_findEncoding.value(r.encoding)->setChecked(true);
-                _findResultModel->refresh();
+                m_findResultModel->refresh();
 
                 m_find->raise();
                 this->showStatus({});
@@ -2539,7 +2545,7 @@ void MainWindow::on_checksum() {
     if (d.exec()) {
         cs = d.getResults();
         editor->getCheckSum(cs);
-        _hashModel->updateCheckSumData(editor->checkSumResult());
+        m_hashModel->updateCheckSumData(editor->checkSumResult());
 
         auto header = m_hash->verticalHeader();
         auto total = int(CryptographicHash::Algorithm::NumAlgorithms);
@@ -3012,7 +3018,7 @@ void MainWindow::on_togglelocked() {
         return;
     }
     if (!hexeditor->setLockedFile(!hexeditor->isLocked())) {
-        Toast::toast(this, _pixLock, tr("Could not lock editing"));
+        Toast::toast(this, m_pixLock, tr("Could not lock editing"));
     }
 }
 
@@ -3022,7 +3028,7 @@ void MainWindow::on_toggleover() {
         return;
     }
     if (!hexeditor->setKeepSize(!hexeditor->isKeepSize())) {
-        Toast::toast(this, _pixCannotOver, tr("Could not lock the file size"));
+        Toast::toast(this, m_pixCannotOver, tr("Could not lock the file size"));
     }
 }
 
@@ -3031,7 +3037,7 @@ void MainWindow::on_clearfindresult() {
     if (editor == nullptr) {
         return;
     }
-    _findResultModel->clear();
+    m_findResultModel->clear();
 }
 
 void MainWindow::on_exportfindresult() {
@@ -3127,9 +3133,9 @@ void MainWindow::on_selectionChanged() {
 
 void MainWindow::on_editableAreaClicked(QHexRenderer::Areas area) {
     if (area == QHexRenderer::Areas::AsciiArea) {
-        _editArea->setText(QStringLiteral("STR"));
+        m_editArea->setText(QStringLiteral("STR"));
     } else {
-        _editArea->setText(QStringLiteral("HEX"));
+        m_editArea->setText(QStringLiteral("HEX"));
     }
     updateOverwriteIndicator();
 }
@@ -3293,7 +3299,7 @@ void MainWindow::on_scriptwindow() { createScriptDialog(nullptr); }
 void MainWindow::on_compare() {
     if (!m_diffDialog) {
         m_diffDialog = new DiffDialog(currentEditor(), this);
-        connect(m_diffDialog.data(), &DiffDialog::settingsRequested, this,
+        connect(m_diffDialog.data(), &DiffDialog::sigOnSettingsRequested, this,
                 &MainWindow::on_settingCompare);
     }
     m_diffDialog->show();
@@ -3493,7 +3499,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         }
     }
 
-    for (const auto &m : std::as_const(_scriptContexts)) {
+    for (const auto &m : std::as_const(m_scriptContexts)) {
         editor->registerQMenu(m);
     }
 
@@ -3616,8 +3622,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             QPoint(m_hash->horizontalScrollBar()->value(),
                    m_hash->verticalScrollBar()->value());
         dbp[int(EditorView::ScrollPoint::UndoStack)] =
-            QPoint(_undoView->horizontalScrollBar()->value(),
-                   _undoView->verticalScrollBar()->value());
+            QPoint(m_undoView->horizontalScrollBar()->value(),
+                   m_undoView->verticalScrollBar()->value());
         dbp[int(EditorView::ScrollPoint::BookMark)] =
             QPoint(m_bookMark->horizontalScrollBar()->value(),
                    m_bookMark->verticalScrollBar()->value());
@@ -3633,7 +3639,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         return;
     }
 
-    _editorLock.lockForWrite();
+    m_editorLock.lockForWrite();
 
     m_curConnections << connect(cur, &EditorView::sigOnFill, this,
                                 &MainWindow::on_fill);
@@ -3727,25 +3733,27 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                                 &MainWindow::on_hexWidth);
 
     auto hexeditor = cur->hexEditor();
-    m_curConnections << connect(hexeditor, &QHexView::cursorLocationChanged,
-                                this, &MainWindow::on_locChanged);
-    m_curConnections << connect(hexeditor, &QHexView::cursorSelectionChanged,
-                                this, &MainWindow::on_selectionChanged);
-    m_curConnections << connect(hexeditor, &QHexView::editableAreaClicked, this,
-                                &MainWindow::on_editableAreaClicked);
-    m_curConnections << connect(hexeditor, &QHexView::insertionModeChanged,
+    m_curConnections << connect(hexeditor,
+                                &QHexView::sigOnCursorLocationChanged, this,
+                                &MainWindow::on_locChanged);
+    m_curConnections << connect(hexeditor,
+                                &QHexView::sigOnCursorSelectionChanged, this,
+                                &MainWindow::on_selectionChanged);
+    m_curConnections << connect(hexeditor, &QHexView::sigOnEditableAreaClicked,
+                                this, &MainWindow::on_editableAreaClicked);
+    m_curConnections << connect(hexeditor, &QHexView::sigOnInsertionModeChanged,
                                 this, &MainWindow::updateOverwriteIndicator);
     m_curConnections << connect(
-        hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
+        hexeditor, &QHexView::sigOnCanUndoChanged, this, [this](bool b) {
             m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::canRedoChanged, this, [this](bool b) {
+        hexeditor, &QHexView::sigOnCanRedoChanged, this, [this](bool b) {
             m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(b);
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::documentSaved, this, [this](bool b) {
-            const auto &icon = b ? _infoSaved : _infoUnsaved;
+        hexeditor, &QHexView::sigOnDocumentSaved, this, [this](bool b) {
+            const auto &icon = b ? m_infoSaved : m_infoUnsaved;
             m_iSaved->setIcon(icon);
             m_sSaved->setIcon(icon);
             if (b) {
@@ -3758,26 +3766,26 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             }
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
-            const auto &icon = b ? _infoCannotOver : _infoCanOver;
+        hexeditor, &QHexView::sigOnDocumentKeepSize, this, [this](bool b) {
+            const auto &icon = b ? m_infoCannotOver : m_infoCanOver;
             m_iCanOver->setIcon(icon);
             m_sCanOver->setIcon(icon);
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::documentLockedFile, this, [this](bool b) {
-            const auto &icon = b ? _infoLock : _infoUnLock;
+        hexeditor, &QHexView::sigOnDocumentLockedFile, this, [this](bool b) {
+            const auto &icon = b ? m_infoLock : m_infoUnLock;
             m_iLocked->setIcon(icon);
             m_sLocked->setIcon(icon);
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::copyLimitRaised, this, [this] {
+        hexeditor, &QHexView::sigOnCopyLimitRaised, this, [this] {
             Toast::toast(this,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::Copy),
                          tr("The copy limit has been reached"));
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::scaleRateChanged, this, [this] {
+        hexeditor, &QHexView::sigOnScaleRateChanged, this, [this] {
             auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
             Q_ASSERT(hexeditor);
             Toast::toast(this,
@@ -3787,24 +3795,24 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                              QStringLiteral("%"));
         });
     m_curConnections << connect(
-        hexeditor, &QHexView::inputTextHitLimit, this, [this]() {
+        hexeditor, &QHexView::sigOnInputTextHitLimit, this, [this]() {
             auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
-            constexpr auto COUNT = 3;
-            constexpr auto INTERVAL = 200;
+            constexpr auto count = 3;
+            constexpr auto interval = 200;
             QPixmap icon;
 
             if (hexeditor->isLocked()) {
-                blinkWidget(m_iLocked, COUNT, INTERVAL);
-                blinkWidget(m_sLocked, COUNT, INTERVAL);
-                icon = _pixLock;
+                blinkWidget(m_iLocked, count, interval);
+                blinkWidget(m_sLocked, count, interval);
+                icon = m_pixLock;
             } else if (hexeditor->isKeepSize()) {
-                blinkWidget(m_iCanOver, COUNT, INTERVAL);
-                blinkWidget(m_sCanOver, COUNT, INTERVAL);
-                icon = _pixCannotOver;
+                blinkWidget(m_iCanOver, count, interval);
+                blinkWidget(m_sCanOver, count, interval);
+                icon = m_pixCannotOver;
             } else {
-                blinkWidget(m_iReadWrite, COUNT, INTERVAL);
-                blinkWidget(m_sReadWrite, COUNT, INTERVAL);
-                icon = _pixReadonly;
+                blinkWidget(m_iReadWrite, count, interval);
+                blinkWidget(m_sReadWrite, count, interval);
+                icon = m_pixReadonly;
             }
 
             QTimer::singleShot(0, this, [icon, this]() {
@@ -3827,14 +3835,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     m_aShowMetabg->setChecked(doc->metabgVisible());
     m_aShowMetafg->setChecked(doc->metafgVisible());
     m_aShowMetaComment->setChecked(doc->metaCommentVisible());
-    m_curConnections << connect(doc, &QHexDocument::metabgVisibleChanged,
+    m_curConnections << connect(doc, &QHexDocument::sigOnMetaBgVisibleChanged,
                                 m_aShowMetabg, &QAction::setChecked);
-    m_curConnections << connect(doc, &QHexDocument::metafgVisibleChanged,
+    m_curConnections << connect(doc, &QHexDocument::sigOnMetaFgVisibleChanged,
                                 m_aShowMetafg, &QAction::setChecked);
-    m_curConnections << connect(doc, &QHexDocument::metaCommentVisibleChanged,
+    m_curConnections << connect(doc,
+                                &QHexDocument::sigOnMetaCommentVisibleChanged,
                                 m_aShowMetaComment, &QAction::setChecked);
 
-    auto icon = hexeditor->isReadOnly() ? _infoReadonly : _infoWriteable;
+    auto icon = hexeditor->isReadOnly() ? m_infoReadonly : m_infoWriteable;
     m_iReadWrite->setIcon(icon);
     m_sReadWrite->setIcon(icon);
     const auto access =
@@ -3845,8 +3854,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     m_sReadWrite->setAccessibleName(access);
 
     loadFindResult(cur);
-    _bookMarkModel->setDocument(doc);
-    _metadataModel->setDocument(doc);
+    m_bookMarkModel->setDocument(doc);
+    m_metadataModel->setDocument(doc);
 
     auto header = m_hash->verticalHeader();
     const auto &headerV = cur->checkSumVisible();
@@ -3854,7 +3863,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     for (int i = 0; i < total; ++i) {
         header->setSectionHidden(i, !headerV[i]);
     }
-    _hashModel->updateCheckSumData(cur->checkSumResult());
+    m_hashModel->updateCheckSumData(cur->checkSumResult());
 
     auto &plgsys = PluginSystem::instance();
     plgsys.setSwitchingContext(true);
@@ -3863,7 +3872,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
     plgsys.setSwitchingContext(false);
 
-    _undoView->setStack(doc->undoStack());
+    m_undoView->setStack(doc->undoStack());
 
     m_curEditor = cur;
     hexeditor->getStatus();
@@ -3883,8 +3892,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             m_hash->verticalScrollBar()->setValue(p.y());
 
             p = dbp[int(EditorView::ScrollPoint::UndoStack)];
-            _undoView->horizontalScrollBar()->setValue(p.x());
-            _undoView->verticalScrollBar()->setValue(p.y());
+            m_undoView->horizontalScrollBar()->setValue(p.x());
+            m_undoView->verticalScrollBar()->setValue(p.y());
 
             p = dbp[int(EditorView::ScrollPoint::BookMark)];
             m_bookMark->horizontalScrollBar()->setValue(p.x());
@@ -3903,7 +3912,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     PluginSystem::instance().dispatchFileSwitchedEvent(
         cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl()));
 
-    _editorLock.unlock();
+    m_editorLock.unlock();
 }
 
 void MainWindow::updateWindowTitle(EditorView *view) {
@@ -3933,7 +3942,7 @@ void MainWindow::updateWindowTitle(EditorView *view) {
 
 void MainWindow::loadFindResult(EditorView *view) {
     auto &result = view->findResult();
-    _findResultModel->updateData(result);
+    m_findResultModel->updateData(result);
     m_findEncoding.value(result.encoding)->setChecked(true);
 }
 
@@ -4145,9 +4154,9 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     }
 
     if (currentEditor() == editor) {
-        _editorLock.lockForWrite();
+        m_editorLock.lockForWrite();
         m_curEditor = nullptr;
-        _editorLock.unlock();
+        m_editorLock.unlock();
     }
 
     auto fileName = editor->fileNameUrl();
@@ -4206,7 +4215,7 @@ void MainWindow::updateEditModeEnabled() {
             doc->canRedo());
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
             doc->canUndo());
-        _editArea->setCursor(Qt::PointingHandCursor);
+        m_editArea->setCursor(Qt::PointingHandCursor);
         m_lblloc->setCursor(Qt::PointingHandCursor);
         updateWindowTitle(editor);
     } else {
@@ -4217,20 +4226,20 @@ void MainWindow::updateEditModeEnabled() {
         }
         plgsys.setSwitchingContext(false);
         updateStringDec();
-        _findResultModel->reset();
-        _bookMarkModel->setDocument(nullptr);
-        _metadataModel->setDocument(nullptr);
-        _hashModel->clearData();
+        m_findResultModel->reset();
+        m_bookMarkModel->setDocument(nullptr);
+        m_metadataModel->setDocument(nullptr);
+        m_hashModel->clearData();
         m_txtDecode->clear();
         m_aDelBookMark->setEnabled(false);
         m_aDelMetaData->setEnabled(false);
-        _undoView->setStack(nullptr);
+        m_undoView->setStack(nullptr);
 
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
-        _numsitem->clear();
+        m_numsitem->clear();
         on_editableAreaClicked(QHexRenderer::Areas::ExtraArea);
-        _editArea->unsetCursor();
+        m_editArea->unsetCursor();
         m_lblloc->unsetCursor();
         updateWindowTitle(nullptr);
     }
@@ -4246,9 +4255,9 @@ void MainWindow::setCurrentHexEditorScale(qreal rate) {
 
 EditorView *MainWindow::currentEditor() {
     if (QThread::currentThread() != this->thread()) {
-        _editorLock.lockForRead();
+        m_editorLock.lockForRead();
         auto ret = m_curEditor;
-        _editorLock.unlock();
+        m_editorLock.unlock();
         return ret;
     }
     return m_curEditor;
@@ -4398,118 +4407,120 @@ void MainWindow::updateNumberTable(bool force) {
 
     if (len >= sizeof(quint64)) {
         auto s = processEndian(n);
-        _numsitem->setNumData(
+        m_numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint64,
             m_unsignedHex
                 ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
                 : QString::number(s));
         auto s1 = processEndian(qsizetype(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
-                              QString::number(s1));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
+                               QString::number(s1));
         double s2 = *(double *)(&n);
         auto s3 = processEndian(s2);
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
-                              qIsNaN(s3) ? QStringLiteral("NAN")
-                                         : QString::number(s3));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
+                               qIsNaN(s3) ? QStringLiteral("NAN")
+                                          : QString::number(s3));
     } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
+                               QString());
     }
 
     if (len >= sizeof(quint32)) {
         auto s = processEndian(quint32(n));
-        _numsitem->setNumData(
+        m_numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint32,
             m_unsignedHex
                 ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
                 : QString::number(s));
         auto s1 = processEndian(qint32(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
-                              QString::number(s1));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
+                               QString::number(s1));
         float s2 = *(float *)(&n);
         auto s3 = processEndian(s2);
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
-                              qIsNaN(s3) ? QStringLiteral("NAN")
-                                         : QString::number(s3));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
+                               qIsNaN(s3) ? QStringLiteral("NAN")
+                                          : QString::number(s3));
     } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
     }
 
     if (len >= sizeof(quint16)) {
         auto s = processEndian(quint16(n));
-        _numsitem->setNumData(
+        m_numsitem->setNumData(
             NumShowModel::NumTableIndex::Ushort,
             m_unsignedHex
                 ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
                 : QString::number(s));
         auto s1 = processEndian(qint16(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Short,
-                              QString::number(s1));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Short,
+                               QString::number(s1));
     } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
     }
     if (len >= sizeof(uchar)) {
         auto s1 = tmp.at(0);
         auto s = uchar(s1);
-        _numsitem->setNumData(
+        m_numsitem->setNumData(
             NumShowModel::NumTableIndex::Byte,
             m_unsignedHex
                 ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
                 : QString::number(s));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Char,
-                              QString::number(s1));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Char,
+                               QString::number(s1));
     } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
     }
 
     // str
     if (len > 0) {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
-                              QString::fromLatin1(tmp));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
-                              QString::fromUtf8(tmp));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                               QString::fromLatin1(tmp));
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
+                               QString::fromUtf8(tmp));
         if (m_islittle) {
             { // utf16
                 QStringDecoder dec(QStringDecoder::Encoding::Utf16LE);
                 QString data = dec.decode(tmp);
-                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
-                                      data);
+                m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                                       data);
             }
 
             { // utf32
                 QStringDecoder dec(QStringDecoder::Encoding::Utf32LE);
                 QString data = dec.decode(tmp);
-                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
-                                      data);
+                m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                                       data);
             }
         } else {
             { // utf16
                 QStringDecoder dec(QStringDecoder::Encoding::Utf16BE);
                 QString data = dec.decode(tmp);
-                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
-                                      data);
+                m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                                       data);
             }
 
             { // utf32
                 QStringDecoder dec(QStringDecoder::Encoding::Utf32BE);
                 QString data = dec.decode(tmp);
-                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
-                                      data);
+                m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                                       data);
             }
         }
     } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
-                              QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
-                              QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
-                              QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                               QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
+                               QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                               QString());
+        m_numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                               QString());
     }
 }
 
@@ -4556,7 +4567,7 @@ QPair<QByteArrayList, bool> MainWindow::updateStringDec() {
                     .arg(total));
         }
 
-        if (buffer.length() <= 1024 * 1024 * _decstrlim) {
+        if (buffer.length() <= 1024 * 1024 * m_decstrlim) {
             m_txtDecode->insertPlainText(Utilities::decodingString(b, enc));
             m_txtDecode->insertPlainText(QStringLiteral("\n"));
         } else {
@@ -4604,9 +4615,9 @@ void MainWindow::updateOverwriteIndicator() {
     if (view) {
         underline = view->cursor()->insertionMode() == QHexCursor::InsertMode;
     }
-    auto font = _editArea->font();
+    auto font = m_editArea->font();
     font.setUnderline(underline);
-    _editArea->setFont(font);
+    m_editArea->setFont(font);
 }
 
 QHexView *MainWindow::currentHexView() {
@@ -4619,26 +4630,26 @@ QHexView *MainWindow::currentHexView() {
 
 void MainWindow::loadCacheIcon() {
     auto &theme = ThemeManager::instance();
-    _infoSaved = theme.standardIcon(ThemeManager::StandardIcon::Saved);
-    _infoUnsaved = theme.standardIcon(ThemeManager::StandardIcon::Unsaved);
+    m_infoSaved = theme.standardIcon(ThemeManager::StandardIcon::Saved);
+    m_infoUnsaved = theme.standardIcon(ThemeManager::StandardIcon::Unsaved);
 
-    _infoWriteable = theme.standardIcon(ThemeManager::StandardIcon::Writable);
-    _infoReadonly = theme.standardIcon(ThemeManager::StandardIcon::ReadOnly);
+    m_infoWriteable = theme.standardIcon(ThemeManager::StandardIcon::Writable);
+    m_infoReadonly = theme.standardIcon(ThemeManager::StandardIcon::ReadOnly);
 
-    _infoUnLock = theme.standardIcon(ThemeManager::StandardIcon::Unlocked);
-    _infoLock = theme.standardIcon(ThemeManager::StandardIcon::Locked);
+    m_infoUnLock = theme.standardIcon(ThemeManager::StandardIcon::Unlocked);
+    m_infoLock = theme.standardIcon(ThemeManager::StandardIcon::Locked);
 
-    _infoCanOver =
+    m_infoCanOver =
         theme.standardIcon(ThemeManager::StandardIcon::OverwriteAllowed);
-    _infoCannotOver =
+    m_infoCannotOver =
         theme.standardIcon(ThemeManager::StandardIcon::OverwriteForbidden);
 
-    _pixLock = theme.standardPixmap(ThemeManager::StandardIcon::Locked);
-    _pixReadonly = theme.standardPixmap(ThemeManager::StandardIcon::ReadOnly);
+    m_pixLock = theme.standardPixmap(ThemeManager::StandardIcon::Locked);
+    m_pixReadonly = theme.standardPixmap(ThemeManager::StandardIcon::ReadOnly);
 
-    _pixCanOver =
+    m_pixCanOver =
         theme.standardPixmap(ThemeManager::StandardIcon::OverwriteAllowed);
-    _pixCannotOver =
+    m_pixCannotOver =
         theme.standardPixmap(ThemeManager::StandardIcon::OverwriteForbidden);
 }
 
@@ -4781,8 +4792,8 @@ void MainWindow::onOutputBgScriptOutput(
     };
 
     auto msgtype = message.type;
-    if (_lastOutputType == ScriptMachine::MessageType::Unknown) {
-        _lastOutputType = msgtype;
+    if (m_lastOutputType == ScriptMachine::MessageType::Unknown) {
+        m_lastOutputType = msgtype;
     }
     switch (msgtype) {
     case ScriptMachine::MessageType::ExecInfo:
@@ -4809,7 +4820,7 @@ void MainWindow::onOutputBgScriptOutput(
         cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
     } break;
     case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart && _lastOutputType != message.type) {
+        if (isNotBlockStart && m_lastOutputType != message.type) {
             cursor.insertBlock();
         }
         cursor.insertText(message.message, {});
@@ -4818,10 +4829,10 @@ void MainWindow::onOutputBgScriptOutput(
         break;
     }
 
-    _lastOutputType = message.type;
+    m_lastOutputType = message.type;
     if (message.type != ScriptMachine::MessageType::ExecInfo) {
         if (!m_bgScriptOutput->isVisible()) {
-            _hlAnim->start();
+            m_hlAnim->start();
         }
     }
 }
@@ -4934,7 +4945,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);
-    Q_EMIT closed();
+    Q_EMIT sigOnClosed();
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
@@ -4978,7 +4989,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
         } break;
         case QEvent::Show: {
             if (watched == m_bgScriptOutput) {
-                _hlAnim->stop();
+                m_hlAnim->stop();
             } else if (watched == m_scriptConsole) {
                 m_console->setIcon({});
             } else if (watched == m_numshowtable) {
@@ -5003,7 +5014,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             } else if (watched == m_sCanOver) {
                 on_toggleover();
                 return true;
-            } else if (watched == _editArea) {
+            } else if (watched == m_editArea) {
                 auto hex = currentHexView();
                 if (hex) {
                     hex->cursor()->switchInsertionMode();
@@ -5018,7 +5029,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             }
         } break;
         case QEvent::Wheel: {
-            if (watched == _editArea) {
+            if (watched == m_editArea) {
                 auto hex = currentHexView();
                 if (hex) {
                     hex->toggleArea();

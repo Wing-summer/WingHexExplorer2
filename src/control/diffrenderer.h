@@ -19,6 +19,7 @@
 #define DIFFRENDERER_H
 
 #include "QHexView/document/qhexrenderer.h"
+
 #include "class/diff/binarydiff.h"
 
 class DiffRenderer final : public QHexRenderer {

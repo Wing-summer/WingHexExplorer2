@@ -48,7 +48,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
-    QGradientStops _gradientStops;
+    QGradientStops m_gradientStops;
 };
 
 #endif

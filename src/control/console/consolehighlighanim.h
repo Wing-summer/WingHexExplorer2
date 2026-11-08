@@ -24,7 +24,8 @@
 class ConsoleHighlighAnim : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(int alpha READ getAlpha WRITE setAlpha NOTIFY alphaChanged FINAL)
+    Q_PROPERTY(
+        int alpha READ getAlpha WRITE setAlpha NOTIFY sigOnAlphaChanged FINAL)
 
 public:
     explicit ConsoleHighlighAnim(QObject *parent = nullptr);
@@ -43,13 +44,13 @@ public:
     void stop();
 
 signals:
-    void alphaChanged();
+    void sigOnAlphaChanged();
 
 private:
     QColor m_highlightColor;
     int m_alpha;
-    QWidget *_w;
-    QPropertyAnimation *_anim;
+    QWidget *m_w;
+    QPropertyAnimation *m_anim;
 };
 
 #endif // CONSOLEHIGHLIGHANIM_H

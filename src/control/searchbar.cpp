@@ -17,6 +17,8 @@
 
 #include "searchbar.h"
 
+#include <algorithm>
+
 #include <QAction>
 #include <QApplication>
 #include <QEvent>
@@ -32,7 +34,6 @@
 #include <QStyle>
 #include <QStyleOption>
 #include <QToolButton>
-#include <algorithm>
 
 namespace {
 enum class SearchIcon { Options, Previous, Next, Close, Busy, Warning };
@@ -43,9 +44,11 @@ class SearchIconEngine final : public QIconEngine {
 public:
     SearchIconEngine(SearchIcon icon, const QPalette &palette)
         : m_icon(icon), m_palette(palette) {}
+
     QIconEngine *clone() const override {
         return new SearchIconEngine(m_icon, m_palette);
     }
+
     QPixmap pixmap(const QSize &size, QIcon::Mode mode,
                    QIcon::State state) override {
         QPixmap result(size);
@@ -54,12 +57,14 @@ public:
         paint(&painter, QRect(QPoint(), size), mode, state);
         return result;
     }
+
     QPixmap scaledPixmap(const QSize &size, QIcon::Mode mode,
                          QIcon::State state, qreal scale) override {
         auto result = pixmap(size * scale, mode, state);
         result.setDevicePixelRatio(scale);
         return result;
     }
+
     void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode,
                QIcon::State) override {
         painter->save();
@@ -193,45 +198,51 @@ SearchBar::SearchBar(QWidget *parent, const QString &prefix) : QWidget(parent) {
     connect(button(QStringLiteral("Previous"), tr("Find previous")),
             &QToolButton::clicked, this, [this] {
                 cancelPendingSearch();
-                Q_EMIT searchRequested(true);
+                Q_EMIT sigOnSearchRequested(true);
             });
     connect(button(QStringLiteral("Next"), tr("Find next")),
             &QToolButton::clicked, this, [this] {
                 cancelPendingSearch();
-                Q_EMIT searchRequested(false);
+                Q_EMIT sigOnSearchRequested(false);
             });
     connect(button(QStringLiteral("Close"), tr("Close")), &QToolButton::clicked,
-            this, &SearchBar::closeRequested);
+            this, &SearchBar::sigOnCloseRequested);
     m_debounce.setSingleShot(true);
     m_debounce.setInterval(150);
     connect(&m_debounce, &QTimer::timeout, this, [this] {
         if (isVisible()) {
-            Q_EMIT searchRequested(false);
+            Q_EMIT sigOnSearchRequested(false);
         }
     });
     connect(m_controls.input, &QLineEdit::textChanged, this,
             &SearchBar::scheduleSearch);
     connect(m_controls.input, &QLineEdit::returnPressed, this, [this] {
         cancelPendingSearch();
-        Q_EMIT searchRequested(
+        Q_EMIT sigOnSearchRequested(
             QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier));
     });
     installEventFilter(this);
     refreshAppearance();
     hide();
 }
+
 QString SearchBar::searchText() const { return m_controls.input->text(); }
+
 void SearchBar::setSearchText(const QString &text) {
     m_controls.input->setText(text);
 }
+
 QMenu *SearchBar::optionsMenu() const { return m_controls.menu; }
+
 QLineEdit *SearchBar::lineEdit() const { return m_controls.input; }
+
 SearchBar::Options SearchBar::options() const {
     return {m_options.caseSensitive->isChecked() ? Qt::CaseSensitive
                                                  : Qt::CaseInsensitive,
             m_options.wholeWord->isChecked(), m_options.regex->isChecked(),
             m_options.wrap->isChecked()};
 }
+
 void SearchBar::setOptions(const Options &options) {
     const QSignalBlocker blockCase(m_options.caseSensitive),
         blockWord(m_options.wholeWord), blockRegex(m_options.regex),
@@ -243,7 +254,9 @@ void SearchBar::setOptions(const Options &options) {
     m_options.wrap->setChecked(options.wrap);
     scheduleSearch();
 }
+
 SearchBar::State SearchBar::state() const { return m_state; }
+
 QRegularExpression SearchBar::expression() const {
     const auto settings = options();
     auto text = settings.regularExpression
@@ -259,33 +272,41 @@ QRegularExpression SearchBar::expression() const {
     }
     return QRegularExpression(text, flags);
 }
+
 SearchBar::Query SearchBar::query() const {
     return {searchText(), options(), expression()};
 }
+
 bool SearchBar::Query::matches(const QString &candidate) const {
     return options.regularExpression || options.wholeWords
                ? pattern.match(candidate).hasMatch()
                : candidate.contains(text, options.caseSensitivity);
 }
+
 void SearchBar::activate() {
     show();
     m_controls.input->setFocus();
     m_controls.input->selectAll();
 }
+
 void SearchBar::scheduleSearch() {
-    Q_EMIT queryChanged();
+    Q_EMIT sigOnQueryChanged();
     setState(State::Idle);
     m_debounce.start();
 }
+
 void SearchBar::cancelPendingSearch() { m_debounce.stop(); }
+
 void SearchBar::setState(State state, const QString &detail) {
     m_state = state;
     m_detail = detail;
     updateStatus();
 }
+
 QIcon SearchBar::busyIcon(const QPalette &palette) {
     return QIcon(new SearchIconEngine(SearchIcon::Busy, palette));
 }
+
 void SearchBar::refreshAppearance() {
     const int extent =
         style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
@@ -302,8 +323,9 @@ void SearchBar::refreshAppearance() {
         m_controls.buttons[i]->setFixedSize(side, side);
         m_controls.buttons[i]->setIcon(searchIcon(this, icons[i]));
     }
-    Q_EMIT geometryChanged();
+    Q_EMIT sigOnGeometryChanged();
 }
+
 void SearchBar::updateStatus() {
     QString message;
     switch (m_state) {
@@ -341,6 +363,7 @@ void SearchBar::updateStatus() {
         m_controls.input->update();
     }
 }
+
 bool SearchBar::handleKeyEvent(QEvent *event) {
     if (event->type() != QEvent::ShortcutOverride &&
         event->type() != QEvent::KeyPress) {
@@ -360,25 +383,28 @@ bool SearchBar::handleKeyEvent(QEvent *event) {
     if (event->type() == QEvent::KeyPress) {
         cancelPendingSearch();
         if (close) {
-            Q_EMIT closeRequested();
+            Q_EMIT sigOnCloseRequested();
         } else {
-            Q_EMIT showRequested();
+            Q_EMIT sigOnShowRequested();
             if (next || previous) {
-                Q_EMIT searchRequested(previous);
+                Q_EMIT sigOnSearchRequested(previous);
             }
         }
     }
     return true;
 }
+
 void SearchBar::paintEvent(QPaintEvent *) {
     QStyleOption option;
     option.initFrom(this);
     QPainter painter(this);
     style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
 }
+
 bool SearchBar::eventFilter(QObject *object, QEvent *event) {
     return handleKeyEvent(event) || QWidget::eventFilter(object, event);
 }
+
 void SearchBar::changeEvent(QEvent *event) {
     QWidget::changeEvent(event);
     if (event->type() == QEvent::FontChange ||
@@ -388,12 +414,14 @@ void SearchBar::changeEvent(QEvent *event) {
         QTimer::singleShot(0, this, &SearchBar::refreshAppearance);
     }
 }
+
 void SearchBar::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
     refreshAppearance();
 }
+
 void SearchBar::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
     cancelPendingSearch();
-    Q_EMIT geometryChanged();
+    Q_EMIT sigOnGeometryChanged();
 }

@@ -18,10 +18,11 @@
 #ifndef SCRIPTFILESYSTEM_H
 #define SCRIPTFILESYSTEM_H
 
-#include <QDir>
-#include <QFile>
 #include <functional>
 #include <utility>
+
+#include <QDir>
+#include <QFile>
 
 namespace ScriptFileSystem {
 
@@ -48,7 +49,7 @@ protected:
 
 private:
     bool prepareOpen(OpenMode &mode);
-    bool openedExisting_ = true;
+    bool m_openedExisting = true;
 };
 
 template <class... Args>
@@ -60,6 +61,7 @@ void checkFileAccess(Access access, QFile *file);
 void checkFileDeviceAccess(Access access, QFileDevice *file);
 void checkIODeviceAccess(Access access, QIODevice *device);
 void checkDirectoryAccess(Access access, QDir *directory);
+
 template <class T>
 void checkResourceAccess(Access access, T *) {
     checkDirectoryAccess(access, nullptr);

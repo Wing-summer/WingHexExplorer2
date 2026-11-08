@@ -24,33 +24,35 @@
 
 #define QHEXVIEW_VERSION 3.1
 
-#include "document/qhexdocument.h"
-#include "document/qhexrenderer.h"
 #include <QAbstractScrollArea>
 #include <QTimer>
+
+#include "document/qhexdocument.h"
+#include "document/qhexrenderer.h"
 
 class QHexView : public QAbstractScrollArea {
     Q_OBJECT
 
     Q_PROPERTY(QColor headerColor READ headerColor WRITE setHeaderColor NOTIFY
-                   headerColorChanged FINAL)
+                   sigOnHeaderColorChanged FINAL)
     Q_PROPERTY(QColor addressColor READ addressColor WRITE setAddressColor
-                   NOTIFY addressColorChanged FINAL)
+                   NOTIFY sigOnAddressColorChanged FINAL)
     Q_PROPERTY(QColor bytesBackground READ bytesBackground WRITE
-                   setBytesBackground NOTIFY bytesBackgroundChanged FINAL)
-    Q_PROPERTY(
-        QColor bytesAlterBackground READ bytesAlterBackground WRITE
-            setBytesAlterBackground NOTIFY bytesAlterBackgroundChanged FINAL)
+                   setBytesBackground NOTIFY sigOnBytesBackgroundChanged FINAL)
+    Q_PROPERTY(QColor bytesAlterBackground READ bytesAlterBackground WRITE
+                   setBytesAlterBackground NOTIFY
+                       sigOnBytesAlterBackgroundChanged FINAL)
     Q_PROPERTY(QColor bytesColor READ bytesColor WRITE setBytesColor NOTIFY
-                   bytesColorChanged FINAL)
+                   sigOnBytesColorChanged FINAL)
     Q_PROPERTY(QColor selectionColor READ selectionColor WRITE setSelectionColor
-                   NOTIFY selectionColorChanged FINAL)
-    Q_PROPERTY(QColor selBackgroundColor READ selBackgroundColor WRITE
-                   setSelBackgroundColor NOTIFY selBackgroundColorChanged FINAL)
+                   NOTIFY sigOnSelectionColorChanged FINAL)
+    Q_PROPERTY(
+        QColor selBackgroundColor READ selBackgroundColor WRITE
+            setSelBackgroundColor NOTIFY sigOnSelBackgroundColorChanged FINAL)
     Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY
-                   borderColorChanged FINAL)
+                   sigOnBorderColorChanged FINAL)
     Q_PROPERTY(qreal scaleRate READ scaleRate WRITE setScaleRate NOTIFY
-                   scaleRateChanged FINAL)
+                   sigOnScaleRateChanged FINAL)
 
 public:
     explicit QHexView(QWidget *parent = nullptr);
@@ -166,39 +168,39 @@ private:
     void adjustLineVisible(qsizetype line);
 
 signals:
-    void cursorLocationChanged();
-    void cursorSelectionChanged();
-    void canUndoChanged(bool canUndo);
-    void canRedoChanged(bool canRedo);
-    void documentSaved(bool saved);
-    void documentLockedFile(bool locked);
-    void documentKeepSize(bool keep);
-    void editableAreaClicked(QHexRenderer::Areas area);
-    void insertionModeChanged();
+    void sigOnCursorLocationChanged();
+    void sigOnCursorSelectionChanged();
+    void sigOnCanUndoChanged(bool canUndo);
+    void sigOnCanRedoChanged(bool canRedo);
+    void sigOnDocumentSaved(bool saved);
+    void sigOnDocumentLockedFile(bool locked);
+    void sigOnDocumentKeepSize(bool keep);
+    void sigOnEditableAreaClicked(QHexRenderer::Areas area);
+    void sigOnInsertionModeChanged();
 
-    void metafgVisibleChanged(bool b);
-    void metabgVisibleChanged(bool b);
-    void metaCommentVisibleChanged(bool b);
-    void metaStatusChanged();
+    void sigOnMetaFgVisibleChanged(bool b);
+    void sigOnMetaBgVisibleChanged(bool b);
+    void sigOnMetaCommentVisibleChanged(bool b);
+    void sigOnMetaStatusChanged();
 
-    void scaleRateChanged();
-    void copyLimitRaised();
+    void sigOnScaleRateChanged();
+    void sigOnCopyLimitRaised();
 
     /*=============================*/
 
-    void headerColorChanged();
-    void addressColorChanged();
-    void bytesBackgroundChanged();
-    void bytesAlterBackgroundChanged();
-    void bytesColorChanged();
-    void selectionColorChanged();
-    void selBackgroundColorChanged();
-    void borderColorChanged();
-    void inputTextHitLimit();
+    void sigOnHeaderColorChanged();
+    void sigOnAddressColorChanged();
+    void sigOnBytesBackgroundChanged();
+    void sigOnBytesAlterBackgroundChanged();
+    void sigOnBytesColorChanged();
+    void sigOnSelectionColorChanged();
+    void sigOnSelBackgroundColorChanged();
+    void sigOnBorderColorChanged();
+    void sigOnInputTextHitLimit();
 
-    void headerAreaClicked(QHexRenderer::Areas area);
-    void onPaintCustomEvent(int XOffset, qsizetype firstVisible,
-                            qsizetype begin, qsizetype end);
+    void sigOnHeaderAreaClicked(QHexRenderer::Areas area);
+    void sigOnPaintCustomEvent(int xOffset, qsizetype firstVisible,
+                               qsizetype begin, qsizetype end);
 
 protected:
     virtual bool event(QEvent *e) override;

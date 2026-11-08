@@ -1,11 +1,11 @@
 #ifndef INSPECTQTLOGHELPER_H
 #define INSPECTQTLOGHELPER_H
 
-#include "dialog/framelessdialogbase.h"
-
 #include <QCoreApplication>
 #include <QFile>
 #include <QTextBrowser>
+
+#include "dialog/framelessdialogbase.h"
 
 class InspectQtLogHelper {
     Q_DECLARE_TR_FUNCTIONS(InspectQtLogHelper)
@@ -29,11 +29,11 @@ private:
                                const QString &message);
 
 private:
-    FramelessDialogBase *_logger;
-    QTextBrowser *_ctx;
+    FramelessDialogBase *m_logger;
+    QTextBrowser *m_ctx;
 
-    QSharedPointer<QFile> _file = nullptr;
-    QSharedPointer<QTextStream> _stream = nullptr;
+    QSharedPointer<QFile> m_file = nullptr;
+    QSharedPointer<QTextStream> m_stream = nullptr;
 };
 
 #endif // INSPECTQTLOGHELPER_H

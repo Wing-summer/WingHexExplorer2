@@ -17,11 +17,11 @@
 
 #include "commandhistorymanager.h"
 
-#include "utilities.h"
-
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSaveFile>
+
+#include "utilities.h"
 
 constexpr auto COMMAND_FILE_SIZE_LIMIT = 4 * 1024 * 1024;
 

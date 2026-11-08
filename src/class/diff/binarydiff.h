@@ -18,7 +18,11 @@
 #ifndef BINARYDIFF_H
 #define BINARYDIFF_H
 
-#include "diffconstants.h"
+#include <array>
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <vector>
 
 #include <QIODevice>
 #include <QLoggingCategory>
@@ -27,11 +31,7 @@
 #include <QString>
 #include <QVector>
 
-#include <array>
-#include <atomic>
-#include <functional>
-#include <memory>
-#include <vector>
+#include "diffconstants.h"
 
 namespace WingDiff {
 
@@ -106,6 +106,7 @@ public:
 
 private:
     static constexpr size_t BlockSize = 1024;
+
     struct Block {
         std::array<Range, BlockSize> ranges;
         std::array<quint16, BlockSize> changed;

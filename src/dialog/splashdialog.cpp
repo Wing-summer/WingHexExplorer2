@@ -18,11 +18,11 @@
 #include "splashdialog.h"
 #include "ui_splashdialog.h"
 
+#include <QCloseEvent>
+
 #include "class/application/startupfeedback.h"
 #include "class/application/startuptrace.h"
 #include "class/settings/thememanager.h"
-
-#include <QCloseEvent>
 
 SplashDialog::SplashDialog(QWidget *parent)
     : SplashDialog(DisplayMode::Immediate, 0, parent) {}
@@ -38,7 +38,7 @@ SplashDialog::SplashDialog(DisplayMode mode, qint64 expectedDurationMs,
     // The application QSS is deferred while the main window is assembled.
     // Style only this subtree when feedback is actually needed.
     auto &theme = ThemeManager::instance();
-    connect(&theme, &ThemeManager::themeChanged, this, [this]() {
+    connect(&theme, &ThemeManager::sigOnThemeChanged, this, [this]() {
         if (m_shown && !m_finished) {
             setStyleSheet(ThemeManager::instance().currentStyleSheet());
         }

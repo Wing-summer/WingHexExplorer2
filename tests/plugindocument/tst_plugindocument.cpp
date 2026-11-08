@@ -1,25 +1,30 @@
 // Copyright (C) 2026 WingSummer
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#include "WingPlugin/iwingplugin.h"
-#include "WingPlugin/winghexdocument.h"
-#include "WingPlugin/wingplugincalls_p.h"
+#include <thread>
+#include <type_traits>
+
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QSharedPointer>
 #include <QTest>
-#include <thread>
-#include <type_traits>
+
+#include "WingPlugin/iwingplugin.h"
+#include "WingPlugin/winghexdocument.h"
+#include "WingPlugin/wingplugincalls_p.h"
 
 using namespace WingHex;
 
 class Plugin final : public IWingPlugin {
 public:
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("probe");
     }
+
     const QString pluginComment() const override { return {}; }
 };
 
@@ -38,10 +43,12 @@ public:
         QMap<qsizetype, QString> bookmarks;
         MetadataInfo annotation{-1, -1, {}, {}, {}};
     };
+
     struct Handle {
         const QObject *owner;
         QSharedPointer<State> state;
     };
+
     QHash<int, Handle> handles;
     QHash<QUrl, QSharedPointer<State>> files;
     int next = 0;
@@ -77,16 +84,20 @@ public:
         CallTableEvent event(&data);
         QCoreApplication::sendEvent(&plugin, &event);
     }
+
     QSharedPointer<State> state(const QObject *owner, int handle) {
         auto it = handles.constFind(handle);
         return it != handles.cend() && it->owner == owner && !it->state->closed
                    ? it->state
                    : QSharedPointer<State>();
     }
+
 public slots:
+
     bool isFileOpened(const QObject *owner, int handle) {
         return bool(state(owner, handle));
     }
+
     bool select(const QObject *owner, qsizetype offset, qsizetype length,
                 SelectionMode) {
         auto target = state(owner, current.value(owner, -1));
@@ -97,12 +108,14 @@ public slots:
         target->selectionSize = length;
         return true;
     }
+
     QByteArray selectedBytes(const QObject *owner, qsizetype index) {
         auto target = state(owner, current.value(owner, -1));
         return target && index == 0 ? target->bytes.mid(target->selectionBegin,
                                                         target->selectionSize)
                                     : QByteArray{};
     }
+
     bool addBookMark(const QObject *owner, qsizetype offset,
                      const QString &comment) {
         auto target = state(owner, current.value(owner, -1));
@@ -112,10 +125,12 @@ public slots:
         target->bookmarks.insert(offset, comment);
         return true;
     }
+
     QString bookMarkComment(const QObject *owner, qsizetype offset) {
         auto target = state(owner, current.value(owner, -1));
         return target ? target->bookmarks.value(offset) : QString{};
     }
+
     bool metadata(const QObject *owner, qsizetype begin, qsizetype length,
                   const QColor &foreground, const QColor &background,
                   const QString &comment) {
@@ -127,10 +142,12 @@ public slots:
                               comment};
         return true;
     }
+
     MetadataInfo metadataInfo(const QObject *owner, qsizetype) {
         auto target = state(owner, current.value(owner, -1));
         return target ? target->annotation : MetadataInfo{-1, -1, {}, {}, {}};
     }
+
     bool switchDocument(const QObject *owner, int handle) {
         if (QThread::currentThread() != thread()) {
             return false;
@@ -142,11 +159,13 @@ public slots:
         current[owner] = handle;
         return true;
     }
+
     QByteArray readBytes(const QObject *owner, qsizetype offset,
                          qsizetype count) {
         auto target = state(owner, current.value(owner, -1));
         return target ? target->bytes.mid(offset, count) : QByteArray{};
     }
+
     bool writeBytes(const QObject *owner, qsizetype offset,
                     const QByteArray &bytes) {
         if (QThread::currentThread() != thread()) {
@@ -160,9 +179,11 @@ public slots:
         target->modified = true;
         return true;
     }
+
     bool moveTo(const QObject *owner, qsizetype, bool) {
         return bool(state(owner, current.value(owner, -1)));
     }
+
     bool moveTo(const QObject *owner, qsizetype, qsizetype, int, bool) {
         return bool(state(owner, current.value(owner, -1)));
     }
@@ -179,6 +200,7 @@ public slots:
         handles.insert(id, {owner, files[url]});
         return id;
     }
+
     int closeFileHandle(const QObject *owner, int handle) {
         if (QThread::currentThread() != thread()) {
             return ErrFile::NotAllowedInNoneGUIThread;
@@ -189,6 +211,7 @@ public slots:
         handles.remove(handle);
         return ErrFile::Success;
     }
+
     int closeFile(const QObject *owner, int handle, bool force) {
         if (QThread::currentThread() != thread()) {
             return ErrFile::NotAllowedInNoneGUIThread;
@@ -208,6 +231,7 @@ public slots:
             [&](const auto &entry) { return entry.value().state == target; });
         return ErrFile::Success;
     }
+
     DocumentInfo documentInfo(const QObject *owner, int handle) {
         auto target = state(owner, handle);
         DocumentInfo info;
@@ -226,6 +250,7 @@ public slots:
         }
         return info;
     }
+
     bool raiseDocument(const QObject *owner, int handle) {
         if (!state(owner, handle)) {
             return false;
@@ -237,9 +262,11 @@ public slots:
 
 template <typename T, typename = void>
 struct HasUrlOpen : std::false_type {};
+
 template <typename T>
 struct HasUrlOpen<T, std::void_t<decltype(std::declval<T &>().openFile(
                          std::declval<QUrl>()))>> : std::true_type {};
+
 static_assert(!HasUrlOpen<WingHexDocument>::value);
 static_assert(!std::is_copy_constructible_v<WingHexDocument>);
 static_assert(std::is_nothrow_move_constructible_v<WingHexDocument>);
@@ -251,6 +278,7 @@ static_assert(std::is_nothrow_move_constructible_v<WingHexDocument::UsingEnv>);
 class DocumentTest final : public QObject {
     Q_OBJECT
 private slots:
+
     void usageScope() {
         Host host;
         Plugin plugin;
@@ -340,6 +368,7 @@ private slots:
         QVERIFY(!inner);
         QCOMPARE(host.switches, 4);
     }
+
     void invalidDocumentCannotEnterScope() {
         Host host;
         Plugin plugin;
@@ -357,6 +386,7 @@ private slots:
         QVERIFY(!moved.use());
         QVERIFY(moved.readBytes(0, 1).isEmpty());
     }
+
     void failedScopeEntryCanRetry() {
         Host host;
         Plugin plugin;
@@ -376,6 +406,7 @@ private slots:
         QVERIFY(!a.use());
         QCOMPARE(b.readBytes(0, 3), QByteArrayLiteral("abc"));
     }
+
     void lastScopeReleasedOnWorker() {
         Host host;
         Plugin plugin;
@@ -399,6 +430,7 @@ private slots:
         QVERIFY(again);
         QCOMPARE(host.switches, 3);
     }
+
     void invalidatedScopeDoesNotBlockReentry() {
         Host host;
         Plugin plugin;
@@ -423,6 +455,7 @@ private slots:
         QVERIFY(!old);
         QCOMPARE(host.switches, 3);
     }
+
     void closeWithUsingEnv() {
         Host host;
         Plugin plugin;
@@ -440,6 +473,7 @@ private slots:
         QVERIFY(!env);
         QVERIFY(!document.writeBytes(0, QByteArrayLiteral("bad")));
     }
+
     void independentPluginScopes() {
         Host host;
         Plugin first, second;
@@ -458,6 +492,7 @@ private slots:
         QCOMPARE(a.readBytes(0, 3), QByteArrayLiteral("abc"));
         QCOMPARE(b.readBytes(0, 3), QByteArrayLiteral("abc"));
     }
+
     void guardOutlivesPlugin() {
         Host host;
         auto plugin = std::make_unique<Plugin>();
@@ -471,6 +506,7 @@ private slots:
         QVERIFY(!usage);
         QVERIFY(document.readBytes(0, 1).isEmpty());
     }
+
     void guardOutlivesDocument() {
         Host host;
         Plugin plugin;
@@ -486,6 +522,7 @@ private slots:
         QVERIFY(!usage);
         QVERIFY(host.handles.isEmpty());
     }
+
     void urls() {
         const auto path = QDir::tempPath() + QStringLiteral("/中文 # %.bin");
         QCOMPARE(WingHex::fileUrl(path).toLocalFile(), path);
@@ -509,6 +546,7 @@ private slots:
         QVERIFY(QDir::isAbsolutePath(
             WingHex::fileUrl(QStringLiteral("relative.bin")).toLocalFile()));
     }
+
     void validityUsesOwnedHandleWithoutScope() {
         Host host;
         Plugin plugin, other;
@@ -563,6 +601,7 @@ private slots:
                  WingHex::fileUrl(QStringLiteral("properties.wingpro"))
                      .toLocalFile());
     }
+
     void releaseHandleExplicitly() {
         Host host;
         Plugin plugin;
@@ -577,6 +616,7 @@ private slots:
         QCOMPARE(document.openFile(QStringLiteral("release.bin")),
                  ErrFile::Success);
     }
+
     void openingAndClosing() {
         Host host;
         Plugin plugin;
@@ -609,6 +649,7 @@ private slots:
                  int(ErrFile::Success));
         QVERIFY(!workspace.documentInfo().workSpaceName.isEmpty());
     }
+
     void moveAndExternalClose() {
         Host host;
         Plugin plugin;
@@ -625,6 +666,7 @@ private slots:
         QCOMPARE(a.openFile(QStringLiteral("again.bin")),
                  int(ErrFile::Success));
     }
+
     void workerDestruction() {
         Host host;
         Plugin plugin;
@@ -639,6 +681,7 @@ private slots:
         QCOMPARE(host.handles.size(), 0);
         QVERIFY(!host.files.cbegin().value()->closed);
     }
+
     void contextAndThread() {
         Host host;
         auto plugin = std::make_unique<Plugin>();

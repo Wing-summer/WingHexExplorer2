@@ -20,20 +20,20 @@
 #include "luau/luautypes.h"
 #include "luauutil.h"
 
-void LuauVariableRegistry::clear() { variables_.clear(); }
+void LuauVariableRegistry::clear() { m_variables.clear(); }
 
-void LuauVariableRegistry::update(const QVector<lua_State *> &vm_chain) {
-    if (vm_chain.isEmpty()) {
+void LuauVariableRegistry::update(const QVector<lua_State *> &vmChain) {
+    if (vmChain.isEmpty()) {
         return;
     }
 
-    auto *scope_state = vm_chain.first();
-    LuauUtil::DisableDebugStep _(scope_state);
-    depth_ = 0;
-    for (lua_State *L : vm_chain) {
-        fetch(L, scope_state);
+    auto *scopeState = vmChain.first();
+    LuauUtil::DisableDebugStep _(scopeState);
+    m_depth = 0;
+    for (lua_State *L : vmChain) {
+        fetch(L, scopeState);
     }
-    fetchGlobals(scope_state);
+    fetchGlobals(scopeState);
     clearDirtyScopes();
 }
 
@@ -59,28 +59,28 @@ LuauVariable::Ptr LuauVariableRegistry::createVariable(lua_State *L,
 
 bool LuauVariableRegistry::registerVariables(LuauScope scope,
                                              LuauVariableList variables) {
-    if (variables_.contains(scope)) {
+    if (m_variables.contains(scope)) {
         return false;
     }
     Q_ASSERT(variables);
-    variables_.insert(scope, variables);
+    m_variables.insert(scope, variables);
     return true;
 }
 
 void LuauVariableRegistry::registerOrUpdateVariables(
     LuauScope scope, LuauVariableList variables) {
     Q_ASSERT(variables);
-    variables_.insert(scope, variables);
+    m_variables.insert(scope, variables);
 }
 
 bool LuauVariableRegistry::isRegistered(LuauScope scope) const {
-    return variables_.contains(scope);
+    return m_variables.contains(scope);
 }
 
 LuauVariableList LuauVariableRegistry::getVariables(const LuauScope &scope,
                                                     bool load) {
-    auto it = variables_.find(scope);
-    if (it == variables_.end()) {
+    auto it = m_variables.find(scope);
+    if (it == m_variables.end()) {
         return {};
     }
 
@@ -96,8 +96,8 @@ LuauVariableList LuauVariableRegistry::getVariables(const LuauScope &scope,
 QPair<const LuauScope, LuauVariableList>
 LuauVariableRegistry::getVariables(int reference) {
     LuauScope scope(reference);
-    auto it = variables_.find(scope);
-    if (it == variables_.end()) {
+    auto it = m_variables.find(scope);
+    if (it == m_variables.end()) {
         return {};
     }
     return qMakePair(it.key(), it.value());
@@ -117,7 +117,7 @@ void LuauVariableRegistry::fetchGlobals(lua_State *L) {
 }
 
 void LuauVariableRegistry::clearDirtyScopes() {
-    for (auto &&[scope, variables] : variables_.asKeyValueRange()) {
+    for (auto &&[scope, variables] : m_variables.asKeyValueRange()) {
         if (scope.isTable() || scope.isUserData()) {
             variables->clear();
             scope.markUnloaded();
@@ -133,7 +133,7 @@ void LuauVariableRegistry::fetch(lua_State *L, lua_State *src) {
             continue;
         }
         fetchFromStack(L, level, src);
-        ++depth_;
+        ++m_depth;
     }
 }
 
@@ -146,7 +146,7 @@ void LuauVariableRegistry::fetchFromStack(lua_State *L, int level,
         variables->append(createVariable(L, QString::fromUtf8(name), level));
         lua_pop(L, 1);
     }
-    registerOrUpdateVariables(getLocalScope(src, depth_), variables);
+    registerOrUpdateVariables(getLocalScope(src, m_depth), variables);
 
     // Register upvalues
     lua_Debug ar = {};
@@ -158,5 +158,5 @@ void LuauVariableRegistry::fetchFromStack(lua_State *L, int level,
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
-    registerOrUpdateVariables(getUpvalueScope(src, depth_), upvalues);
+    registerOrUpdateVariables(getUpvalueScope(src, m_depth), upvalues);
 }

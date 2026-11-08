@@ -18,11 +18,6 @@
 #ifndef LUAULANGUAGESERVER_H
 #define LUAULANGUAGESERVER_H
 
-#include "lsp.h"
-#include "luau/scriptsymbol.h"
-#include "semantictokensvisitor.h"
-#include "typedisplay.h"
-
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -37,7 +32,12 @@
 #include "Luau/Documentation.h"
 #include "Luau/Frontend.h"
 #include "Luau/TypeCheckLimits.h"
+
+#include "lsp.h"
+#include "luau/scriptsymbol.h"
 #include "luau/wingluaurequire.h"
+#include "semantictokensvisitor.h"
+#include "typedisplay.h"
 
 namespace Luau {
 struct ToStringOptions;
@@ -74,9 +74,9 @@ public:
     void onUpdateDocument(const lsp::DocumentUri &uri, QTextDocument *document);
 
 signals:
-    void initialized();
-    void onPublishDiagnostic(const lsp::DocumentUri &,
-                             const QVector<lsp::Diagnostic> &);
+    void sigOnInitialized();
+    void sigOnPublishDiagnostic(const lsp::DocumentUri &,
+                                const QVector<lsp::Diagnostic> &);
 
 public:
     QVector<lsp::CompletionItem>
@@ -119,6 +119,7 @@ public:
         Ffi,
         Plugins
     };
+
     struct Symbol {
         lsp::CompletionItem item;
         QString fullDeclaration;
@@ -159,6 +160,7 @@ private:
         DocumentHandle(lsp::DocumentUri uri, QTextDocument *document);
         DocumentHandle(lsp::DocumentUri uri,
                        std::unique_ptr<QTextDocument> document);
+
         explicit operator bool() const { return document != nullptr; }
     };
 
@@ -180,45 +182,45 @@ private:
     /// Used for documentation comment lookup within definition files and
     /// to keep checked modules alive for type function lifetime.
     std::unordered_map<Luau::ModuleName, DefinitionsFileState>
-        definitionsFileState{};
+        m_definitionsFileState{};
 
 private:
-    Luau::Frontend frontend;
-    Luau::TypeCheckLimits limits;
-    Luau::Config defaultConfig;
+    Luau::Frontend m_frontend;
+    Luau::TypeCheckLimits m_limits;
+    Luau::Config m_defaultConfig;
 
-    QHash<QString, QString> builtinModuleFiles;
-    QString symbolCatalogFile;
-    QStringList pluginDefinitionFiles;
-    QHash<QString, QString> typeDisplayNames;
-    QHash<QString, QList<Symbol>> symbolPages;
-    QList<Symbol> pluginRoots;
-    QHash<QString, QList<Symbol>> pluginPages;
-    QList<Symbol> catalogRoots;
-    std::optional<QList<Symbol>> builtinRoots;
-    QStringList readAllowedCfgRoots;
-    std::unique_ptr<WingLuauRequire::ResolutionSession> requireResolver;
+    QHash<QString, QString> m_builtinModuleFiles;
+    QString m_symbolCatalogFile;
+    QStringList m_pluginDefinitionFiles;
+    QHash<QString, QString> m_typeDisplayNames;
+    QHash<QString, QList<Symbol>> m_symbolPages;
+    QList<Symbol> m_pluginRoots;
+    QHash<QString, QList<Symbol>> m_pluginPages;
+    QList<Symbol> m_catalogRoots;
+    std::optional<QList<Symbol>> m_builtinRoots;
+    QStringList m_readAllowedCfgRoots;
+    std::unique_ptr<WingLuauRequire::ResolutionSession> m_requireResolver;
     /// A registered definitions file passed by the client
-    std::unordered_map<std::string, QString> definitionsFiles;
+    std::unordered_map<std::string, QString> m_definitionsFiles;
     /// A registered documentation file passed by the client
-    QStringList documentationFiles;
+    QStringList m_documentationFiles;
     /// Parsed documentation database
-    Luau::DocumentationDatabase documentation{};
+    Luau::DocumentationDatabase m_documentation{};
     /// Whether this workspace folder has completed an initial set up process.
     /// Workspaces are initialized lazily on demand.
     /// When a new request comes in and the workspace is not ready, we will
     /// prepare it then.
-    bool isReady = false;
+    bool m_isReady = false;
 
     // Currently opened files where content is managed by client
     mutable std::unordered_map<Luau::ModuleName, QTextDocument *>
-        managedFiles{};
-    mutable std::unordered_map<QString, Luau::Config> configCache{};
+        m_managedFiles{};
+    mutable std::unordered_map<QString, Luau::Config> m_configCache{};
 
     /// Whether the first-time configuration (platform, global types) have been
     /// applied for this folder. First-time configuration is only applied once,
     /// and changes require a language server restart
-    bool appliedFirstTimeConfiguration = false;
+    bool m_appliedFirstTimeConfiguration = false;
 
     // FileResolver interface
 private:

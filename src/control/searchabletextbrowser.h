@@ -18,9 +18,10 @@
 #ifndef SEARCHABLETEXTBROWSER_H
 #define SEARCHABLETEXTBROWSER_H
 
-#include "searchbar.h"
 #include <QTextBrowser>
 #include <QTimer>
+
+#include "searchbar.h"
 
 class SearchableTextBrowser : public QTextBrowser {
     Q_OBJECT
@@ -38,7 +39,7 @@ public slots:
     void findNext();
     void findPrevious();
 signals:
-    void searchFinished(const QTextCursor &match);
+    void sigOnSearchFinished(const QTextCursor &match);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;

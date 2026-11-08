@@ -17,11 +17,11 @@
 
 #include "qhexreadsession.h"
 
-#include <QFile>
-#include <QFileInfo>
-
 #include <algorithm>
 #include <cstring>
+
+#include <QFile>
+#include <QFileInfo>
 
 Q_LOGGING_CATEGORY(lcQHexRead, "wing.qhexview.read")
 

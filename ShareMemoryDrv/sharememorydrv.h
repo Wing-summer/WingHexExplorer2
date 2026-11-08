@@ -51,7 +51,7 @@ private:
     WING_SERVICE bool isShareMemUsed(const WingHex::SenderInfo &sender);
 
 private:
-    size_t _count = 0;
+    size_t m_count = 0;
 };
 
 #endif // SHAREDMEMORYDRIVER_H

@@ -1,12 +1,12 @@
 #include "wingupdater.h"
 
-#include "class/settings/languagemanager.h"
-
 #include <QEventLoop>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QVersionNumber>
+
+#include "class/settings/languagemanager.h"
 
 bool WingUpdater::checkUpdate(bool *ok) {
     QNetworkAccessManager manager;

@@ -18,10 +18,10 @@
 #ifndef WINGCONSOLEHIGHLIGHER_H
 #define WINGCONSOLEHIGHLIGHER_H
 
-#include "WingCodeEdit/wingsyntaxhighlighter.h"
-
 #include <QFont>
 #include <QTextCharFormat>
+
+#include "WingCodeEdit/wingsyntaxhighlighter.h"
 
 struct WingEditorMetaInfo {
     bool isClickable = false;
@@ -71,14 +71,14 @@ protected:
 private:
     void highlightPrompt(QStringView prompt);
 
-    int _formatOffset = 0;
+    int m_formatOffset = 0;
     // One-entry cache: continuation prompts normally repeat across many blocks.
-    bool _promptCacheValid = false;
-    QFont _promptDocumentFont;
-    QString _promptText;
-    qreal _promptTabWidth = -1;
-    QTextCharFormat _promptFormat;
-    QTextCharFormat _promptTailFormat;
+    bool m_promptCacheValid = false;
+    QFont m_promptDocumentFont;
+    QString m_promptText;
+    qreal m_promptTabWidth = -1;
+    QTextCharFormat m_promptFormat;
+    QTextCharFormat m_promptTailFormat;
 };
 
 #endif // WINGCONSOLEHIGHLIGHER_H

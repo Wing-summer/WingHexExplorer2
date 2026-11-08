@@ -18,13 +18,13 @@
 #ifndef LUAUFORMATTER_H
 #define LUAUFORMATTER_H
 
-#include "Luau/Ast.h"
-#include "Luau/Cst.h"
-#include "Luau/ParseResult.h"
+#include <vector>
 
 #include <QString>
 
-#include <vector>
+#include "Luau/Ast.h"
+#include "Luau/Cst.h"
+#include "Luau/ParseResult.h"
 
 class LuauFormat {
 public:
@@ -87,10 +87,12 @@ private:
                      unsigned int blockDepth);
     QByteArray getIndentString() const;
     QByteArray sourceText(const Luau::Location &location) const;
-    inline void increaseIndent() { ++indentLevel_; }
+
+    inline void increaseIndent() { ++m_indentLevel; }
+
     inline void decreaseIndent() {
-        if (indentLevel_ > 0) {
-            --indentLevel_;
+        if (m_indentLevel > 0) {
+            --m_indentLevel;
         }
     }
 
@@ -177,20 +179,20 @@ private:
     void formatAttributes(const Luau::AstArray<Luau::AstAttr *> &attributes);
 
 private:
-    FormatOptions options_;
-    Luau::CstNodeMap cstNodeMap_;
-    QByteArray source_;
-    QByteArray output_;
-    std::vector<Luau::Comment> comments_;
-    std::vector<size_t> sourceLineOffsets_;
-    std::vector<TokenAnchor> tokenAnchors_;
+    FormatOptions m_options;
+    Luau::CstNodeMap m_cstNodeMap;
+    QByteArray m_source;
+    QByteArray m_output;
+    std::vector<Luau::Comment> m_comments;
+    std::vector<size_t> m_sourceLineOffsets;
+    std::vector<TokenAnchor> m_tokenAnchors;
 
-    size_t nextComment_ = 0;
-    unsigned int lastSourceLine_ = 0;
-    unsigned int indentLevel_ = 0;
-    bool hasSourceLine_ = false;
-    bool hasFmtError_ = false;
-    bool atLineStart_ = true;
+    size_t m_nextComment = 0;
+    unsigned int m_lastSourceLine = 0;
+    unsigned int m_indentLevel = 0;
+    bool m_hasSourceLine = false;
+    bool m_hasFmtError = false;
+    bool m_atLineStart = true;
 };
 
 #endif

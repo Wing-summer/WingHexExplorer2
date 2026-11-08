@@ -45,7 +45,7 @@ public slots:
 
 private:
     Ui::LayoutDelDialog *ui;
-    FramelessDialogBase *_dialog;
+    FramelessDialogBase *m_dialog;
 };
 
 #endif // LAYOUTDELDIALOG_H

@@ -18,9 +18,9 @@
 #ifndef DIFFCONSTANTS_H
 #define DIFFCONSTANTS_H
 
-#include <QtGlobal>
-
 #include <array>
+
+#include <QtGlobal>
 
 namespace WingDiff {
 inline constexpr quint64 KiB = 1024;

@@ -20,6 +20,7 @@
 */
 
 #include "replacecommand.h"
+
 #include "document/qhexdocument.h"
 
 inline QString constructText(qsizetype offset, qsizetype length) {
@@ -40,12 +41,12 @@ ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
 }
 
 void ReplaceCommand::undo() {
-    m_doc->_replace(m_offset, m_olddata);
+    m_doc->replaceInternal(m_offset, m_olddata);
     m_cursor->setPos(m_offset, m_nibbleindex);
 }
 
 void ReplaceCommand::redo() {
-    if (!m_doc->_replace(m_offset, m_data)) {
+    if (!m_doc->replaceInternal(m_offset, m_data)) {
         setObsolete(true);
         return;
     }

@@ -1,12 +1,7 @@
-#include "class/settings/settingmanager.h"
-#include "class/settings/thememanager.h"
-#include "control/editorview.h"
-#include "control/qtableviewext.h"
-#include "control/searchbar.h"
-#include "dialog/diffdialog.h"
-#include "dialog/settingdialog.h"
-#include "model/diffresultmodel.h"
-#include "settings/diffsettingdialog.h"
+#include <cstdio>
+#include <functional>
+#include <random>
+
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
@@ -27,9 +22,16 @@
 #include <QThreadPool>
 #include <QToolButton>
 #include <QtConcurrent>
-#include <cstdio>
-#include <functional>
-#include <random>
+
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "control/editorview.h"
+#include "control/qtableviewext.h"
+#include "control/searchbar.h"
+#include "dialog/diffdialog.h"
+#include "dialog/settingdialog.h"
+#include "model/diffresultmodel.h"
+#include "settings/diffsettingdialog.h"
 
 static bool waitFor(const std::function<bool()> &predicate) {
     QElapsedTimer timer;
@@ -43,6 +45,7 @@ static bool waitFor(const std::function<bool()> &predicate) {
     }
     return false;
 }
+
 #define CHECK(condition)                                                       \
     do {                                                                       \
         if (!(condition)) {                                                    \
@@ -50,6 +53,7 @@ static bool waitFor(const std::function<bool()> &predicate) {
             return 1;                                                          \
         }                                                                      \
     } while (false)
+
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("WingCloudStudio"));
@@ -73,7 +77,7 @@ int main(int argc, char **argv) {
     CHECK(manager.diffMemoryLimit() == 128 * WingDiff::MiB);
     CHECK(manager.diffDetailLimit() == 100000);
     CHECK(manager.diffPrecise());
-    manager.reset(SettingManager::DIFF);
+    manager.reset(SettingManager::Diff);
     CHECK(manager.diffFileLimit() == 32768 * WingDiff::MiB);
     manager.setDiffFileLimit(0);
     CHECK(manager.diffFileLimit() == 64 * WingDiff::MiB);
@@ -86,7 +90,7 @@ int main(int argc, char **argv) {
         QSettings settings(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME));
         CHECK(settings.value(QStringLiteral("diff.precise")).toBool());
     }
-    manager.reset(SettingManager::EDITOR);
+    manager.reset(SettingManager::Editor);
     CHECK(manager.diffPrecise());
     auto configuration =
         std::make_unique<SettingDialog>(QIcon(), QStringLiteral("Settings"));
@@ -105,7 +109,7 @@ int main(int argc, char **argv) {
     CHECK(
         dummy->findChild<QSpinBox *>(QStringLiteral("sbFileLimit"))->value() ==
         2048);
-    manager.reset(SettingManager::ALL);
+    manager.reset(SettingManager::All);
     CHECK(manager.diffFileLimit() == 32768 * WingDiff::MiB);
     auto left = std::make_unique<EditorView>();
     auto right = std::make_unique<EditorView>();
@@ -127,7 +131,7 @@ int main(int argc, char **argv) {
     bool settingsOpened = false;
     bool settingValuesFit = false;
     QObject::connect(
-        dialog, &DiffDialog::settingsRequested, configuration.get(), [&] {
+        dialog, &DiffDialog::sigOnSettingsRequested, configuration.get(), [&] {
             QTimer::singleShot(0, page, [page, &settingValuesFit] {
                 settingValuesFit = true;
                 for (auto spin : page->findChildren<QSpinBox *>()) {
@@ -198,7 +202,7 @@ int main(int argc, char **argv) {
     document->setBaseAddress(0x1000);
     document->setMetabgVisible(!document->metabgVisible());
     document->addBookMark(10, QStringLiteral("Marker"));
-    document->documentSaved(true);
+    document->sigOnDocumentSaved(true);
     QElapsedTimer untouched;
     untouched.start();
     CHECK(waitFor([&] { return untouched.elapsed() > 650; }));
@@ -235,10 +239,10 @@ int main(int argc, char **argv) {
     CHECK(search->geometry().top() > table->geometry().bottom());
     search->setSearchText(QStringLiteral("0X80000"));
     search->cancelPendingSearch();
-    search->searchRequested(false);
+    search->sigOnSearchRequested(false);
     CHECK(waitFor([&] { return view->currentOffset() == 0x80000; }));
     CHECK(view->currentOffset() == 0x80000);
-    search->closeRequested();
+    search->sigOnCloseRequested();
     for (auto button : dialog->findChildren<QToolButton *>()) {
         if (button->text() == QStringLiteral("First")) {
             button->click();

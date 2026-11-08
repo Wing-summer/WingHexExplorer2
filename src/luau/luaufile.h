@@ -18,12 +18,12 @@
 #ifndef LUAUFILE_H
 #define LUAUFILE_H
 
+#include <QSharedPointer>
+#include <QString>
+
 #include "luau/VM/src/lobject.h"
 
 #include "breakpoint.h"
-
-#include <QSharedPointer>
-#include <QString>
 
 // Reference to a loaded Lua file
 struct LuaFileRef final {
@@ -37,10 +37,10 @@ struct LuaFileRef final {
     void release();
     void copyFrom(const LuaFileRef &other);
 
-    lua_State *L_ = nullptr;
-    Closure *func_ = nullptr;
-    int file_ref_ = LUA_REFNIL;
-    int thread_ref_ = LUA_REFNIL;
+    lua_State *state = nullptr;
+    Closure *func = nullptr;
+    int fileRef = LUA_REFNIL;
+    int threadRef = LUA_REFNIL;
 };
 
 class LuauFile {
@@ -73,20 +73,20 @@ private:
     bool enableBreakPoint(BreakPoint &bp, bool enable);
 
 private:
-    QString path_;
-    QString src_;
-    std::unordered_map<int, BreakPoint> breakpoints_;
-    std::vector<LuaFileRef> refs_;
+    QString m_path;
+    QString m_src;
+    std::unordered_map<int, BreakPoint> m_breakpoints;
+    std::vector<LuaFileRef> m_refs;
 };
 
 using LuauFileContext = QSharedPointer<LuauFile>;
 
 template <class Predicate>
 void LuauFile::removeBreakPointsIf(Predicate pred) {
-    for (auto it = breakpoints_.begin(); it != breakpoints_.end();) {
+    for (auto it = m_breakpoints.begin(); it != m_breakpoints.end();) {
         if (pred(it->second)) {
             enableBreakPoint(it->second, false);
-            it = breakpoints_.erase(it);
+            it = m_breakpoints.erase(it);
         } else {
             ++it;
         }

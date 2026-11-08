@@ -1,14 +1,15 @@
-#include "DockManager.h"
-#include "DockWidget.h"
-
 #include <QApplication>
 #include <QPainter>
 #include <QSettings>
 #include <QVBoxLayout>
 
+#include "DockManager.h"
+#include "DockWidget.h"
+
 class PaintProbe : public QWidget {
 public:
     int paints = 0;
+
     PaintProbe() { setMinimumSize(100, 80); }
 
 protected:

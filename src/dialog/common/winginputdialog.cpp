@@ -16,10 +16,11 @@
 */
 
 #include "winginputdialog.h"
-#include "dialog/framelessdialogbase.h"
 
 #include <QDialogButtonBox>
 #include <QPointer>
+
+#include "dialog/framelessdialogbase.h"
 
 QString WingInputDialog::getText(QWidget *parent, const QString &title,
                                  const QString &label, QLineEdit::EchoMode echo,

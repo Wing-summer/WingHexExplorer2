@@ -71,17 +71,68 @@ ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
-IncludeBlocks:   Preserve
+IncludeBlocks:   Regroup
 IncludeCategories:
-  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
-    Priority:        2
-    SortPriority:    0
-  - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
+  # The generated UI header must stay immediately after the module header.
+  - Regex:           '^"ui_'
+    Priority:        0
+    CaseSensitive:   true
+  # Lua C API headers must precede all Luau and LuaBridge wrappers.
+  - Regex:           '^"(lua|lualib|luacode|luaconf)\.h"$'
+    Priority:        5
+    CaseSensitive:   true
+  - Regex:           '^<(lua|lualib|luacode|luaconf)\.h>$'
+    Priority:        5
+    CaseSensitive:   true
+  # Luau headers must precede LuaBridge3 headers.
+  - Regex:           '^"(Luau|luau/(CodeGen|VM|Compiler|Ast|Common|Analysis|Config|Require))/'
+    Priority:        6
+    CaseSensitive:   true
+  - Regex:           '^<(Luau|luau)/'
+    Priority:        6
+    CaseSensitive:   true
+  # LuaBridge3 headers must follow Luau headers.
+  - Regex:           '^"LuaBridge/'
+    Priority:        7
+    CaseSensitive:   true
+  - Regex:           '^<LuaBridge/'
+    Priority:        7
+    CaseSensitive:   true
+  # Other third-party libraries, including the in-tree integrated forks.
+  - Regex:           '^"(WingPlugin|WingCodeEdit|QConsoleWidget|QHexView|QWingRibbon|qtluau|Qt-Advanced-Docking-System|QHexEdit2|qtsingleapplication|CRaC|KSyntaxHighlighting|cpptrace|openssl|3rdparty|QColorPicker)/'
+    Priority:        8
+    CaseSensitive:   true
+  - Regex:           '^<(WingPlugin|WingCodeEdit|QConsoleWidget|QHexView|QWingRibbon|qtluau|Qt-Advanced-Docking-System|QHexEdit2|qtsingleapplication|CRaC|KSyntaxHighlighting|cpptrace|openssl|QWKWidgets|QColorPicker)/'
+    Priority:        8
+    CaseSensitive:   true
+  - Regex:           '^"(Dock|AutoHide|FloatingDockContainer|DockingState)'
+    Priority:        8
+    CaseSensitive:   true
+  # Qt headers, including private and legacy q*.h headers.
+  - Regex:           '^<(Q[A-Z][A-Za-z0-9_]*|Qt[A-Z][A-Za-z0-9_]*|private/|q[a-z0-9_]+\.h>)'
+    Priority:        4
+    CaseSensitive:   true
+  # C, POSIX and Windows system headers.
+  - Regex:           '^<(windows|Windows|ShObjIdl|ShlDisp|unistd|pwd|grp|aclapi|fcntl|termios|direct|io|process|tchar|winbase|winnt|winsock2|ws2tcpip)(\.h|>)|^<sys/|^<linux/'
     Priority:        3
-    SortPriority:    0
+    CaseSensitive:   true
+  - Regex:           '^<[A-Z][A-Za-z0-9_]*\.h>$'
+    Priority:        3
+    CaseSensitive:   true
+  # C++ standard library headers.
+  - Regex:           '^<[a-z_][a-z0-9_]*(\.h)?>$'
+    Priority:        2
+    CaseSensitive:   true
+  # Project headers.
+  - Regex:           '^"'
+    Priority:        9
+    CaseSensitive:   true
+  - Regex:           '^<(widgetframe|src|TestPlugin|ShareMemoryDrv)/'
+    Priority:        9
+    CaseSensitive:   true
   - Regex:           '.*'
-    Priority:        1
-    SortPriority:    0
+    Priority:        10
+    CaseSensitive:   true
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentCaseLabels: false
@@ -98,6 +149,7 @@ KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
 MaxEmptyLinesToKeep: 1
+SeparateDefinitionBlocks: Always
 NamespaceIndentation: None
 ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 2
@@ -114,7 +166,7 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 ReflowComments:  true
-SortIncludes:    true
+SortIncludes:    CaseSensitive
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false

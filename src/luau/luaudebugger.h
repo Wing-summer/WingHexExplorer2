@@ -18,18 +18,18 @@
 #ifndef LUAUDEBUGGER_H
 #define LUAUDEBUGGER_H
 
+#include <functional>
+
 #include <QDir>
 #include <QEventLoop>
 #include <QHash>
 #include <QStack>
 
-#include <functional>
+#include "lua.h"
 
 #include "luau/breakpoint.h"
 #include "luau/luaufile.h"
 #include "luau/luauvariableregistry.h"
-
-#include "lua.h"
 
 struct LuauStackFrame {
 public:
@@ -48,12 +48,12 @@ public:
     LuauDebugger();
 
 Q_SIGNALS:
-    void onAdjustBreakPointLine(const QString &file, int oldLineNbr,
-                                int newLineNbr);
-    void onPullVariables();
-    void onPullCallStack();
-    void onRunCurrentLine(const QString &file, int lineNr);
-    void onDebugActionExec();
+    void sigOnAdjustBreakPointLine(const QString &file, int oldLineNbr,
+                                   int newLineNbr);
+    void sigOnPullVariables();
+    void sigOnPullCallStack();
+    void sigOnRunCurrentLine(const QString &file, int lineNr);
+    void sigOnDebugActionExec();
 
 public:
     void attach(lua_State *L);
@@ -132,24 +132,24 @@ private:
     lua_State *getParent(lua_State *L) const;
 
 private:
-    lua_State *L_ = nullptr;
-    lua_Callbacks *callbacks_ = nullptr;
-    bool attached_ = false;
-    bool resume_ = true;
-    bool pauseRequested_ = false;
-    bool terminateRequested_ = false;
-    QEventLoop *breakLoop_ = nullptr;
-    lua_State *breakVm_ = nullptr;
-    BreakContext breakContext_;
-    SingleStepProcessor singleStepProcessor_;
-    QVector<LuauStackFrame> stackFrames_;
-    QVector<lua_State *> frameStates_;
-    QVector<int> frameLevels_;
-    QVector<int> frameDepths_;
+    lua_State *m_state = nullptr;
+    lua_Callbacks *m_callbacks = nullptr;
+    bool m_attached = false;
+    bool m_resume = true;
+    bool m_pauseRequested = false;
+    bool m_terminateRequested = false;
+    QEventLoop *m_breakLoop = nullptr;
+    lua_State *m_breakVm = nullptr;
+    BreakContext m_breakContext;
+    SingleStepProcessor m_singleStepProcessor;
+    QVector<LuauStackFrame> m_stackFrames;
+    QVector<lua_State *> m_frameStates;
+    QVector<int> m_frameLevels;
+    QVector<int> m_frameDepths;
 
-    QHash<QString, LuauFileContext> files_;
-    QStack<lua_State *> thread_stack_;
-    LuauVariableRegistry variable_registry_;
+    QHash<QString, LuauFileContext> m_files;
+    QStack<lua_State *> m_threadStack;
+    LuauVariableRegistry m_variableRegistry;
 };
 
 #endif // LUAUDEBUGGER_H

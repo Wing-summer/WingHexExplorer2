@@ -21,6 +21,7 @@
 #include <QObject>
 
 #include "lua.h"
+
 #include "qtluau/callback.hpp"
 
 struct LuauThread;
@@ -76,7 +77,7 @@ public:
     QString executeError() const;
 
 signals:
-    void finished(int status);
+    void sigOnFinished(int status);
 
 private Q_SLOTS:
     void step();

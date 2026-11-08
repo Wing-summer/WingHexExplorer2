@@ -18,6 +18,7 @@
 #include "semantictokensvisitor.h"
 
 #include "Luau/AstQuery.h"
+
 #include "typehelpers.h"
 
 static bool isMethod(const Luau::FunctionType *ftv) {

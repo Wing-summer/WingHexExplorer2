@@ -32,7 +32,7 @@ public:
     void setColor(const QColor &newColor);
 
 signals:
-    void colorChanged(QColor color);
+    void sigOnColorChanged(QColor color);
 
 private:
     QColor redColor(int s, int v);
@@ -45,7 +45,7 @@ private:
     QColor color(Qt::GlobalColor color, int s, int v);
 
 private:
-    QColor _color;
+    QColor m_color;
 };
 
 #endif // HUECOLORPICKERSLIDER_H

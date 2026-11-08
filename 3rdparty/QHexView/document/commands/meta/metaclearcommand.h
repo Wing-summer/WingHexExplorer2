@@ -22,10 +22,10 @@
 #ifndef METACLEARCOMMAND_H
 #define METACLEARCOMMAND_H
 
+#include <QVector>
+
 #include "../../qhexmetadata.h"
 #include "../undocommandbase.h"
-
-#include <QVector>
 
 // this class is newed by wingsummer
 

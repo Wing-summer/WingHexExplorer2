@@ -18,13 +18,14 @@
 #ifndef SCRIPTEDITOR_H
 #define SCRIPTEDITOR_H
 
+#include <QFileSystemWatcher>
+
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+
 #include "class/util/resettabletimer.h"
 #include "codeedit.h"
 #include "editorinfo.h"
 #include "lspeditorinterface.h"
-
-#include <QFileSystemWatcher>
 
 class ScriptEditor final : public ads::CDockWidget,
                            public LspEditorInterace,
@@ -70,9 +71,9 @@ protected:
     virtual QVector<lsp::SemanticToken> parseSemanticTokens() override;
 
 signals:
-    void onToggleMark(int line);
-    void need2Reload();
-    void navigateToLocation(const QString &path, int line, int character);
+    void sigOnToggleMark(int line);
+    void sigOnReloadNeeded();
+    void sigOnNavigateToLocation(const QString &path, int line, int character);
 
 public slots:
     void setReadOnly(bool b);
@@ -95,10 +96,10 @@ private:
     inline static QList<ScriptEditor *> m_instances;
 
     CodeEdit *m_editor = nullptr;
-    ResettableTimer *_tokentimer;
-    bool _reloadLater = false;
+    ResettableTimer *m_tokentimer;
+    bool m_reloadLater = false;
 
-    QFileSystemWatcher _watcher;
+    QFileSystemWatcher m_watcher;
 
     // EditorInfo interface
 public:

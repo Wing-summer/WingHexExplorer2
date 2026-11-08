@@ -17,15 +17,15 @@
 
 #include "wingconsolehighligher.h"
 
-#include <KSyntaxHighlighting/FoldingRegion>
-#include <KSyntaxHighlighting/Format>
-#include <KSyntaxHighlighting/Theme>
-
 #include <QFontDatabase>
 #include <QFontMetricsF>
 #include <QScopedValueRollback>
 #include <QTextCharFormat>
 #include <QtMath>
+
+#include <KSyntaxHighlighting/FoldingRegion>
+#include <KSyntaxHighlighting/Format>
+#include <KSyntaxHighlighting/Theme>
 
 class ConsoleTextBlockUserData : public WingTextBlockUserData {
 public:
@@ -146,9 +146,9 @@ void WingConsoleHighligher::highlightPrompt(QStringView prompt) {
     const auto tabWidth = doc->defaultTextOption().tabStopDistance();
     const auto color =
         QColor::fromRgb(theme().textColor(KSyntaxHighlighting::Theme::Normal));
-    if (!_promptCacheValid || _promptDocumentFont != font ||
-        _promptTabWidth != tabWidth || _promptText != prompt ||
-        _promptFormat.foreground().color() != color) {
+    if (!m_promptCacheValid || m_promptDocumentFont != font ||
+        m_promptTabWidth != tabWidth || m_promptText != prompt ||
+        m_promptFormat.foreground().color() != color) {
         auto promptFont = font;
         const auto family =
             QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
@@ -157,29 +157,29 @@ void WingConsoleHighligher::highlightPrompt(QStringView prompt) {
         promptFont.setItalic(false);
         promptFont.setLetterSpacing(QFont::AbsoluteSpacing, 0);
 
-        _promptDocumentFont = font;
-        _promptTabWidth = tabWidth;
-        _promptText = prompt.toString();
-        _promptFormat = {};
-        _promptFormat.setForeground(color);
-        _promptFormat.setFontFamilies({family});
-        _promptFormat.setFontWeight(QFont::Normal);
-        _promptFormat.setFontItalic(false);
-        _promptFormat.setFontLetterSpacingType(QFont::AbsoluteSpacing);
-        _promptFormat.setFontLetterSpacing(0);
-        _promptTailFormat = _promptFormat;
+        m_promptDocumentFont = font;
+        m_promptTabWidth = tabWidth;
+        m_promptText = prompt.toString();
+        m_promptFormat = {};
+        m_promptFormat.setForeground(color);
+        m_promptFormat.setFontFamilies({family});
+        m_promptFormat.setFontWeight(QFont::Normal);
+        m_promptFormat.setFontItalic(false);
+        m_promptFormat.setFontLetterSpacingType(QFont::AbsoluteSpacing);
+        m_promptFormat.setFontLetterSpacing(0);
+        m_promptTailFormat = m_promptFormat;
         if (tabWidth > 0) {
             const auto width =
-                QFontMetricsF(promptFont).horizontalAdvance(_promptText);
+                QFontMetricsF(promptFont).horizontalAdvance(m_promptText);
             // Keep the source origin on a tab stop without adding whitespace.
-            _promptTailFormat.setFontLetterSpacing(
+            m_promptTailFormat.setFontLetterSpacing(
                 qCeil(width / tabWidth) * tabWidth - width);
         }
-        _promptCacheValid = true;
+        m_promptCacheValid = true;
     }
-    setFormat(0, prompt.size(), _promptFormat);
+    setFormat(0, prompt.size(), m_promptFormat);
     if (tabWidth > 0) {
-        setFormat(prompt.size() - 1, 1, _promptTailFormat);
+        setFormat(prompt.size() - 1, 1, m_promptTailFormat);
     }
 }
 
@@ -210,7 +210,7 @@ void WingConsoleHighligher::highlightBlock(const QString &text) {
         if (prefixLength > 0) {
             highlightPrompt(view.sliced(0, prefixLength));
         }
-        const QScopedValueRollback offset(_formatOffset, prefixLength);
+        const QScopedValueRollback offset(m_formatOffset, prefixLength);
         state = highlightLine(view.sliced(prefixLength), state);
     } else if (data->type == ConsoleTextBlockUserData::Type::TextWithFormat) {
         setFormat(0, text.size(), data->fmt);
@@ -239,7 +239,7 @@ void WingConsoleHighligher::highlightBlock(const QString &text) {
 
 void WingConsoleHighligher::applyFormat(
     int offset, int length, const KSyntaxHighlighting::Format &format) {
-    WingSyntaxHighlighter::applyFormat(offset + _formatOffset, length, format);
+    WingSyntaxHighlighter::applyFormat(offset + m_formatOffset, length, format);
 }
 
 void WingConsoleHighligher::applyFolding(

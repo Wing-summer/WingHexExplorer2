@@ -28,12 +28,12 @@
 
 ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     : QConsoleWidget(parent) {
-    _warnCharFmt.setForeground(QColorConstants::Svg::gold);
-    _errCharFmt.setForeground(Qt::red);
+    m_warnCharFmt.setForeground(QColorConstants::Svg::gold);
+    m_errCharFmt.setForeground(Qt::red);
     setHighlighter(new WingConsoleHighligher);
     setSyntax(syntaxRepo().definitionForName("Luau"));
 
-    _s.setDevice(this->device());
+    m_s.setDevice(this->device());
     connect(this, &QPlainTextEdit::textChanged, this, [this]() {
         if (mode() == Input) {
             refreshInputBlocks();
@@ -55,19 +55,19 @@ void ScriptingConsoleBase::changeEvent(QEvent *event) {
 }
 
 void ScriptingConsoleBase::refreshInputBlocks() {
-    if (_refreshingInput) {
+    if (m_refreshingInput) {
         return;
     }
-    QScopedValueRollback refreshing(_refreshingInput, true);
+    QScopedValueRollback refreshing(m_refreshingInput, true);
     const QSignalBlocker blocker(this);
     auto cursor = textCursor();
-    auto block = document()->findBlock(inpos_);
+    auto block = document()->findBlock(m_inpos);
     if (!block.isValid()) {
         return;
     }
     auto h = consoleHighligher();
-    const auto prefixLength = inpos_ - block.position();
-    h->setBlockAsCodeWithPrefix(block, prefixLength, {}, !_lastCommandPrompt);
+    const auto prefixLength = m_inpos - block.position();
+    h->setBlockAsCodeWithPrefix(block, prefixLength, {}, !m_lastCommandPrompt);
     block = block.next();
     const auto prompt = this->commandPrompt(true);
     while (block.isValid()) {
@@ -91,7 +91,7 @@ QString ScriptingConsoleBase::commandPrompt(bool storeOnly) {
 
 QString ScriptingConsoleBase::currentCommandLine() const {
     QStringList lines;
-    auto block = document()->findBlock(inpos_);
+    auto block = document()->findBlock(m_inpos);
     while (block.isValid()) {
         const auto start = inputStartForBlock(block) - block.position();
         lines.append(block.text().sliced(start));
@@ -101,8 +101,8 @@ QString ScriptingConsoleBase::currentCommandLine() const {
 }
 
 int ScriptingConsoleBase::inputStartForBlock(const QTextBlock &block) const {
-    return qMax(inpos_, block.position() +
-                            consoleHighligher()->blockPrefixLength(block));
+    return qMax(m_inpos, block.position() +
+                             consoleHighligher()->blockPrefixLength(block));
 }
 
 void ScriptingConsoleBase::stdOutLine(QString str,
@@ -137,7 +137,7 @@ void ScriptingConsoleBase::stdErrLine(QString str,
     auto h = consoleHighligher();
     for (int i = 0; i < total; ++i) {
         auto blk = doc->findBlockByNumber(id + i);
-        h->setBlockAsTextWithFormat(blk, _errCharFmt, info);
+        h->setBlockAsTextWithFormat(blk, m_errCharFmt, info);
     }
 }
 
@@ -155,13 +155,13 @@ void ScriptingConsoleBase::stdWarnLine(QString str,
     auto h = consoleHighligher();
     for (int i = 0; i < total; ++i) {
         auto blk = doc->findBlockByNumber(id + i);
-        h->setBlockAsTextWithFormat(blk, _warnCharFmt, info);
+        h->setBlockAsTextWithFormat(blk, m_warnCharFmt, info);
     }
 }
 
-void ScriptingConsoleBase::newLine() { _s << Qt::endl; }
+void ScriptingConsoleBase::newLine() { m_s << Qt::endl; }
 
-void ScriptingConsoleBase::flush() { _s << Qt::flush; }
+void ScriptingConsoleBase::flush() { m_s << Qt::flush; }
 
 void ScriptingConsoleBase::initOutput() {
     stdWarnLine(tr("Scripting console for WingHexExplorer"));
@@ -185,18 +185,18 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     }
 
     commandPrompt += this->commandPrompt(storeOnly);
-    _lastCommandPrompt = storeOnly;
+    m_lastCommandPrompt = storeOnly;
     auto id = write(commandPrompt);
     blk = doc->findBlockByNumber(id);
     h->setBlockAsCodeWithPrefix(blk, commandPrompt.length(), {}, !storeOnly);
 }
 
 bool ScriptingConsoleBase::lastCommandPrompt() const {
-    return _lastCommandPrompt;
+    return m_lastCommandPrompt;
 }
 
 bool ScriptingConsoleBase::restorePreviousCommandPrompt(bool storeOnly) {
-    auto block = document()->findBlock(inpos_).previous();
+    auto block = document()->findBlock(m_inpos).previous();
     auto h = consoleHighligher();
     const auto prefixLength = h->blockPrefixLength(block);
     if (!block.isValid() || prefixLength <= 0) {
@@ -208,13 +208,13 @@ bool ScriptingConsoleBase::restorePreviousCommandPrompt(bool storeOnly) {
     setMode(Output);
     auto cursor = textCursor();
     cursor.setPosition(joinPosition);
-    cursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    cursor.setPosition(m_inpos, QTextCursor::KeepAnchor);
     cursor.removeSelectedText();
     setMode(Input);
-    inpos_ = inputStart;
+    m_inpos = inputStart;
     cursor.setPosition(joinPosition);
     setTextCursor(cursor);
-    _lastCommandPrompt = storeOnly;
+    m_lastCommandPrompt = storeOnly;
     h->setBlockAsCodeWithPrefix(block, prefixLength, {}, !storeOnly);
     return true;
 }
@@ -223,4 +223,4 @@ WingConsoleHighligher *ScriptingConsoleBase::consoleHighligher() const {
     return reinterpret_cast<WingConsoleHighligher *>(highlighter());
 }
 
-QTextStream &ScriptingConsoleBase::consoleStream() { return _s; }
+QTextStream &ScriptingConsoleBase::consoleStream() { return m_s; }

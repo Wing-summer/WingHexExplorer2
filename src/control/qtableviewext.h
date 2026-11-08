@@ -18,7 +18,7 @@
 #ifndef QTABLEVIEWEXT_H
 #define QTABLEVIEWEXT_H
 
-#include "searchbar.h"
+#include <optional>
 
 #include <QHash>
 #include <QPersistentModelIndex>
@@ -27,7 +27,8 @@
 #include <QSet>
 #include <QTableView>
 #include <QTimer>
-#include <optional>
+
+#include "searchbar.h"
 
 class QLabel;
 class QMenu;
@@ -40,6 +41,7 @@ public:
     enum class WidthSource { Specified, Contents, Weight };
     enum class WidthUpdate { Initial, Continuous };
     enum class WidthUnit { Pixels, ViewportRatio };
+
     struct ColumnWidthPolicy {
         WidthSource source = WidthSource::Contents;
         WidthUpdate update = WidthUpdate::Initial;
@@ -97,10 +99,10 @@ public slots:
     void sortByColumn(int column, Qt::SortOrder order);
 
 signals:
-    void modelChanged();
-    void sortingChanged(bool busy);
-    void searchFinished(const QModelIndex &match);
-    void columnWidthsAdjusted();
+    void sigOnModelChanged();
+    void sigOnSortingChanged(bool busy);
+    void sigOnSearchFinished(const QModelIndex &match);
+    void sigOnColumnWidthsAdjusted();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -135,6 +137,7 @@ private:
     TableColumnWidthController *m_widths = nullptr;
     QPointer<QAbstractItemModel> m_source;
     AsyncTableProxyModel *m_proxy;
+
     struct SortState {
         bool enabled = false;
         int column = -1;
@@ -142,6 +145,7 @@ private:
         QLabel *status = nullptr;
         bool layoutPending = false;
     } m_sort;
+
     QList<QMetaObject::Connection> m_sourceConnections;
     QList<QMetaObject::Connection> m_displayConnections;
     QHash<QAbstractItemModel *, ModelState> m_states;
@@ -155,6 +159,7 @@ private:
         QSet<int> knownColumns;
         QHash<int, int> roles;
     } m_search;
+
     struct SearchSession {
         QTimer timer;
         SearchBar::Query query;
@@ -163,6 +168,7 @@ private:
         qint64 remaining = 0;
         int step = 1;
     } m_scan;
+
     struct SearchControls {
         SearchBar *bar = nullptr;
         QMenu *columns = nullptr;

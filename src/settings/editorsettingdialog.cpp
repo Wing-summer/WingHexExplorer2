@@ -76,6 +76,6 @@ QString EditorSettingDialog::name() const { return tr("Editor"); }
 QString EditorSettingDialog::id() const { return QStringLiteral("Editor"); }
 
 void EditorSettingDialog::restore() {
-    SettingManager::instance().reset(SettingManager::SETTING::EDITOR);
+    SettingManager::instance().reset(SettingManager::Setting::Editor);
     reload();
 }

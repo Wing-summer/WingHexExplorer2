@@ -16,8 +16,6 @@
 */
 
 #include "appmanager.h"
-#include "startupfeedback.h"
-#include "startuptrace.h"
 
 #include <QFont>
 #include <QScopeGuard>
@@ -25,6 +23,8 @@
 
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
+#include <KSyntaxHighlighting/Repository>
+
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
@@ -39,11 +39,11 @@
 #include "logger.h"
 #include "luau/runtime/scriptmanager.h"
 #include "settings/settings.h"
+#include "startupfeedback.h"
+#include "startuptrace.h"
 #include "utilities.h"
 
-#include <KSyntaxHighlighting/Repository>
-
-AppManager *AppManager::_instance = nullptr;
+AppManager *AppManager::m_instance = nullptr;
 
 AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
@@ -51,7 +51,7 @@ AppManager::AppManager(int &argc, char *argv[])
     StartupTrace::PhaseTimer startupPhases;
     ASSERT_SINGLETON;
 
-    _instance = this;
+    m_instance = this;
 
     LanguageManager::instance();
     InspectQtLogHelper::instance().init();
@@ -89,21 +89,21 @@ AppManager::AppManager(int &argc, char *argv[])
     repo.addCustomSearchPath(QStringLiteral(":/WingScript/Luau"));
 
     auto dontSplash = set.dontUseSplash();
-    QString SPLASH_HISTORY_KEY;
+    QString splashHistoryKey;
     QVariantList splashHistory;
 
     if (!dontSplash) {
         // Separate histories for materially different startup configurations.
-        SPLASH_HISTORY_KEY = QStringLiteral("startup.splash.%1.%2.%3.%4.%5")
-                                 .arg(applicationVersion())
-                                 .arg(set.themeID())
-                                 .arg(set.scriptEnabled())
-                                 .arg(set.enablePlugin())
-                                 .arg(args.size() > 1);
+        splashHistoryKey = QStringLiteral("startup.splash.%1.%2.%3.%4.%5")
+                               .arg(applicationVersion())
+                               .arg(set.themeID())
+                               .arg(set.scriptEnabled())
+                               .arg(set.enablePlugin())
+                               .arg(args.size() > 1);
         HANDLE_CONFIG;
-        splashHistory = READ_CONFIG(SPLASH_HISTORY_KEY, {}).toList();
-        splash = new SplashDialog(SplashDialog::DisplayMode::Automatic,
-                                  StartupFeedback::estimate(splashHistory));
+        splashHistory = READ_CONFIG(splashHistoryKey, {}).toList();
+        m_splash = new SplashDialog(SplashDialog::DisplayMode::Automatic,
+                                    StartupFeedback::estimate(splashHistory));
     }
 
     const auto cmdlist = CommandHistoryManager::load();
@@ -112,26 +112,26 @@ AppManager::AppManager(int &argc, char *argv[])
         his.add(cmd);
     }
 
-    _timer.start();
+    m_timer.start();
 
     startupPhases.checkpoint("application.syntax_history_and_splash");
-    _w = new MainWindow(splash);
+    m_w = new MainWindow(m_splash);
     startupPhases.checkpoint("application.mainwindow");
     // Applying QSS before restoring docks repeatedly restyles the same widget
     // subtrees as they are reparented. Polish the complete tree once instead.
-    if (splash) {
-        splash->prepareForBlockingPhase();
+    if (m_splash) {
+        m_splash->prepareForBlockingPhase();
     }
     theme.setStyleSheetDeferred(false);
     finishStyle.dismiss();
     startupPhases.checkpoint("application.stylesheet");
 
-    setActivationWindow(_w);
+    setActivationWindow(m_w);
 
-    connect(this, &QtSingleApplication::messageReceived, this,
+    connect(this, &QtSingleApplication::sigOnMessageReceived, this,
             [this](QByteArray message) {
-                Q_ASSERT(_w);
-                if (!_w->isEnabled()) {
+                Q_ASSERT(m_w);
+                if (!m_w->isEnabled()) {
                     return;
                 }
 
@@ -146,19 +146,19 @@ AppManager::AppManager(int &argc, char *argv[])
                         failedFile.append(param);
                     }
                 }
-                _w->show();
+                m_w->show();
 
                 if (!failedFile.isEmpty()) {
                     WingMessageBox::critical(
-                        _w, tr("Error"),
+                        m_w, tr("Error"),
                         tr("Could not open the following file. Check that it "
                            "exists and that you have permission to read it:") +
                             QStringLiteral("\n") + failedFile.join('\n'));
                 }
             });
 
-    if (splash) {
-        splash->setInfoText(tr("Opening files"));
+    if (m_splash) {
+        m_splash->setInfoText(tr("Opening files"));
     }
 
     if (args.size() > 1) {
@@ -173,7 +173,7 @@ AppManager::AppManager(int &argc, char *argv[])
 
         if (!failedFile.isEmpty()) {
             WingMessageBox::critical(
-                _w, tr("Error"),
+                m_w, tr("Error"),
                 tr("Could not open the following file. Check that it exists "
                    "and that you have permission to read it:") +
                     QStringLiteral("\n") + failedFile.join('\n'));
@@ -181,38 +181,38 @@ AppManager::AppManager(int &argc, char *argv[])
     }
 
     startupPhases.checkpoint("application.open_files");
-    connect(_w, &MainWindow::closed, this,
+    connect(m_w, &MainWindow::sigOnClosed, this,
             []() { AppManager::instance()->exit(); });
 
-    if (splash) {
+    if (m_splash) {
         HANDLE_CONFIG;
         WRITE_CONFIG(
-            SPLASH_HISTORY_KEY,
-            StartupFeedback::remember(splashHistory, splash->elapsedTime()));
-        splash->finish();
-        splash = nullptr;
+            splashHistoryKey,
+            StartupFeedback::remember(splashHistory, m_splash->elapsedTime()));
+        m_splash->finish();
+        m_splash = nullptr;
     }
 }
 
 AppManager::~AppManager() {
     ScriptMachine::instance().destoryMachine();
     InspectQtLogHelper::instance().destory();
-    CommandHistoryManager::save(QConsoleWidget::history().strings_);
+    CommandHistoryManager::save(QConsoleWidget::history().strings);
 
-    delete _w;
-    _w = nullptr;
+    delete m_w;
+    m_w = nullptr;
 }
 
-AppManager *AppManager::instance() { return _instance; }
+AppManager *AppManager::instance() { return m_instance; }
 
-MainWindow *AppManager::mainWindow() const { return _w; }
+MainWindow *AppManager::mainWindow() const { return m_w; }
 
-quint64 AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
+quint64 AppManager::currentMSecsSinceEpoch() { return m_timer.elapsed(); }
 
 ErrFile AppManager::openFile(const QString &file, bool autoDetect,
                              bool skipScripting, bool *isWorkSpace) {
     EditorView *editor = nullptr;
-    Q_ASSERT(_w);
+    Q_ASSERT(m_w);
 
     bool isWS = false;
 
@@ -222,25 +222,25 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         if (Utilities::isTextFile(finfo)) {
             auto suffix = finfo.suffix();
             if (suffix.compare(QLatin1String("wingpro")) == 0) {
-                ret = _w->openWorkSpace(file, &editor);
+                ret = m_w->openWorkSpace(file, &editor);
                 if (ret == ErrFile::Success) {
                     isWS = true;
                 }
             } else if (!skipScripting &&
                        ScriptManager::isScriptFileSuffix(suffix)) {
-                _w->openScriptFile(file, splash);
+                m_w->openScriptFile(file, m_splash);
                 ret = ErrFile::Success;
             }
         }
     }
 
     if (ret == ErrFile::Error) {
-        ret = _w->openFile(file, &editor);
+        ret = m_w->openFile(file, &editor);
 
         if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
-            if (_w->currentEditor() == editor) {
-                Toast::toast(_w,
+            if (m_w->currentEditor() == editor) {
+                Toast::toast(m_w,
                              ThemeManager::instance().standardPixmap(
                                  ThemeManager::StandardIcon::OpenFile),
                              tr("This file is already open"));
@@ -249,14 +249,14 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
             }
 
             editor->setFocus();
-            _w->addRecentFile(nullptr, file);
+            m_w->addRecentFile(nullptr, file);
         } else if (ret == ErrFile::Success) {
-            _w->addRecentFile(editor, file);
+            m_w->addRecentFile(editor, file);
         }
     } else if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
-        if (_w->currentEditor() == editor) {
-            Toast::toast(_w,
+        if (m_w->currentEditor() == editor) {
+            Toast::toast(m_w,
                          ThemeManager::instance().standardPixmap(
                              ThemeManager::StandardIcon::OpenFile),
                          tr("This file is already open"));
@@ -265,7 +265,7 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
         }
 
         editor->setFocus();
-        _w->addRecentFile(nullptr, file, isWS);
+        m_w->addRecentFile(nullptr, file, isWS);
     }
 
     if (isWorkSpace) {

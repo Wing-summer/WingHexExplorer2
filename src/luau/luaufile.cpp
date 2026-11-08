@@ -17,25 +17,27 @@
 
 #include "luaufile.h"
 
-#include "Luau/RegisterX64.h"
-#include "luauutil.h"
+#include <unordered_set>
 
 #include <QVector>
 #include <qpair.h>
-#include <unordered_set>
+
+#include "Luau/RegisterX64.h"
+
+#include "luauutil.h"
 
 LuaFileRef::LuaFileRef(lua_State *L) {
-    L_ = L;
-    func_ = LuauUtil::getLuaFunction(L, -1);
+    state = L;
+    func = LuauUtil::getLuaFunction(L, -1);
     lua_checkstack(L, 1);
 
     // Save the lua_State associated with file
     lua_pushthread(L);
-    thread_ref_ = lua_ref(L, -1);
+    threadRef = lua_ref(L, -1);
     lua_pop(L, 1);
 
     // Save the function return by luau_load
-    file_ref_ = lua_ref(L, -1);
+    fileRef = lua_ref(L, -1);
 }
 
 LuaFileRef::~LuaFileRef() { release(); }
@@ -52,54 +54,54 @@ LuaFileRef &LuaFileRef::operator=(const LuaFileRef &other) {
 }
 
 bool LuaFileRef::operator==(const LuaFileRef &other) const {
-    return L_ == other.L_ && func_ == other.func_;
+    return state == other.state && func == other.func;
 }
 
 void LuaFileRef::release() {
-    if (L_ == nullptr) {
+    if (state == nullptr) {
         return;
     }
-    if (thread_ref_ != LUA_REFNIL) {
-        lua_unref(L_, thread_ref_);
+    if (threadRef != LUA_REFNIL) {
+        lua_unref(state, threadRef);
     }
-    if (file_ref_ != LUA_REFNIL) {
-        lua_unref(L_, file_ref_);
+    if (fileRef != LUA_REFNIL) {
+        lua_unref(state, fileRef);
     }
-    thread_ref_ = LUA_REFNIL;
-    file_ref_ = LUA_REFNIL;
+    threadRef = LUA_REFNIL;
+    fileRef = LUA_REFNIL;
 }
 
 void LuaFileRef::copyFrom(const LuaFileRef &other) {
-    L_ = other.L_;
-    lua_checkstack(L_, 1);
+    state = other.state;
+    lua_checkstack(state, 1);
 
     // Copy the lua_State reference
-    lua_getref(L_, other.thread_ref_);
-    thread_ref_ = lua_ref(L_, -1);
-    lua_pop(L_, 1);
+    lua_getref(state, other.threadRef);
+    threadRef = lua_ref(state, -1);
+    lua_pop(state, 1);
 
     // Copy the function reference
-    lua_getref(L_, other.file_ref_);
-    file_ref_ = lua_ref(L_, -1);
-    func_ = LuauUtil::getLuaFunction(L_, -1);
-    lua_pop(L_, 1);
+    lua_getref(state, other.fileRef);
+    fileRef = lua_ref(state, -1);
+    func = LuauUtil::getLuaFunction(state, -1);
+    lua_pop(state, 1);
 }
 
 LuauFile::LuauFile(const QString &path) { setPath(path); }
 
 void LuauFile::setPath(const QString &path) {
-    if (path_ == path) {
+    if (m_path == path) {
         return;
     }
     clearBreakPoints();
-    path_ = path;
+    m_path = path;
 }
 
-QString LuauFile::path() const { return path_; }
+QString LuauFile::path() const { return m_path; }
 
-QString LuauFile::source() const { return src_; }
+QString LuauFile::source() const { return m_src; }
 
-void LuauFile::setSource(const QString &source) { src_ = source; }
+void LuauFile::setSource(const QString &source) { m_src = source; }
 
 void LuauFile::setBreakPoints(
     const std::unordered_map<int, BreakPoint> &breakpoints) {
@@ -115,12 +117,12 @@ void LuauFile::setBreakPoints(
 
 QVector<QPair<int, int>> LuauFile::addRef(LuaFileRef ref) {
     QVector<QPair<int, int>> adjustedLines;
-    if (std::find(refs_.begin(), refs_.end(), ref) != refs_.end()) {
+    if (std::find(m_refs.begin(), m_refs.end(), ref) != m_refs.end()) {
         return adjustedLines;
     }
 
-    for (auto &[_, bp] : breakpoints_) {
-        const auto originLine = bp.enable(ref.L_, ref.file_ref_, true);
+    for (auto &[_, bp] : m_breakpoints) {
+        const auto originLine = bp.enable(ref.state, ref.fileRef, true);
         if (originLine >= 0) {
             if (originLine != bp.line()) {
                 adjustedLines.append(qMakePair(originLine, bp.line()));
@@ -129,22 +131,21 @@ QVector<QPair<int, int>> LuauFile::addRef(LuaFileRef ref) {
             adjustedLines.append(qMakePair(originLine, -1));
         }
     }
-    refs_.emplace_back(std::move(ref));
+    m_refs.emplace_back(std::move(ref));
     return adjustedLines;
 }
 
 void LuauFile::removeRef(lua_State *L) {
-    auto it =
-        std::remove_if(refs_.begin(), refs_.end(), [L](const LuaFileRef &ref) {
-            return lua_mainthread(ref.L_) == L;
-        });
-    refs_.erase(it, refs_.end());
+    auto it = std::remove_if(
+        m_refs.begin(), m_refs.end(),
+        [L](const LuaFileRef &ref) { return lua_mainthread(ref.state) == L; });
+    m_refs.erase(it, m_refs.end());
 }
 
 bool LuauFile::enableBreakPoint(BreakPoint &bp, bool enable) {
     bool ok = true;
-    for (auto &ref : refs_) {
-        ok &= bp.enable(ref.L_, ref.file_ref_, enable) >= 0;
+    for (auto &ref : m_refs) {
+        ok &= bp.enable(ref.state, ref.fileRef, enable) >= 0;
     }
     return ok;
 }
@@ -155,8 +156,8 @@ int LuauFile::addBreakPoint(int line) {
 
 int LuauFile::addBreakPoint(const BreakPoint &bp) {
     auto line = bp.line();
-    auto it = breakpoints_.find(line);
-    if (it == breakpoints_.end()) {
+    auto it = m_breakpoints.find(line);
+    if (it == m_breakpoints.end()) {
         auto nbp = bp;
         // invalid breakpoint
         if (!enableBreakPoint(nbp, true)) {
@@ -167,12 +168,12 @@ int LuauFile::addBreakPoint(const BreakPoint &bp) {
         // check if the new line already exists
         auto nline = nbp.line();
         if (nline != line) {
-            auto it = breakpoints_.find(nline);
-            if (it != breakpoints_.end()) {
+            auto it = m_breakpoints.find(nline);
+            if (it != m_breakpoints.end()) {
                 return -1;
             }
         }
-        it = breakpoints_.emplace(nline, nbp).first;
+        it = m_breakpoints.emplace(nline, nbp).first;
     } else {
         it->second = bp;
     }
@@ -180,23 +181,23 @@ int LuauFile::addBreakPoint(const BreakPoint &bp) {
 }
 
 void LuauFile::removeBreakPoint(int line) {
-    auto it = breakpoints_.find(line);
-    if (it != breakpoints_.end()) {
+    auto it = m_breakpoints.find(line);
+    if (it != m_breakpoints.end()) {
         enableBreakPoint(it->second, false);
-        breakpoints_.erase(it);
+        m_breakpoints.erase(it);
     }
 }
 
 void LuauFile::clearBreakPoints() {
-    for (auto &[line, bp] : breakpoints_) {
+    for (auto &[line, bp] : m_breakpoints) {
         enableBreakPoint(bp, false);
     }
-    breakpoints_.clear();
+    m_breakpoints.clear();
 }
 
 BreakPoint *LuauFile::findBreakPoint(int line) {
-    auto it = breakpoints_.find(line);
-    if (it == breakpoints_.end()) {
+    auto it = m_breakpoints.find(line);
+    if (it == m_breakpoints.end()) {
         return nullptr;
     }
     return &it->second;

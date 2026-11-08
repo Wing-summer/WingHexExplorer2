@@ -1,10 +1,11 @@
-#include "class/application/startuptrace.h"
+#include <cstdio>
 
 #include <QApplication>
 #include <QCloseEvent>
 #include <QTimer>
 #include <QWidget>
-#include <cstdio>
+
+#include "class/application/startuptrace.h"
 
 class Probe : public QWidget {
 public:

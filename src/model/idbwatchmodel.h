@@ -18,11 +18,11 @@
 #ifndef IDBWATCHMODEL_H
 #define IDBWATCHMODEL_H
 
-#include "idbtreemodel.h"
-#include "luau/luaudebugger.h"
-
 #include <QStringList>
 #include <QVector>
+
+#include "idbtreemodel.h"
+#include "luau/luaudebugger.h"
 
 class IDBWatchModel final : public IDBTreeModel {
     Q_OBJECT

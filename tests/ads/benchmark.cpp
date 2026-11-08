@@ -4,12 +4,13 @@
 #ifndef ADS_LEGACY_STATE
 #include "DockingState.h"
 #endif
+#include <algorithm>
+#include <cstdio>
+
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QMainWindow>
-#include <algorithm>
-#include <cstdio>
 
 static void drain() {
     QApplication::processEvents();

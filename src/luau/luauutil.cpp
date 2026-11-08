@@ -17,42 +17,43 @@
 
 #include "luauutil.h"
 
-#include "utilities.h"
+#include <QtDebug>
+
+#include <lualib.h>
 
 #include "Luau/BytecodeBuilder.h"
 #include "Luau/Compiler.h"
 #include "luau/VM/src/lapi.h"
 #include "luau/VM/src/lstate.h"
 
-#include <lualib.h>
-
-#include <QtDebug>
+#include "utilities.h"
 
 namespace LuauUtil {
 
 StackGuard::StackGuard(lua_State *L, int capacity)
-    : L_(L), top_(lua_gettop(L)) {
+    : m_state(L), m_top(lua_gettop(L)) {
     lua_checkstack(L, capacity);
 }
 
-StackGuard::~StackGuard() { lua_settop(L_, top_); }
+StackGuard::~StackGuard() { lua_settop(m_state, m_top); }
 
-ReadOnlyGuard::ReadOnlyGuard(lua_State *L, int index) : L_(L), index_(index) {
-    enable_ = lua_getreadonly(L, index);
+ReadOnlyGuard::ReadOnlyGuard(lua_State *L, int index)
+    : m_state(L), m_index(index) {
+    m_enable = lua_getreadonly(L, index);
     lua_setreadonly(L, index, false);
 }
 
-ReadOnlyGuard::~ReadOnlyGuard() { lua_setreadonly(L_, index_, enable_); }
+ReadOnlyGuard::~ReadOnlyGuard() { lua_setreadonly(m_state, m_index, m_enable); }
 
 DisableDebugStep::DisableDebugStep(lua_State *L) {
-    main_vm_ = lua_mainthread(L);
-    callbacks_ = lua_callbacks(main_vm_);
-    old_debug_step_ = callbacks_->debugstep;
-    callbacks_->debugstep = nullptr;
+    m_mainVm = lua_mainthread(L);
+    m_callbacks = lua_callbacks(m_mainVm);
+    m_oldDebugStep = m_callbacks->debugstep;
+    m_callbacks->debugstep = nullptr;
 }
 
 LuauUtil::DisableDebugStep::~DisableDebugStep() {
-    callbacks_->debugstep = old_debug_step_;
+    m_callbacks->debugstep = m_oldDebugStep;
 }
 
 bool pushBreakEnv(lua_State *L, int level) {
@@ -76,7 +77,7 @@ bool pushBreakEnv(lua_State *L, int level) {
     // -1: function env table
     // -2: function
     // -3: break env table
-    int break_env = lua_absindex(L, -3);
+    int breakEnv = lua_absindex(L, -3);
     int fenv = lua_absindex(L, -1);
 
     // set fenv as metatable
@@ -84,7 +85,7 @@ bool pushBreakEnv(lua_State *L, int level) {
     lua_pushstring(L, "__index");
     lua_pushvalue(L, fenv);
     lua_rawset(L, -3);
-    lua_setmetatable(L, break_env);
+    lua_setmetatable(L, breakEnv);
     lua_pop(L, 1);
 
     // -1: function
@@ -119,7 +120,7 @@ std::optional<int> eval(lua_State *L, const QString &code, int env) {
     DisableDebugStep _(L);
 
     lua_setsafeenv(L, LUA_ENVIRONINDEX, false);
-    auto env_idx = lua_absindex(L, env);
+    auto envIdx = lua_absindex(L, env);
     int top = lua_gettop(L);
 
     auto c = code.toStdString();
@@ -142,11 +143,11 @@ std::optional<int> eval(lua_State *L, const QString &code, int env) {
         return std::nullopt;
     }
 
-    lua_pushvalue(L, env_idx);
+    lua_pushvalue(L, envIdx);
     lua_setfenv(L, -2);
 
-    int call_result = lua_pcall(L, 0, LUA_MULTRET, 0);
-    if (call_result == LUA_OK) {
+    int callResult = lua_pcall(L, 0, LUA_MULTRET, 0);
+    if (callResult == LUA_OK) {
         return lua_gettop(L) - top;
     } else {
         qCritical("Error running code: %s", lua_tostring(L, -1));
@@ -155,11 +156,11 @@ std::optional<int> eval(lua_State *L, const QString &code, int env) {
 }
 
 bool setLocal(lua_State *L, int level, const QByteArray &name, int index) {
-    auto value_idx = lua_absindex(L, index);
+    auto valueIdx = lua_absindex(L, index);
     int n = 1;
-    while (const char *local_name = lua_getlocal(L, level, n)) {
-        if (name == local_name) {
-            lua_pushvalue(L, value_idx);
+    while (const char *localName = lua_getlocal(L, level, n)) {
+        if (name == localName) {
+            lua_pushvalue(L, valueIdx);
             auto *result = lua_setlocal(L, level, n);
             lua_pop(L, 1);
             return result != nullptr;
@@ -171,7 +172,7 @@ bool setLocal(lua_State *L, int level, const QByteArray &name, int index) {
 }
 
 bool setUpvalue(lua_State *L, int level, const QByteArray &name, int index) {
-    auto value_idx = lua_absindex(L, index);
+    auto valueIdx = lua_absindex(L, index);
     lua_Debug ar;
     lua_checkstack(L, 1);
     if (!lua_getinfo(L, level, "f", &ar)) {
@@ -179,13 +180,13 @@ bool setUpvalue(lua_State *L, int level, const QByteArray &name, int index) {
                   level);
         return false;
     }
-    auto function_index = lua_absindex(L, -1);
+    auto functionIndex = lua_absindex(L, -1);
 
     int n = 1;
-    while (const char *local_name = lua_getupvalue(L, function_index, n)) {
-        if (name == local_name) {
-            lua_pushvalue(L, value_idx);
-            auto *result = lua_setupvalue(L, function_index, n);
+    while (const char *localName = lua_getupvalue(L, functionIndex, n)) {
+        if (name == localName) {
+            lua_pushvalue(L, valueIdx);
+            auto *result = lua_setupvalue(L, functionIndex, n);
             Q_ASSERT(result != nullptr);
             lua_pop(L, 2);
             return result != nullptr;
@@ -208,34 +209,34 @@ Closure *getCFunction(lua_State *L, int index) {
 }
 
 QString normalizeLuauRequirePath(const QString &path) {
-    QString normalized_path = path;
+    QString normalizedPath = path;
     if (path.startsWith('@')) {
-        normalized_path.removeFirst();
-        auto clean_path = QDir::cleanPath(normalized_path);
-        if (clean_path != normalized_path) {
+        normalizedPath.removeFirst();
+        auto cleanPath = QDir::cleanPath(normalizedPath);
+        if (cleanPath != normalizedPath) {
             return {};
         }
-        QFileInfo info(normalized_path);
+        QFileInfo info(normalizedPath);
         if (info.isAbsolute()) {
             return {};
         }
         QDir dir(QApplication::applicationDirPath());
         info.setFile(dir.absoluteFilePath(QStringLiteral("luau")),
-                     normalized_path);
+                     normalizedPath);
         return info.absoluteFilePath();
     } else if (path.startsWith('$')) {
-        normalized_path.removeFirst();
-        auto clean_path = QDir::cleanPath(normalized_path);
-        if (clean_path != normalized_path) {
+        normalizedPath.removeFirst();
+        auto cleanPath = QDir::cleanPath(normalizedPath);
+        if (cleanPath != normalizedPath) {
             return {};
         }
-        QFileInfo info(normalized_path);
+        QFileInfo info(normalizedPath);
         if (info.isAbsolute()) {
             return {};
         }
         QDir dir(Utilities::getAppDataPath());
         info.setFile(dir.absoluteFilePath(QStringLiteral("luau")),
-                     normalized_path);
+                     normalizedPath);
         return info.absoluteFilePath();
     } else {
         QFileInfo info(path);

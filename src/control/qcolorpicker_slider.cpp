@@ -15,12 +15,12 @@
 ** =============================================================================
 */
 
+#include "qcolorpicker_slider.hpp"
+
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyleOptionSlider>
-
-#include "qcolorpicker_slider.hpp"
 
 QColorPickerSlider::QColorPickerSlider(Qt::Orientation orientation,
                                        QWidget *parent)
@@ -32,7 +32,7 @@ QColorPickerSlider::QColorPickerSlider(QWidget *parent)
 QColorPickerSlider::~QColorPickerSlider() = default;
 
 void QColorPickerSlider::setGradientStops(QGradientStops gradientStops) {
-    _gradientStops = gradientStops;
+    m_gradientStops = gradientStops;
     update();
 }
 
@@ -52,16 +52,16 @@ void QColorPickerSlider::paintEvent(QPaintEvent *event) {
     } else {
         gradient = QLinearGradient(0, groove.top() + r, 0, groove.bottom() - r);
     }
-    gradient.setStops(_gradientStops);
+    gradient.setStops(m_gradientStops);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(gradient);
     painter.drawRoundedRect(groove, r, r);
 
     QColor leftColor =
-        _gradientStops.isEmpty() ? QColor() : _gradientStops.first().second;
+        m_gradientStops.isEmpty() ? QColor() : m_gradientStops.first().second;
     QColor rightColor =
-        _gradientStops.isEmpty() ? QColor() : _gradientStops.last().second;
+        m_gradientStops.isEmpty() ? QColor() : m_gradientStops.last().second;
     float leftPos = 0.0f, rightPos = 1.0f;
 
     const float valueFloat =
@@ -69,13 +69,13 @@ void QColorPickerSlider::paintEvent(QPaintEvent *event) {
             ? 0.0f
             : float(value() - minimum()) / float(maximum() - minimum());
 
-    for (int i = 0; i < _gradientStops.size() - 1; ++i) {
-        if (_gradientStops[i].first <= valueFloat &&
-            _gradientStops[i + 1].first >= valueFloat) {
-            leftColor = _gradientStops[i].second;
-            rightColor = _gradientStops[i + 1].second;
-            leftPos = _gradientStops[i].first;
-            rightPos = _gradientStops[i + 1].first;
+    for (int i = 0; i < m_gradientStops.size() - 1; ++i) {
+        if (m_gradientStops[i].first <= valueFloat &&
+            m_gradientStops[i + 1].first >= valueFloat) {
+            leftColor = m_gradientStops[i].second;
+            rightColor = m_gradientStops[i + 1].second;
+            leftPos = m_gradientStops[i].first;
+            rightPos = m_gradientStops[i + 1].first;
             break;
         }
     }

@@ -17,48 +17,48 @@
 
 #include "changedstringlist.h"
 
-bool ChangedStringList::containChanges() const { return !mods.isEmpty(); }
+bool ChangedStringList::containChanges() const { return !m_mods.isEmpty(); }
 
 bool ChangedStringList::containChanges(const QString &item) const {
-    return contents.contains(item);
+    return m_contents.contains(item);
 }
 
 void ChangedStringList::clear() {
-    contents.clear();
-    mods.clear();
+    m_contents.clear();
+    m_mods.clear();
 }
 
 void ChangedStringList::pushAddItem(const QString &item) {
-    if (mods.contains(item)) {
-        auto v = mods.value(item);
+    if (m_mods.contains(item)) {
+        auto v = m_mods.value(item);
         if (v) {
             return;
         } else {
-            mods.remove(item);
+            m_mods.remove(item);
         }
     } else {
-        mods.insert(item, true);
+        m_mods.insert(item, true);
     }
-    contents.append(item);
+    m_contents.append(item);
 }
 
 void ChangedStringList::pushRemoveItem(const QString &item) {
-    if (mods.contains(item)) {
-        auto v = mods.value(item);
+    if (m_mods.contains(item)) {
+        auto v = m_mods.value(item);
         if (v) {
-            mods.remove(item);
+            m_mods.remove(item);
         } else {
             return;
         }
     } else {
-        mods.insert(item, false);
+        m_mods.insert(item, false);
     }
-    contents.removeOne(item);
+    m_contents.removeOne(item);
 }
 
-QStringList ChangedStringList::getContents() const { return contents; }
+QStringList ChangedStringList::getContents() const { return m_contents; }
 
 void ChangedStringList::setContents(const QStringList &newContents) {
-    contents = newContents;
-    mods.clear();
+    m_contents = newContents;
+    m_mods.clear();
 }

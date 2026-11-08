@@ -16,17 +16,18 @@
 */
 
 #include "crashhandler.h"
-#include "class/plugin/pluginsystem.h"
-#include "dialog/crashreport.h"
+
+#include <csignal>
 
 #include <QApplication>
 #include <QLibraryInfo>
 #include <QTextStream>
 
 #include <cpptrace/cpptrace.hpp>
-
 #include <cpptrace/formatting.hpp>
-#include <csignal>
+
+#include "class/plugin/pluginsystem.h"
+#include "dialog/crashreport.h"
 
 #ifdef Q_OS_WIN
 #include <Windows.h>

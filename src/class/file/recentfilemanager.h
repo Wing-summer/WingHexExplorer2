@@ -41,6 +41,7 @@ public:
             return this->url == info.url &&
                    this->isWorkSpace == info.isWorkSpace;
         }
+
         bool operator!=(const RecentInfo &info) const {
             return this->url != info.url ||
                    this->isWorkSpace != info.isWorkSpace;
@@ -93,7 +94,7 @@ public:
     bool isDirty() const;
 
 signals:
-    void triggered(const RecentFileManager::RecentInfo &rinfo);
+    void sigOnRecentFileTriggered(const RecentFileManager::RecentInfo &rinfo);
 
 private:
     bool existsPath(const RecentInfo &info);
@@ -103,10 +104,10 @@ private:
     QMenu *m_menu;
     QWidget *m_parent;
     QList<RecentInfo> m_recents;
-    QList<QAction *> hitems;
+    QList<QAction *> m_hitems;
 
-    bool _isScriptFile;
-    bool _dirty = false;
+    bool m_isScriptFile;
+    bool m_dirty = false;
 };
 
 #endif // RECENTFILEMANAGER_H

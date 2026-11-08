@@ -18,14 +18,15 @@
 #ifndef SCRIPTDOCUMENTCONTEXT_H
 #define SCRIPTDOCUMENTCONTEXT_H
 
+#include <functional>
+#include <memory>
+
 #include <QHash>
 #include <QList>
 #include <QObject>
 #include <QPointer>
 #include <QSet>
 #include <QUrl>
-#include <functional>
-#include <memory>
 
 class EditorView;
 class QHexDocument;
@@ -78,15 +79,15 @@ public:
 private:
     bool finishMacro();
     static bool onGuiThread();
-    CurrentView _current;
-    OpenView _open;
-    CloseView _close;
-    std::shared_ptr<ScriptDocumentIds> _ids;
-    QHash<int, QPointer<EditorView>> _handles;
-    QPointer<QHexDocument> _macroDocument;
-    int _macroDepth = 0;
-    int _token;
-    int _active = -1;
+    CurrentView m_current;
+    OpenView m_open;
+    CloseView m_close;
+    std::shared_ptr<ScriptDocumentIds> m_ids;
+    QHash<int, QPointer<EditorView>> m_handles;
+    QPointer<QHexDocument> m_macroDocument;
+    int m_macroDepth = 0;
+    int m_token;
+    int m_active = -1;
 };
 
 #endif // SCRIPTDOCUMENTCONTEXT_H

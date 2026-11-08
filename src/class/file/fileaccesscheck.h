@@ -22,7 +22,7 @@
 
 class FileAccessCheck {
 public:
-    enum class Status { OK, Deny, Unknown };
+    enum class Status { Ok, Deny, Unknown };
 
 public:
     static Status canStandardUserWriteFile(const QFileInfo &file);

@@ -17,15 +17,16 @@
 
 #include "framelesshelper.h"
 
-#include "windowbutton.h"
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QTimer>
 #include <QVBoxLayout>
+
 #include <QWKWidgets/widgetwindowagent.h>
 
 #include "class/settings/thememanager.h"
+#include "windowbutton.h"
 
 FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
     : QObject(parent) {
@@ -86,7 +87,7 @@ FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
     windowAgent->setWindowAttribute(QStringLiteral("dark-mode"),
                                     ThemeManager::instance().currentTheme() ==
                                         ThemeManager::Theme::Dark);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
             [windowAgent](ThemeManager::Theme theme) {
                 windowAgent->setWindowAttribute(QStringLiteral("dark-mode"),
                                                 theme ==
@@ -95,9 +96,9 @@ FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
 #endif
 
 #ifndef Q_OS_MAC
-    connect(m_windowBar, &QWK::WindowBar::minimizeRequested, parent,
+    connect(m_windowBar, &QWK::WindowBar::sigOnMinimizeRequested, parent,
             &QWidget::showMinimized);
-    connect(m_windowBar, &QWK::WindowBar::maximizeRequested, parent,
+    connect(m_windowBar, &QWK::WindowBar::sigOnMaximizeRequested, parent,
             [parent, maxButton](bool max) {
                 if (max) {
                     parent->showMaximized();
@@ -111,7 +112,7 @@ FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
                 // events to the button.
                 emulateLeaveEvent(maxButton);
             });
-    connect(m_windowBar, &QWK::WindowBar::closeRequested, parent,
+    connect(m_windowBar, &QWK::WindowBar::sigOnCloseRequested, parent,
             &QWidget::close);
 #endif
 }

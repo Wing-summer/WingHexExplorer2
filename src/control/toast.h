@@ -36,15 +36,15 @@ class Toast : public QDialog {
     Q_PROPERTY(QColor textcolor READ textColor WRITE setTextColor)
 
 public:
-    enum TOAST_POS { TOP, CENTER, BOTTOM };
+    enum ToastPos { Top, Center, Bottom };
 
     static void toast(QWidget *parent, const QPixmap &icon,
                       const QString &strContent);
 
     virtual ~Toast() override;
 
-    void setToastPos(TOAST_POS pos);
-    TOAST_POS lastToastPos() const;
+    void setToastPos(ToastPos pos);
+    ToastPos lastToastPos() const;
 
     QPixmap icon() const;
     void setIcon(const QPixmap &icon);
@@ -81,10 +81,10 @@ private:
     QColor m_backColor = Qt::black;
     QPixmap m_icon;
 
-    QPointer<QWidget> _parent;
+    QPointer<QWidget> m_parent;
 
-    TOAST_POS m_pos = TOAST_POS::BOTTOM;
-    bool _pauseTimer = false;
+    ToastPos m_pos = ToastPos::Bottom;
+    bool m_pauseTimer = false;
     bool m_dismissing = false;
 
     void dismiss();

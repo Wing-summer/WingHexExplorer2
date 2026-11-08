@@ -18,9 +18,10 @@
 #include "dockcomponentsfactory.h"
 
 #include "DockWidget.h"
+
 #include "dockwidgettab.h"
 
 ads::CDockWidgetTab *
-DockComponentsFactory::createDockWidgetTab(ads::CDockWidget *DockWidget) const {
-    return new DockWidgetTab(DockWidget);
+DockComponentsFactory::createDockWidgetTab(ads::CDockWidget *dockWidget) const {
+    return new DockWidgetTab(dockWidget);
 }

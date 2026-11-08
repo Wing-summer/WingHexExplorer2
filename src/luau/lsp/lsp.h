@@ -169,10 +169,12 @@ struct MarkupContent {
 struct CompletionParams {
     DocumentUri textDocument;
     Position position;
+
     struct Context {
         CompletionTriggerKind triggerKind = CompletionTriggerKind::Invoked;
         std::optional<QString> triggerCharacter;
     };
+
     std::optional<Context> context;
 };
 

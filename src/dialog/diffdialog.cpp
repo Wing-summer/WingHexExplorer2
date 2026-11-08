@@ -17,16 +17,7 @@
 
 #include "diffdialog.h"
 
-#include "QWingRibbon/ribbon.h"
-#include "QWingRibbon/ribbontabcontent.h"
-#include "class/settings/settingmanager.h"
-#include "class/settings/thememanager.h"
-#include "control/diffrenderer.h"
-#include "control/documentchoice.h"
-#include "control/editorview.h"
-#include "control/qtableviewext.h"
-#include "control/searchbar.h"
-#include "model/diffresultmodel.h"
+#include <limits>
 
 #include <QButtonGroup>
 #include <QComboBox>
@@ -45,7 +36,17 @@
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrentRun>
 
-#include <limits>
+#include "QWingRibbon/ribbon.h"
+#include "QWingRibbon/ribbontabcontent.h"
+
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "control/diffrenderer.h"
+#include "control/documentchoice.h"
+#include "control/editorview.h"
+#include "control/qtableviewext.h"
+#include "control/searchbar.h"
+#include "model/diffresultmodel.h"
 
 namespace {
 
@@ -78,6 +79,7 @@ QString errorText(WingDiff::Error error) {
         return DiffDialog::tr("Invalid comparison source");
     }
 }
+
 QString readErrorText(QHexReadError error) {
     return error == QHexReadError::SourceChanged
                ? DiffDialog::tr("Source changed — compare again")
@@ -110,7 +112,7 @@ DiffDialog::DiffDialog(EditorView *initial, QWidget *parent)
     m_viewsSplitter->setSizes({1, 1});
     reloadSettings();
     connect(&SettingManager::instance(),
-            &SettingManager::sigDiffSettingsChanged, this,
+            &SettingManager::sigOnDiffSettingsChanged, this,
             &DiffDialog::reloadSettings);
     refreshCandidates();
     if (initial) {
@@ -144,7 +146,7 @@ DiffDialog::DiffDialog(EditorView *initial, QWidget *parent)
     m_timer.start(RefreshIntervalMs);
     connect(&m_worker, &QFutureWatcher<WingDiff::Outcome>::finished, this,
             &DiffDialog::comparisonFinished);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+    connect(&ThemeManager::instance(), &ThemeManager::sigOnThemeChanged, this,
             &DiffDialog::applyTheme);
     applyTheme();
     updateControls();
@@ -222,7 +224,7 @@ void DiffDialog::buildComparePage() {
     addPannelAction(nav, tr("Search"), Icon::Search, &DiffDialog::showSearch);
 
     addPannelAction(tab->addGroup(tr("Resources")), tr("Settings"),
-                    Icon::Settings, &DiffDialog::settingsRequested);
+                    Icon::Settings, &DiffDialog::sigOnSettingsRequested);
 }
 
 void DiffDialog::buildViewPage() {
@@ -262,22 +264,31 @@ void DiffDialog::swapSides() {
     m_choices[Side::Left]->setCurrentIndex(second);
     m_choices[Side::Right]->setCurrentIndex(first);
 }
+
 void DiffDialog::firstDifference() { selectDifference(0); }
+
 void DiffDialog::previousDifference() { navigate(-1); }
+
 void DiffDialog::nextDifference() { navigate(1); }
+
 void DiffDialog::lastDifference() {
     if (m_results && m_results->publishedDifferences()) {
         selectDifference(m_results->publishedDifferences() - 1);
     }
 }
+
 void DiffDialog::showSideBySide() { setOrientation(false); }
+
 void DiffDialog::showStacked() { setOrientation(true); }
+
 void DiffDialog::setSyncScrolling(bool enabled) {
     SettingManager::instance().setDiffSyncScroll(enabled);
 }
+
 void DiffDialog::setListVisible(bool visible) {
     m_listPanel->setVisible(visible);
 }
+
 void DiffDialog::resetLayout() {
     showSideBySide();
     m_viewsSplitter->setSizes({1, 1});
@@ -286,11 +297,13 @@ void DiffDialog::resetLayout() {
     m_listPanel->show();
     m_listButton->setChecked(true);
 }
+
 void DiffDialog::setAsciiVisible(bool visible) {
     for (auto view : m_views) {
         view->setAsciiVisible(visible);
     }
 }
+
 void DiffDialog::setAddressesVisible(bool visible) {
     for (auto view : m_views) {
         view->setAddressVisible(visible);
@@ -309,7 +322,7 @@ void DiffDialog::buildViews() {
         row->addWidget(
             new QLabel(side == Side::Right ? tr("Right") : tr("Left"), panel));
         auto choice = new DocumentChoice(panel);
-        connect(choice, &DocumentChoice::aboutToShowPopup, this,
+        connect(choice, &DocumentChoice::sigOnAboutToShowPopup, this,
                 &DiffDialog::refreshCandidates);
         choice->setObjectName(side == Side::Right
                                   ? QStringLiteral("diff.right.source")
@@ -378,10 +391,11 @@ void DiffDialog::buildDifferenceList() {
     listLayout->addWidget(m_search);
     connect(m_table->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, &DiffDialog::selectCurrentDifference);
-    connect(m_search, &SearchBar::searchRequested, this, &DiffDialog::search);
-    connect(m_search, &SearchBar::queryChanged, this,
+    connect(m_search, &SearchBar::sigOnSearchRequested, this,
+            &DiffDialog::search);
+    connect(m_search, &SearchBar::sigOnQueryChanged, this,
             &DiffDialog::cancelSearch);
-    connect(m_search, &SearchBar::closeRequested, this,
+    connect(m_search, &SearchBar::sigOnCloseRequested, this,
             &DiffDialog::closeSearch);
     connect(new QShortcut(QKeySequence::Find, this), &QShortcut::activated,
             this, &DiffDialog::showSearch);
@@ -395,12 +409,14 @@ void DiffDialog::selectCurrentDifference(const QModelIndex &index) {
     m_selected = m_model->globalRow(source.row());
     locateRange(m_model->range(source.row()));
 }
+
 void DiffDialog::cancelSearch() {
     if (m_searchCancel) {
         *m_searchCancel = true;
     }
     m_search->setState(SearchBar::State::Idle);
 }
+
 void DiffDialog::closeSearch() {
     cancelSearch();
     m_search->hide();
@@ -504,10 +520,10 @@ void DiffDialog::bindSource(Side side) {
         auto document = editor->hexEditor()->document();
         m_views[side]->setDocument(document, m_views[side]->cursor());
         m_sourceConnections[side].append(
-            connect(document.data(), &QHexDocument::contentsChanged, this,
+            connect(document.data(), &QHexDocument::sigOnContentsChanged, this,
                     &DiffDialog::sourceContentChanged));
         m_sourceConnections[side].append(
-            connect(document.data(), &QHexDocument::documentSaved, this,
+            connect(document.data(), &QHexDocument::sigOnDocumentSaved, this,
                     &DiffDialog::sourceSaved));
         m_sourceConnections[side].append(
             connect(editor.data(), &QObject::destroyed, this, [this, side] {
@@ -533,6 +549,7 @@ void DiffDialog::bindSource(Side side) {
 void DiffDialog::sourceContentChanged() {
     requestComparison(tr("Source content changed"));
 }
+
 void DiffDialog::sourceSaved(bool saved) {
     if (!saved || !m_results) {
         return;

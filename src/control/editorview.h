@@ -26,6 +26,7 @@
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
 #include "WingPlugin/wingplugincalls_p.h"
+
 #include "class/settings/thememanager.h"
 #include "class/util/cryptographichash.h"
 #include "control/editor/editorinfo.h"
@@ -609,7 +610,7 @@ private:
     QStackedWidget *m_stack = nullptr;
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
-    EditorViewContext *_context = nullptr;
+    EditorViewContext *m_context = nullptr;
 
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;
@@ -618,10 +619,10 @@ private:
     QHash<WingEditorViewWidget *, QIcon> m_iconOrigin;
     QHash<QWidget *, QIcon> m_iconCaches;
     QVector<EditorView *> m_cloneChildren;
-    QMap<QString, QByteArray> _pluginData;
-    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
+    QMap<QString, QByteArray> m_pluginData;
+    QMap<CryptographicHash::Algorithm, QString> m_checkSumData;
 
-    bool _hasRegistered = false;
+    bool m_hasRegistered = false;
     bool m_isNewFile = true;
     bool m_checkSumInvalid = false;
     bool m_cleanUpedPluginData = false;
@@ -631,17 +632,17 @@ private:
     mutable QMutex m_findMutex;
     FindResultModel::FindData m_findData;
 
-    CryptoAlgorithms _checkSumVisible;
-    ScrollDataPoints _scrollPoints;
+    CryptoAlgorithms m_checkSumVisible;
+    ScrollDataPoints m_scrollPoints;
 
     DocumentType m_docType = DocumentType::InValid;
     QString m_workSpaceName;
 
-    WingHex::WingIODevice *_dev = nullptr;
+    WingHex::WingIODevice *m_dev = nullptr;
     QUrl m_fileName;
 
-    QReadWriteLock _rwlock;
-    WingPluginCallsCorePrivate _api;
+    QReadWriteLock m_rwlock;
+    WingPluginCallsCorePrivate m_api;
 
 private:
     inline static QList<EditorView *> m_instances;

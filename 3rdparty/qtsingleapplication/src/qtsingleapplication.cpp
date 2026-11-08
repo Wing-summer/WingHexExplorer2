@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "qtsingleapplication.h"
-#include "qtlocalpeer.h"
-#include <QWidget>
 
 #include <QCryptographicHash>
+#include <QWidget>
+
+#include "qtlocalpeer.h"
 
 #ifdef Q_OS_UNIX
 #include <pwd.h>
@@ -50,7 +51,7 @@
     of the application user interface before entering the event loop
     with exec(), as normal.
 
-    The messageReceived() signal will be emitted when the running
+    The sigOnMessageReceived() signal will be emitted when the running
     application receives messages from another instance of the same
     application. When a message is received it might be helpful to the
     user to raise the application so that it becomes visible. To
@@ -113,11 +114,11 @@
 */
 
 void QtSingleApplication::sysInit(const QString &appId) {
-    actWin = nullptr;
+    m_actWin = nullptr;
 
-    peer = new QtLocalPeer(this, appId);
-    connect(peer, &QtLocalPeer::messageReceived, this,
-            &QtSingleApplication::messageReceived);
+    m_peer = new QtLocalPeer(this, appId);
+    connect(m_peer, &QtLocalPeer::sigOnMessageReceived, this,
+            &QtSingleApplication::sigOnMessageReceived);
 }
 
 /*!
@@ -140,12 +141,12 @@ QtSingleApplication::QtSingleApplication(int &argc, char **argv)
     \sa sendMessage()
 */
 
-bool QtSingleApplication::isRunning() { return peer->isClient(); }
+bool QtSingleApplication::isRunning() { return m_peer->isClient(); }
 
 /*!
     Tries to send the text \a message to the currently running
     instance. The QtSingleApplication object in the running instance
-    will emit the messageReceived() signal when it receives the
+    will emit the sigOnMessageReceived() signal when it receives the
     message.
 
     This function returns true if the message has been sent to, and
@@ -153,17 +154,17 @@ bool QtSingleApplication::isRunning() { return peer->isClient(); }
     currently running, or if the running instance fails to process the
     message within \a timeout milliseconds, this function return false.
 
-    \sa isRunning(), messageReceived()
+    \sa isRunning(), sigOnMessageReceived()
 */
 bool QtSingleApplication::sendMessage(const QByteArray &message, int timeout) {
-    return peer->sendMessage(message, timeout);
+    return m_peer->sendMessage(message, timeout);
 }
 
 /*!
     Returns the application identifier. Two processes with the same
     identifier will be regarded as instances of the same application.
 */
-QString QtSingleApplication::id() const { return peer->applicationId(); }
+QString QtSingleApplication::id() const { return m_peer->applicationId(); }
 
 /*!
   Sets the activation window of this application to \a aw. The
@@ -172,19 +173,19 @@ QString QtSingleApplication::id() const { return peer->applicationId(); }
 
   If \a activateOnMessage is true (the default), the window will be
   activated automatically every time a message is received, just prior
-  to the messageReceived() signal being emitted.
+  to the sigOnMessageReceived() signal being emitted.
 
-  \sa activateWindow(), messageReceived()
+  \sa activateWindow(), sigOnMessageReceived()
 */
 
 void QtSingleApplication::setActivationWindow(QWidget *aw,
                                               bool activateOnMessage) {
-    actWin = aw;
+    m_actWin = aw;
     if (activateOnMessage) {
-        connect(peer, &QtLocalPeer::messageReceived, this,
+        connect(m_peer, &QtLocalPeer::sigOnMessageReceived, this,
                 &QtSingleApplication::activateWindow);
     } else {
-        disconnect(peer, &QtLocalPeer::messageReceived, this,
+        disconnect(m_peer, &QtLocalPeer::sigOnMessageReceived, this,
                    &QtSingleApplication::activateWindow);
     }
 }
@@ -195,7 +196,7 @@ void QtSingleApplication::setActivationWindow(QWidget *aw,
 
     \sa setActivationWindow()
 */
-QWidget *QtSingleApplication::activationWindow() const { return actWin; }
+QWidget *QtSingleApplication::activationWindow() const { return m_actWin; }
 
 /*!
   De-minimizes, raises, and activates this application's activation window.
@@ -206,16 +207,17 @@ QWidget *QtSingleApplication::activationWindow() const { return actWin; }
   another instance.
 
   This function should typically be called in response to the
-  messageReceived() signal. By default, that will happen
+  sigOnMessageReceived() signal. By default, that will happen
   automatically, if an activation window has been set.
 
-  \sa setActivationWindow(), messageReceived(), initialize()
+  \sa setActivationWindow(), sigOnMessageReceived(), initialize()
 */
 void QtSingleApplication::activateWindow() {
-    if (actWin) {
-        actWin->setWindowState(actWin->windowState() & ~Qt::WindowMinimized);
-        actWin->raise();
-        actWin->activateWindow();
+    if (m_actWin) {
+        m_actWin->setWindowState(m_actWin->windowState() &
+                                 ~Qt::WindowMinimized);
+        m_actWin->raise();
+        m_actWin->activateWindow();
     }
 }
 
@@ -244,7 +246,7 @@ QString QtSingleApplication::genBlockServerName() const {
 }
 
 /*!
-    \fn void QtSingleApplication::messageReceived(const QString& message)
+    \fn void QtSingleApplication::sigOnMessageReceived(const QString& message)
 
     This signal is emitted when the current instance receives a \a
     message from another instance of this application.

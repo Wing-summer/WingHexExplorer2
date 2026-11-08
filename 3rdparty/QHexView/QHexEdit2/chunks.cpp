@@ -18,6 +18,7 @@
  */
 
 #include "chunks.h"
+
 #include <limits.h>
 
 #include <QBuffer>
@@ -37,7 +38,7 @@
 Chunks::Chunks(QIODevice *ioDevice) { setIODevice(ioDevice); }
 
 Chunks::~Chunks() {
-    if (_ioDevice) {
+    if (m_ioDevice) {
         resetIODevice();
     }
 }
@@ -46,31 +47,31 @@ bool Chunks::setIODevice(QIODevice *ioDevice) {
     if (ioDevice == nullptr) {
         return false;
     }
-    QWriteLocker locker(&_mutex);
-    _ioDevice = ioDevice;
-    _size = _ioDevice->size();
-    _chunks.clear();
+    QWriteLocker locker(&m_mutex);
+    m_ioDevice = ioDevice;
+    m_size = m_ioDevice->size();
+    m_chunks.clear();
     return true;
 }
 
 void Chunks::resetIODevice() {
-    QWriteLocker locker(&_mutex);
-    _ioDevice = nullptr;
-    _size = 0;
-    _chunks.clear();
+    QWriteLocker locker(&m_mutex);
+    m_ioDevice = nullptr;
+    m_size = 0;
+    m_chunks.clear();
 }
 
 // ***************************************** Getting data out of Chunks
 
 QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     return __data(pos, maxSize);
 }
 
 bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     if (count == -1) {
-        count = _size;
+        count = m_size;
     }
     if (iODevice && iODevice->isOpen() && iODevice->isWritable()) {
         for (qint64 idx = pos; idx < count; idx += BUFFER_SIZE) {
@@ -87,8 +88,9 @@ bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
 qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
     qint64 result = -1;
     QByteArray buffer;
-    QWriteLocker locker(&_mutex);
-    for (qint64 pos = from; (pos < _size) && (result < 0); pos += BUFFER_SIZE) {
+    QWriteLocker locker(&m_mutex);
+    for (qint64 pos = from; (pos < m_size) && (result < 0);
+         pos += BUFFER_SIZE) {
         buffer = __data(pos, BUFFER_SIZE + ba.size() - 1);
         auto findPos = buffer.indexOf(ba);
         if (findPos >= 0) {
@@ -101,7 +103,7 @@ qint64 Chunks::indexOf(const QByteArray &ba, qint64 from) const {
 qint64 Chunks::lastIndexOf(const QByteArray &ba, qint64 from) const {
     qint64 result = -1;
     QByteArray buffer;
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     for (qint64 pos = from; (pos > 0) && (result < 0); pos -= BUFFER_SIZE) {
         qint64 sPos = pos - BUFFER_SIZE - ba.size() + 1;
         if (sPos < 0) {
@@ -129,7 +131,7 @@ bool Chunks::overwrite(qint64 pos, char b) {
 bool Chunks::removeAt(qint64 pos) { return remove(pos, 1); }
 
 bool Chunks::insert(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos > _size)) {
+    if ((pos < 0) || (pos > m_size)) {
         return false;
     }
 
@@ -137,10 +139,10 @@ bool Chunks::insert(qint64 pos, const QByteArray &ba) {
         return true;
     }
 
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     auto length = ba.length();
     qsizetype chunkIdx;
-    if (_size && pos == _size) {
+    if (m_size && pos == m_size) {
         chunkIdx = getChunkIndex(pos - 1);
     } else {
         chunkIdx = getChunkIndex(pos);
@@ -150,22 +152,22 @@ bool Chunks::insert(qint64 pos, const QByteArray &ba) {
         return false;
     }
 
-    qint64 posInBa = pos - _chunks[chunkIdx].absPos;
-    _chunks[chunkIdx].data.insert(posInBa, ba);
-    for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
-        _chunks[idx].absPos += length;
+    qint64 posInBa = pos - m_chunks[chunkIdx].absPos;
+    m_chunks[chunkIdx].data.insert(posInBa, ba);
+    for (auto idx = chunkIdx + 1; idx < m_chunks.size(); idx++) {
+        m_chunks[idx].absPos += length;
     }
-    _size += length;
+    m_size += length;
     return true;
 }
 
 bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     return __overwrite(pos, ba);
 }
 
 bool Chunks::remove(qint64 pos, qint64 length) {
-    QWriteLocker locker(&_mutex);
+    QWriteLocker locker(&m_mutex);
     return __remove(pos, length);
 }
 
@@ -175,7 +177,7 @@ char Chunks::at(qint64 pos) const { return data(pos, 1).at(0); }
 
 char Chunks::operator[](qint64 pos) const { return this->at(pos); }
 
-qint64 Chunks::size() const { return _size; }
+qint64 Chunks::size() const { return m_size; }
 
 qsizetype Chunks::getChunkIndex(qint64 absPos) const {
     // This routine checks, if there is already a copied chunk available. If os,
@@ -186,8 +188,8 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
     qsizetype insertIdx = 0;
     qint64 ioDelta = 0;
 
-    for (qsizetype idx = 0; idx < _chunks.size(); idx++) {
-        Chunk chunk = _chunks[idx];
+    for (qsizetype idx = 0; idx < m_chunks.size(); idx++) {
+        Chunk chunk = m_chunks[idx];
         if ((absPos >= chunk.absPos) &&
             (absPos < (chunk.absPos + chunk.data.size()))) {
             foundIdx = idx;
@@ -201,25 +203,25 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
         insertIdx = idx + 1;
     }
 
-    if (foundIdx == -1 && _ioDevice) {
-        auto oldPos = _ioDevice->pos();
+    if (foundIdx == -1 && m_ioDevice) {
+        auto oldPos = m_ioDevice->pos();
         Chunk newChunk;
         qint64 readAbsPos = absPos - ioDelta;
         qint64 readPos = (readAbsPos & READ_CHUNK_MASK);
-        if (!_ioDevice->seek(readPos)) {
+        if (!m_ioDevice->seek(readPos)) {
             return -1;
         }
-        newChunk.data = _ioDevice->read(CHUNK_SIZE);
+        newChunk.data = m_ioDevice->read(CHUNK_SIZE);
         newChunk.absPos = absPos - (readAbsPos - readPos);
-        _chunks.insert(insertIdx, newChunk);
+        m_chunks.insert(insertIdx, newChunk);
         foundIdx = insertIdx;
-        _ioDevice->seek(oldPos);
+        m_ioDevice->seek(oldPos);
     }
     return foundIdx;
 }
 
 bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
-    if ((pos < 0) || (pos >= _size)) {
+    if ((pos < 0) || (pos >= m_size)) {
         return false;
     }
 
@@ -228,7 +230,7 @@ bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
         return false;
     }
 
-    auto &chunk = _chunks[chunkIdx];
+    auto &chunk = m_chunks[chunkIdx];
     qint64 posInBa = pos - chunk.absPos;
 
     auto length = ba.length();
@@ -249,7 +251,7 @@ bool Chunks::__overwrite(qint64 pos, const QByteArray &ba) {
 }
 
 bool Chunks::__remove(qint64 pos, qint64 length) {
-    if ((pos < 0) || (pos >= _size)) {
+    if ((pos < 0) || (pos >= m_size)) {
         return false;
     }
 
@@ -258,7 +260,7 @@ bool Chunks::__remove(qint64 pos, qint64 length) {
         return false;
     }
 
-    auto &chunk = _chunks[chunkIdx];
+    auto &chunk = m_chunks[chunkIdx];
     qint64 posInBa = pos - chunk.absPos;
 
     auto clen = chunk.data.size();
@@ -266,17 +268,17 @@ bool Chunks::__remove(qint64 pos, qint64 length) {
 
     if (dist <= 0) {
         chunk.data.remove(posInBa, length);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
-            _chunks[idx].absPos += length;
+        for (auto idx = chunkIdx + 1; idx < m_chunks.size(); idx++) {
+            m_chunks[idx].absPos += length;
         }
-        _size -= length;
+        m_size -= length;
     } else {
         auto len = clen - posInBa;
         chunk.data.remove(posInBa, len);
-        for (auto idx = chunkIdx + 1; idx < _chunks.size(); idx++) {
-            _chunks[idx].absPos -= len;
+        for (auto idx = chunkIdx + 1; idx < m_chunks.size(); idx++) {
+            m_chunks[idx].absPos -= len;
         }
-        _size -= len;
+        m_size -= len;
 
         if (!__remove(pos + clen, dist)) {
             return false;
@@ -294,31 +296,31 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
     QByteArray buffer;
 
     // Do some checks and some arrangements
-    if (pos >= _size) {
+    if (pos >= m_size) {
         return buffer;
     }
 
     if (maxSize < 0) {
-        maxSize = _size;
-    } else if ((pos + maxSize) > _size) {
-        maxSize = _size - pos;
+        maxSize = m_size;
+    } else if ((pos + maxSize) > m_size) {
+        maxSize = m_size - pos;
     }
 
-    if (!_ioDevice || !_ioDevice->isReadable()) {
+    if (!m_ioDevice || !m_ioDevice->isReadable()) {
         return {};
     }
 
-    auto oldPos = _ioDevice->pos(); // save the pos state
+    auto oldPos = m_ioDevice->pos(); // save the pos state
     while (maxSize > 0) {
         chunk.absPos = LLONG_MAX;
         bool chunksLoopOngoing = true;
-        while ((chunkIdx < _chunks.count()) && chunksLoopOngoing) {
+        while ((chunkIdx < m_chunks.count()) && chunksLoopOngoing) {
             // In this section, we track changes before our required data and
             // we take the editdet data, if availible. ioDelta is a difference
             // counter to justify the read pointer to the original data, if
             // data in between was deleted or inserted.
 
-            chunk = _chunks[chunkIdx];
+            chunk = m_chunks[chunkIdx];
             if (chunk.absPos > pos) {
                 chunksLoopOngoing = false;
             } else {
@@ -352,28 +354,29 @@ QByteArray Chunks::__data(qint64 pos, qint64 maxSize) const {
             }
 
             maxSize -= byteCount;
-            if (!_ioDevice->seek(pos + ioDelta)) {
+            if (!m_ioDevice->seek(pos + ioDelta)) {
                 return {};
             }
-            readBuffer = _ioDevice->read(byteCount);
+            readBuffer = m_ioDevice->read(byteCount);
             buffer += readBuffer;
             pos += readBuffer.size();
         }
     }
-    _ioDevice->seek(oldPos); // restore it
+    m_ioDevice->seek(oldPos); // restore it
     return buffer;
 }
 
-QIODevice *Chunks::ioDevice() const { return _ioDevice; }
+QIODevice *Chunks::ioDevice() const { return m_ioDevice; }
 
 QHexReadSessionResult Chunks::readSession(quint64 budget) const {
-    QReadLocker locker(&_mutex);
-    if (!_ioDevice || !_ioDevice->isReadable() || _ioDevice->isSequential()) {
+    QReadLocker locker(&m_mutex);
+    if (!m_ioDevice || !m_ioDevice->isReadable() ||
+        m_ioDevice->isSequential()) {
         return readSessionError(budget, QHexReadError::InvalidDevice);
     }
     auto result = std::make_shared<QHexReadSession>();
-    result->length = _size;
-    if (auto file = qobject_cast<QFile *>(_ioDevice)) {
+    result->length = m_size;
+    if (auto file = qobject_cast<QFile *>(m_ioDevice)) {
         const QFileInfo info(file->fileName());
         if (!info.isFile()) {
             return readSessionError(budget, QHexReadError::OwnerThreadRequired);
@@ -381,7 +384,7 @@ QHexReadSessionResult Chunks::readSession(quint64 budget) const {
         result->fileName = info.absoluteFilePath();
         result->sourceSize = info.size();
         result->modified = info.lastModified();
-    } else if (auto memory = qobject_cast<QBuffer *>(_ioDevice)) {
+    } else if (auto memory = qobject_cast<QBuffer *>(m_ioDevice)) {
         result->memory = memory->data();
         result->sourceSize = result->memory.size();
     } else {
@@ -394,21 +397,21 @@ QHexReadSessionResult Chunks::readSession(quint64 budget) const {
     if (retained > budget) {
         return readSessionError(budget, QHexReadError::BudgetExceeded);
     }
-    for (const auto &chunk : std::as_const(_chunks)) {
+    for (const auto &chunk : std::as_const(m_chunks)) {
         const auto bytes = quint64(chunk.data.capacity());
         if (bytes > budget - retained) {
             return readSessionError(budget, QHexReadError::BudgetExceeded);
         }
         retained += bytes;
     }
-    const quint64 capacity = quint64(_chunks.size()) * 2 + 1;
+    const quint64 capacity = quint64(m_chunks.size()) * 2 + 1;
     if (capacity > (budget - retained) / sizeof(QHexReadSession::Piece)) {
         return readSessionError(budget, QHexReadError::BudgetExceeded);
     }
     result->pieces.reserve(size_t(capacity));
     qint64 logical = 0;
     qint64 source = 0;
-    for (const auto &chunk : std::as_const(_chunks)) {
+    for (const auto &chunk : std::as_const(m_chunks)) {
         const auto gap = chunk.absPos - logical;
         if (gap < 0) {
             return readSessionError(budget, QHexReadError::InvalidMapping);
@@ -425,15 +428,16 @@ QHexReadSessionResult Chunks::readSession(quint64 budget) const {
         }
         source += CHUNK_SIZE;
     }
-    if (logical < _size) {
-        result->pieces.push_back({logical, _size - logical, source, {}, false});
+    if (logical < m_size) {
+        result->pieces.push_back(
+            {logical, m_size - logical, source, {}, false});
     }
     return {result, QHexReadError::None};
 }
 
 QHexReadSessionResult Chunks::readSessionError(quint64 budget,
                                                QHexReadError error) const {
-    const auto file = qobject_cast<QFile *>(_ioDevice);
+    const auto file = qobject_cast<QFile *>(m_ioDevice);
     const auto name = file ? file->fileName() : QString();
     switch (error) {
     case QHexReadError::BudgetExceeded:

@@ -21,9 +21,9 @@
 #ifndef TESTSETTINGPAGE_H
 #define TESTSETTINGPAGE_H
 
-#include "WingPlugin/settingpage.h"
-
 #include <QLabel>
+
+#include "WingPlugin/settingpage.h"
 
 class TestSettingPage : public WingHex::SettingPage {
     Q_OBJECT
@@ -44,9 +44,9 @@ public:
     virtual void restore() override;
 
 private:
-    QLabel *_lbl = nullptr;
-    bool _isShownInRibbton;
-    QString _id;
+    QLabel *m_lbl = nullptr;
+    bool m_isShownInRibbton;
+    QString m_id;
 };
 
 #endif // TESTSETTINGPAGE_H

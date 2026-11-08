@@ -21,21 +21,21 @@
 
 CompositeIconEngine::CompositeIconEngine(const QIcon &main,
                                          const QIcon &overlay)
-    : mainIcon(main), overlayIcon(overlay) {}
+    : m_mainIcon(main), m_overlayIcon(overlay) {}
 
 QIconEngine *CompositeIconEngine::clone() const {
-    return new CompositeIconEngine(mainIcon, overlayIcon);
+    return new CompositeIconEngine(m_mainIcon, m_overlayIcon);
 }
 
 void CompositeIconEngine::paint(QPainter *painter, const QRect &rect,
                                 QIcon::Mode mode, QIcon::State state) {
-    mainIcon.paint(painter, rect, Qt::AlignCenter, mode, state);
+    m_mainIcon.paint(painter, rect, Qt::AlignCenter, mode, state);
     auto w = rect.width() / 2;
     auto h = rect.height() / 2;
     auto x = rect.x() + w;
     auto y = rect.y() + h;
     QRect overlayRect(x, y, w, h);
-    overlayIcon.paint(painter, overlayRect, Qt::AlignCenter, mode, state);
+    m_overlayIcon.paint(painter, overlayRect, Qt::AlignCenter, mode, state);
 }
 
 QPixmap CompositeIconEngine::pixmap(const QSize &size, QIcon::Mode mode,

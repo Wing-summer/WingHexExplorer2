@@ -18,9 +18,9 @@
 #ifndef CHECKSUMDIALOG_H
 #define CHECKSUMDIALOG_H
 
-#include "framelessdialogbase.h"
-
 #include <QTreeWidget>
+
+#include "framelessdialogbase.h"
 
 class CheckSumDialog : public FramelessDialogBase {
     Q_OBJECT
@@ -44,9 +44,9 @@ private:
     void updateCheckStatus(QTreeWidgetItem *parent);
 
 private:
-    QTreeWidget *hashlist = nullptr;
+    QTreeWidget *m_hashlist = nullptr;
     QTreeWidgetItem *m_pressedItem;
-    QVector<int> _result;
+    QVector<int> m_result;
     bool m_updating = false;
 };
 

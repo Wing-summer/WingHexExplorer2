@@ -35,8 +35,8 @@ public:
     virtual QVariant loadResource(int type, const QUrl &name) override;
 
 private:
-    QIcon _icon;
-    bool _isSys = true;
+    QIcon m_icon;
+    bool m_isSys = true;
 };
 
 #endif // SCRIPTINFOBROSWER_H

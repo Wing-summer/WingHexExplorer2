@@ -27,9 +27,9 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
+#include "3rdparty/WingCodeEdit/wingcodeedit.h"
 #include <KSyntaxHighlighting/Repository>
 
-#include "3rdparty/WingCodeEdit/wingcodeedit.h"
 #include "class/settings/thememanager.h"
 #include "utilities.h"
 
@@ -64,7 +64,7 @@ void TreeFilterEdit::resizeEvent(QResizeEvent *event) {
 
 void TreeFilterEdit::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Down) {
-        Q_EMIT navigateDown();
+        Q_EMIT sigOnNavigateDown();
         return;
     }
     QLineEdit::keyPressEvent(event);
@@ -103,7 +103,7 @@ FilteredTreePopup::FilteredTreePopup(QWidget *parent) : QWidget(parent) {
     m_tree->header()->hide();
     layout->addWidget(m_tree);
 
-    connect(m_filter, &TreeFilterEdit::navigateDown, this, [this] {
+    connect(m_filter, &TreeFilterEdit::sigOnNavigateDown, this, [this] {
         m_tree->setFocus();
         auto topItem = firstVisibleItem(m_tree->invisibleRootItem());
         if (topItem) {
@@ -216,13 +216,13 @@ void SyntaxPopup::syntaxItemChosen(QTreeWidgetItem *current, int) {
     }
 
     if (current == m_plainTextItem) {
-        Q_EMIT syntaxSelected(WingCodeEdit::nullSyntax());
+        Q_EMIT sigOnSyntaxSelected(WingCodeEdit::nullSyntax());
         return;
     }
 
     QVariant itemData = current->data(0, Qt::UserRole);
     if (itemData.canConvert<KSyntaxHighlighting::Definition>()) {
-        Q_EMIT syntaxSelected(
+        Q_EMIT sigOnSyntaxSelected(
             itemData.value<KSyntaxHighlighting::Definition>());
     }
 }
@@ -250,6 +250,6 @@ void EncodingPopup::encodingItemChosen(QTreeWidgetItem *current, int) {
 
     QVariant codecName = current->data(0, Qt::UserRole);
     if (codecName.isValid()) {
-        Q_EMIT encodingSelected(codecName.toString());
+        Q_EMIT sigOnEncodingSelected(codecName.toString());
     }
 }

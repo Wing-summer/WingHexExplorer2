@@ -25,21 +25,21 @@ class ScriptSettings : public QObject {
     Q_OBJECT
 
 public:
-    enum SETTING {
-        EDITOR = 1,
-        CONSOLE = 2,
-        FORMAT = 4,
-        ALL = EDITOR | CONSOLE | FORMAT
+    enum Setting {
+        Editor = 1,
+        Console = 2,
+        Format = 4,
+        All = Editor | Console | Format
     };
-    Q_DECLARE_FLAGS(SETTINGS, SETTING)
+    Q_DECLARE_FLAGS(Settings, Setting)
 
 public:
     static ScriptSettings &instance();
 
     void load();
-    void reset(SETTINGS cat = SETTING::ALL);
+    void reset(Settings cat = Setting::All);
 
-    void __reset(SETTINGS cat);
+    void __reset(Settings cat);
 
 public:
     QFont editorFont() const;
@@ -107,11 +107,11 @@ private:
     explicit ScriptSettings();
 
 signals:
-    void editorSettingsUpdate();
-    void consoleSettingUpdate();
+    void sigOnEditorSettingsUpdate();
+    void sigOnConsoleSettingUpdate();
 
 private:
-    QFont _defaultFont;
+    QFont m_defaultFont;
 
     QString m_editorFontFamily;
     QString m_consoleFontFamily;

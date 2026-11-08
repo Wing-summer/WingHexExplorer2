@@ -15,12 +15,12 @@
     </message>
     <message>
         <location filename="../sharememorydrv.cpp" line="60"/>
-        <location filename="../sharememorydrv.cpp" line="69"/>
+        <location filename="../sharememorydrv.cpp" line="70"/>
         <source>Shared memory</source>
         <translation>共享内存</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="70"/>
+        <location filename="../sharememorydrv.cpp" line="71"/>
         <source>Enter the shared memory identifier:</source>
         <translation>请输入共享内存标识：</translation>
     </message>

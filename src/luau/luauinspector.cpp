@@ -17,17 +17,18 @@
 
 #include "luauinspector.h"
 
-#include <lualib.h>
-
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <limits>
-#include <qstringview.h>
 #include <unordered_map>
 #include <vector>
+
+#include <qstringview.h>
+
+#include <lualib.h>
 
 #include <LuaBridge/LuaBridge.h>
 
@@ -249,31 +250,31 @@ void countCyclesRec(lua_State *L, int absIdx, int depth,
 class Inspector {
 public:
     Inspector(lua_State *L, const InspectOptions &opts)
-        : L(L), options(opts), level(0), nextIdByType{}, items(0),
-          pretty(opts.getMode() == InspectMode::Pretty) {}
+        : m_l(L), m_options(opts), m_level(0), m_nextIdByType{}, m_items(0),
+          m_pretty(opts.getMode() == InspectMode::Pretty) {}
 
     void putValue(int absIdx, bool quoteString) {
-        if (truncated) {
+        if (m_truncated) {
             return;
         }
 
-        if (items++ >= options.maxItems) {
-            buf += QByteArrayLiteral("...");
-            truncated = true;
+        if (m_items++ >= m_options.maxItems) {
+            m_buf += QByteArrayLiteral("...");
+            m_truncated = true;
             return;
         }
 
-        int type = lua_type(L, absIdx);
+        int type = lua_type(m_l, absIdx);
 
         switch (type) {
         case LUA_TSTRING: {
             size_t len = 0;
-            const char *s = lua_tolstring(L, absIdx, &len);
+            const char *s = lua_tolstring(m_l, absIdx, &len);
 
             if (quoteString) {
-                buf += smartQuote(escapeString(s, len));
+                m_buf += smartQuote(escapeString(s, len));
             } else {
-                buf += QByteArray(s, len);
+                m_buf += QByteArray(s, len);
             }
             break;
         }
@@ -281,95 +282,98 @@ public:
         case LUA_TNUMBER:
         case LUA_TINTEGER: {
             size_t len = 0;
-            const char *s = luaL_tolstring(L, absIdx, &len);
+            const char *s = luaL_tolstring(m_l, absIdx, &len);
 
             if (s) {
-                buf += QByteArray(s, len);
+                m_buf += QByteArray(s, len);
             }
 
-            lua_pop(L, 1);
+            lua_pop(m_l, 1);
             break;
         }
 
         case LUA_TBOOLEAN:
-            buf += lua_toboolean(L, absIdx) ? QByteArrayLiteral("true")
-                                            : QByteArrayLiteral("false");
+            m_buf += lua_toboolean(m_l, absIdx) ? QByteArrayLiteral("true")
+                                                : QByteArrayLiteral("false");
             break;
 
         case LUA_TNIL:
-            buf += QByteArrayLiteral("nil");
+            m_buf += QByteArrayLiteral("nil");
             break;
 
         case LUA_TVECTOR: {
-            const float *v = lua_tovector(L, absIdx);
+            const float *v = lua_tovector(m_l, absIdx);
 
             if (v) {
                 if (LUA_VECTOR_SIZE == 4) {
-                    buf += QByteArrayLiteral("(");
-                    buf += QByteArray::number(v[0]);
-                    buf += QByteArrayLiteral(", ");
-                    buf += QByteArray::number(v[1]);
-                    buf += QByteArrayLiteral(", ");
-                    buf += QByteArray::number(v[2]);
-                    buf += QByteArrayLiteral(", ");
-                    buf += QByteArray::number(v[3]);
-                    buf += QByteArrayLiteral(")");
+                    m_buf += QByteArrayLiteral("(");
+                    m_buf += QByteArray::number(v[0]);
+                    m_buf += QByteArrayLiteral(", ");
+                    m_buf += QByteArray::number(v[1]);
+                    m_buf += QByteArrayLiteral(", ");
+                    m_buf += QByteArray::number(v[2]);
+                    m_buf += QByteArrayLiteral(", ");
+                    m_buf += QByteArray::number(v[3]);
+                    m_buf += QByteArrayLiteral(")");
                 } else {
-                    buf += QByteArrayLiteral("(");
-                    buf += QByteArray::number(v[0]);
-                    buf += QByteArrayLiteral(", ");
-                    buf += QByteArray::number(v[1]);
-                    buf += QByteArrayLiteral(", ");
-                    buf += QByteArray::number(v[2]);
-                    buf += QByteArrayLiteral(")");
+                    m_buf += QByteArrayLiteral("(");
+                    m_buf += QByteArray::number(v[0]);
+                    m_buf += QByteArrayLiteral(", ");
+                    m_buf += QByteArray::number(v[1]);
+                    m_buf += QByteArrayLiteral(", ");
+                    m_buf += QByteArray::number(v[2]);
+                    m_buf += QByteArrayLiteral(")");
                 }
             } else {
-                buf += QByteArrayLiteral("<vector>");
+                m_buf += QByteArrayLiteral("<vector>");
             }
             break;
         }
 
         case LUA_TBUFFER: {
             size_t len = 0;
-            lua_tobuffer(L, absIdx, &len);
-            buf += QByteArrayLiteral("<buffer ") + QByteArray::number(len) +
-                   QByteArrayLiteral(">");
+            lua_tobuffer(m_l, absIdx, &len);
+            m_buf += QByteArrayLiteral("<buffer ") + QByteArray::number(len) +
+                     QByteArrayLiteral(">");
             break;
         }
 
         case LUA_TLIGHTUSERDATA:
-            buf +=
-                QByteArrayLiteral("<") + QByteArray(luaL_typename(L, absIdx)) +
-                QByteArrayLiteral(" ") +
-                QByteArray::number(
-                    reinterpret_cast<quintptr>(lua_touserdata(L, absIdx)), 16) +
-                QByteArrayLiteral(">");
+            m_buf += QByteArrayLiteral("<") +
+                     QByteArray(luaL_typename(m_l, absIdx)) +
+                     QByteArrayLiteral(" ") +
+                     QByteArray::number(reinterpret_cast<quintptr>(
+                                            lua_touserdata(m_l, absIdx)),
+                                        16) +
+                     QByteArrayLiteral(">");
             break;
 
         case LUA_TUSERDATA:
-            if (luaL_getmetafield(L, absIdx, "__tostring")) {
-                lua_pushvalue(L, absIdx);
-                if (lua_pcall(L, 1, 1, 0) == LUA_OK &&
-                    lua_type(L, -1) == LUA_TSTRING) {
+            if (luaL_getmetafield(m_l, absIdx, "__tostring")) {
+                lua_pushvalue(m_l, absIdx);
+                if (lua_pcall(m_l, 1, 1, 0) == LUA_OK &&
+                    lua_type(m_l, -1) == LUA_TSTRING) {
                     size_t length = 0;
-                    const char *text = lua_tolstring(L, -1, &length);
-                    buf += quoteString ? smartQuote(escapeString(text, length))
-                                       : QByteArray(text, length);
-                    lua_pop(L, 1);
+                    const char *text = lua_tolstring(m_l, -1, &length);
+                    m_buf += quoteString
+                                 ? smartQuote(escapeString(text, length))
+                                 : QByteArray(text, length);
+                    lua_pop(m_l, 1);
                     break;
                 }
-                lua_pop(L, 1);
+                lua_pop(m_l, 1);
             }
             Q_FALLTHROUGH();
         case LUA_TFUNCTION:
         case LUA_TTHREAD:
         case LUA_TCLASS:
         case LUA_TOBJECT:
-            buf += QByteArrayLiteral("<") +
-                   QByteArray(luaL_typename(L, absIdx)) +
-                   QByteArrayLiteral(" ") +
-                   QByteArray::number(getId(type, lua_topointer(L, absIdx))) +
-                   QByteArrayLiteral(">");
+            m_buf +=
+                QByteArrayLiteral("<") +
+                QByteArray(luaL_typename(m_l, absIdx)) +
+                QByteArrayLiteral(" ") +
+                QByteArray::number(getId(type, lua_topointer(m_l, absIdx))) +
+                QByteArrayLiteral(">");
             break;
 
         case LUA_TTABLE:
@@ -380,24 +384,24 @@ public:
             // Unknown type, use tostring if available
             {
                 size_t len = 0;
-                const char *s = luaL_tolstring(L, absIdx, &len);
+                const char *s = luaL_tolstring(m_l, absIdx, &len);
 
                 if (s) {
-                    buf += QByteArray(s, len);
+                    m_buf += QByteArray(s, len);
                 } else {
-                    buf += QByteArrayLiteral("<") +
-                           QByteArray(luaL_typename(L, absIdx)) +
-                           QByteArrayLiteral(">");
+                    m_buf += QByteArrayLiteral("<") +
+                             QByteArray(luaL_typename(m_l, absIdx)) +
+                             QByteArrayLiteral(">");
                 }
 
-                lua_pop(L, 1);
+                lua_pop(m_l, 1);
             }
             break;
         }
     }
 
 public:
-    const QByteArray &output() const { return buf; }
+    const QByteArray &output() const { return m_buf; }
 
 private:
     struct Entry {
@@ -405,50 +409,50 @@ private:
         luabridge::LuaRef value;
     };
 
-    lua_State *L;
-    const InspectOptions &options;
-    QByteArray buf;
-    int level;
-    std::unordered_map<int, int> nextIdByType;
-    std::unordered_map<int, std::unordered_map<const void *, int>> idsByType;
-    int items;
-    bool pretty;
-    bool truncated = false;
+    lua_State *m_l;
+    const InspectOptions &m_options;
+    QByteArray m_buf;
+    int m_level;
+    std::unordered_map<int, int> m_nextIdByType;
+    std::unordered_map<int, std::unordered_map<const void *, int>> m_idsByType;
+    int m_items;
+    bool m_pretty;
+    bool m_truncated = false;
 
     int getId(int type, const void *ptr) {
-        auto &typeIds = idsByType[type];
+        auto &typeIds = m_idsByType[type];
         auto it = typeIds.find(ptr);
         if (it != typeIds.end()) {
             return it->second;
         }
-        int id = ++nextIdByType[type];
+        int id = ++m_nextIdByType[type];
         typeIds[ptr] = id;
         return id;
     }
 
     void tabify() {
-        buf += options.getNewline();
-        for (int i = 0; i < level; ++i) {
-            buf += options.getIndent();
+        m_buf += m_options.getNewline();
+        for (int i = 0; i < m_level; ++i) {
+            m_buf += m_options.getIndent();
         }
     }
 
     void putTable(int absIdx) {
-        const void *ptr = lua_topointer(L, absIdx);
+        const void *ptr = lua_topointer(m_l, absIdx);
 
         // Check if this table has already been output (by id)
-        auto &typeIds = idsByType[LUA_TTABLE];
+        auto &typeIds = m_idsByType[LUA_TTABLE];
         auto existing = typeIds.find(ptr);
         if (existing != typeIds.end()) {
-            buf += QByteArrayLiteral("<table ") +
-                   QByteArray::number(existing->second) +
-                   QByteArrayLiteral(">");
+            m_buf += QByteArrayLiteral("<table ") +
+                     QByteArray::number(existing->second) +
+                     QByteArrayLiteral(">");
             return;
         }
 
         // Depth limit
-        if (level >= options.depth) {
-            buf += QByteArrayLiteral("{...}");
+        if (m_level >= m_options.depth) {
+            m_buf += QByteArrayLiteral("{...}");
             return;
         }
 
@@ -457,31 +461,31 @@ private:
         // If cycle count > 1, output prefix <id>
         auto cycleIt = cycles.find(ptr);
         if (cycleIt != cycles.end() && cycleIt->second > 1) {
-            buf += QByteArrayLiteral("<") + QByteArray::number(id) +
-                   QByteArrayLiteral(">");
+            m_buf += QByteArrayLiteral("<") + QByteArray::number(id) +
+                     QByteArrayLiteral(">");
         }
 
         std::vector<Entry> entries;
         std::unordered_map<lua_Integer, size_t> integerKeys;
 
-        const int initialTop = lua_gettop(L);
+        const int initialTop = lua_gettop(m_l);
 
-        for (int iter = 0; (iter = lua_rawiter(L, absIdx, iter)) != -1;) {
+        for (int iter = 0; (iter = lua_rawiter(m_l, absIdx, iter)) != -1;) {
             // key at -2, value at -1
             const size_t entryIndex = entries.size();
 
-            entries.push_back({luabridge::LuaRef::fromStack(L, -2),
-                               luabridge::LuaRef::fromStack(L, -1)});
+            entries.push_back({luabridge::LuaRef::fromStack(m_l, -2),
+                               luabridge::LuaRef::fromStack(m_l, -1)});
 
             lua_Integer sequenceIndex = 0;
-            if (sequenceKey(L, lua_absindex(L, -2), sequenceIndex)) {
+            if (sequenceKey(m_l, lua_absindex(m_l, -2), sequenceIndex)) {
                 integerKeys.emplace(sequenceIndex, entryIndex);
             }
 
-            lua_pop(L, 2);
+            lua_pop(m_l, 2);
         }
 
-        Q_ASSERT(lua_gettop(L) == initialTop);
+        Q_ASSERT(lua_gettop(m_l) == initialTop);
 
         std::vector<size_t> sequenceEntries;
         std::vector<size_t> mapEntries;
@@ -508,18 +512,18 @@ private:
         }
 
         // Sort keys
-        std::sort(
-            mapEntries.begin(), mapEntries.end(), [&](size_t a, size_t b) {
-                entries[a].key.push(L);
-                entries[b].key.push(L);
-                bool less =
-                    compareLuaKeys(L, lua_absindex(L, -2), lua_absindex(L, -1));
-                lua_pop(L, 2);
-                return less;
-            });
+        std::sort(mapEntries.begin(), mapEntries.end(),
+                  [&](size_t a, size_t b) {
+                      entries[a].key.push(m_l);
+                      entries[b].key.push(m_l);
+                      bool less = compareLuaKeys(m_l, lua_absindex(m_l, -2),
+                                                 lua_absindex(m_l, -1));
+                      lua_pop(m_l, 2);
+                      return less;
+                  });
 
-        buf += QByteArrayLiteral("{");
-        ++level;
+        m_buf += QByteArrayLiteral("{");
+        ++m_level;
 
         bool first = true;
         auto beginElement = [&]() {
@@ -527,94 +531,94 @@ private:
                 tabify();
                 first = false;
             } else {
-                buf += QByteArrayLiteral(",");
+                m_buf += QByteArrayLiteral(",");
 
-                if (pretty) {
+                if (m_pretty) {
                     tabify();
                 } else {
-                    buf += QByteArrayLiteral(" ");
+                    m_buf += QByteArrayLiteral(" ");
                 }
             }
         };
 
         // Output sequence part (array-like items)
         for (size_t entryIndex : sequenceEntries) {
-            if (truncated) {
+            if (m_truncated) {
                 break;
             }
 
             beginElement();
-            entries[entryIndex].value.push(L);
-            putValue(lua_absindex(L, -1), true);
-            lua_pop(L, 1);
+            entries[entryIndex].value.push(m_l);
+            putValue(lua_absindex(m_l, -1), true);
+            lua_pop(m_l, 1);
 
-            if (truncated) {
+            if (m_truncated) {
                 break;
             }
         }
 
         // Output key-value pairs (non-sequence keys)
         for (size_t entryIndex : mapEntries) {
-            if (truncated) {
+            if (m_truncated) {
                 break;
             }
 
             beginElement();
-            entries[entryIndex].key.push(L);
-            const int keyAbs = lua_absindex(L, -1);
+            entries[entryIndex].key.push(m_l);
+            const int keyAbs = lua_absindex(m_l, -1);
 
             // Output key
-            if (lua_type(L, keyAbs) == LUA_TSTRING) {
+            if (lua_type(m_l, keyAbs) == LUA_TSTRING) {
                 size_t len;
-                const char *s = lua_tolstring(L, keyAbs, &len);
+                const char *s = lua_tolstring(m_l, keyAbs, &len);
 
                 if (isIdentifier(s, len)) {
-                    buf += QByteArray(s, static_cast<int>(len));
+                    m_buf += QByteArray(s, static_cast<int>(len));
                 } else {
-                    buf += QByteArrayLiteral("[");
-                    lua_pushvalue(L, keyAbs);
-                    putValue(lua_absindex(L, -1), true);
-                    lua_pop(L, 1);
-                    buf += QByteArrayLiteral("]");
+                    m_buf += QByteArrayLiteral("[");
+                    lua_pushvalue(m_l, keyAbs);
+                    putValue(lua_absindex(m_l, -1), true);
+                    lua_pop(m_l, 1);
+                    m_buf += QByteArrayLiteral("]");
                 }
             } else {
-                buf += QByteArrayLiteral("[");
-                lua_pushvalue(L, keyAbs);
-                putValue(lua_absindex(L, -1), true);
-                lua_pop(L, 1);
-                buf += QByteArrayLiteral("]");
+                m_buf += QByteArrayLiteral("[");
+                lua_pushvalue(m_l, keyAbs);
+                putValue(lua_absindex(m_l, -1), true);
+                lua_pop(m_l, 1);
+                m_buf += QByteArrayLiteral("]");
             }
 
-            if (truncated) {
-                lua_pop(L, 1);
+            if (m_truncated) {
+                lua_pop(m_l, 1);
                 break;
             }
 
-            buf += QByteArrayLiteral(" = ");
+            m_buf += QByteArrayLiteral(" = ");
 
-            entries[entryIndex].value.push(L);
-            putValue(lua_absindex(L, -1), true);
-            lua_pop(L, 1);
+            entries[entryIndex].value.push(m_l);
+            putValue(lua_absindex(m_l, -1), true);
+            lua_pop(m_l, 1);
 
-            lua_pop(L, 1);
+            lua_pop(m_l, 1);
 
-            if (truncated) {
+            if (m_truncated) {
                 break;
             }
         }
 
         // Metatable handling
-        if (!truncated && lua_getmetatable(L, absIdx)) {
-            if (lua_type(L, -1) == LUA_TTABLE) {
+        if (!m_truncated && lua_getmetatable(m_l, absIdx)) {
+            if (lua_type(m_l, -1) == LUA_TTABLE) {
                 beginElement();
-                buf += QByteArrayLiteral("<metatable> = ");
-                putValue(lua_absindex(L, -1), true);
+                m_buf += QByteArrayLiteral("<metatable> = ");
+                putValue(lua_absindex(m_l, -1), true);
             }
 
-            lua_pop(L, 1);
+            lua_pop(m_l, 1);
         }
 
-        --level;
+        --m_level;
 
         // If Pretty mode and there are elements, add newline and indent before
         // closing '}'
@@ -622,8 +626,8 @@ private:
             tabify();
         }
 
-        buf += QByteArrayLiteral("}");
-        Q_ASSERT(lua_gettop(L) == initialTop);
+        m_buf += QByteArrayLiteral("}");
+        Q_ASSERT(lua_gettop(m_l) == initialTop);
     }
 
 public:

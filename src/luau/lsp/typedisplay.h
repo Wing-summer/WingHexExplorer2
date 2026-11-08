@@ -18,11 +18,12 @@
 #ifndef TYPEDISPLAY_H
 #define TYPEDISPLAY_H
 
+#include <algorithm>
+#include <functional>
+
 #include "Luau/ToString.h"
 #include "Luau/Type.h"
 #include "Luau/TypePack.h"
-#include <algorithm>
-#include <functional>
 
 namespace LuauLsp {
 

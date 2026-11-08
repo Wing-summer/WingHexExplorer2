@@ -1,20 +1,23 @@
 // Copyright (C) 2026 WingSummer
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#include "WingPlugin/winghexdocument.h"
-#include "class/file/workspacemanager.h"
-#include "class/plugin/pluginsystem.h"
-#include "class/settings/settingmanager.h"
-#include "class/settings/thememanager.h"
-#include "dialog/mainwindow.h"
-#include <QApplication>
-#include <QFile>
-#include <QTemporaryDir>
 #include <atomic>
 #include <cstring>
 #include <iostream>
 #include <limits>
 #include <thread>
 #include <vector>
+
+#include <QApplication>
+#include <QFile>
+#include <QTemporaryDir>
+
+#include "WingPlugin/winghexdocument.h"
+
+#include "class/file/workspacemanager.h"
+#include "class/plugin/pluginsystem.h"
+#include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
+#include "dialog/mainwindow.h"
 
 using namespace WingHex;
 #define REQUIRE(expression)                                                    \
@@ -32,16 +35,22 @@ class ProbePlugin final : public IWingPlugin {
 public:
     int acquired = 0;
     int released = 0;
+
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("probe");
     }
+
     const QString pluginComment() const override { return {}; }
+
     RegisteredEvents registeredEvents() const override {
         return RegisteredEvents(RegisteredEvent::PluginFileOpened) |
                RegisteredEvent::PluginFileClosed;
     }
+
     void eventPluginFile(PluginFileEvent event, FileType, const QUrl &, int,
                          const QUrl &) override {
         acquired += event == PluginFileEvent::PluginOpened;
@@ -52,11 +61,15 @@ public:
 class ProbeDevice final : public WingIODevice {
 public:
     QByteArray bytes = QByteArrayLiteral("device-data");
+
     qint64 size() const override { return bytes.size(); }
+
     bool isSequential() const override { return false; }
+
     bool seek(qint64 offset) override {
         return offset >= 0 && offset <= size() && QIODevice::seek(offset);
     }
+
     bool defaultIsLocked() const override { return false; }
 
 protected:
@@ -65,6 +78,7 @@ protected:
         std::memcpy(data, bytes.constData() + pos(), size_t(count));
         return count;
     }
+
     qint64 writeData(const char *data, qint64 length) override {
         const auto count = std::min(length, size() - pos());
         std::memcpy(bytes.data() + pos(), data, size_t(count));
@@ -80,20 +94,27 @@ public:
     int opens = 0;
     int closes = 0;
     QString lastPath;
+
     bool init(const std::unique_ptr<QSettings> &) override { return true; }
+
     void unload(std::unique_ptr<QSettings> &) override {}
+
     const QString pluginName() const override {
         return QStringLiteral("driver");
     }
+
     const QString pluginComment() const override { return {}; }
+
     QString supportedFileExtDisplayName() const override {
         return QStringLiteral("driver");
     }
+
     WingIODevice *onOpenFile(const QString &path) override {
         ++opens;
         lastPath = path;
         return new ProbeDevice;
     }
+
     bool onCloseFile(WingIODevice *) override {
         ++closes;
         return allowClose;
@@ -721,8 +742,8 @@ public:
         ProbeDriver driver;
         PluginInfo driverInfo;
         driverInfo.id = QStringLiteral("probedriver");
-        host._loadeddevs.append(&driver);
-        host._pinfos.insert(&driver, driverInfo);
+        host.m_loadeddevs.append(&driver);
+        host.m_pinfos.insert(&driver, driverInfo);
         QTemporaryDir directory;
         REQUIRE(directory.isValid());
         const auto first = directory.filePath(QStringLiteral("中文 # %.bin"));
@@ -931,8 +952,8 @@ public:
         }
         REQUIRE(plugin.acquired == plugin.released);
         REQUIRE(host.m_plgviewMap[&plugin].contexts.isEmpty());
-        host._loadeddevs.removeAll(&driver);
-        host._pinfos.remove(&driver);
+        host.m_loadeddevs.removeAll(&driver);
+        host.m_pinfos.remove(&driver);
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         REQUIRE(EditorView::instances().size() == initialViews);
         std::cout << "Host document integration passed\n";

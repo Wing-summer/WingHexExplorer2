@@ -16,7 +16,6 @@
 */
 
 #include "wingplugincert.h"
-#include "class/file/fileaccesscheck.h"
 
 #include <QByteArray>
 #include <QCoreApplication>
@@ -29,6 +28,8 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
+
+#include "class/file/fileaccesscheck.h"
 
 namespace {
 constexpr qint64 MaxPluginSize = 500LL * 1024 * 1024; // 500 MB
@@ -80,7 +81,7 @@ WingPluginCert &WingPluginCert::instance() {
 
 bool WingPluginCert::verify(const QFileInfo &plg,
                             const QByteArray &fprint) const {
-    if (!_cs.contains(fprint)) {
+    if (!m_cs.contains(fprint)) {
         return false;
     }
     if (plg.size() <= 0 || plg.size() > MaxPluginSize) {
@@ -120,7 +121,7 @@ bool WingPluginCert::verify(const QFileInfo &plg,
         }
     }
 
-    auto c = _cs.value(fprint);
+    auto c = m_cs.value(fprint);
     return verify(data, sig, c);
 }
 
@@ -133,26 +134,26 @@ QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
 }
 
 QFileInfo WingPluginCert::certLocation(const QSslCertificate &cert) {
-    return _certs.value(cert);
+    return m_certs.value(cert);
 }
 
 QSslCertificate WingPluginCert::cert(const QByteArray &fprint) {
-    return _cs.value(fprint);
+    return m_cs.value(fprint);
 }
 
 bool WingPluginCert::isSysCert(const QSslCertificate &cert) const {
-    if (_sysCert.isNull()) {
+    if (m_sysCert.isNull()) {
         return false;
     }
-    return _sysCert == cert;
+    return m_sysCert == cert;
 }
 
 QHash<QSslCertificate, QFileInfo> WingPluginCert::certificates() const {
-    return _certs;
+    return m_certs;
 }
 
 bool WingPluginCert::isValidFingerPrint(const QSslCertificate &cert) const {
-    return _cs.contains(fingerPrint(cert));
+    return m_cs.contains(fingerPrint(cert));
 }
 
 QByteArray WingPluginCert::fingerPrint(const QSslCertificate &cert) {
@@ -214,9 +215,9 @@ WingPluginCert::WingPluginCert() {
         QSslCertificate cert(&f, QSsl::Pem);
         if (!cert.isNull()) {
             if (isValidCert(cert)) {
-                _certs.insert(cert, {});
-                _sysCert = cert;
-                _cs.insert(fingerPrint(cert), cert);
+                m_certs.insert(cert, {});
+                m_sysCert = cert;
+                m_cs.insert(fingerPrint(cert), cert);
             }
         }
     }
@@ -247,23 +248,23 @@ WingPluginCert::WingPluginCert() {
             continue;
         }
         QSslCertificate cert(&f, QSsl::Pem);
-        if (cert.isNull() || _certs.contains(cert)) {
+        if (cert.isNull() || m_certs.contains(cert)) {
             continue;
         }
 
         if (FileAccessCheck::canStandardUserWriteFile(c) !=
             FileAccessCheck::Status::Deny) {
             // untrusted cert, maybe modified
-            _certs.insert(cert, c);
+            m_certs.insert(cert, c);
             continue;
         }
 
         if (!isValidCert(cert)) {
-            _certs.insert(cert, c);
+            m_certs.insert(cert, c);
             continue;
         }
 
-        _certs.insert(cert, c);
-        _cs.insert(fingerPrint(cert), cert);
+        m_certs.insert(cert, c);
+        m_cs.insert(fingerPrint(cert), cert);
     }
 }

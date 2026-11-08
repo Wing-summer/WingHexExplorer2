@@ -20,8 +20,9 @@
 
 #else
 #include <errno.h>
-#include <fcntl.h>
 #include <string.h>
+
+#include <fcntl.h>
 #include <unistd.h>
 #endif
 
@@ -133,7 +134,7 @@ QtLockedFile::QtLockedFile() : QFile() {
     wmutex = nullptr;
     rmutex = nullptr;
 #endif
-    m_lock_mode = NoLock;
+    m_lockMode = NoLock;
 }
 
 /*!
@@ -148,7 +149,7 @@ QtLockedFile::QtLockedFile(const QString &name) : QFile(name) {
     wmutex = nullptr;
     rmutex = nullptr;
 #endif
-    m_lock_mode = NoLock;
+    m_lockMode = NoLock;
 }
 
 bool QtLockedFile::lock(LockMode mode, bool block) {
@@ -161,11 +162,11 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
         return unlock();
     }
 
-    if (mode == m_lock_mode) {
+    if (mode == m_lockMode) {
         return true;
     }
 
-    if (m_lock_mode != NoLock) {
+    if (m_lockMode != NoLock) {
         unlock();
     }
 
@@ -223,7 +224,7 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
                     qErrnoWarning(
                         "QtLockedFile::lock(): WaitForMultipleObjects failed");
                 }
-                m_lock_mode =
+                m_lockMode =
                     WriteLock; // trick unlock() to clean up - semiyucky
                 unlock();
                 return false;
@@ -247,7 +248,7 @@ bool QtLockedFile::lock(LockMode mode, bool block) {
     }
 #endif
 
-    m_lock_mode = mode;
+    m_lockMode = mode;
     return true;
 }
 
@@ -262,7 +263,7 @@ bool QtLockedFile::unlock() {
     }
 
 #ifdef Q_OS_WIN
-    if (m_lock_mode == ReadLock) {
+    if (m_lockMode == ReadLock) {
         ReleaseMutex(rmutex);
         CloseHandle(rmutex);
         rmutex = 0;
@@ -288,7 +289,7 @@ bool QtLockedFile::unlock() {
     }
 #endif
 
-    m_lock_mode = NoLock;
+    m_lockMode = NoLock;
     return true;
 }
 
@@ -310,7 +311,7 @@ QtLockedFile::~QtLockedFile() {
 
  \sa lockMode()
 */
-bool QtLockedFile::isLocked() const { return m_lock_mode != NoLock; }
+bool QtLockedFile::isLocked() const { return m_lockMode != NoLock; }
 
 /*!
     Returns the type of lock currently held by this object, or \e
@@ -318,7 +319,7 @@ bool QtLockedFile::isLocked() const { return m_lock_mode != NoLock; }
 
  \sa isLocked()
 */
-QtLockedFile::LockMode QtLockedFile::lockMode() const { return m_lock_mode; }
+QtLockedFile::LockMode QtLockedFile::lockMode() const { return m_lockMode; }
 
 /*!
   Opens the file in OpenMode \a mode.

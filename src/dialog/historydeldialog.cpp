@@ -16,20 +16,19 @@
 */
 
 #include "historydeldialog.h"
-
-#include "class/settings/thememanager.h"
 #include "ui_historydeldialog.h"
 
-#include "class/plugin/pluginsystem.h"
-#include "utilities.h"
-
 #include <QListWidgetItem>
+
+#include "class/plugin/pluginsystem.h"
+#include "class/settings/thememanager.h"
+#include "utilities.h"
 
 HistoryDelDialog::HistoryDelDialog(
     const QList<RecentFileManager::RecentInfo> &files, bool isScriptFile,
     QWidget *parent)
-    : QWidget(parent), ui(new Ui::HistoryDelDialog), _infos(files),
-      _isScriptFile(isScriptFile) {
+    : QWidget(parent), ui(new Ui::HistoryDelDialog), m_infos(files),
+      m_isScriptFile(isScriptFile) {
     ui->setupUi(this);
 
     auto &theme = ThemeManager::instance();
@@ -42,9 +41,9 @@ HistoryDelDialog::HistoryDelDialog(
             auto fileName = info.url.toLocalFile();
             auto mt = db.mimeTypeForFile(fileName);
             auto title =
-                RecentFileManager::getDisplayFileName(info, _isScriptFile);
+                RecentFileManager::getDisplayFileName(info, m_isScriptFile);
             lw->setText(title);
-            if (_isScriptFile) {
+            if (m_isScriptFile) {
                 lw->setIcon(
                     Utilities::getIconFromFile(qApp->style(), fileName));
             } else {
@@ -82,13 +81,13 @@ HistoryDelDialog::HistoryDelDialog(
         ui->lwHistory->addItem(lw);
     }
 
-    _dialog = new FramelessDialogBase(parent);
-    _dialog->buildUpContent(this);
-    _dialog->setWindowIcon(
+    m_dialog = new FramelessDialogBase(parent);
+    m_dialog->buildUpContent(this);
+    m_dialog->setWindowIcon(
         theme.standardIcon(ThemeManager::StandardIcon::ClearHistory));
-    _dialog->setWindowTitle(this->windowTitle());
-    _dialog->setMinimumSize(600, 400);
-    Utilities::moveToCenter(_dialog);
+    m_dialog->setWindowTitle(this->windowTitle());
+    m_dialog->setMinimumSize(600, 400);
+    Utilities::moveToCenter(m_dialog);
 }
 
 HistoryDelDialog::~HistoryDelDialog() { delete ui; }
@@ -105,14 +104,14 @@ QVector<int> HistoryDelDialog::getResult() const {
     return ret;
 }
 
-int HistoryDelDialog::exec() { return _dialog->exec(); }
+int HistoryDelDialog::exec() { return m_dialog->exec(); }
 
 void HistoryDelDialog::on_lwHistory_currentRowChanged(int currentRow) {
-    auto info = _infos.at(currentRow);
+    auto info = m_infos.at(currentRow);
     ui->tbInfo->setText(
-        RecentFileManager::getDisplayTooltip(info, _isScriptFile));
+        RecentFileManager::getDisplayTooltip(info, m_isScriptFile));
 }
 
-void HistoryDelDialog::on_buttonBox_accepted() { _dialog->accept(); }
+void HistoryDelDialog::on_buttonBox_accepted() { m_dialog->accept(); }
 
-void HistoryDelDialog::on_buttonBox_rejected() { _dialog->reject(); }
+void HistoryDelDialog::on_buttonBox_rejected() { m_dialog->reject(); }

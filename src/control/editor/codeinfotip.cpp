@@ -17,9 +17,7 @@
 
 #include "codeinfotip.h"
 
-#include "class/settings/thememanager.h"
-#include "editorlspevent.h"
-#include "snippetprocessor.h"
+#include <functional>
 
 #include <QApplication>
 #include <QClipboard>
@@ -32,7 +30,9 @@
 #include <QTime>
 #include <QUuid>
 
-#include <functional>
+#include "class/settings/thememanager.h"
+#include "editorlspevent.h"
+#include "snippetprocessor.h"
 
 namespace {
 
@@ -88,37 +88,37 @@ QIcon CodeInfoTip::getDisplayIcon(lsp::CompletionItemKind kind) {
 CodeInfoTip::CodeInfoTip(const lsp::CompletionItem &serverItem) {
     label = serverItem.label;
     kind = serverItem.kind.value_or(lsp::CompletionItemKind::Text);
-    documentationText = serverItem.documentation.value;
+    m_documentationText = serverItem.documentation.value;
     if (serverItem.detail && !serverItem.detail->isEmpty()) {
         detail = serverItem.detail.value();
     }
     if (serverItem.insertText) {
-        insertionText = serverItem.insertText.value();
+        m_insertionText = serverItem.insertText.value();
     }
-    insertionFormat = serverItem.insertTextFormat;
+    m_insertionFormat = serverItem.insertTextFormat;
     if (serverItem.textEdit) {
-        textEditRange = serverItem.textEdit->range;
-        insertionText = serverItem.textEdit->newText;
+        m_textEditRange = serverItem.textEdit->range;
+        m_insertionText = serverItem.textEdit->newText;
     }
-    additionalTextEdits = serverItem.additionalTextEdits;
+    m_additionalTextEdits = serverItem.additionalTextEdits;
 }
 
 QString CodeInfoTip::documentation() const {
     if (detail.isEmpty()) {
-        return documentationText.isEmpty() ? label : documentationText;
+        return m_documentationText.isEmpty() ? label : m_documentationText;
     }
-    if (documentationText.isEmpty()) {
+    if (m_documentationText.isEmpty()) {
         return detail;
     }
-    return detail + QStringLiteral("\n") + documentationText;
+    return detail + QStringLiteral("\n") + m_documentationText;
 }
 
 QString CodeInfoTip::insertionTextOrLabel() const {
-    return insertionText.isEmpty() ? label : insertionText;
+    return m_insertionText.isEmpty() ? label : m_insertionText;
 }
 
 bool CodeInfoTip::usesSnippet() const {
-    return insertionFormat == lsp::InsertTextFormat::Snippet;
+    return m_insertionFormat == lsp::InsertTextFormat::Snippet;
 }
 
 void CodeInfoTip::applyEdit(QPlainTextEdit *editor,
@@ -133,8 +133,9 @@ void CodeInfoTip::applyEdit(QPlainTextEdit *editor,
     int primaryStart = cursor.position();
     int primaryEnd = cursor.position();
 
-    if (textEditRange) {
-        if (!resolveRange(document, *textEditRange, primaryStart, primaryEnd)) {
+    if (m_textEditRange) {
+        if (!resolveRange(document, *m_textEditRange, primaryStart,
+                          primaryEnd)) {
             return;
         }
     } else if (!completionPrefix.isEmpty()) {
@@ -156,9 +157,9 @@ void CodeInfoTip::applyEdit(QPlainTextEdit *editor,
     }
 
     std::vector<PendingTextEdit> edits;
-    edits.reserve(additionalTextEdits.size() + 1);
+    edits.reserve(m_additionalTextEdits.size() + 1);
     int insertionStart = primaryStart;
-    for (const auto &additional : additionalTextEdits) {
+    for (const auto &additional : m_additionalTextEdits) {
         int start = 0;
         int end = 0;
         if (!resolveRange(document, additional.range, start, end)) {
@@ -206,14 +207,14 @@ void CodeInfoTip::applyEdit(QPlainTextEdit *editor,
 
 QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
                                    bool hasCodeLineContext) {
-    static QHash<QString, SnippetProcessor::TM_CODE> maps;
+    static QHash<QString, SnippetProcessor::TmCode> maps;
 
     if (maps.isEmpty()) {
-        auto e = QMetaEnum::fromType<SnippetProcessor::TM_CODE>();
+        auto e = QMetaEnum::fromType<SnippetProcessor::TmCode>();
         auto total = e.keyCount();
         for (int i = 0; i < total; ++i) {
             maps.insert(QString::fromLatin1(e.key(i)),
-                        SnippetProcessor::TM_CODE(e.value(i)));
+                        SnippetProcessor::TmCode(e.value(i)));
         }
     }
 
@@ -223,20 +224,20 @@ QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
 
     auto en = maps.value(name);
     switch (en) {
-    case SnippetProcessor::TM_CODE::TM_SELECTED_TEXT: {
+    case SnippetProcessor::TmCode::TM_SELECTED_TEXT: {
         auto tc = editor->textCursor();
         return tc.selectedText();
     }
-    case SnippetProcessor::TM_CODE::TM_CURRENT_LINE: {
+    case SnippetProcessor::TmCode::TM_CURRENT_LINE: {
         auto tc = editor->textCursor();
         return tc.block().text();
     }
-    case SnippetProcessor::TM_CODE::TM_CURRENT_WORD: {
+    case SnippetProcessor::TmCode::TM_CURRENT_WORD: {
         auto tc = editor->textCursor();
         tc.movePosition(QTextCursor::PreviousWord, QTextCursor::KeepAnchor);
         return tc.selectedText();
     }
-    case SnippetProcessor::TM_CODE::TM_LINE_INDEX: {
+    case SnippetProcessor::TmCode::TM_LINE_INDEX: {
         if (hasCodeLineContext) {
             auto tc = editor->textCursor();
             return QString::number(tc.blockNumber());
@@ -244,7 +245,7 @@ QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
             return QStringLiteral("-1");
         }
     }
-    case SnippetProcessor::TM_CODE::TM_LINE_NUMBER: {
+    case SnippetProcessor::TmCode::TM_LINE_NUMBER: {
         if (hasCodeLineContext) {
             auto tc = editor->textCursor();
             return QString::number(tc.blockNumber() + 1);
@@ -252,78 +253,78 @@ QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
             return QStringLiteral("-1");
         }
     }
-    case SnippetProcessor::TM_CODE::TM_FILENAME: {
+    case SnippetProcessor::TmCode::TM_FILENAME: {
         // Assuming fileName is stored in it
         return editor->windowFilePath();
     }
-    case SnippetProcessor::TM_CODE::RELATIVE_FILEPATH:
-    case SnippetProcessor::TM_CODE::TM_FILENAME_BASE: {
+    case SnippetProcessor::TmCode::RELATIVE_FILEPATH:
+    case SnippetProcessor::TmCode::TM_FILENAME_BASE: {
         auto fileName = editor->windowFilePath();
         QFileInfo info(fileName);
         return info.fileName();
     }
-    case SnippetProcessor::TM_CODE::TM_DIRECTORY: {
+    case SnippetProcessor::TmCode::TM_DIRECTORY: {
         auto fileName = editor->windowFilePath();
         QFileInfo info(fileName);
         return info.filePath();
     }
-    case SnippetProcessor::TM_CODE::TM_FILEPATH: {
+    case SnippetProcessor::TmCode::TM_FILEPATH: {
         auto fileName = editor->windowFilePath();
         QFileInfo info(fileName);
         return info.absoluteFilePath();
     }
-    case SnippetProcessor::TM_CODE::CLIPBOARD:
+    case SnippetProcessor::TmCode::CLIPBOARD:
         return QApplication::clipboard()->text();
-    case SnippetProcessor::TM_CODE::WORKSPACE_NAME:
-    case SnippetProcessor::TM_CODE::WORKSPACE_FOLDER:
+    case SnippetProcessor::TmCode::WORKSPACE_NAME:
+    case SnippetProcessor::TmCode::WORKSPACE_FOLDER:
         return {};
-    case SnippetProcessor::TM_CODE::CURRENT_YEAR: {
+    case SnippetProcessor::TmCode::CURRENT_YEAR: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("yyyy"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_YEAR_SHORT: {
+    case SnippetProcessor::TmCode::CURRENT_YEAR_SHORT: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("yy"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_MONTH: {
+    case SnippetProcessor::TmCode::CURRENT_MONTH: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("M"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_MONTH_NAME: {
+    case SnippetProcessor::TmCode::CURRENT_MONTH_NAME: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("MMMM"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_MONTH_NAME_SHORT: {
+    case SnippetProcessor::TmCode::CURRENT_MONTH_NAME_SHORT: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("MMM"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_DATE: {
+    case SnippetProcessor::TmCode::CURRENT_DATE: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("d"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_DAY_NAME: {
+    case SnippetProcessor::TmCode::CURRENT_DAY_NAME: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("dddd"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_DAY_NAME_SHORT: {
+    case SnippetProcessor::TmCode::CURRENT_DAY_NAME_SHORT: {
         auto date = QDate::currentDate();
         return date.toString(QStringLiteral("ddd"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_HOUR: {
+    case SnippetProcessor::TmCode::CURRENT_HOUR: {
         auto time = QTime::currentTime();
         return time.toString(QStringLiteral("h"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_MINUTE: {
+    case SnippetProcessor::TmCode::CURRENT_MINUTE: {
         auto time = QTime::currentTime();
         return time.toString(QStringLiteral("m"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_SECOND: {
+    case SnippetProcessor::TmCode::CURRENT_SECOND: {
         auto time = QTime::currentTime();
         return time.toString(QStringLiteral("s"));
     }
-    case SnippetProcessor::TM_CODE::CURRENT_SECONDS_UNIX:
+    case SnippetProcessor::TmCode::CURRENT_SECONDS_UNIX:
         return QString::number(QDateTime::currentSecsSinceEpoch());
-    case SnippetProcessor::TM_CODE::RANDOM: {
+    case SnippetProcessor::TmCode::RANDOM: {
         auto ran = QRandomGenerator::global();
         QString buffer(6, QChar{});
         for (int i = 0; i < 6; ++i) {
@@ -331,7 +332,7 @@ QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
         }
         return buffer;
     }
-    case SnippetProcessor::TM_CODE::RANDOM_HEX: {
+    case SnippetProcessor::TmCode::RANDOM_HEX: {
         auto ran = QRandomGenerator::global();
         QString buffer(6, QChar{});
         for (int i = 0; i < 6; ++i) {
@@ -344,13 +345,13 @@ QString CodeInfoTip::processSnippt(const QString &name, QPlainTextEdit *editor,
         }
         return buffer;
     }
-    case SnippetProcessor::TM_CODE::UUID:
+    case SnippetProcessor::TmCode::UUID:
         return QUuid::createUuid().toString();
-    case SnippetProcessor::TM_CODE::BLOCK_COMMENT_START:
+    case SnippetProcessor::TmCode::BLOCK_COMMENT_START:
         return QStringLiteral("--[[");
-    case SnippetProcessor::TM_CODE::BLOCK_COMMENT_END:
+    case SnippetProcessor::TmCode::BLOCK_COMMENT_END:
         return QStringLiteral("]]");
-    case SnippetProcessor::TM_CODE::LINE_COMMENT:
+    case SnippetProcessor::TmCode::LINE_COMMENT:
         return QStringLiteral("--");
         break;
     }

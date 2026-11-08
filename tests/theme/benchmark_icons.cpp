@@ -1,10 +1,11 @@
-#include "class/settings/thememanager.h"
+#include <algorithm>
+#include <cstdio>
 
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QPixmapCache>
-#include <algorithm>
-#include <cstdio>
+
+#include "class/settings/thememanager.h"
 
 int main(int argc, char **argv) {
     QApplication application(argc, argv);

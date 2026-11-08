@@ -18,10 +18,10 @@
 #ifndef BOOKMARKSMODEL_H
 #define BOOKMARKSMODEL_H
 
-#include "QHexView/document/qhexdocument.h"
-
 #include <QAbstractTableModel>
 #include <QObject>
+
+#include "QHexView/document/qhexdocument.h"
 
 class BookMarksModel : public QAbstractTableModel {
     Q_OBJECT
@@ -40,7 +40,7 @@ public slots:
     void setDocument(QHexDocument *newDoc);
 
 private:
-    QHexDocument *_doc = nullptr;
+    QHexDocument *m_doc = nullptr;
 };
 
 #endif // BOOKMARKSMODEL_H

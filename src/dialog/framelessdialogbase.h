@@ -40,8 +40,8 @@ protected:
 
 private:
 #ifdef WINGHEX_USE_FRAMELESS
-    FramelessHelper *_helper = nullptr;
-    bool _useFrameLess = true;
+    FramelessHelper *m_helper = nullptr;
+    bool m_useFrameLess = true;
 #endif
 #ifdef QT_DEBUG
     bool m_isBuilt = false;

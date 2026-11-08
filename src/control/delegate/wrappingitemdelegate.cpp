@@ -17,6 +17,9 @@
 
 #include "wrappingitemdelegate.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include <QAbstractTextDocumentLayout>
 #include <QEvent>
 #include <QListView>
@@ -24,8 +27,6 @@
 #include <QStyle>
 #include <QTextDocument>
 #include <QTextOption>
-#include <algorithm>
-#include <cmath>
 
 namespace {
 QRect textArea(const QStyleOptionViewItem &option, const QListView *view) {
@@ -36,6 +37,7 @@ QRect textArea(const QStyleOptionViewItem &option, const QListView *view) {
     area.setBottom(option.rect.bottom() - 2);
     return area;
 }
+
 void prepareText(QTextDocument &document, const QStyleOptionViewItem &option,
                  int width) {
     document.setDocumentMargin(0);

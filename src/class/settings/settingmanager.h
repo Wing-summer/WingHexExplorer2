@@ -18,38 +18,37 @@
 #ifndef SETTINGMANAGER_H
 #define SETTINGMANAGER_H
 
-#include "class/diff/diffconstants.h"
-
 #include <QByteArray>
 #include <QFont>
 #include <QObject>
 #include <QString>
 #include <QStringList>
 
+#include "class/diff/diffconstants.h"
 #include "class/file/recentfilemanager.h"
 
 class SettingManager : public QObject {
     Q_OBJECT
 
 public:
-    enum SETTING {
-        NONE = 0,
-        APP = 1,
-        PLUGIN = 2,
-        EDITOR = 4,
-        SCRIPT = 8,
-        OTHER = 16,
-        DIFF = 32,
-        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER | DIFF
+    enum Setting {
+        None = 0,
+        App = 1,
+        Plugin = 2,
+        Editor = 4,
+        Script = 8,
+        Other = 16,
+        Diff = 32,
+        All = App | Plugin | Editor | Script | Other | Diff
     };
-    Q_DECLARE_FLAGS(SETTINGS, SETTING)
+    Q_DECLARE_FLAGS(Settings, Setting)
 
 public:
     static SettingManager &instance();
     virtual ~SettingManager();
 
 public:
-    void reset(SETTINGS cat);
+    void reset(Settings cat);
 
 public:
     QByteArray dockLayout() const;
@@ -171,19 +170,19 @@ public:
     QByteArray savePluginRule(const QStringList &rules);
 
 signals:
-    void sigDiffSettingsChanged();
-    void sigEditorfontSizeChanged(int v);
-    void sigDecodeStrlimitChanged(int v);
-    void sigCopylimitChanged(int v);
-    void sigHexCursorSync(bool b);
+    void sigOnDiffSettingsChanged();
+    void sigOnEditorFontSizeChanged(int v);
+    void sigOnDecodeStrLimitChanged(int v);
+    void sigOnCopyLimitChanged(int v);
+    void sigOnHexCursorSync(bool b);
 
-    void logLevelChanged();
+    void sigOnLogLevelChanged();
 
 private:
     SettingManager();
 
     void load();
-    void __reset(SETTINGS cat);
+    void __reset(Settings cat);
 
     QList<RecentFileManager::RecentInfo>
     getDataFromVarList(const QVariantList &varlist) const;
@@ -254,7 +253,7 @@ private:
     bool m_findStrDecShow = true;
 
 private:
-    QFont _defaultFont;
+    QFont m_defaultFont;
 };
 
 #endif // SETTINGMANAGER_H

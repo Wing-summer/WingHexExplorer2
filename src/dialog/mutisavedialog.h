@@ -18,10 +18,10 @@
 #ifndef MUTISAVEDIALOG_H
 #define MUTISAVEDIALOG_H
 
+#include <QVector>
+
 #include "control/editor/editorinfo.h"
 #include "framelessdialogbase.h"
-
-#include <QVector>
 
 namespace Ui {
 class MutiSaveDialog;
@@ -51,10 +51,10 @@ private slots:
 
 private:
     Ui::MutiSaveDialog *ui;
-    FramelessDialogBase *_dialog;
+    FramelessDialogBase *m_dialog;
 
-    QVector<EditorInfo *> _editors;
-    EditorsCtl *_esctl = nullptr;
+    QVector<EditorInfo *> m_editors;
+    EditorsCtl *m_esctl = nullptr;
 };
 
 #endif // MUTISAVEDIALOG_H

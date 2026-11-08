@@ -44,7 +44,7 @@ void IDBWatchModel::attachDebugger(LuauDebugger *debugger) {
     }
 
     if (m_dbg) {
-        disconnect(m_dbg, &LuauDebugger::onPullVariables, this,
+        disconnect(m_dbg, &LuauDebugger::sigOnPullVariables, this,
                    &IDBWatchModel::refresh);
     }
 
@@ -52,7 +52,7 @@ void IDBWatchModel::attachDebugger(LuauDebugger *debugger) {
     m_watchRegistry = nullptr;
 
     if (m_dbg) {
-        connect(m_dbg, &LuauDebugger::onPullVariables, this,
+        connect(m_dbg, &LuauDebugger::sigOnPullVariables, this,
                 &IDBWatchModel::refresh);
     }
 

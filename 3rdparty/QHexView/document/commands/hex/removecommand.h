@@ -38,8 +38,8 @@ public:
     virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
-    QVector<QHexMetadataItem> _rmMetas;
-    QMap<qsizetype, QString> _rmbms;
+    QVector<QHexMetadataItem> m_rmMetas;
+    QMap<qsizetype, QString> m_rmbms;
 };
 
 #endif // REMOVECOMMAND_H

@@ -31,6 +31,7 @@ struct ScriptSymbol {
     Kind kind = Kind::Module;
     QString detail;
 };
+
 using ScriptSymbolCatalog = QList<ScriptSymbol>;
 } // namespace WingScriptBind
 

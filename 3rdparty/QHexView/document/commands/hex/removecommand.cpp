@@ -38,9 +38,9 @@ RemoveCommand::RemoveCommand(QHexDocument *doc, qsizetype offset,
 }
 
 void RemoveCommand::undo() {
-    m_doc->_insert(m_offset, m_data);
-    m_doc->removeBookMarkAdjustRevert(_rmbms, m_offset, m_length);
-    m_doc->metadata()->removeAdjustRevert(_rmMetas, m_offset, m_length);
+    m_doc->insertInternal(m_offset, m_data);
+    m_doc->removeBookMarkAdjustRevert(m_rmbms, m_offset, m_length);
+    m_doc->metadata()->removeAdjustRevert(m_rmMetas, m_offset, m_length);
     if (m_length > 1) {
         m_cursor->setPos(m_offset + m_length - 1, 1);
     } else {
@@ -54,12 +54,12 @@ void RemoveCommand::undo() {
 
 void RemoveCommand::redo() {
     m_cursor->setPos(m_offset, m_nibbleindex);
-    if (!m_doc->_remove(m_offset, m_length)) {
+    if (!m_doc->removeInternal(m_offset, m_length)) {
         setObsolete(true);
         return;
     }
-    _rmbms = m_doc->removeBookMarkAdjust(m_offset, m_length);
-    _rmMetas = m_doc->metadata()->removeAdjust(m_offset, m_length);
+    m_rmbms = m_doc->removeBookMarkAdjust(m_offset, m_length);
+    m_rmMetas = m_doc->metadata()->removeAdjust(m_offset, m_length);
 }
 
 int RemoveCommand::id() const { return UndoID_HexRemove; }
@@ -69,16 +69,16 @@ bool RemoveCommand::mergeWith(const QUndoCommand *other) {
     if (ucmd) {
         if (this->m_offset == ucmd->m_offset) {
             this->m_data.append(ucmd->m_data);
-            auto bms = ucmd->_rmbms;
+            auto bms = ucmd->m_rmbms;
             for (const auto &&b : bms.asKeyValueRange()) {
-                this->_rmbms.insert(b.first + this->m_length, b.second);
+                this->m_rmbms.insert(b.first + this->m_length, b.second);
             }
-            auto metas = ucmd->_rmMetas;
+            auto metas = ucmd->m_rmMetas;
             for (auto &m : metas) {
                 m.begin += this->m_length;
                 m.end += this->m_length;
             }
-            this->_rmMetas.append(ucmd->_rmMetas);
+            this->m_rmMetas.append(ucmd->m_rmMetas);
             this->m_length += ucmd->m_length;
             setText(constructText(this->m_offset, this->m_length));
             return true;

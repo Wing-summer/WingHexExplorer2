@@ -39,8 +39,8 @@ public slots:
     void attachDebugger(LuauDebugger *debugger);
 
 private:
-    QVector<LuauStackFrame> _frames;
-    LuauDebugger *_debugger = nullptr;
+    QVector<LuauStackFrame> m_frames;
+    LuauDebugger *m_debugger = nullptr;
 };
 
 #endif // DBGCALLSTACKMODEL_H
