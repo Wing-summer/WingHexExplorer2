@@ -28,8 +28,6 @@ public:
     explicit ScriptingConsoleBase(QWidget *parent = nullptr);
 
 public:
-    QTextStream &consoleStream();
-
     bool lastCommandPrompt() const;
     void setTabWidth(int width);
 
@@ -41,7 +39,6 @@ public slots:
     void stdErrLine(QString str, const WingEditorMetaInfo &info = {});
     void stdWarnLine(QString str, const WingEditorMetaInfo &info = {});
     void newLine();
-    void flush();
 
     void initOutput();
 
@@ -65,7 +62,6 @@ private:
     static QString commandPrompt(bool storeOnly);
 
 private:
-    QTextStream m_s;
     QTextCharFormat m_warnCharFmt;
     QTextCharFormat m_errCharFmt;
 

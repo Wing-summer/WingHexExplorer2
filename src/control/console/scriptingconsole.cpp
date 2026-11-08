@@ -28,7 +28,6 @@
 #include <QTemporaryFile>
 #include <QTextBlock>
 
-#include "QConsoleWidget/QConsoleIODevice.h"
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
@@ -100,12 +99,6 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     if (m_isWaitingRead) {
         Q_EMIT sigOnInputSubmitted(code);
         return;
-    }
-
-    // append the newline char and
-    // send signal / update iodevice
-    if (m_iodevice->isOpen()) {
-        m_iodevice->consoleWidgetInput(code);
     }
 
     if (mod == Qt::ControlModifier) {
@@ -291,21 +284,18 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
             newLine();
         }
         stdOutLine(tr("[Info]") + fmtMsg(message), packMetaData(message));
-        flush();
         break;
     case ScriptMachine::MessageType::Warn:
         if (isNotBlockStart) {
             newLine();
         }
         stdWarnLine(tr("[Warn]") + fmtMsg(message), packMetaData(message));
-        flush();
         break;
     case ScriptMachine::MessageType::Error:
         if (isNotBlockStart) {
             newLine();
         }
         stdErrLine(tr("[Error]") + fmtMsg(message), packMetaData(message));
-        flush();
         break;
     case ScriptMachine::MessageType::Print:
         if (isNotBlockStart &&
@@ -313,7 +303,6 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
             newLine();
         }
         stdOutLine(message.message);
-        flush();
         break;
 
     case ScriptMachine::MessageType::Unknown:

@@ -44,8 +44,6 @@ add_executable(
     "${WING_SOURCE_ROOT}/src/control/editor/luauindentation.cpp"
     "${WING_SOURCE_ROOT}/3rdparty/QConsoleWidget/QConsoleWidget.cpp"
     "${WING_SOURCE_ROOT}/3rdparty/QConsoleWidget/QConsoleWidget.h"
-    "${WING_SOURCE_ROOT}/3rdparty/QConsoleWidget/QConsoleIODevice.cpp"
-    "${WING_SOURCE_ROOT}/3rdparty/QConsoleWidget/QConsoleIODevice.h"
 )
 target_include_directories(
     wing_luau_indentation_tests PRIVATE "${WING_SOURCE_ROOT}/src"

@@ -19,11 +19,8 @@
 #define _QCONSOLEWIDGET_H_
 
 #include <QCompleter>
-#include <QTextStream>
 
 #include "WingCodeEdit/wingcodeedit.h"
-
-class QConsoleIODevice;
 
 class QConsoleWidget : public WingCodeEdit {
     Q_OBJECT
@@ -72,7 +69,6 @@ public:
 public:
     ConsoleMode mode() const;
     void setMode(ConsoleMode m);
-    QIODevice *device() const;
 
     // write a formatted message to the console
 
@@ -126,12 +122,6 @@ protected:
     static History m_history;
     ConsoleMode m_mode;
     int m_inpos;
-    QConsoleIODevice *m_iodevice;
 };
-
-QTextStream &waitForInput(QTextStream &s);
-QTextStream &inputMode(QTextStream &s);
-QTextStream &outChannel(QTextStream &s);
-QTextStream &errChannel(QTextStream &s);
 
 #endif

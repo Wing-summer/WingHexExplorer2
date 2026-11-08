@@ -158,8 +158,6 @@ set(RIBBON_SRC
 set(QCONSOLEWIDGET_SRC
     3rdparty/QConsoleWidget/commandhistorymanager.cpp
     3rdparty/QConsoleWidget/commandhistorymanager.h
-    3rdparty/QConsoleWidget/QConsoleIODevice.cpp
-    3rdparty/QConsoleWidget/QConsoleIODevice.h
     3rdparty/QConsoleWidget/QConsoleWidget.cpp
     3rdparty/QConsoleWidget/QConsoleWidget.h)
 

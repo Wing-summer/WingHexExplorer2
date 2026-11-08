@@ -20,7 +20,6 @@
 #include <QScopedValueRollback>
 #include <QSignalBlocker>
 #include <QTextBlock>
-#include <QTextStream>
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
@@ -33,7 +32,6 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     setHighlighter(new WingConsoleHighligher);
     setSyntax(syntaxRepo().definitionForName("Luau"));
 
-    m_s.setDevice(this->device());
     connect(this, &QPlainTextEdit::textChanged, this, [this]() {
         if (mode() == Input) {
             refreshInputBlocks();
@@ -159,9 +157,7 @@ void ScriptingConsoleBase::stdWarnLine(QString str,
     }
 }
 
-void ScriptingConsoleBase::newLine() { m_s << Qt::endl; }
-
-void ScriptingConsoleBase::flush() { m_s << Qt::flush; }
+void ScriptingConsoleBase::newLine() { write(QStringLiteral("\n")); }
 
 void ScriptingConsoleBase::initOutput() {
     stdWarnLine(tr("Scripting console for WingHexExplorer"));
@@ -222,5 +218,3 @@ bool ScriptingConsoleBase::restorePreviousCommandPrompt(bool storeOnly) {
 WingConsoleHighligher *ScriptingConsoleBase::consoleHighligher() const {
     return reinterpret_cast<WingConsoleHighligher *>(highlighter());
 }
-
-QTextStream &ScriptingConsoleBase::consoleStream() { return m_s; }

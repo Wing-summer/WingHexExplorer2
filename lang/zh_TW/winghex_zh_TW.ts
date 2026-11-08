@@ -3676,22 +3676,22 @@
 <context>
     <name>ScriptingConsole</name>
     <message>
-        <location filename="../../src/control/console/scriptingconsole.cpp" line="+293"/>
+        <location filename="../../src/control/console/scriptingconsole.cpp" line="+286"/>
         <source>[Info]</source>
         <translation>【資訊】</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
         <source>[Error]</source>
         <translation>【錯誤】</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+115"/>
         <source>[Console]</source>
         <translation>【控制臺】</translation>
     </message>
@@ -3725,7 +3725,7 @@
 <context>
     <name>ScriptingConsoleBase</name>
     <message>
-        <location filename="../../src/control/console/scriptingconsolebase.cpp" line="+167"/>
+        <location filename="../../src/control/console/scriptingconsolebase.cpp" line="+163"/>
         <source>Scripting console for WingHexExplorer</source>
         <translation>羽雲十六進制編輯器腳本控制臺</translation>
     </message>

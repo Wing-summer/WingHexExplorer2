@@ -37,12 +37,8 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
-#include "QConsoleIODevice.h"
-
 QConsoleWidget::QConsoleWidget(QWidget *parent)
     : WingCodeEdit(parent), m_mode(Output), m_inpos(0) {
-    m_iodevice = new QConsoleIODevice(this, this);
-
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setUndoRedoEnabled(false);
 
@@ -74,8 +70,6 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         m_mode = Output;
     }
 }
-
-QIODevice *QConsoleWidget::device() const { return m_iodevice; }
 
 QString QConsoleWidget::getCommandLine() {
     if (m_mode == Output) {
@@ -117,12 +111,6 @@ void QConsoleWidget::handleReturnKey(Qt::KeyboardModifiers mod) {
     // Update the history
     if (!code.isEmpty()) {
         m_history.add(code);
-    }
-
-    // append the newline char and
-    // send signal / update iodevice
-    if (m_iodevice->isOpen()) {
-        m_iodevice->consoleWidgetInput(code);
     }
 
     Q_EMIT sigOnConsoleCommand(code);
@@ -608,40 +596,6 @@ bool QConsoleWidget::History::move(bool dir) {
 
 int QConsoleWidget::History::indexOf(bool dir, int from) const {
     return qBound(-1, from + (dir ? 1 : -1), int(strings.size()) - 1);
-}
-
-/////////////////// Stream manipulators /////////////////////
-
-QTextStream &waitForInput(QTextStream &s) {
-    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
-    if (d) {
-        d->waitForReadyRead(-1);
-    }
-    return s;
-}
-
-QTextStream &inputMode(QTextStream &s) {
-    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
-    if (d && d->widget()) {
-        d->widget()->setMode(QConsoleWidget::Input);
-    }
-    return s;
-}
-
-QTextStream &outChannel(QTextStream &s) {
-    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
-    if (d) {
-        d->setCurrentWriteChannel(QConsoleWidget::StandardOutput);
-    }
-    return s;
-}
-
-QTextStream &errChannel(QTextStream &s) {
-    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
-    if (d) {
-        d->setCurrentWriteChannel(QConsoleWidget::StandardError);
-    }
-    return s;
 }
 
 void QConsoleWidget::mousePressEvent(QMouseEvent *event) {
