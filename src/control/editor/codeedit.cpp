@@ -303,15 +303,11 @@ void CodeEdit::keyPressEvent(QKeyEvent *event) {
         if (isHelpTooltipVisible()) {
             if (event->modifiers() == Qt::KeyboardModifier::NoModifier) {
                 auto key = event->key();
-                if (key == Qt::Key_Semicolon) {
-                    hideHelpTooltip();
-                } else if (auto c = completer()) {
-                    if (c) {
-                        auto pp = c->popup();
-                        if (!pp || !pp->isVisible()) {
-                            if (key == Qt::Key_Enter || key == Qt::Key_Return) {
-                                hideHelpTooltip();
-                            }
+                if (auto c = completer()) {
+                    auto pp = c->popup();
+                    if (!pp || !pp->isVisible()) {
+                        if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+                            hideHelpTooltip();
                         }
                     }
                 }

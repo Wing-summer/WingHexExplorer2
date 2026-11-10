@@ -98,6 +98,28 @@ static bool hasCompletion(const QVector<lsp::CompletionItem> &items,
     return false;
 }
 
+static void testColonCompletion() {
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary directory unavailable");
+    const auto uri = QUrl::fromLocalFile(directory.filePath("main.luau"));
+    const QString source =
+        QStringLiteral("local object = { method = function(self) end }\n"
+                       "object:\n");
+    QTextDocument document(source);
+    LuauLanguageServer server;
+    server.initialize({});
+    server.onOpenDocument(uri, &document);
+    const auto items =
+        server.completion({uri, positionOf(source, "object:\n", 7),
+                           lsp::CompletionParams::Context{
+                               lsp::CompletionTriggerKind::TriggerCharacter,
+                               QStringLiteral(":")}},
+                          nullptr);
+    require(hasCompletion(items, "method"),
+            "colon-triggered method completion failed");
+    server.onCloseDocument(uri);
+}
+
 static void testLanguageFeatures() {
     LuauLanguageServer server;
     server.initialize({});
@@ -326,6 +348,10 @@ static void testDefinitionsAndOverloads() {
                 signature->signatures.at(*signature->activeSignature)
                     .label.contains("string"),
             "new solver selected the wrong overload");
+    const auto callText = QStringLiteral("choose(\"text\")");
+    const auto afterCall = server.signatureHelp(
+        {uri, positionOf(source, callText, int(callText.size()))}, nullptr);
+    require(!afterCall, "signature help remained active after the call");
     const QString incomplete =
         QStringLiteral("--!strict\nlocal result = pair(\"text\", ");
     document.setPlainText(incomplete);
@@ -407,6 +433,154 @@ static void testRequiredModuleUpdates() {
             "dependency update reused stale type information");
     server.onCloseDocument(mainUri);
     server.onCloseDocument(moduleUri);
+}
+
+static void testRequirePathCompletion() {
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary directory unavailable");
+    const QDir root(directory.path());
+    require(root.mkpath("folder"), "cannot create require subdirectory");
+
+    QFile moduleFile(root.filePath("module.luau"));
+    require(moduleFile.open(QIODevice::WriteOnly),
+            "cannot create require module");
+    moduleFile.write("return {}\n");
+    moduleFile.close();
+
+    QFile nestedFile(root.filePath("folder/child.luau"));
+    require(nestedFile.open(QIODevice::WriteOnly),
+            "cannot create nested require module");
+    nestedFile.write("return {}\n");
+    nestedFile.close();
+
+    const auto uri = QUrl::fromLocalFile(root.filePath("main.luau"));
+    const QString source =
+        QStringLiteral("local loaded = require(\"./mod\")\n"
+                       "local nested = require(\"./folder/ch\")\n");
+    QTextDocument document(source);
+    LuauLanguageServer server;
+    server.initialize({});
+    server.onOpenDocument(uri, &document);
+
+    const auto moduleItems = server.completion(
+        {uri, positionOf(source, "./mod", int(QStringLiteral("./mod").size())),
+         std::nullopt},
+        nullptr);
+    const auto moduleItem =
+        std::find_if(moduleItems.cbegin(), moduleItems.cend(),
+                     [](const lsp::CompletionItem &item) {
+                         return item.label == QLatin1String("module");
+                     });
+    require(moduleItem != moduleItems.cend() && moduleItem->textEdit &&
+                moduleItem->textEdit->newText == QLatin1String("./module"),
+            "relative require path completion failed");
+
+    const auto nestedItems = server.completion(
+        {uri,
+         positionOf(source, "./folder/ch",
+                    int(QStringLiteral("./folder/ch").size())),
+         std::nullopt},
+        nullptr);
+    require(hasCompletion(nestedItems, "child"),
+            "nested require path completion failed");
+    server.onCloseDocument(uri);
+}
+
+static void testBuiltinRequirePathCompletion() {
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary builtin directory unavailable");
+    const auto writeModule = [&directory](const QString &path) {
+        const auto filePath = directory.filePath(path);
+        require(QDir().mkpath(QFileInfo(filePath).path()),
+                "cannot create builtin module directory");
+        QFile file(filePath);
+        require(file.open(QIODevice::WriteOnly),
+                "cannot create builtin module fixture");
+        file.write("return {}\n");
+        file.close();
+        return file.fileName();
+    };
+    const auto rootModule = writeModule(QStringLiteral("core.luau"));
+    const auto nestedModule = writeModule(QStringLiteral("core/net.luau"));
+
+    LuauLanguageServer::InitializationOptions options;
+    options.builtinModuleFiles.insert(QStringLiteral("core"), rootModule);
+    options.builtinModuleFiles.insert(QStringLiteral("core/net"), nestedModule);
+    LuauLanguageServer server;
+    server.initialize(options);
+
+    const auto uri = QUrl::fromLocalFile(directory.filePath("main.luau"));
+    const QString source =
+        QStringLiteral("local root = require(\"@b/\")\n"
+                       "local nested = require(\"@b/core/ne\")\n");
+    QTextDocument document(source);
+    server.onOpenDocument(uri, &document);
+
+    const auto rootItems = server.completion(
+        {uri, positionOf(source, "@b/", 3), std::nullopt}, nullptr);
+    require(hasCompletion(rootItems, "core"),
+            "explicit builtin root completion failed");
+
+    const auto nestedItems =
+        server.completion({uri,
+                           positionOf(source, "@b/core/ne",
+                                      int(QStringLiteral("@b/core/ne").size())),
+                           std::nullopt},
+                          nullptr);
+    require(hasCompletion(nestedItems, "net"),
+            "nested explicit builtin completion failed");
+    server.onCloseDocument(uri);
+}
+
+static void testRequireAliasDirectoryCompletion() {
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary package directory unavailable");
+    const QDir root(directory.path());
+    require(root.mkpath(QStringLiteral("user/pkg/nested")),
+            "cannot create user package");
+    const auto writeFile = [&root](const QString &path,
+                                   const QByteArray &data) {
+        QFile file(root.filePath(path));
+        require(file.open(QIODevice::WriteOnly), "cannot write module fixture");
+        require(file.write(data) == data.size(), "incomplete module fixture");
+    };
+    writeFile(QStringLiteral("user/pkg/init.luau"), "return {}\n");
+    writeFile(QStringLiteral("user/pkg/nested/child.luau"), "return {}\n");
+    writeFile(QStringLiteral("user/single.luau"), "return {}\n");
+    writeFile(QStringLiteral(".luaurc"),
+              R"({"aliases":{"project":"./user/pkg/nested"}})");
+
+    WingLuauRequire::Options options;
+    options.userRoot = root.filePath(QStringLiteral("user"));
+    WingLuauRequire::ResolutionSession resolver(options, {});
+    const auto suggester = WingLuauRequire::createPathSuggester(
+        {}, options.userRoot, {}, &resolver);
+    const auto context = root.filePath(QStringLiteral("main.luau"));
+    const auto hasSuggestion = [&](const std::string &path,
+                                   const std::string &fullPath) {
+        const auto items =
+            suggester->getRequireSuggestions(context.toStdString(), path);
+        return items && std::any_of(items->begin(), items->end(),
+                                    [&](const Luau::RequireSuggestion &item) {
+                                        return item.fullPath == fullPath;
+                                    });
+    };
+    require(hasSuggestion("@u/", "@u/pkg"), "package store root lost children");
+    require(hasSuggestion("@u/p", "@u/pkg"), "partial package lost children");
+    require(hasSuggestion("@u/pkg/", "@u/pkg/nested"),
+            "package init module lost children");
+    require(hasSuggestion("@pkg/nested/", "@pkg/nested/child"),
+            "package namespace lost children");
+    require(hasSuggestion("@project/", "@project/child"),
+            "configuration alias namespace lost children");
+    require(hasSuggestion("", "@single"), "file package alias missing");
+    using Kind = WingLuauRequire::FileModuleResolution::Kind;
+    require(resolver.resolve(context, QStringLiteral("@project")).kind ==
+                Kind::NotFound,
+            "completion made namespace directories loadable");
+    require(resolver.resolve(context, QStringLiteral("@u/pkg")).kind ==
+                Kind::File,
+            "completion query leaked into module resolution");
 }
 
 static void testBuiltinResolutionBoundaries() {
@@ -833,6 +1007,7 @@ int main(int argc, char **argv) {
         }
         if (scenario.isEmpty() || scenario == QLatin1String("features")) {
             testLanguageFeatures();
+            testColonCompletion();
         }
         if (scenario.isEmpty() || scenario == QLatin1String("types")) {
             testTypeDisplayIdentity();
@@ -843,7 +1018,10 @@ int main(int argc, char **argv) {
         }
         if (scenario.isEmpty() || scenario == QLatin1String("modules")) {
             testRequiredModuleUpdates();
+            testRequirePathCompletion();
+            testBuiltinRequirePathCompletion();
             testBuiltinResolutionBoundaries();
+            testRequireAliasDirectoryCompletion();
         }
         std::cout << "Luau language server tests passed\n";
         return 0;

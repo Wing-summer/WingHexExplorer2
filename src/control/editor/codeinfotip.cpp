@@ -139,9 +139,15 @@ void CodeInfoTip::applyEdit(QPlainTextEdit *editor,
             return;
         }
     } else if (!completionPrefix.isEmpty()) {
-        cursor.movePosition(QTextCursor::WordLeft, QTextCursor::KeepAnchor);
-        primaryStart = cursor.selectionStart();
-        primaryEnd = cursor.selectionEnd();
+        if (completionPrefix.size() > primaryEnd) {
+            return;
+        }
+        primaryStart = primaryEnd - completionPrefix.size();
+        cursor.setPosition(primaryStart);
+        cursor.setPosition(primaryEnd, QTextCursor::KeepAnchor);
+        if (cursor.selectedText() != completionPrefix) {
+            return;
+        }
     }
 
     const auto sourceText = insertionTextOrLabel();

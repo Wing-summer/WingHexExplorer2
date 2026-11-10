@@ -55,6 +55,7 @@
 #include "lua.h"
 
 #include "Luau/Common.h"
+#include "Luau/FileResolver.h"
 #include "Luau/Require.h"
 
 LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
@@ -124,13 +125,19 @@ public:
                           const QSet<QString> &builtinModules,
                           const QStringList &configRoots = {});
         ~ResolutionSession();
+        // Completion may inspect namespace directories without loading them.
         FileModuleResolution resolve(const QString &contextPath,
-                                     const QString &requested);
+                                     const QString &requested,
+                                     bool includeDirectories = false);
 
     private:
         struct Impl;
         std::unique_ptr<Impl> m_impl;
     };
+
+    static std::shared_ptr<Luau::RequireSuggester> createPathSuggester(
+        const QStringList &builtinModules, const QString &userModuleRoot,
+        const QString &systemModuleRoot, ResolutionSession *resolver);
 
     bool initRequire(lua_State *L, Options options);
 
@@ -180,6 +187,7 @@ private:
     struct ResolutionQuery {
         FileModuleResolution resolution;
         QStringList roots;
+        bool includeDirectories = false;
     };
 
     ResolutionQuery *m_resolutionQuery = nullptr;

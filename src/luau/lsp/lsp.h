@@ -137,7 +137,14 @@ constexpr SemanticTokenModifiers operator&(SemanticTokenModifiers left,
 struct Position {
     uint line = 0;
     uint character = 0;
-    bool operator==(const Position &) const = default;
+
+    constexpr bool operator==(const Position &other) const noexcept {
+        return line == other.line && character == other.character;
+    }
+
+    constexpr bool operator!=(const Position &other) const noexcept {
+        return line != other.line || character != other.character;
+    }
 };
 
 struct CodeDescription {
@@ -147,13 +154,27 @@ struct CodeDescription {
 struct Range {
     Position start;
     Position end;
-    bool operator==(const Range &) const = default;
+
+    constexpr bool operator==(const Range &other) const noexcept {
+        return start == other.start && end == other.end;
+    }
+
+    constexpr bool operator!=(const Range &other) const noexcept {
+        return start != other.start || end != other.end;
+    }
 };
 
 struct Location {
     DocumentUri uri;
     Range range;
-    bool operator==(const Location &) const = default;
+
+    bool operator==(const Location &other) const {
+        return uri == other.uri && range == other.range;
+    }
+
+    bool operator!=(const Location &other) const {
+        return uri != other.uri || range != other.range;
+    }
 };
 
 struct TextEdit {

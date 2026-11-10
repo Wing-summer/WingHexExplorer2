@@ -43,12 +43,19 @@ public:
 
 private slots:
     void onCodeComplete();
+    void onSignatureHelpRefreshRequested();
+    void onSignatureHelpUpdate();
     void onActivatedCodeComplete(const QModelIndex &index);
 
 private:
+    bool canShowSignatureHelp() const;
+
+private:
     ResettableTimer *m_timer = nullptr;
+    ResettableTimer *m_signatureTimer = nullptr;
     LspEditorInterace *m_inter = nullptr;
     bool m_ok = true;
+    bool m_signatureHelpDismissed = false;
 };
 
 #endif // LUAUCOMPLETION_H

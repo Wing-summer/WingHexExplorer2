@@ -18,6 +18,10 @@
 #include "wingluaurequire.h"
 
 #include <algorithm>
+#include <set>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include <QCryptographicHash>
 #include <QDebug>
@@ -28,6 +32,314 @@
 #include "lualib.h"
 
 #include "Luau/Compiler.h"
+#include "Luau/StringUtils.h"
+
+namespace {
+
+void appendRequireAlias(QStringList &aliases, const QString &alias) {
+    if (!aliases.contains(alias)) {
+        aliases.append(alias);
+    }
+}
+
+void appendPackageAliases(QStringList &aliases, const QString &root,
+                          const QString &source) {
+    if (root.isEmpty()) {
+        return;
+    }
+    appendRequireAlias(aliases, source);
+    const auto packages = QDir(root).entryInfoList(
+        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    for (const auto &package : packages) {
+        QString name;
+        if (package.isDir()) {
+            name = package.fileName().toLower();
+        } else if (package.suffix().compare(QLatin1String("luau"),
+                                            Qt::CaseInsensitive) == 0 ||
+                   package.suffix().compare(QLatin1String("lua"),
+                                            Qt::CaseInsensitive) == 0) {
+            name = package.completeBaseName().toLower();
+        } else {
+            continue;
+        }
+        appendRequireAlias(aliases, name);
+        appendRequireAlias(aliases, source + QLatin1Char('/') + name);
+    }
+}
+
+class WingRequirePathNode final : public Luau::RequireNode {
+public:
+    WingRequirePathNode(QString basePath, QString contextPath,
+                        std::string pathComponent,
+                        const std::vector<Luau::RequireAlias> &aliases,
+                        const std::vector<std::string> &builtinModules,
+                        WingLuauRequire::ResolutionSession *resolver,
+                        bool isDirectory, std::string builtinPath = {},
+                        bool isBuiltinNamespace = false)
+        : m_basePath(std::move(basePath)),
+          m_contextPath(std::move(contextPath)),
+          m_pathComponent(std::move(pathComponent)), m_aliases(aliases),
+          m_builtinModules(builtinModules), m_resolver(resolver),
+          m_isDirectory(isDirectory), m_builtinPath(std::move(builtinPath)),
+          m_isBuiltinNamespace(isBuiltinNamespace) {}
+
+    virtual std::string getPathComponent() const override {
+        return m_pathComponent;
+    }
+
+    virtual std::vector<std::string> getTags() const override {
+        return m_isDirectory ? std::vector<std::string>{"Directory"}
+                             : std::vector<std::string>{};
+    }
+
+    virtual std::unique_ptr<Luau::RequireNode>
+    resolvePathToNode(const std::string &path) const override {
+        const std::string_view pathView(path);
+        if (Luau::equalsLower(path, "@b") ||
+            (pathView.size() >= 3 &&
+             Luau::equalsLower(pathView.substr(0, 3), "@b/"))) {
+            auto builtinPath =
+                pathView.size() > 3 ? pathView.substr(3) : std::string_view{};
+            if (!builtinPath.empty() && builtinPath.back() == '/') {
+                builtinPath.remove_suffix(1);
+            }
+            const auto separator = builtinPath.find_last_of('/');
+            const auto label = separator == std::string_view::npos
+                                   ? builtinPath
+                                   : builtinPath.substr(separator + 1);
+            return makeBuiltinNode(builtinPath, label);
+        }
+        const auto requested = QString::fromStdString(path);
+        const auto resolution =
+            Luau::startsWith(path, "@")
+                ? (m_resolver
+                       ? m_resolver->resolve(m_contextPath, requested, true)
+                       : WingLuauRequire::FileModuleResolution{})
+                : WingLuauRequire::resolveFileModule(m_basePath, requested);
+        return nodeForResolution(path, resolution);
+    }
+
+    virtual std::vector<std::unique_ptr<Luau::RequireNode>>
+    getChildren() const override {
+        std::vector<std::unique_ptr<Luau::RequireNode>> children;
+        if (!m_isDirectory) {
+            return children;
+        }
+
+        if (m_isBuiltinNamespace) {
+            std::set<std::string> components;
+            const auto prefixSize =
+                m_builtinPath.empty() ? 0 : m_builtinPath.size() + 1;
+            for (const auto &module : m_builtinModules) {
+                if (module.size() < prefixSize) {
+                    continue;
+                }
+                if (!m_builtinPath.empty() &&
+                    (module[m_builtinPath.size()] != '/' ||
+                     !Luau::equalsLower(std::string_view(module).substr(
+                                            0, m_builtinPath.size()),
+                                        m_builtinPath))) {
+                    continue;
+                }
+                const std::string_view moduleView(module);
+                const auto separator = moduleView.find('/', prefixSize);
+                const auto component = moduleView.substr(
+                    prefixSize, separator == std::string_view::npos
+                                    ? std::string_view::npos
+                                    : separator - prefixSize);
+                if (!component.empty()) {
+                    components.emplace(component);
+                }
+            }
+            for (const auto &component : components) {
+                const auto childPath = m_builtinPath.empty()
+                                           ? component
+                                           : m_builtinPath + '/' + component;
+                auto child = makeBuiltinNode(childPath, component);
+                if (child) {
+                    children.emplace_back(std::move(child));
+                }
+            }
+            return children;
+        }
+
+        QDir directory(m_basePath);
+        directory.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        directory.setSorting(QDir::Name);
+        QSet<QString> seenComponents;
+        const auto entries = directory.entryInfoList();
+        for (const auto &entry : entries) {
+            QString component;
+            auto suffix = entry.suffix();
+            if (entry.isDir()) {
+                component = entry.fileName();
+            } else if (suffix.compare(QLatin1String("luau"),
+                                      Qt::CaseInsensitive) == 0 ||
+                       suffix.compare(QLatin1String("lua"),
+                                      Qt::CaseInsensitive) == 0) {
+                component = entry.completeBaseName();
+                if (component.compare(QLatin1String("init"),
+                                      Qt::CaseInsensitive) == 0) {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+
+            if (component.isEmpty() || seenComponents.contains(component)) {
+                continue;
+            }
+            seenComponents.insert(component);
+            const auto resolution =
+                WingLuauRequire::resolveFileModule(m_basePath, component);
+            auto child = nodeForResolution(component.toStdString(), resolution);
+            if (child) {
+                children.emplace_back(std::move(child));
+            }
+        }
+        return children;
+    }
+
+    virtual std::vector<Luau::RequireAlias>
+    getAvailableAliases() const override {
+        return m_aliases;
+    }
+
+private:
+    std::unique_ptr<WingRequirePathNode>
+    makeBuiltinNode(std::string_view builtinPath,
+                    std::string_view label) const {
+        bool registered = false;
+        for (const auto &module : m_builtinModules) {
+            if (Luau::equalsLower(module, builtinPath)) {
+                registered = true;
+                break;
+            }
+        }
+        const auto prefixSize =
+            builtinPath.empty() ? 0 : builtinPath.size() + 1;
+        bool hasChildren = false;
+        for (const auto &module : m_builtinModules) {
+            if (module.size() > prefixSize &&
+                (builtinPath.empty() ||
+                 (module[builtinPath.size()] == '/' &&
+                  Luau::equalsLower(
+                      std::string_view(module).substr(0, builtinPath.size()),
+                      builtinPath)))) {
+                hasChildren = true;
+                break;
+            }
+        }
+        if (!registered && !hasChildren) {
+            return nullptr;
+        }
+        return std::make_unique<WingRequirePathNode>(
+            QString(), m_contextPath, std::string(label), m_aliases,
+            m_builtinModules, m_resolver, hasChildren, std::string(builtinPath),
+            true);
+    }
+
+    std::unique_ptr<WingRequirePathNode> nodeForResolution(
+        std::string pathComponent,
+        const WingLuauRequire::FileModuleResolution &resolution) const {
+        using Kind = WingLuauRequire::FileModuleResolution::Kind;
+        QString resolvedPath;
+        bool isDirectory = false;
+        switch (resolution.kind) {
+        case Kind::File:
+            resolvedPath = resolution.path;
+            break;
+        case Kind::ModuleDirectory:
+            resolvedPath = QFileInfo(resolution.path).absolutePath();
+            isDirectory = true;
+            break;
+        case Kind::NamespaceDirectory:
+            resolvedPath = resolution.path;
+            isDirectory = true;
+            break;
+        case Kind::Builtin:
+            return makeBuiltinNode(resolution.path.toStdString(),
+                                   std::move(pathComponent));
+        case Kind::NotFound:
+        case Kind::Ambiguous:
+            return nullptr;
+        }
+
+        return std::make_unique<WingRequirePathNode>(
+            std::move(resolvedPath), m_contextPath, std::move(pathComponent),
+            m_aliases, m_builtinModules, m_resolver, isDirectory);
+    }
+
+    QString m_basePath;
+    QString m_contextPath;
+    std::string m_pathComponent;
+    const std::vector<Luau::RequireAlias> &m_aliases;
+    const std::vector<std::string> &m_builtinModules;
+    WingLuauRequire::ResolutionSession *m_resolver = nullptr;
+    bool m_isDirectory = false;
+    std::string m_builtinPath;
+    bool m_isBuiltinNamespace = false;
+};
+
+class WingRequireSuggester final : public Luau::RequireSuggester {
+public:
+    WingRequireSuggester(std::vector<Luau::RequireAlias> aliases,
+                         std::vector<std::string> builtinModules,
+                         WingLuauRequire::ResolutionSession *resolver)
+        : m_aliases(std::move(aliases)),
+          m_builtinModules(std::move(builtinModules)), m_resolver(resolver) {}
+
+private:
+    virtual std::unique_ptr<Luau::RequireNode>
+    getNode(const Luau::ModuleName &name) const override {
+        const auto contextPath = QString::fromStdString(name);
+        if (!QFileInfo(contextPath).isAbsolute()) {
+            return nullptr;
+        }
+        return std::make_unique<WingRequirePathNode>(
+            QFileInfo(contextPath).absolutePath(), contextPath, std::string(),
+            m_aliases, m_builtinModules, m_resolver, true);
+    }
+
+    std::vector<Luau::RequireAlias> m_aliases;
+    std::vector<std::string> m_builtinModules;
+    WingLuauRequire::ResolutionSession *m_resolver = nullptr;
+};
+
+} // namespace
+
+std::shared_ptr<Luau::RequireSuggester> WingLuauRequire::createPathSuggester(
+    const QStringList &builtinModules, const QString &userModuleRoot,
+    const QString &systemModuleRoot, ResolutionSession *resolver) {
+    QStringList requireAliases;
+    if (!builtinModules.isEmpty()) {
+        appendRequireAlias(requireAliases, QStringLiteral("b"));
+    }
+    for (const auto &module : builtinModules) {
+        QString prefix;
+        const auto parts = module.split(QLatin1Char('/'));
+        for (const auto &part : parts) {
+            prefix = prefix.isEmpty() ? part : prefix + QLatin1Char('/') + part;
+            appendRequireAlias(requireAliases, prefix);
+        }
+    }
+    appendPackageAliases(requireAliases, userModuleRoot, QStringLiteral("u"));
+    appendPackageAliases(requireAliases, systemModuleRoot, QStringLiteral("s"));
+
+    std::vector<Luau::RequireAlias> aliases;
+    aliases.reserve(std::size_t(requireAliases.size()));
+    for (const auto &alias : std::as_const(requireAliases)) {
+        aliases.emplace_back(alias.toStdString());
+    }
+
+    std::vector<std::string> builtinModulePaths;
+    builtinModulePaths.reserve(std::size_t(builtinModules.size()));
+    for (const auto &module : builtinModules) {
+        builtinModulePaths.emplace_back(module.toStdString());
+    }
+    return std::make_shared<WingRequireSuggester>(
+        std::move(aliases), std::move(builtinModulePaths), resolver);
+}
 
 WingLuauRequire::WingLuauRequire() {}
 
@@ -161,7 +473,7 @@ bool WingLuauRequire::registerBuiltinLoader(
     m_builtinLoaders.insert(normalized, std::move(entry));
     m_builtinModules.insert(normalized);
     QString prefix;
-    for (const auto &part : normalized.split('/', Qt::SkipEmptyParts)) {
+    for (auto &part : normalized.split('/', Qt::SkipEmptyParts)) {
         prefix = prefix.isEmpty() ? part : prefix + '/' + part;
         m_builtinNamespaces.insert(prefix);
     }
@@ -403,7 +715,7 @@ WingLuauRequire::ResolutionSession::ResolutionSession(
         const QString normalized = name.toLower();
         navigator.m_builtinModules.insert(normalized);
         QString prefix;
-        for (const auto &part : normalized.split('/')) {
+        for (auto &part : normalized.split('/')) {
             prefix = prefix.isEmpty() ? part : prefix + '/' + part;
             navigator.m_builtinNamespaces.insert(prefix);
         }
@@ -414,7 +726,8 @@ WingLuauRequire::ResolutionSession::~ResolutionSession() = default;
 
 WingLuauRequire::FileModuleResolution
 WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
-                                            const QString &requested) {
+                                            const QString &requested,
+                                            bool includeDirectories) {
     if (requested.isEmpty() || requested.contains(':')) {
         return {};
     }
@@ -425,13 +738,13 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
                                      : QDir::currentPath(),
                                  requested);
     }
-    // Use the runtime's native resolver, including configuration aliases. Only
-    // its load callback is replaced: analysis records the destination and never
-    // executes the resolved module.
+    // Use the runtime's native resolver, including configuration aliases.
+    // Analysis records the destination without executing the resolved module.
     auto &navigator = m_impl->navigator;
     auto &query = m_impl->query;
     auto &state = m_impl->state;
     query.resolution = {};
+    query.includeDirectories = includeDirectories;
     navigator.m_knownChunks.clear();
     lua_settop(state.get(), 0);
     // Require's result cache would skip the destination-recording load
@@ -505,6 +818,35 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
             }
             return result;
         };
+        config->is_module_present = +[](lua_State *L, void *context) {
+            auto *navigator = static_cast<WingLuauRequire *>(context);
+            auto *query = navigator->m_resolutionQuery;
+            if (!query->includeDirectories) {
+                return cbIsModulePresent(L, context);
+            }
+
+            // Completion needs the navigated node even when it cannot be
+            // loaded (for example @u or an alias to a namespace directory).
+            const auto &node = navigator->m_current;
+            using Kind = FileModuleResolution::Kind;
+            if (node.kind == NodeKind::Builtin) {
+                query->resolution = {Kind::Builtin, node.builtinPath};
+            } else if (node.kind == NodeKind::ModuleFile ||
+                       node.kind == NodeKind::ExternalFile) {
+                query->resolution = {Kind::File, node.physicalPath};
+            } else if (node.kind == NodeKind::ScopeRoot) {
+                query->resolution = {Kind::NamespaceDirectory,
+                                     navigator->rootForScope(node.scope)};
+            } else if (node.kind == NodeKind::ModuleDirectory) {
+                query->resolution = {Kind::ModuleDirectory,
+                                     navigator->loadPathForNode(node)};
+            } else {
+                query->resolution = {Kind::NamespaceDirectory,
+                                     node.physicalPath};
+            }
+            // Stop before require tries to load or cache this query result.
+            return false;
+        };
         config->load = +[](lua_State *L, void *context, const char *,
                            const char *, const char *) {
             auto *navigator = static_cast<WingLuauRequire *>(context);
@@ -528,7 +870,8 @@ WingLuauRequire::ResolutionSession::resolve(const QString &contextPath,
     lua_pushlstring(state.get(), requestBytes.constData(), requestBytes.size());
     lua_pushlstring(state.get(), contextBytes.constData(), contextBytes.size());
     if (lua_pcall(state.get(), 2, 1, 0) != LUA_OK &&
-        query.resolution.kind != FileModuleResolution::Kind::Ambiguous) {
+        query.resolution.kind != FileModuleResolution::Kind::Ambiguous &&
+        !includeDirectories) {
         return {};
     }
     return query.resolution;

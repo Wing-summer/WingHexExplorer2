@@ -78,3 +78,30 @@ if(WING_GENERATED_BINDINGS_DIR)
     set_tests_properties(wing_luau_lsp_hexdoc PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;WING_BINDINGS_DIR=${WING_GENERATED_BINDINGS_DIR};WING_SOURCE_DIR=${WING_SOURCE_ROOT}")
 endif()
+
+option(WING_LUAU_LSP_EDITOR_TESTS "Build editor completion interaction tests" OFF)
+if(WING_LUAU_LSP_EDITOR_TESTS)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets PrintSupport Test)
+    add_subdirectory("${WING_SOURCE_ROOT}/3rdparty/WingCodeEdit" WingCodeEdit EXCLUDE_FROM_ALL)
+    get_target_property(editor_lsp_sources wing_luau_lsp_tests SOURCES)
+    list(REMOVE_ITEM editor_lsp_sources tst_luaulanguageserver.cpp)
+    add_executable(wing_luau_editor_tests
+        tst_editorcompletion.cpp
+        tst_editortheme.cpp
+        ${editor_lsp_sources}
+        ${WING_SOURCE_ROOT}/src/control/editor/luaucompletion.cpp
+        ${WING_SOURCE_ROOT}/src/control/editor/editorlspevent.cpp
+        ${WING_SOURCE_ROOT}/src/control/editor/lspeditorinterface.cpp
+        ${WING_SOURCE_ROOT}/src/control/editor/codeinfotip.cpp
+        ${WING_SOURCE_ROOT}/src/control/editor/snippetprocessor.cpp
+        ${WING_SOURCE_ROOT}/src/model/codecompletionmodel.cpp
+        ${WING_SOURCE_ROOT}/src/class/util/resettabletimer.cpp
+        ${WING_SOURCE_ROOT}/src/class/settings/thememanager.h)
+    target_include_directories(wing_luau_editor_tests PRIVATE
+        "${WING_SOURCE_ROOT}" "${WING_SOURCE_ROOT}/src" "${WING_SOURCE_ROOT}/3rdparty")
+    target_link_libraries(wing_luau_editor_tests PRIVATE
+        WingCodeEdit Qt6::Test Luau.Analysis Luau.Require Luau.Compiler Luau.VM)
+    add_test(NAME wing_luau_editor_interaction COMMAND wing_luau_editor_tests)
+    set_tests_properties(wing_luau_editor_interaction PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()

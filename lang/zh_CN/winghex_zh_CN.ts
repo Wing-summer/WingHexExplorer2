@@ -121,7 +121,7 @@
 <context>
     <name>CodeEdit</name>
     <message>
-        <location filename="../../src/control/editor/codeedit.cpp" line="+329"/>
+        <location filename="../../src/control/editor/codeedit.cpp" line="+325"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>

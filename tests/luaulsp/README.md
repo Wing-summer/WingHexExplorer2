@@ -20,8 +20,8 @@ Tests use Qt's offscreen platform and require Qt 6.6.2 or newer and a C++20 comp
   User-defined type functions and member inference in the default nonstrict mode.
 - `overloads`：自定义定义文件、符号树、重载选择、不完整调用和带接收者的方法调用。
   Custom definition files, the symbol tree, overload selection, incomplete calls, and method receivers.
-- `modules`：含空格路径下的相对 `require`、跨模块跳转及依赖修改后的补全刷新。
-  Relative `require` in paths containing spaces, cross-module navigation, and completion refresh after dependency edits.
+- `modules`：含空格路径下的相对 `require`、单层与嵌套路径补全、`@b/` builtin 路径补全、跨模块跳转及依赖修改后的补全刷新。
+  Relative `require` in paths containing spaces, single-level and nested path completion, `@b/` builtin path completion, cross-module navigation, and completion refresh after dependency edits.
 
 ## 新求解器迁移依据 / New solver migration rationale
 
@@ -36,3 +36,21 @@ The adapter selects `SolverMode::New` when constructing the frontend, uses the r
 - [Luau: Local Type Inference](https://rfcs.luau.org/local-type-inference.html)
 - [Luau: User-Defined Type Functions](https://rfcs.luau.org/user-defined-type-functions.html)
 - 本地实现 / Local implementation: `3rdparty/luau/Analysis/src/Frontend.cpp`, `Autocomplete.cpp`, `AutocompleteCore.cpp`, `FragmentAutocomplete.cpp`.
+
+## 编辑器交互测试 / Editor interaction tests
+
+启用可选的 Qt Widgets、PrintSupport 和 Test 依赖，测试实际编辑器、补全编辑及函数提示的交互：
+Enable the optional Qt Widgets, PrintSupport, and Test dependencies to test the actual editor, completion edits, and signature-help interactions:
+
+```sh
+cmake -S tests/luaulsp -B /tmp/wing-luau-lsp-build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug -DWING_LUAU_LSP_EDITOR_TESTS=ON
+cmake --build /tmp/wing-luau-lsp-build -j 2
+ctest --test-dir /tmp/wing-luau-lsp-build --output-on-failure
+```
+
+覆盖光标移动、嵌套和不完整调用、参数表达式、Esc 关闭与重新触发、焦点切换、合并刷新、补全占位符、补全列表优先显示与函数提示恢复，以及 `require` 的相对路径候选和 `@b/` 下的原生父路径候选。保留 Luau 原生路径候选及规范化结果，不在宿主层过滤 `.`、`..`。
+Covers cursor movement, nested and incomplete calls, argument expressions, Escape dismissal and retriggering, focus changes, coalesced refreshes, completion placeholders, completion-popup priority and signature-help restoration, relative `require` candidates, and native parent-path candidates under `@b/`. Preserves Luau's native candidates and normalized paths without host-side filtering of `.` or `..`.
+
+测试仅替换主题图标加载，以免引入完整应用的设置依赖；离屏交互测试不能替代原生桌面验收。
+Only theme icon loading is stubbed to avoid full-application settings dependencies; offscreen interaction tests do not replace native desktop acceptance.

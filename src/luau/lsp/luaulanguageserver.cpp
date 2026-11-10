@@ -17,10 +17,14 @@
 
 #include "luaulanguageserver.h"
 
+#include <algorithm>
+#include <string_view>
+
 #include <QDebug>
 #include <QDir>
 #include <QRegularExpression>
 #include <QSet>
+#include <QTextBlock>
 #include <QUrl>
 
 #include "lua.h"
@@ -28,10 +32,12 @@
 #include "Luau/AstQuery.h"
 #include "Luau/BuiltinDefinitions.h"
 #include "Luau/Config.h"
+#include "Luau/FileResolver.h"
 #include "Luau/FragmentAutocomplete.h"
 #include "Luau/LuauConfig.h"
 #include "Luau/Normalize.h"
 #include "Luau/PrettyPrinter.h"
+#include "Luau/StringUtils.h"
 #include "Luau/Subtyping.h"
 #include "Luau/TimeTrace.h"
 #include "Luau/ToString.h"
@@ -1495,9 +1501,30 @@ std::optional<lsp::SignatureHelp> LuauLanguageServer::signatureHelp(
         return std::nullopt;
     }
 
-    auto *candidate = ancestry.back()->as<Luau::AstExprCall>();
-    if (!candidate && ancestry.size() >= 2) {
-        candidate = ancestry.at(ancestry.size() - 2)->as<Luau::AstExprCall>();
+    Luau::AstExprCall *candidate = nullptr;
+    for (auto it = ancestry.crbegin(); it != ancestry.crend(); ++it) {
+        if ((*it)->is<Luau::AstExprFunction>()) {
+            break;
+        }
+        auto *call = (*it)->as<Luau::AstExprCall>();
+        if (!call || !call->argLocation.containsClosed(position)) {
+            continue;
+        }
+        if (position == call->argLocation.end &&
+            (call->args.size == 0 ||
+             call->args.data[call->args.size - 1]->location.end < position)) {
+            const auto line =
+                textDocument->findBlockByNumber(position.line).text().toUtf8();
+            // AST ancestry includes the end of the last call at EOF. A closed
+            // inner call must yield to its enclosing call, or dismiss the tip.
+            // An incomplete outer call ending in inner() still owns its tip.
+            if (position.column > 0 && position.column <= line.size() &&
+                line.at(position.column - 1) == ')') {
+                continue;
+            }
+        }
+        candidate = call;
+        break;
     }
 
     if (!candidate) {
@@ -2522,8 +2549,13 @@ void LuauLanguageServer::initialize(const InitializationOptions &options) {
          it != m_builtinModuleFiles.cend(); ++it) {
         names.insert(it.key());
     }
+    QStringList builtinModules = names.values();
+    builtinModules.sort(Qt::CaseSensitive);
     m_requireResolver = std::make_unique<WingLuauRequire::ResolutionSession>(
         requireOptions, names, options.readCfgRoots);
+    requireSuggester = WingLuauRequire::createPathSuggester(
+        builtinModules, options.userModuleRoot, options.systemModuleRoot,
+        m_requireResolver.get());
     m_symbolCatalogFile = options.symbolCatalogFile;
     m_pluginDefinitionFiles = options.pluginDefinitionFiles;
     initializeSymbolCatalog(options.pluginSymbols);
@@ -2640,15 +2672,15 @@ LuauLanguageServer::resolveStringRequire(const Luau::ModuleInfo *context,
         QString::fromUtf8(requiredString.data(),
                           qsizetype(requiredString.size())));
     if (result.kind == WingLuauRequire::FileModuleResolution::Kind::Builtin) {
-        return Luau::ModuleInfo(
+        return Luau::ModuleInfo{
             QFileInfo(m_builtinModuleFiles.value(result.path))
                 .absoluteFilePath()
-                .toStdString());
+                .toStdString()};
     }
     if (result.kind == WingLuauRequire::FileModuleResolution::Kind::File ||
         result.kind ==
             WingLuauRequire::FileModuleResolution::Kind::ModuleDirectory) {
-        return Luau::ModuleInfo(result.path.toStdString());
+        return Luau::ModuleInfo{result.path.toStdString()};
     }
     return std::nullopt;
 }

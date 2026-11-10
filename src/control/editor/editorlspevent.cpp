@@ -25,17 +25,7 @@
 
 bool EditorLspEvent::processEvent(QEvent *event, LspEditorInterace *editor) {
     auto type = event->type();
-    if (type == QEvent::KeyPress) {
-        auto e = static_cast<QKeyEvent *>(event);
-        if (e->modifiers() == Qt::NoModifier) {
-            auto key = e->key();
-            if (key == Qt::Key_Comma || key == Qt::Key_ParenLeft) {
-                showSignatureHelp(editor);
-            } else if (key == Qt::Key_Semicolon) {
-                editor->clearFunctionTip();
-            }
-        }
-    } else if (type == QEvent::ToolTip) {
+    if (type == QEvent::ToolTip) {
         auto uri = editor->lspFileNameURL();
         if (uri.isEmpty()) {
             return false;
@@ -81,11 +71,13 @@ bool EditorLspEvent::showSignatureHelp(LspEditorInterace *editor) {
     }
     const auto documentUrl = editor->lspFileNameURL();
     if (documentUrl.isEmpty()) {
+        editor->clearFunctionTip();
         return false;
     }
 
     const auto position = editor->currentPosition();
     if (position.blockNumber < 0 || position.positionInBlock < 0) {
+        editor->clearFunctionTip();
         return false;
     }
 
@@ -97,6 +89,7 @@ bool EditorLspEvent::showSignatureHelp(LspEditorInterace *editor) {
     const auto signatureHelp =
         LuauLanguageServer::instance().signatureHelp(params, nullptr);
     if (!signatureHelp) {
+        editor->clearFunctionTip();
         return false;
     }
 
@@ -108,6 +101,7 @@ bool EditorLspEvent::showSignatureHelp(LspEditorInterace *editor) {
         signatures.append(std::move(item));
     }
     if (signatures.isEmpty()) {
+        editor->clearFunctionTip();
         return false;
     }
     editor->showFunctionTip(signatures);
