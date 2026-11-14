@@ -45,16 +45,17 @@ class DiffDialog final : public FramelessMainWindow {
     Q_OBJECT
 
 public:
-    explicit DiffDialog(EditorView *initial = nullptr,
-                        QWidget *parent = nullptr);
+    explicit DiffDialog(QWidget *parent = nullptr);
     virtual ~DiffDialog() override;
+
+    enum Side { Left, Right, SideCount };
+
+    bool openFile(const QString &path, Side side = Side::Left);
 
 signals:
     void sigOnSettingsRequested();
 
 private:
-    enum Side { Left, Right, SideCount };
-
     enum PaneLayout { SideBySide, Stacked, LayoutCount };
     enum class Phase {
         Idle,
@@ -67,13 +68,13 @@ private:
         Failed
     };
 
-    static constexpr Side oppositeSide(Side side) {
+    inline static constexpr Side oppositeSide(Side side) {
         return side == Side::Left ? Side::Right : Side::Left;
     }
 
 private:
     template <typename Func>
-    QToolButton *
+    inline QToolButton *
     addPannelAction(RibbonButtonGroup *group, const QString &text,
                     ThemeManager::StandardIcon icon, Func &&action,
                     bool checkable = false, const QKeySequence &shortcut = {},
@@ -136,6 +137,8 @@ private:
     void reloadSettings();
     void refreshCandidates();
     void bindSource(Side side);
+    void openSource(Side side);
+    void closeSource(Side side);
     void invalidate(const QString &reason);
     void start();
     void cancel();
@@ -159,10 +162,21 @@ private:
 
 private:
     QPointer<EditorView> m_editors[SideCount];
-    QVector<QPointer<EditorView>> m_candidates;
+
+    struct DocumentEntry {
+        QSharedPointer<QHexDocument> document;
+        QPointer<EditorView> editor;
+        QString name;
+        QString path;
+    };
+
+    QVector<DocumentEntry> m_candidates;
+    QVector<DocumentEntry> m_openedDocuments;
+    QSharedPointer<QHexDocument> m_boundDocuments[SideCount];
     QList<QMetaObject::Connection> m_sourceConnections[SideCount];
     QHexView *m_views[SideCount] = {};
     QComboBox *m_choices[SideCount] = {};
+    QToolButton *m_closeButtons[SideCount] = {};
     WingDiff::Source m_sources[SideCount];
     Ribbon *m_ribbon;
     QSplitter *m_viewsSplitter;

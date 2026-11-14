@@ -18,7 +18,6 @@
 #ifndef APPMANAGER_H
 #define APPMANAGER_H
 
-#include <QElapsedTimer>
 #include <QPointer>
 
 #include "qtsingleapplication/src/qtsingleapplication.h"
@@ -31,16 +30,16 @@ public:
     explicit AppManager(int &argc, char *argv[]);
     virtual ~AppManager();
 
+    void initialize(const QStringList &files);
+
     static AppManager *instance();
 
     MainWindow *mainWindow() const;
 
-    void translation() {
+    inline void translation() {
         QApplication::tr("wingsummer");
         QApplication::tr("WingCloudStudio");
     }
-
-    quint64 currentMSecsSinceEpoch();
 
 public slots:
     WingHex::ErrFile openFile(const QString &file, bool autoDetect,
@@ -48,7 +47,6 @@ public slots:
 
 private:
     MainWindow *m_w = nullptr;
-    QElapsedTimer m_timer;
     QPointer<SplashDialog> m_splash;
 
     static AppManager *m_instance;

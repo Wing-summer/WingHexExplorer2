@@ -30,8 +30,6 @@
 #include "src/luau/runtime/scriptfilesystem.h"
 #include "src/luau/wingluaurequire.h"
 
-LUAU_FASTFLAG(LuauIntegerType2)
-
 namespace {
 void run(lua_State *L, const QString &code) {
     QString error;
@@ -402,7 +400,6 @@ assert(not pcall(N.local_server.remove_server, _network_local_name))
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
-    FFlag::LuauIntegerType2.value = true;
     try {
         for (const bool qtFirst : {false, true}) {
             // Install fixture strings before the generated module registration.

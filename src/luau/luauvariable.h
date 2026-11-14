@@ -74,7 +74,7 @@ private:
     lua_State *m_state = nullptr;
     int m_level = 0;
     QString m_name;
-    std::optional<int> m_index = std::nullopt;
+    std::optional<double> m_index = std::nullopt;
     QString m_value;
     LuauScope m_scope;
     int m_type = LUA_TNIL;

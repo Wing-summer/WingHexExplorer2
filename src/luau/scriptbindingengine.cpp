@@ -17,6 +17,7 @@
 
 #include "scriptbindingengine.h"
 
+#include <limits>
 #include <new>
 
 #include <QDir>
@@ -31,6 +32,8 @@ namespace WingScriptBind {
 
 namespace {
 char objectMarker;
+constexpr qint64 MaxSafeInteger =
+    (qint64{1} << std::numeric_limits<lua_Number>::digits) - 1;
 
 struct StackGuard {
     lua_State *state;
@@ -568,8 +571,6 @@ private:
             return detail::toValue(bool(lua_toboolean(state, index)));
         case LUA_TNUMBER:
             return detail::toValue(lua_tonumber(state, index));
-        case LUA_TINTEGER:
-            return detail::toValue(lua_tointeger64(state, index, nullptr));
         case LUA_TSTRING: {
             size_t length = 0;
             const auto *bytes = lua_tolstring(state, index, &length);
@@ -622,25 +623,21 @@ private:
             lua_pushboolean(state, value.boolean);
             break;
         case Value::Kind::Signed:
-            if (value.signedNumber >= -9007199254740991LL &&
-                value.signedNumber <= 9007199254740991LL) {
-                lua_pushnumber(state, double(value.signedNumber));
-            } else {
-                lua_pushinteger64(state, value.signedNumber);
-            }
-            break;
-        case Value::Kind::Unsigned:
-            if (value.unsignedNumber >
-                quint64(std::numeric_limits<qint64>::max())) {
+            if (value.signedNumber < -MaxSafeInteger ||
+                value.signedNumber > MaxSafeInteger) {
                 throw ScriptException(
                     Exception::TypeMismatch,
-                    QStringLiteral("Integer exceeds Luau int64 range"));
+                    QStringLiteral("Integer exceeds Luau's safe number range"));
             }
-            if (value.unsignedNumber <= 9007199254740991ULL) {
-                lua_pushnumber(state, double(value.unsignedNumber));
-            } else {
-                lua_pushinteger64(state, qint64(value.unsignedNumber));
+            lua_pushnumber(state, double(value.signedNumber));
+            break;
+        case Value::Kind::Unsigned:
+            if (value.unsignedNumber > quint64(MaxSafeInteger)) {
+                throw ScriptException(
+                    Exception::TypeMismatch,
+                    QStringLiteral("Integer exceeds Luau's safe number range"));
             }
+            lua_pushnumber(state, double(value.unsignedNumber));
             break;
         case Value::Kind::Number:
             lua_pushnumber(state, value.number);

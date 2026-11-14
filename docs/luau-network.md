@@ -22,9 +22,9 @@ Additional required QtNetwork value types are discovered from signatures and exp
 
 ## I/O and events / 读写与事件
 
-`write()` accepts a Lua string or bytearray, including embedded zero bytes; `read_all()` returns a binary Lua string. Byte counts use the existing 64-bit integer bindings. Use `receive_datagram()` for UDP payload, sender/receiver addresses and ports. Raw writable buffer-pointer overloads are omitted. Synchronous `wait_for_*` methods retain Qt semantics and defaults: they block their owning thread. Prefer signals in the application UI thread.
+`write()` accepts a Lua string or bytearray, including embedded zero bytes; `read_all()` returns a binary Lua string. Byte counts use `number` within ±(2^53−1); larger 64-bit values use `int64`/`uint64` userdata. Use `receive_datagram()` for UDP payload, sender/receiver addresses and ports. Raw writable buffer-pointer overloads are omitted. Synchronous `wait_for_*` methods retain Qt semantics and defaults: they block their owning thread. Prefer signals in the application UI thread.
 
-`write()` 接受含零字节的 Lua string 或 bytearray，`read_all()` 返回二进制 Lua string；字节计数沿用现有 64 位整数绑定。UDP 使用 `receive_datagram()` 获取数据及地址、端口。无法安全表达的原始可写缓冲区重载不公开。同步 `wait_for_*` 保留 Qt 默认参数和行为，会阻塞所属线程；应用 GUI 线程宜使用信号。
+`write()` 接受含零字节的 Lua string 或 bytearray，`read_all()` 返回二进制 Lua string；字节计数在安全整数范围内使用 `number`，超出范围时使用 `int64`/`uint64` userdata。UDP 使用 `receive_datagram()` 获取数据及地址、端口。无法安全表达的原始可写缓冲区重载不公开。同步 `wait_for_*` 保留 Qt 默认参数和行为，会阻塞所属线程；应用 GUI 线程宜使用信号。
 
 `socket:connect("state_changed", function(state) ... end)` receives the scanned parameters. Native Qt names and full signatures, such as `bytesWritten(qint64)`, remain accepted. Ambiguous overload names require a full signature. Generated socket signals are events, not callable methods. Value arguments are copied at emission; QObject arguments use guarded references. Unsupported temporary pointer arguments are recorded in the generated exclusion report.
 
@@ -34,9 +34,9 @@ Queued readiness notifications can outlive the available data: drain `has_pendin
 
 排队通知可能在数据已被处理后才到达；读取数据报或接受连接前，使用 `has_pending_datagrams()` / `has_pending_connections()` 检查并消费队列。
 
-Delivery is queued on the owning event loop and runs on a separate protected Lua coroutine, preserving a suspended script’s stack. Callbacks cannot yield; keep a top-level script coroutine running with `coroutine.yield()` while waiting for events. Returning, stopping, or closing that script context cancels queued callbacks, disconnects its connections and releases its unparented network objects. Child objects follow Qt ownership; returned accepted connections are borrowed from their server and become invalid after server destruction. Context cleanup does not stop another script context. Native socket descriptors retain Qt ownership rules when explicitly adopted. Explicit local-server endpoint removal obeys the existing filesystem-removal setting; closing an owned server still cleans its own endpoint.
+Delivery is queued on the owning event loop and runs on a separate protected Lua coroutine, preserving a suspended script’s stack. Callbacks cannot yield. In the GUI, keep a top-level script coroutine running with `coroutine.yield()` while waiting for events; headless `--live` services may return from their entry point. Returning outside `--live`, stopping, or closing that script context cancels queued callbacks, disconnects its connections and releases its unparented network objects. Child objects follow Qt ownership; returned accepted connections are borrowed from their server and become invalid after server destruction. Context cleanup does not stop another script context. Native socket descriptors retain Qt ownership rules when explicitly adopted. Explicit local-server endpoint removal obeys the existing filesystem-removal setting; closing an owned server still cleans its own endpoint.
 
-回调排队交付，在独立的受保护 Lua 协程中执行，不改变挂起脚本的栈；不允许在回调内 yield。等待网络事件期间，应让顶层脚本通过 `coroutine.yield()` 保持运行。脚本返回、中止或关闭上下文时，取消未执行的回调、断开所属连接并释放无父对象的网络对象。子对象沿用 Qt 所有权，服务器返回的连接为借用对象，服务器销毁后不可继续使用。清理不会停止其他脚本上下文。显式接收原生 socket 句柄时，沿用 Qt 的句柄所有权规则。显式删除本地服务端点遵守既有文件系统删除设置；关闭所属服务器仍会清理自己的端点。
+回调排队交付，在独立的受保护 Lua 协程中执行，不改变挂起脚本的栈；不允许在回调内 yield。GUI 中等待网络事件期间，应让顶层脚本通过 `coroutine.yield()` 保持运行；无头 `--live` 服务允许入口返回。非 `--live` 模式下脚本返回，以及中止或关闭上下文时，取消未执行的回调、断开所属连接并释放无父对象的网络对象。子对象沿用 Qt 所有权，服务器返回的连接为借用对象，服务器销毁后不可继续使用。清理不会停止其他脚本上下文。显式接收原生 socket 句柄时，沿用 Qt 的句柄所有权规则。显式删除本地服务端点遵守既有文件系统删除设置；关闭所属服务器仍会清理自己的端点。
 
 ## TLS / TLS
 
@@ -66,3 +66,7 @@ ctest --test-dir build/Debug/lsp-restructure --output-on-failure
 python tests/luaubindings/build_host_probe.py --build build/Debug
 QT_QPA_PLATFORM=offscreen build/Debug/WingLuauHostInputProbe --test-plugin --network
 ```
+
+`--headless --live` accepts script tasks over a separate management socket and retains each task after its entry returns; see [headless services](headless.md).
+
+`--headless --live` 通过独立管理 socket 接受脚本任务，并在各任务入口返回后保留其回调；参见[无头服务](headless.md)。

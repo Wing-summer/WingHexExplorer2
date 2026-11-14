@@ -18,6 +18,10 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
+#include <array>
+#include <memory>
+
+#include <QHash>
 #include <QObject>
 
 #include "luau/luaudebugger.h"
@@ -26,9 +30,18 @@
 #include "luau/wingluaurequire.h"
 #include "luauscheduler.h"
 
+struct ScriptRuntimeOptions {
+    bool ui = true;
+    bool debugger = true;
+    bool languageServer = true;
+    bool retainContext = false;
+};
+
 class ScriptMachine : public QObject {
     Q_OBJECT
     friend class ScriptMachineBindings;
+    friend class ScriptExecution;
+    friend class LuauScheduler;
 
 public:
     // we have three console modes
@@ -76,6 +89,11 @@ private:
     configureEngine(lua_State *l,
                     WingScriptBind::ScriptBindingEngine::ObjectCodec codec);
     constexpr static int consoleModeIdx(ConsoleMode mode);
+    LuauScheduler *createScheduler(LuauThread *context);
+
+    inline bool isExecuting() const { return m_executing; }
+
+    int resumeThread(LuauThread *thread, int arguments);
 
 public:
     static ScriptMachine &instance();
@@ -84,7 +102,17 @@ public:
     QVector<lua_State *> getThreadAncestors(lua_State *L) const;
 
 public:
-    bool init(WingScriptBind::ScriptBindingEngine::ObjectCodec codec = {});
+    inline void setInterruptionCheck(std::function<bool()> check) {
+        m_interruptionCheck = std::move(check);
+    }
+
+    inline void
+    setCallbackFailureHandler(std::function<void(const QString &)> handler) {
+        m_callbackFailure = std::move(handler);
+    }
+
+    bool init(WingScriptBind::ScriptBindingEngine::ObjectCodec codec = {},
+              ScriptRuntimeOptions options = {});
     void finishScriptRegistration();
     bool scriptRegistrationFinished() const noexcept;
     bool isInited() const;
@@ -106,6 +134,15 @@ public:
     // @return true if execution finished, else need more codes input
     void executeCode(ScriptMachine::ConsoleMode mode, const QString &code,
                      const std::function<void(bool)> &onFinished);
+
+    enum class ExecutionResult { Success, Busy, FileError, Failed, Aborted };
+    void executeScriptWithResult(
+        ConsoleMode mode, const QString &fileName, bool isInDebug,
+        const std::function<void(ExecutionResult)> &onFinished);
+
+    ScriptExecution *createExecution(const QString &path);
+    bool registerBuiltin(const QString &name,
+                         const std::function<void(lua_State *)> &push);
 
     // only scripting mode can be debugged
     void executeScript(ScriptMachine::ConsoleMode mode, const QString &fileName,
@@ -151,6 +188,21 @@ private:
     static void onLuauThreadCreated(lua_State *lp, lua_State *L);
 
 private:
+    struct ScriptLoadResult {
+        ExecutionResult result = ExecutionResult::Failed;
+        QByteArray source;
+        QString message;
+    };
+
+    static ScriptLoadResult loadScript(lua_State *thread, const QString &path,
+                                       ConsoleMode mode, bool debug,
+                                       bool native);
+
+private:
+    std::array<std::unique_ptr<LuauScheduler>, ConsoleModeCount>
+        m_consoleSchedulers;
+    QHash<const void *, ScriptExecution *> m_executions;
+    bool m_executing = false;
     bool m_inited = false;
     bool m_scriptRegistrationFinished = false;
     lua_State *m_main = nullptr;
@@ -162,6 +214,9 @@ private:
     WingLuauRequire m_luaReq;
 
     inline static InspectOptions m_printOptions;
+    ScriptRuntimeOptions m_runtimeOptions;
+    std::function<bool()> m_interruptionCheck;
+    std::function<void(const QString &)> m_callbackFailure;
     QVector<RegCallBacks> m_regcalls;
 };
 

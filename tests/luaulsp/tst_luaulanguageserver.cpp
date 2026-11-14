@@ -15,12 +15,6 @@
 ** =============================================================================
 */
 
-#include "Luau/Common.h"
-
-#include "luau/lsp/luaulanguageserver.h"
-#include "luau/wingluaurequire.h"
-LUAU_FASTFLAG(LuauIntegerType2)
-
 #include <iostream>
 #include <stdexcept>
 
@@ -32,6 +26,11 @@ LUAU_FASTFLAG(LuauIntegerType2)
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
+
+#include "Luau/Common.h"
+
+#include "luau/lsp/luaulanguageserver.h"
+#include "luau/wingluaurequire.h"
 
 static void require(bool condition, const char *message) {
     if (!condition) {
@@ -665,7 +664,6 @@ static void testBuiltinResolutionBoundaries() {
 }
 
 static void testGeneratedBindings() {
-    FFlag::LuauIntegerType2.value = true;
     const QDir output(qEnvironmentVariable("WING_BINDINGS_DIR"));
     QFile manifest(output.filePath("manifest.json"));
     require(manifest.open(QIODevice::ReadOnly),
@@ -770,14 +768,22 @@ static void testGeneratedBindings() {
         "local literal: \"_qt_QWidget\" = \"_qt_QWidget\"\nprint(literal)\n"
         "local widget = "
         "qt.load_ui_widget_file(\"fixture.ui\")\nprint(widget)\n"
+        "local wide = int64(\"9223372036854775806\") + int64(1)\n"
+        "local bits = uint64(\"0xffffffffffffffff\"):band(uint64(255))\n"
+        "local precise: string = wide:to_string()\nprint(bits, precise)\n"
+        "local numeric_left = 2 + uint64(\"9007199254740993\")\n"
+        "local compared = int64(-1) < uint64(\"18446744073709551615\")\n"
+        "print(numeric_left, compared)\n"
         "local fs_file = filesystem.file(\"fixture.bin\")\n"
         "local fs_info = filesystem.fileinfo(\"fixture.bin\")\n"
         "local fs_dir = filesystem.dir(\".\")\n"
-        "local fs_size: integer = fs_info:size()\n"
+        "local fs_size: number | typeof(int64(0)) = fs_info:size()\n"
         "local fs_opened = "
         "fs_file:open(filesystem.file.OpenModeFlag.ReadOnly)\n"
-        "local fs_written: integer = fs_file:write(bytearray(\"data\"))\n"
-        "local fs_raw_written: integer = fs_file:write(\"data\")\n"
+        "local fs_written: number | typeof(int64(0)) = "
+        "fs_file:write(bytearray(\"data\"))\n"
+        "local fs_raw_written: number | typeof(int64(0)) = "
+        "fs_file:write(\"data\")\n"
         "local fs_entries = fs_dir:entry_info_list({\"*.bin\"})\n"
         "print(fs_size, fs_opened, fs_written, fs_raw_written, fs_entries, "
         "fs_dir:exists())\n"
@@ -785,7 +791,8 @@ static void testGeneratedBindings() {
         "local socket = net.tcp_socket()\n"
         "socket:connect(\"state_changed\", function(state: number) "
         "print(state) end)\n"
-        "local net_written: integer = socket:write(\"data\")\n"
+        "local net_written: number | typeof(int64(0)) = "
+        "socket:write(\"data\")\n"
         "local address = net.host_address(\"127.0.0.1\")\n"
         "local ssl_server = net.ssl_server()\n"
         "local secure_peer = ssl_server:next_pending_connection()\n"
@@ -803,7 +810,9 @@ static void testGeneratedBindings() {
     require(socketHover &&
                 socketHover->contents.value.contains("network.tcp_socket") &&
                 !socketHover->contents.value.contains("_qt_"),
-            "socket hover exposes internal types");
+            qPrintable(QStringLiteral("socket hover exposes internal types: %1")
+                           .arg(socketHover ? socketHover->contents.value
+                                            : QStringLiteral("missing"))));
     const auto dialogHover = server.hover(
         {uri, positionOf(source, "print(text, dialog", 13)}, nullptr);
     require(dialogHover && dialogHover->contents.value.contains("qt.QDialog") &&
@@ -851,7 +860,6 @@ static void testGeneratedBindings() {
 }
 
 static void testHexdocModule() {
-    FFlag::LuauIntegerType2.value = true;
     const QDir output(qEnvironmentVariable("WING_BINDINGS_DIR"));
     QFile manifest(output.filePath("manifest.json"));
     require(manifest.open(QIODevice::ReadOnly),

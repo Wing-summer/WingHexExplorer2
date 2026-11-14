@@ -18,13 +18,9 @@
 #ifndef QTLUAU_INTEGRATIONS_WINGHEX_SCRIPTMACHINEBINDINGS_H
 #define QTLUAU_INTEGRATIONS_WINGHEX_SCRIPTMACHINEBINDINGS_H
 
-#include <limits>
-
 #include <QDialog>
 #include <QMainWindow>
 #include <QUrl>
-
-#include "Luau/Common.h"
 
 #include "qtluau/value_conversion.hpp"
 #include "qtluau/value_ref.hpp"
@@ -36,22 +32,20 @@
 #include "scriptwindowfactory.h"
 #include "src/class/settings/settingmanager.h"
 
-LUAU_FASTFLAG(LuauIntegerType2)
-
 class ScriptMachineBindings {
     using Codec = WingScriptBind::ScriptBindingEngine::ObjectCodec;
     using Value = WingScriptBind::Value;
     using ObjectValue = WingScriptBind::ObjectValue;
 
     template <class T>
-    static ObjectValue object(T value) {
+    inline static ObjectValue object(T value) {
         auto storage = std::make_shared<T>(std::move(value));
         return {WingScriptBind::typeInfo<T>(), storage, storage.get()};
     }
 
     template <class T>
-    static bool readObject(const luabridge::LuaRef &value,
-                           ObjectValue &result) {
+    inline static bool readObject(const luabridge::LuaRef &value,
+                                  ObjectValue &result) {
         if (auto native = value.cast<T>()) {
             result = object<T>(*native);
             return true;
@@ -60,7 +54,7 @@ class ScriptMachineBindings {
     }
 
     template <class T>
-    static bool pushObject(lua_State *L, const ObjectValue &value) {
+    inline static bool pushObject(lua_State *L, const ObjectValue &value) {
         if (WingScriptBind::sameType(value.type,
                                      WingScriptBind::typeInfo<T>())) {
             qtluau::qtToLua(L, *static_cast<const T *>(value.pointer)).push();
@@ -69,7 +63,7 @@ class ScriptMachineBindings {
         return false;
     }
 
-    static void adaptText(Value &value) {
+    inline static void adaptText(Value &value) {
         if (value.kind == Value::Kind::Bytes) {
             value.object = object<QString>(
                 QAnyStringView(QUtf8StringView(value.bytes)).toString());
@@ -87,10 +81,13 @@ class ScriptMachineBindings {
     }
 
 public:
-    static Codec initialize(lua_State *L, Codec fallback,
-                            WingLuauRequire &require) {
-        FFlag::LuauIntegerType2.value = true;
-        bindings::registerEagerModules(L);
+    inline static Codec initialize(lua_State *L, Codec fallback,
+                                   WingLuauRequire &require, bool ui) {
+        if (!ui) {
+#include "headless_initializers.inc"
+        } else {
+            bindings::registerEagerModules(L);
+        }
         const auto modules = bindings::moduleFiles();
 
         // The statically linked factory is registered by the host.
@@ -100,7 +97,11 @@ public:
             if (name.isEmpty()) {
                 continue;
             }
-            if (internalMods.contains(name)) {
+            if (internalMods.contains(name) ||
+                (!ui && (name == QStringLiteral("qt") ||
+                         name == QStringLiteral("dialogs") ||
+                         name == QStringLiteral("clipboard") ||
+                         name == QStringLiteral("toast")))) {
                 continue;
             }
             const bool registered =
@@ -114,7 +115,9 @@ public:
             }
         }
 #include SCRIPTMACHINE_LUAU_CALLBACKS
-        qtluau::setUiWidgetResolver(&ScriptWindowFactory::create);
+        if (ui) {
+            qtluau::setUiWidgetResolver(&ScriptWindowFactory::create);
+        }
         ScriptFileSystem::setFileSystemAccessPolicy(
             {[] {
                  return SettingManager::instance().scriptFileEnableOverwrite();
@@ -122,13 +125,15 @@ public:
              [] {
                  return SettingManager::instance().scriptFileSystemWrite();
              }});
-        qtluau::setUiWidgetCreatedCallback(&ScriptWindowFactory::created);
-        qtluau::setUiWidgetFinalizer(&ScriptWindowFactory::finalize);
-        qtluau::setWidgetContentResolver(&ScriptWindowFactory::content);
-        qtluau::setWidgetContentMutators(&ScriptWindowFactory::setContent,
-                                         &ScriptWindowFactory::takeContent);
-        qtluau::setWindowMenuAccessors(&ScriptWindowFactory::menu,
-                                       &ScriptWindowFactory::setMenu);
+        if (ui) {
+            qtluau::setUiWidgetCreatedCallback(&ScriptWindowFactory::created);
+            qtluau::setUiWidgetFinalizer(&ScriptWindowFactory::finalize);
+            qtluau::setWidgetContentResolver(&ScriptWindowFactory::content);
+            qtluau::setWidgetContentMutators(&ScriptWindowFactory::setContent,
+                                             &ScriptWindowFactory::takeContent);
+            qtluau::setWindowMenuAccessors(&ScriptWindowFactory::menu,
+                                           &ScriptWindowFactory::setMenu);
+        }
         Codec codec;
         codec.read = [previous = fallback.read](lua_State *state, int index,
                                                 ObjectValue &result) {
@@ -177,25 +182,51 @@ public:
         codec.readValue = [previous = fallback.readValue](
                               lua_State *state, int index, Value &result) {
             if (lua_type(state, index) == LUA_TUSERDATA) {
+                if (qtluau::isUnsignedInteger64(state, index)) {
+                    std::uint64_t number = 0;
+                    qtluau::readUnsignedInteger64(state, index, number);
+                    result = WingScriptBind::detail::toValue(number);
+                    return true;
+                }
+                if (qtluau::isInteger64(state, index)) {
+                    std::int64_t number = 0;
+                    qtluau::readInteger64(state, index, number);
+                    result = WingScriptBind::detail::toValue(number);
+                    return true;
+                }
                 auto value = luabridge::LuaRef::fromStack(state, index);
                 if (auto bytes = value.cast<qtluau::QtValueRef<QByteArray>>()) {
                     result = WingScriptBind::detail::toValue(bytes->value());
                     return true;
                 }
-                if (auto box = value.cast<qtluau::VariantBox>();
-                    box && box->value.metaType().id() == QMetaType::ULongLong) {
-                    result = WingScriptBind::detail::toValue(
-                        box->value.toULongLong());
-                    return true;
+                if (auto box = value.cast<qtluau::VariantBox>()) {
+                    const auto type = box->value.metaType().id();
+                    if (type == QMetaType::ULongLong ||
+                        type == QMetaType::ULong) {
+                        result = WingScriptBind::detail::toValue(
+                            box->value.toULongLong());
+                        return true;
+                    }
+                    if (type == QMetaType::LongLong ||
+                        type == QMetaType::Long) {
+                        result = WingScriptBind::detail::toValue(
+                            box->value.toLongLong());
+                        return true;
+                    }
                 }
             }
             return previous && previous(state, index, result);
         };
         codec.pushValue = [previous = fallback.pushValue](lua_State *state,
                                                           const Value &value) {
+            if (value.kind == Value::Kind::Signed &&
+                (value.signedNumber < -qtluau::MaxSafeInteger ||
+                 value.signedNumber > qtluau::MaxSafeInteger)) {
+                qtluau::qtToLua(state, value.signedNumber).push();
+                return true;
+            }
             if (value.kind == Value::Kind::Unsigned &&
-                value.unsignedNumber >
-                    quint64(std::numeric_limits<qint64>::max())) {
+                value.unsignedNumber > quint64(qtluau::MaxSafeInteger)) {
                 qtluau::qtToLua(state, value.unsignedNumber).push();
                 return true;
             }
@@ -204,11 +235,11 @@ public:
         return codec;
     }
 
-    static QHash<QString, QString> moduleFiles() {
+    inline static QHash<QString, QString> moduleFiles() {
         return bindings::moduleFiles();
     }
 
-    static QHash<QString, QString> definitions() {
+    inline static QHash<QString, QString> definitions() {
         return bindings::definitionFiles();
     }
 };

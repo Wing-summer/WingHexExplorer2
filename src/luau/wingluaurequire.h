@@ -87,11 +87,13 @@ public:
                            const QByteArray &source)>
             onLuauFileLoading;
 
+        bool readonlyBuiltins = false;
+
         inline Options() {}
     };
 
     explicit WingLuauRequire();
-    ~WingLuauRequire() = default;
+    inline ~WingLuauRequire() = default;
 
 public:
     struct FileModuleResolution {
@@ -394,6 +396,7 @@ private:
     // --- Runtime callbacks -------------------------------------------------
 
     static int cbRequireDispatch(lua_State *L);
+    static int cbRequireContinuation(lua_State *L, int status);
 
     static bool cbIsRequireAllowed(lua_State *, void *ctx,
                                    const char *requirerChunkname);

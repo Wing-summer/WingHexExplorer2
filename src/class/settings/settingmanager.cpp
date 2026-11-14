@@ -18,6 +18,7 @@
 #include "settingmanager.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QFileInfo>
 #include <QMetaEnum>
 
@@ -471,11 +472,8 @@ void SettingManager::setLogCount(qsizetype newLogCount) {
 void SettingManager::checkWriteableAndWarn() {
     HANDLE_CONFIG;
     if (!CONFIG.isWritable()) {
-        Logger::warning(
-            QStringLiteral("<i><u>") +
-            tr("The program will be unable to save the configuration. Please "
-               "check the permissions for the configuration file.") +
-            QStringLiteral("</u></i>"));
+        qWarning("The program cannot save its configuration. Check the "
+                 "configuration file permissions.");
     }
 }
 

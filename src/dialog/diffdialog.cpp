@@ -21,6 +21,8 @@
 
 #include <QButtonGroup>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QHeaderView>
 #include <QLabel>
 #include <QMenu>
@@ -39,6 +41,8 @@
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbontabcontent.h"
 
+#include "class/application/applicationmode.h"
+#include "class/file/documentloader.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
 #include "control/diffrenderer.h"
@@ -46,6 +50,7 @@
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
 #include "control/searchbar.h"
+#include "dialog/common/wingmessagebox.h"
 #include "model/diffresultmodel.h"
 
 namespace {
@@ -88,8 +93,7 @@ QString readErrorText(QHexReadError error) {
 
 } // namespace
 
-DiffDialog::DiffDialog(EditorView *initial, QWidget *parent)
-    : FramelessMainWindow(parent) {
+DiffDialog::DiffDialog(QWidget *parent) : FramelessMainWindow(parent) {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("Compare"));
     setWindowIcon(ThemeManager::instance().standardIcon(Icon::Compare));
@@ -115,27 +119,6 @@ DiffDialog::DiffDialog(EditorView *initial, QWidget *parent)
             &SettingManager::sigOnDiffSettingsChanged, this,
             &DiffDialog::reloadSettings);
     refreshCandidates();
-    if (initial) {
-        for (int index = 0; index < m_candidates.size(); ++index) {
-            if (m_candidates[index]->hexEditor()->document() ==
-                initial->hexEditor()->document()) {
-                m_choices[Side::Left]->setCurrentIndex(index);
-                break;
-            }
-        }
-    }
-    if (m_choices[Side::Left]->currentIndex() < 0 && !m_candidates.isEmpty()) {
-        m_choices[Side::Left]->setCurrentIndex(0);
-    }
-    for (int candidate = 0; candidate < m_candidates.size(); ++candidate) {
-        if (m_candidates[candidate]->hexEditor()->document() !=
-            m_views[Side::Left]->document()) {
-            m_choices[Side::Right]->setCurrentIndex(candidate);
-            break;
-        }
-    }
-    bindSource(Side::Left);
-    bindSource(Side::Right);
     m_finalStatus = usable() ? tr("Ready to compare")
                              : tr("Choose two different open documents");
     m_recompareTimer.setSingleShot(true);
@@ -224,7 +207,8 @@ void DiffDialog::buildComparePage() {
     addPannelAction(nav, tr("Search"), Icon::Search, &DiffDialog::showSearch);
 
     addPannelAction(tab->addGroup(tr("Resources")), tr("Settings"),
-                    Icon::Settings, &DiffDialog::sigOnSettingsRequested);
+                    Icon::Settings, &DiffDialog::sigOnSettingsRequested)
+        ->setObjectName(QStringLiteral("diff.settings"));
 }
 
 void DiffDialog::buildViewPage() {
@@ -331,6 +315,39 @@ void DiffDialog::buildViews() {
                                                       : tr("Left document"));
         m_choices[side] = choice;
         row->addWidget(choice, 1);
+        if (!ApplicationMode::hasMainWindow()) {
+            auto open = new QToolButton(panel);
+            open->setObjectName(side == Side::Right
+                                    ? QStringLiteral("diff.right.open")
+                                    : QStringLiteral("diff.left.open"));
+            open->setText(tr("Open"));
+            open->setAccessibleName(tr("Open a file for this side"));
+            open->setToolTip(open->accessibleName());
+            open->setIcon(
+                ThemeManager::instance().standardIcon(Icon::OpenFile));
+            connect(open, &QToolButton::clicked, this,
+                    [this, side] { openSource(side); });
+            auto close = new QToolButton(panel);
+            close->setObjectName(side == Side::Right
+                                     ? QStringLiteral("diff.right.close")
+                                     : QStringLiteral("diff.left.close"));
+            close->setText(tr("Close"));
+            close->setAccessibleName(tr("Close the document on this side"));
+            close->setToolTip(close->accessibleName());
+            close->setIcon(
+                ThemeManager::instance().standardIcon(Icon::CloseFile));
+            connect(close, &QToolButton::clicked, this,
+                    [this, side] { closeSource(side); });
+            m_closeButtons[side] = close;
+            for (auto button : {open, close}) {
+                button->setAutoRaise(true);
+                button->setToolButtonStyle(Qt::ToolButtonIconOnly);
+                const auto extent = qMax(choice->sizeHint().height(),
+                                         button->sizeHint().height());
+                button->setFixedSize(extent, extent);
+                row->addWidget(button);
+            }
+        }
         panelLayout->addLayout(row);
         m_views[side] = new QHexView(panel);
         m_views[side]->setReadOnly(true);
@@ -458,8 +475,60 @@ DiffDialog::~DiffDialog() {
     }
 }
 
+void DiffDialog::openSource(Side side) {
+    const auto path = QFileDialog::getOpenFileName(this, tr("Open file"));
+    if (!path.isEmpty()) {
+        openFile(path, side);
+    }
+}
+
+void DiffDialog::closeSource(Side side) {
+    const auto document = m_boundDocuments[side];
+    if (!document) {
+        return;
+    }
+    m_choices[side]->setCurrentIndex(-1);
+    if (m_boundDocuments[oppositeSide(side)] != document) {
+        for (int index = m_openedDocuments.size() - 1; index >= 0; --index) {
+            if (m_openedDocuments[index].document == document) {
+                m_openedDocuments.removeAt(index);
+            }
+        }
+    }
+    refreshCandidates();
+}
+
+bool DiffDialog::openFile(const QString &path, Side side) {
+    Q_ASSERT(side == Side::Left || side == Side::Right);
+    const auto absolutePath = QFileInfo(path).absoluteFilePath();
+    refreshCandidates();
+    for (int index = 0; index < m_candidates.size(); ++index) {
+        if (m_candidates[index].path == absolutePath) {
+            m_choices[side]->setCurrentIndex(index);
+            return true;
+        }
+    }
+    auto loaded = loadFileDocument(absolutePath, true);
+    if (loaded.error != WingHex::ErrFile::Success) {
+        WingMessageBox::critical(
+            this, tr("Error"),
+            tr("Could not open the file: %1").arg(absolutePath));
+        return false;
+    }
+    m_openedDocuments.append(
+        {loaded.document, {}, QFileInfo(loaded.path).fileName(), loaded.path});
+    refreshCandidates();
+    for (int index = 0; index < m_candidates.size(); ++index) {
+        if (m_candidates[index].document == loaded.document) {
+            m_choices[side]->setCurrentIndex(index);
+            break;
+        }
+    }
+    return true;
+}
+
 void DiffDialog::refreshCandidates() {
-    QVector<QPointer<EditorView>> candidates;
+    QVector<DocumentEntry> candidates;
     QSet<QHexDocument *> seen;
     const auto &editors = EditorView::instances();
     for (auto editor : editors) {
@@ -483,19 +552,32 @@ void DiffDialog::refreshCandidates() {
             continue;
         }
         seen.insert(document);
-        candidates.append(editor);
+        candidates.append({editor->hexEditor()->document(), editor,
+                           editor->infoFileName(),
+                           editor->fileNameUrl().toLocalFile()});
+    }
+    for (const auto &entry : std::as_const(m_openedDocuments)) {
+        if (!seen.contains(entry.document.data())) {
+            candidates.append(entry);
+            seen.insert(entry.document.data());
+        }
     }
     m_candidates = std::move(candidates);
     for (const auto side : {Side::Left, Side::Right}) {
         QSignalBlocker blocker(m_choices[side]);
         m_choices[side]->clear();
         for (const auto &editor : std::as_const(m_candidates)) {
-            m_choices[side]->addItem(editor->infoFileName());
+            m_choices[side]->addItem(editor.name);
             m_choices[side]->setItemData(m_choices[side]->count() - 1,
-                                         editor->infoTooltip(),
-                                         Qt::ToolTipRole);
+                                         editor.path, Qt::ToolTipRole);
         }
-        const auto previous = m_candidates.indexOf(m_editors[side]);
+        int previous = -1;
+        for (int index = 0; index < m_candidates.size(); ++index) {
+            if (m_candidates[index].document == m_boundDocuments[side]) {
+                previous = index;
+                break;
+            }
+        }
         m_choices[side]->setCurrentIndex(previous >= 0 ? previous : -1);
     }
     updateControls();
@@ -503,10 +585,11 @@ void DiffDialog::refreshCandidates() {
 
 void DiffDialog::bindSource(Side side) {
     const auto index = m_choices[side]->currentIndex();
-    const auto editor = index >= 0 && index < m_candidates.size()
-                            ? m_candidates[index]
-                            : QPointer<EditorView>();
-    if (m_editors[side] == editor) {
+    const auto entry = index >= 0 && index < m_candidates.size()
+                           ? m_candidates[index]
+                           : DocumentEntry{};
+    const auto editor = entry.editor;
+    if (m_boundDocuments[side] == entry.document && m_editors[side] == editor) {
         updateControls();
         return;
     }
@@ -516,8 +599,9 @@ void DiffDialog::bindSource(Side side) {
     }
     m_sourceConnections[side].clear();
     m_editors[side] = editor;
-    if (editor) {
-        auto document = editor->hexEditor()->document();
+    m_boundDocuments[side] = entry.document;
+    if (entry.document) {
+        auto document = entry.document;
         m_views[side]->setDocument(document, m_views[side]->cursor());
         m_sourceConnections[side].append(
             connect(document.data(), &QHexDocument::sigOnContentsChanged, this,
@@ -525,19 +609,23 @@ void DiffDialog::bindSource(Side side) {
         m_sourceConnections[side].append(
             connect(document.data(), &QHexDocument::sigOnDocumentSaved, this,
                     &DiffDialog::sourceSaved));
-        m_sourceConnections[side].append(
-            connect(editor.data(), &QObject::destroyed, this, [this, side] {
-                invalidate(tr("Source closed — choose another document"));
-                for (const auto &connection :
-                     std::as_const(m_sourceConnections[side])) {
-                    disconnect(connection);
-                }
-                m_sourceConnections[side].clear();
-                m_editors[side] = nullptr;
-                m_views[side]->resetDocument();
-                m_choices[side]->setCurrentIndex(-1);
-                updateControls();
-            }));
+        if (editor) {
+            m_sourceConnections[side].append(
+                connect(editor.data(), &QObject::destroyed, this, [this, side] {
+                    invalidate(tr("Source closed — choose another document"));
+                    for (const auto &connection :
+                         std::as_const(m_sourceConnections[side])) {
+                        disconnect(connection);
+                    }
+                    m_sourceConnections[side].clear();
+                    m_editors[side] = nullptr;
+                    m_boundDocuments[side].reset();
+                    m_views[side]->resetDocument();
+                    m_choices[side]->setCurrentIndex(-1);
+                    refreshCandidates();
+                    updateControls();
+                }));
+        }
     } else {
         m_views[side]->resetDocument();
     }
@@ -577,7 +665,7 @@ bool DiffDialog::recaptureSources() {
 }
 
 bool DiffDialog::usable() const {
-    return m_editors[Side::Left] && m_editors[Side::Right] &&
+    return m_boundDocuments[Side::Left] && m_boundDocuments[Side::Right] &&
            m_views[Side::Left]->document() != m_views[Side::Right]->document();
 }
 
@@ -703,6 +791,11 @@ void DiffDialog::updateControls() {
     }
 
     m_swapButton->setEnabled(!m_running);
+    for (const auto side : {Side::Left, Side::Right}) {
+        if (m_closeButtons[side]) {
+            m_closeButtons[side]->setEnabled(bool(m_boundDocuments[side]));
+        }
+    }
     for (auto choice : m_choices) {
         if (choice) {
             choice->setEnabled(!m_running);
@@ -717,7 +810,7 @@ void DiffDialog::requestComparison(const QString &reason) {
 }
 
 void DiffDialog::queueComparison() {
-    if (m_hasCompared && m_autoCompareButton->isChecked() && usable()) {
+    if (m_autoCompareButton->isChecked() && usable()) {
         m_recomparePending = true;
         m_phase = Phase::Waiting;
         m_recompareTimer.start();
@@ -735,13 +828,12 @@ void DiffDialog::tryRecompare() {
 
 void DiffDialog::setAutoCompare(bool enabled) {
     if (enabled) {
-        m_hasCompared = true;
         queueComparison();
     } else {
         m_recomparePending = false;
         m_recompareTimer.stop();
         if (m_phase == Phase::Waiting) {
-            m_phase = Phase::Stale;
+            m_phase = m_hasCompared ? Phase::Stale : Phase::Idle;
         }
     }
     updateControls();
@@ -808,7 +900,12 @@ void DiffDialog::tick() {
             m_views[side]->setDocument(document, m_views[side]->cursor());
             // Rebind change notifications after reload, which may replace the
             // document.
-            m_editors[side] = nullptr;
+            for (auto &entry : m_candidates) {
+                if (entry.editor == m_editors[side]) {
+                    entry.document = document;
+                }
+            }
+            m_boundDocuments[side].reset();
             bindSource(side);
         }
         if (m_results && !m_sources[side].sourceUnchanged()) {

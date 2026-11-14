@@ -38,7 +38,7 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../../src/class/application/appmanager.cpp" line="+153"/>
+        <location filename="../../src/class/application/appmanager.cpp" line="+146"/>
         <location line="+23"/>
         <source>Error</source>
         <translation> 錯誤</translation>
@@ -223,7 +223,7 @@
 <context>
     <name>DiffDialog</name>
     <message>
-        <location filename="../../src/dialog/diffdialog.cpp" line="+67"/>
+        <location filename="../../src/dialog/diffdialog.cpp" line="+72"/>
         <source>File size limit exceeded</source>
         <translation>超過檔案大小限制</translation>
     </message>
@@ -260,8 +260,8 @@
         <translation>比較來源無效</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <location line="+100"/>
+        <location line="+14"/>
+        <location line="+79"/>
         <source>Compare</source>
         <translation>比較</translation>
     </message>
@@ -322,13 +322,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+145"/>
-        <location line="+503"/>
+        <location line="+179"/>
+        <location line="+583"/>
         <source>Differences</source>
         <translation>差異</translation>
     </message>
     <message>
-        <location line="-647"/>
+        <location line="-761"/>
         <source>First</source>
         <translation>首處</translation>
     </message>
@@ -353,7 +353,7 @@
         <translation>搜尋</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>View</source>
         <translation>檢視</translation>
     </message>
@@ -379,12 +379,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+120"/>
+        <location line="+153"/>
         <source>Difference list</source>
         <translation>差異清單</translation>
     </message>
     <message>
-        <location line="-117"/>
+        <location line="-150"/>
         <source>Reset layout</source>
         <translation>重設配置</translation>
     </message>
@@ -404,17 +404,18 @@
         <translation>位址</translation>
     </message>
     <message>
-        <location line="-30"/>
+        <location filename="../../src/class/application/standalonemodes.cpp" line="+49"/>
+        <location filename="../../src/dialog/diffdialog.cpp" line="-31"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location filename="../../src/dialog/diffdialog.cpp" line="+0"/>
         <source>Resources</source>
         <translation>資源</translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+98"/>
         <source>Right</source>
         <translation>右側</translation>
     </message>
@@ -425,30 +426,65 @@
     </message>
     <message>
         <location line="+7"/>
-        <location line="+15"/>
-        <location line="+282"/>
+        <location line="+48"/>
+        <location line="+353"/>
         <source>Right document</source>
         <translation>右側文件</translation>
     </message>
     <message>
-        <location line="-296"/>
-        <location line="+14"/>
-        <location line="+283"/>
+        <location line="-400"/>
+        <location line="+47"/>
+        <location line="+354"/>
         <source>Left document</source>
         <translation>左側文件</translation>
     </message>
     <message>
-        <location line="-115"/>
+        <location line="-393"/>
+        <source>Open</source>
+        <translation>開啟</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open a file for this side</source>
+        <translation>為此側開啟檔案</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Close</source>
+        <translation>關閉</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close the document on this side</source>
+        <translation>關閉此側文件</translation>
+    </message>
+    <message>
+        <location line="+144"/>
+        <source>Open file</source>
+        <translation>開啟檔案</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Error</source>
+        <translation>錯誤</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Could not open the file: %1</source>
+        <translation>無法開啟檔案：%1</translation>
+    </message>
+    <message>
+        <location line="+81"/>
         <source>Sources changed — compare again</source>
         <translation>來源已變更 — 請重新比較</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+19"/>
         <source>Source closed — choose another document</source>
         <translation>來源已關閉 — 請選擇其他文件</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+23"/>
         <source>Source content changed</source>
         <translation>來源內容已變更</translation>
     </message>
@@ -464,7 +500,7 @@
     </message>
     <message>
         <location line="+63"/>
-        <location line="+77"/>
+        <location line="+81"/>
         <source>Cancelling...</source>
         <translation>正在取消...</translation>
     </message>
@@ -524,7 +560,7 @@
         <translation>來源已重新載入 — 請重新比較</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+13"/>
         <source>Source file changed · reload or compare again</source>
         <translation>來源檔案已變更 · 請重新載入或比較</translation>
     </message>
@@ -645,7 +681,7 @@
         <translation>資源</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+6"/>
         <source>Maximum file size per side</source>
         <translation>每側最大檔案大小</translation>
     </message>
@@ -660,7 +696,7 @@
         <translation>詳細差異區間上限</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+16"/>
         <source>Defaults</source>
         <translation>預設行為</translation>
     </message>
@@ -678,7 +714,7 @@
 <context>
     <name>DockWidgetTab</name>
     <message>
-        <location filename="../../src/control/docking/dockwidgettab.cpp" line="+37"/>
+        <location filename="../../src/control/docking/dockwidgettab.cpp" line="+57"/>
         <source>Close edit group</source>
         <translation>關閉編輯組</translation>
     </message>
@@ -688,22 +724,22 @@
         <translation>左側</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+27"/>
         <source>Right</source>
         <translation>右側</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+27"/>
         <source>All</source>
         <translation>全部</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+19"/>
         <source>Other</source>
         <translation>其他</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+37"/>
         <source>File information</source>
         <translation>檔資訊</translation>
     </message>
@@ -774,7 +810,7 @@
 <context>
     <name>EditorView</name>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="+105"/>
+        <location filename="../../src/control/editorview.cpp" line="+106"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
@@ -847,11 +883,6 @@
         <location line="+257"/>
         <source>Untitled</source>
         <translation>未命名</translation>
-    </message>
-    <message>
-        <location line="+808"/>
-        <source>Not allowed operation in non-ui thread</source>
-        <translation>該操作在非 UI 線程非法</translation>
     </message>
 </context>
 <context>
@@ -1253,7 +1284,7 @@
 <context>
     <name>InspectQtLogHelper</name>
     <message>
-        <location filename="../../src/class/application/inspectqtloghelper.cpp" line="+31"/>
+        <location filename="../../src/class/application/inspectqtloghelper.cpp" line="+84"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
@@ -1279,7 +1310,7 @@
 <context>
     <name>Logger</name>
     <message>
-        <location filename="../../src/class/application/logger.cpp" line="+100"/>
+        <location filename="../../src/class/application/logger.cpp" line="+102"/>
         <source>[Trace]</source>
         <translation>【跟蹤】</translation>
     </message>
@@ -1412,7 +1443,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="+518"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="+529"/>
         <source>File</source>
         <translation>檔</translation>
     </message>
@@ -1429,12 +1460,12 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.ui" line="+14"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="+3381"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="+3353"/>
         <source>WingHexExplorer</source>
         <translation>羽雲十六進制編輯器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="-3753"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="-3733"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
@@ -1444,7 +1475,7 @@
         <translation>選取範圍</translation>
     </message>
     <message>
-        <location line="+344"/>
+        <location line="+352"/>
         <source>Edit</source>
         <translation>編輯</translation>
     </message>
@@ -1502,13 +1533,13 @@
         <location line="-630"/>
         <location line="+85"/>
         <location line="+84"/>
-        <location line="+1381"/>
+        <location line="+1354"/>
         <location line="+262"/>
         <source>Copy to clipboard</source>
         <translation>數據已拷貝到粘貼板</translation>
     </message>
     <message>
-        <location line="-1708"/>
+        <location line="-1681"/>
         <source>Little-endian</source>
         <translation>小端</translation>
     </message>
@@ -1543,21 +1574,21 @@
     <message>
         <location line="-427"/>
         <location line="+418"/>
-        <location line="+1223"/>
+        <location line="+1196"/>
         <location line="+8"/>
         <source>Bookmark</source>
         <translation>書簽</translation>
     </message>
     <message>
-        <location line="-1951"/>
+        <location line="-1924"/>
         <location line="+432"/>
-        <location line="+3287"/>
+        <location line="+3259"/>
         <location line="+5"/>
         <source>Decoded text</source>
         <translation>解碼文字</translation>
     </message>
     <message>
-        <location line="-3267"/>
+        <location line="-3239"/>
         <source>Script console</source>
         <translation>腳本控制臺</translation>
     </message>
@@ -1704,12 +1735,12 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+1156"/>
+        <location line="+1129"/>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
     <message>
-        <location line="-1152"/>
+        <location line="-1125"/>
         <source>Fill with zeros</source>
         <translation>填充零</translation>
     </message>
@@ -1748,18 +1779,18 @@
         <translation>縮放</translation>
     </message>
     <message>
-        <location line="+1595"/>
-        <location line="+1649"/>
+        <location line="+1568"/>
+        <location line="+1650"/>
         <source>Restoring layout...</source>
         <translation>恢復 Dock 佈局</translation>
     </message>
     <message>
-        <location line="-4345"/>
+        <location line="-4328"/>
         <source>Startup complete</source>
         <translation>啟動完畢</translation>
     </message>
     <message>
-        <location line="+210"/>
+        <location line="+219"/>
         <source>No extensions</source>
         <translation>無擴展</translation>
     </message>
@@ -1770,12 +1801,12 @@
         <translation>導出結果</translation>
     </message>
     <message>
-        <location line="+3115"/>
+        <location line="+3087"/>
         <source>There is nothing to save</source>
         <translation>沒有保存的數據</translation>
     </message>
     <message>
-        <location line="-2892"/>
+        <location line="-2864"/>
         <source>Open device</source>
         <translation>開啟裝置</translation>
     </message>
@@ -1815,35 +1846,35 @@
         <translation>檔狀態</translation>
     </message>
     <message>
-        <location line="-1440"/>
-        <location line="+1444"/>
+        <location line="-1448"/>
+        <location line="+1452"/>
         <source>Saved</source>
         <translation>是否保存</translation>
     </message>
     <message>
-        <location line="+2211"/>
+        <location line="+2183"/>
         <source>Read-only</source>
         <translation>唯讀</translation>
     </message>
     <message>
-        <location line="-3636"/>
-        <location line="+1434"/>
+        <location line="-3616"/>
+        <location line="+1442"/>
         <source>Editing lock</source>
         <translation>編輯鎖定</translation>
     </message>
     <message>
-        <location line="+1373"/>
+        <location line="+1346"/>
         <source>Could not lock editing</source>
         <translation>鎖定編輯失敗</translation>
     </message>
     <message>
-        <location line="-2796"/>
-        <location line="+1427"/>
+        <location line="-2777"/>
+        <location line="+1435"/>
         <source>File resizing</source>
         <translation>檔案大小調整</translation>
     </message>
     <message>
-        <location line="-1286"/>
+        <location line="-1295"/>
         <source>Input request</source>
         <translation>輸入請求</translation>
     </message>
@@ -1853,7 +1884,7 @@
         <translation>腳本引擎啟動失敗，將自動禁用該功能。</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+557"/>
         <source>Unsigned hexadecimal</source>
         <translation>無符號 Hex</translation>
     </message>
@@ -1884,12 +1915,12 @@
         <translation>後臺腳本輸出</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1659"/>
         <source>Could not lock the file size</source>
         <translation>鎖定檔大小失敗</translation>
     </message>
     <message>
-        <location line="-1373"/>
+        <location line="-1346"/>
         <source>Window</source>
         <translation>窗體</translation>
     </message>
@@ -1914,7 +1945,7 @@
         <translation>設置基址</translation>
     </message>
     <message>
-        <location line="+891"/>
+        <location line="+864"/>
         <source>Base address</source>
         <translation>基址</translation>
     </message>
@@ -1934,7 +1965,7 @@
         <translation>非法基址輸入</translation>
     </message>
     <message>
-        <location line="-900"/>
+        <location line="-873"/>
         <source>Show address column</source>
         <translation>顯示位址欄</translation>
     </message>
@@ -1970,20 +2001,20 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1406"/>
+        <location line="+1379"/>
         <location line="+8"/>
         <source>Save layout</source>
         <translation>保存佈局</translation>
     </message>
     <message>
-        <location line="-2419"/>
+        <location line="-2392"/>
         <location line="+1108"/>
-        <location line="+1409"/>
+        <location line="+1382"/>
         <source>Export logs</source>
         <translation>導出日誌</translation>
     </message>
     <message>
-        <location line="-2514"/>
+        <location line="-2487"/>
         <location line="+1107"/>
         <source>Clear logs</source>
         <translation>清空日誌</translation>
@@ -2064,7 +2095,7 @@
         <translation>設置頁重複的 ID 名稱，已忽略加載</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+110"/>
         <source>Plugin %1 contains a duplicate ID (%2) that is already registered by plugin %3</source>
         <translation>插件 %1 包含重複 ID (%2)，該 ID 已被插件 %3 註冊</translation>
     </message>
@@ -2081,12 +2112,12 @@
         <location line="+94"/>
         <location line="+98"/>
         <location line="+1137"/>
-        <location line="+75"/>
+        <location line="+74"/>
         <location line="+9"/>
         <location line="+410"/>
         <location line="+363"/>
         <location line="+11"/>
-        <location line="+346"/>
+        <location line="+348"/>
         <location line="+4"/>
         <location line="+4"/>
         <location line="+4"/>
@@ -2098,27 +2129,27 @@
         <translation>錯誤</translation>
     </message>
     <message>
-        <location line="-2591"/>
-        <location line="+2566"/>
+        <location line="-2592"/>
+        <location line="+2567"/>
         <source>The file does not exist.</source>
         <translation>檔不存在！</translation>
     </message>
     <message>
-        <location line="-2562"/>
-        <location line="+2197"/>
+        <location line="-2563"/>
+        <location line="+2196"/>
         <location line="+11"/>
-        <location line="+350"/>
+        <location line="+352"/>
         <source>You do not have permission to access this file.</source>
         <translation>因檔許可權無法繼續！</translation>
     </message>
     <message>
-        <location line="-2547"/>
-        <location line="+2572"/>
+        <location line="-2548"/>
+        <location line="+2573"/>
         <source>An unknown error occurred.</source>
         <translation>未知錯誤</translation>
     </message>
     <message>
-        <location line="-3563"/>
+        <location line="-3537"/>
         <source>Custom header</source>
         <translation>自定義表頭</translation>
     </message>
@@ -2133,7 +2164,7 @@
         <translation>刪除佈局</translation>
     </message>
     <message>
-        <location line="+404"/>
+        <location line="+377"/>
         <source>Workspace files (*.wingpro)</source>
         <translation>專案檔 (*.wingpro)</translation>
     </message>
@@ -2150,8 +2181,8 @@
     <message>
         <location line="+125"/>
         <location line="+747"/>
-        <location line="+1230"/>
-        <location line="+781"/>
+        <location line="+1229"/>
+        <location line="+782"/>
         <source>Please select the file save location</source>
         <translation>請選擇保存檔路徑</translation>
     </message>
@@ -2178,8 +2209,8 @@
         <translation>搜索數量已到達上限，結果可能不全，建議請按區段搜索</translation>
     </message>
     <message>
-        <location line="-792"/>
-        <location line="+920"/>
+        <location line="-765"/>
+        <location line="+893"/>
         <source>Bytes per line</source>
         <translation>十六進制行寬</translation>
     </message>
@@ -2224,7 +2255,7 @@
         <translation>日誌檔 (*.log)</translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+262"/>
         <source>This edit page has been cloned for editing. Closing it will also close the associated pages. Are you sure to proceed?</source>
         <translation>該編輯頁已被克隆編輯，如果關閉，相關聯的頁也會被關閉，你確認繼續嗎？</translation>
     </message>
@@ -2239,7 +2270,7 @@
         <translation>羽雲十六進制工作區 (*.wingpro)</translation>
     </message>
     <message>
-        <location line="+377"/>
+        <location line="+379"/>
         <source>Save changes to the modified files and workspaces?</source>
         <translation>正在關閉未保存的檔或工作區，你確定保存嗎？</translation>
     </message>
@@ -2254,8 +2285,8 @@
         <translation>找不到設備</translation>
     </message>
     <message>
-        <location line="-1213"/>
-        <location line="+1234"/>
+        <location line="-1214"/>
+        <location line="+1235"/>
         <source>Too many files are open.</source>
         <translation>打開的檔過多，無法繼續操作！</translation>
     </message>
@@ -2285,22 +2316,22 @@
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>
     <message>
-        <location line="-548"/>
+        <location line="-550"/>
         <source>File saved</source>
         <translation>保存成功</translation>
     </message>
     <message>
-        <location line="+324"/>
+        <location line="+326"/>
         <source>Could not save the workspace.</source>
         <translation>保存工作區錯誤！</translation>
     </message>
     <message>
-        <location line="-1173"/>
+        <location line="-1175"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location line="-1409"/>
+        <location line="-1408"/>
         <source>Opening...</source>
         <translation>打開檔中...</translation>
     </message>
@@ -2412,7 +2443,7 @@
         <translation>查找中...</translation>
     </message>
     <message>
-        <location line="-2338"/>
+        <location line="-2319"/>
         <source>Initializing interface</source>
         <translation>初始化介面</translation>
     </message>
@@ -2442,7 +2473,7 @@
         <translation>正在載入外掛程式 %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Initializing recent files</source>
         <translation>啟動最近檔服務</translation>
     </message>
@@ -2482,7 +2513,7 @@
         <translation>啟動即將完成</translation>
     </message>
     <message>
-        <location line="+905"/>
+        <location line="+914"/>
         <source>Open a file for editing</source>
         <translation>開啟檔案進行編輯</translation>
     </message>
@@ -2542,12 +2573,12 @@
         <translation>應用設定</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location filename="../../src/class/application/uiservices.cpp" line="+53"/>
         <source>Scripting environment</source>
         <translation>指令碼環境</translation>
     </message>
     <message>
-        <location line="+300"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="+332"/>
         <source>Export failed.</source>
         <translation>匯出失敗。</translation>
     </message>
@@ -2610,12 +2641,12 @@
     </message>
     <message>
         <location line="+32"/>
-        <location line="+847"/>
+        <location line="+846"/>
         <source>Select some bytes first</source>
         <translation>沒有選區，無法繼續的操作</translation>
     </message>
     <message>
-        <location line="-808"/>
+        <location line="-807"/>
         <source>There is no annotation to edit</source>
         <translation>沒有可編輯的標註</translation>
     </message>
@@ -2656,7 +2687,12 @@
         <translation>導出搜索結果成功</translation>
     </message>
     <message>
-        <location line="+684"/>
+        <location line="+384"/>
+        <source>[%1|%2] The editor view widget has an unexpected creator</source>
+        <translation>[%1|%2] 編輯器檢視元件的建立者與預期不符</translation>
+    </message>
+    <message>
+        <location line="+299"/>
         <source>The copy limit has been reached</source>
         <translation>已達複製大小限制</translation>
     </message>
@@ -2686,12 +2722,12 @@
         <translation>構建腳本編輯器</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+111"/>
         <source>Unsupported file format</source>
         <translation>非法檔格式</translation>
     </message>
     <message>
-        <location line="+356"/>
+        <location line="+355"/>
         <location line="+30"/>
         <source>File saved.</source>
         <translation>檔案已儲存。</translation>
@@ -2702,8 +2738,8 @@
         <translation>佈局保存中...</translation>
     </message>
     <message>
-        <location line="-2790"/>
-        <location line="+2797"/>
+        <location line="-2772"/>
+        <location line="+2779"/>
         <source>Enter a value:</source>
         <translation>請輸入</translation>
     </message>
@@ -2738,8 +2774,8 @@
         <translation>當前軟體為最新版本</translation>
     </message>
     <message>
-        <location line="-2820"/>
-        <location line="+2815"/>
+        <location line="-2793"/>
+        <location line="+2788"/>
         <source>You are using an outdated version of the software. We recommend downloading the latest release from the GitHub and Gitee repositories.</source>
         <translation>你使用的軟體為老版本，建議到 Github 和 Gitee 的倉庫發行版下載更新。</translation>
     </message>
@@ -2749,7 +2785,7 @@
         <translation>檢查更新中......</translation>
     </message>
     <message>
-        <location line="+204"/>
+        <location line="+203"/>
         <source>You do not have permission to save this file. Exit anyway?</source>
         <translation>因檔許可權無法保存，你確認要退出嗎？</translation>
     </message>
@@ -2764,7 +2800,7 @@
         <translation>打開檔出現錯誤（由於許可權不足），如下為打開錯誤的檔：</translation>
     </message>
     <message>
-        <location line="-2476"/>
+        <location line="-2448"/>
         <source>Compare</source>
         <translation>比較</translation>
     </message>
@@ -3162,29 +3198,40 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/plugin/pluginsystem.cpp" line="+3374"/>
+        <location filename="../../src/class/plugin/pluginsystem.cpp" line="+3521"/>
         <location line="+95"/>
         <source>Loading plugins:</source>
         <translation>加載插件中：</translation>
     </message>
     <message>
-        <location line="-386"/>
+        <location line="-388"/>
         <source>Program shutdown canceled:</source>
         <translation>程式關閉被取消：</translation>
     </message>
     <message>
-        <location line="+332"/>
+        <location line="-749"/>
+        <location line="+4"/>
+        <source>Script registration failed [%1]: %2</source>
+        <translation>指令碼註冊失敗 [%1]：%2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Script registration failed [%1]</source>
+        <translation>指令碼註冊失敗 [%1]</translation>
+    </message>
+    <message>
+        <location line="+1075"/>
         <source>Total number of device extension plugins discovered:</source>
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location line="+267"/>
-        <location line="+68"/>
+        <location line="+271"/>
+        <location line="+72"/>
         <source>Could not load the plugin: invalid plugin name.</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location line="-47"/>
+        <location line="-49"/>
         <source>Could not initialize the plugin.</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
@@ -3204,7 +3251,7 @@
         <translation>註冊插件對象中......</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+43"/>
         <source>Device extension plugin author:</source>
         <translation>設備拓展插件作者：</translation>
     </message>
@@ -3214,17 +3261,17 @@
         <translation>設備拓展註冊插件對象中......</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+19"/>
         <source>Could not initialize the device extension plugin.</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Select file</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+42"/>
         <source>Empty dock widget name:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
@@ -3239,22 +3286,17 @@
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location line="+115"/>
-        <source>Not allowed operation in non-ui thread</source>
-        <translation>該操作在非 UI 線程非法</translation>
-    </message>
-    <message>
-        <location line="-2534"/>
-        <source>Detected an abnormally pushed undo command</source>
-        <translation>監測到異常推入的撤銷命令</translation>
-    </message>
-    <message>
-        <location line="+1728"/>
+        <location line="-707"/>
         <source>Total number of plugins found:</source>
         <translation>總計發現插件數目：</translation>
     </message>
     <message>
-        <location line="+853"/>
+        <location line="+876"/>
+        <source>Certificate bypass requires interactive confirmation</source>
+        <translation>略過憑證驗證需要互動確認</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Skipping certificate verification is dangerous. Are you sure you want to continue?</source>
         <translation>忽略證書驗證存在嚴重風險，確認繼續嗎？</translation>
     </message>
@@ -3272,7 +3314,7 @@
         <translation>該設置需要程式重啟後生效</translation>
     </message>
     <message>
-        <location filename="../../src/class/application/appmanager.h" line="+39"/>
+        <location filename="../../src/class/application/appmanager.h" line="+40"/>
         <source>wingsummer</source>
         <translation>寂靜的羽夏</translation>
     </message>
@@ -3586,6 +3628,68 @@
     </message>
 </context>
 <context>
+    <name>ScriptServiceTray</name>
+    <message>
+        <location filename="../../src/class/application/scriptservicetray.cpp" line="+41"/>
+        <source>No script tasks</source>
+        <translation>目前沒有指令碼工作</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 — %2</source>
+        <translation>%1 — %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stop task</source>
+        <translation>停止工作</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Force shutdown</source>
+        <translation>強制結束</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Queued</source>
+        <translation>佇列中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Running</source>
+        <translation>執行中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Resident</source>
+        <translation>常駐中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stopping</source>
+        <translation>正在停止</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stopped</source>
+        <translation>已停止</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>%1
+%2
+Active tasks: %3</source>
+        <translation>%1
+%2
+作用中的工作：%3</translation>
+    </message>
+</context>
+<context>
     <name>ScriptSettingDialog</name>
     <message>
         <location filename="../../src/settings/scriptsettingdialog.cpp" line="+187"/>
@@ -3733,7 +3837,7 @@
 <context>
     <name>ScriptingDialog</name>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="+1141"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="+1143"/>
         <source>Script editor</source>
         <translation>腳本編輯器</translation>
     </message>
@@ -3776,12 +3880,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1364"/>
+        <location line="+1377"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location line="-1360"/>
+        <location line="-1373"/>
         <source>Open</source>
         <translation>打開檔</translation>
     </message>
@@ -3792,12 +3896,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1294"/>
+        <location line="+1307"/>
         <source>Reload</source>
         <translation>重新加載</translation>
     </message>
     <message>
-        <location line="-1291"/>
+        <location line="-1304"/>
         <source>Exit</source>
         <translation>退出</translation>
     </message>
@@ -4031,19 +4135,37 @@
         <translation>診斷</translation>
     </message>
     <message>
-        <location line="+97"/>
-        <location line="+316"/>
-        <location line="+381"/>
+        <location filename="../../src/class/application/standalonemodes.cpp" line="+17"/>
+        <source>Scripting is disabled in settings.</source>
+        <translation>設定中已停用指令碼。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The script engine failed to start.</source>
+        <translation>指令碼引擎啟動失敗。</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="+97"/>
+        <location line="+339"/>
+        <location line="+371"/>
         <location line="+80"/>
         <location line="+40"/>
         <location line="+32"/>
         <location line="+30"/>
-        <location line="+448"/>
+        <location line="+452"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location line="-1326"/>
+        <location line="+1"/>
+        <source>Could not open the following scripts:
+%1</source>
+        <translation>無法開啟下列指令碼：
+%1</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="-1343"/>
         <source>Too many files are open.</source>
         <translation>打開的檔過多，無法繼續操作！</translation>
     </message>
@@ -4053,13 +4175,13 @@
         <translation>腳本保存失敗，你仍確認關閉嗎？</translation>
     </message>
     <message>
-        <location line="+237"/>
+        <location line="+278"/>
         <source>This file is already open</source>
         <translation>檔已被打開</translation>
     </message>
     <message>
-        <location line="+13"/>
-        <location line="+461"/>
+        <location line="-5"/>
+        <location line="+451"/>
         <source>Invalid file format or insufficient file access permissions</source>
         <translation>非法格式檔或訪問檔許可權不足</translation>
     </message>
@@ -4074,12 +4196,12 @@
         <translation>新建的檔案名和正在調試的檔衝突</translation>
     </message>
     <message>
-        <location line="+579"/>
+        <location line="+583"/>
         <source>A script is already running.</source>
         <translation>腳本運行繁忙</translation>
     </message>
     <message>
-        <location line="-1065"/>
+        <location line="-1082"/>
         <source>Debugging...</source>
         <translation>調試中...</translation>
     </message>
@@ -4089,7 +4211,7 @@
         <translation>運行中...</translation>
     </message>
     <message>
-        <location line="+405"/>
+        <location line="+418"/>
         <source>Line %1, column %2</source>
         <translation>行 %1, 列 %2</translation>
     </message>
@@ -4155,14 +4277,14 @@
         <translation>無法保存，故無法繼續運行腳本。</translation>
     </message>
     <message>
-        <location line="-1028"/>
-        <location line="+290"/>
+        <location line="-1041"/>
+        <location line="+303"/>
         <location line="+830"/>
         <source>A script is still running. Exit anyway?</source>
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>
     <message>
-        <location line="-1845"/>
+        <location line="-1858"/>
         <location line="+700"/>
         <source>Save changes to the modified scripts?</source>
         <translation>你嘗試關閉程式，但仍存在未保存的腳本檔，你確定保存這些更改嗎？</translation>
@@ -4457,14 +4579,6 @@
     </message>
 </context>
 <context>
-    <name>SettingManager</name>
-    <message>
-        <location filename="../../src/class/settings/settingmanager.cpp" line="+476"/>
-        <source>The program will be unable to save the configuration. Please check the permissions for the configuration file.</source>
-        <translation>程式將無法保存配置，請檢查配置檔許可權。</translation>
-    </message>
-</context>
-<context>
     <name>ShowInShell</name>
     <message>
         <location filename="../../src/class/file/showinshell.cpp" line="+155"/>
@@ -4475,6 +4589,104 @@
         <location line="+2"/>
         <source>Could not find explorer.exe in path to launch Windows Explorer.</source>
         <translation>在啟動 Windows 資源管理器的路徑中找不到 explorer.exe。</translation>
+    </message>
+</context>
+<context>
+    <name>StartupOptions</name>
+    <message>
+        <location filename="../../src/class/application/applicationmode.cpp" line="+27"/>
+        <source>Binary editor and Luau tools</source>
+        <translation>二進位編輯器與 Luau 工具</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Run one script without a window</source>
+        <translation>無視窗執行一個指令碼</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keep the headless script service running</source>
+        <translation>保持無頭指令碼服務執行</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Live service listen address</source>
+        <translation>常駐服務監聽位址</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Live service listen port</source>
+        <translation>常駐服務監聽連接埠</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Live service TLS certificate</source>
+        <translation>常駐服務 TLS 憑證</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Live service TLS private key</source>
+        <translation>常駐服務 TLS 私密金鑰</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open only the comparison window</source>
+        <translation>僅開啟比較視窗</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open only the script editor</source>
+        <translation>僅開啟指令碼編輯器</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Files to open or script to execute</source>
+        <translation>要開啟的檔案或執行的指令碼</translation>
+    </message>
+    <message>
+        <location line="+72"/>
+        <source>--headless, --diff and --script are mutually exclusive</source>
+        <translation>--headless、--diff 與 --script 不能同時使用</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>--live requires --headless</source>
+        <translation>--live 必須與 --headless 一起使用</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>--address, --port, --cert and --key require --headless --live</source>
+        <translation>--address、--port、--cert 和 --key 必須搭配 --headless --live 使用</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>--headless --live does not accept script arguments</source>
+        <translation>--headless --live 不接受指令碼參數</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Invalid live service address or port</source>
+        <translation>常駐服務位址或連接埠無效</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>--cert and --key must be provided together</source>
+        <translation>--cert 和 --key 必須同時提供</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Non-loopback service addresses require --cert and --key</source>
+        <translation>非回送服務位址必須提供 --cert 和 --key</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>--headless requires exactly one script</source>
+        <translation>--headless 必須且只能指定一個指令碼</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>--diff accepts at most two files</source>
+        <translation>--diff 最多接受兩個檔案</translation>
     </message>
 </context>
 <context>

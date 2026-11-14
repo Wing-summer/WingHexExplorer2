@@ -42,7 +42,7 @@ public:
         QuoteStyle quoteStyle = QuoteStyle::Preserve;
         bool preserveBlockNewlineGaps = false;
 
-        FormatOptions(unsigned int indentSize = 4, bool useTabs = true)
+        inline FormatOptions(unsigned int indentSize = 4, bool useTabs = true)
             : indentSize(indentSize), useTabs(useTabs) {}
     };
 
@@ -145,7 +145,6 @@ private:
     void formatConstantBool(bool value);
     void formatConstantNumber(double value);
     void formatConstantNumberWithCst(Luau::AstExprConstantNumber *expr);
-    void formatConstantInteger(Luau::AstExprConstantInteger *expr);
     void formatConstantString(Luau::AstExprConstantString *expr);
     void formatLocal(Luau::AstExprLocal *expr);
     void formatGlobal(Luau::AstExprGlobal *expr);

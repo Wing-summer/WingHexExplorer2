@@ -22,6 +22,7 @@
 #include <QDir>
 #include <QRegularExpression>
 
+#include "applicationmode.h"
 #include "class/settings/settingmanager.h"
 #include "utilities.h"
 
@@ -36,7 +37,8 @@
      QStringLiteral("</font>"))
 
 Logger::Logger(QObject *parent)
-    : QObject(parent), m_stream(new QTextStream(stdout)) {
+    : QObject(parent),
+      m_stream(new QTextStream(ApplicationMode::headless() ? stderr : stdout)) {
     m_stream->device()->setTextModeEnabled(true);
 
     QString newFileName = QStringLiteral("%1_%2_%3.log")

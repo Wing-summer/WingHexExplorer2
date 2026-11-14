@@ -15,20 +15,45 @@
 ** =============================================================================
 */
 
-#ifndef WINGPLUGINCERT_H
-#define WINGPLUGINCERT_H
+#ifndef WINGCERT_H
+#define WINGCERT_H
 
 #include <QFileInfo>
 #include <QHash>
 #include <QSslCertificate>
+#include <QSslConfiguration>
+#include <QSslError>
 
-class WingPluginCert {
+class WingCert {
 public:
-    static WingPluginCert &instance();
+    enum class ConfigurationError {
+        None,
+        BackendUnavailable,
+        FileError,
+        InvalidCredentials
+    };
+
+    struct ServerConfigurationResult {
+        ConfigurationError error = ConfigurationError::None;
+        QSslConfiguration configuration;
+        QString message;
+    };
+
+public:
+    static WingCert &instance();
 
     QHash<QSslCertificate, QFileInfo> certificates() const;
 
     bool isValidFingerPrint(const QSslCertificate &cert) const;
+
+    bool isTrustedCertificate(const QSslCertificate &certificate) const;
+    QList<QSslCertificate> trustedCertificates() const;
+    bool verifyPeer(const QSslCertificate &certificate,
+                    const QList<QSslError> &errors) const;
+
+    ServerConfigurationResult
+    serverConfiguration(const QString &certificateFile,
+                        const QString &keyFile) const;
 
     bool verify(const QFileInfo &plg, const QByteArray &fprint) const;
 
@@ -48,12 +73,12 @@ private:
                 const QSslCertificate &cert) const;
 
 private:
-    WingPluginCert();
-    Q_DISABLE_COPY_MOVE(WingPluginCert)
+    WingCert();
+    Q_DISABLE_COPY_MOVE(WingCert)
 
     QSslCertificate m_sysCert;
     QHash<QSslCertificate, QFileInfo> m_certs;
     QHash<QByteArray, QSslCertificate> m_cs;
 };
 
-#endif // WINGPLUGINCERT_H
+#endif // WINGCERT_H

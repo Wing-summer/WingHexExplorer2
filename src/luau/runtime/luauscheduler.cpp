@@ -17,46 +17,55 @@
 
 #include "luauscheduler.h"
 
-#include <QTimer>
+#include "scriptmachine.h"
 
-LuauScheduler::LuauScheduler(LuauThread *th) : QObject(), m_th(th) {
+LuauScheduler::LuauScheduler(ScriptMachine &machine, LuauThread *th,
+                             QObject *parent)
+    : QObject(parent), m_machine(machine), m_th(th) {
     Q_ASSERT(th);
+    m_timer.setSingleShot(true);
+    connect(&m_timer, &QTimer::timeout, this, &LuauScheduler::step);
 }
 
 LuauScheduler::~LuauScheduler() {}
 
-void LuauScheduler::start() {
-    if (!lua_isfunction(m_th->state, -1)) {
+void LuauScheduler::start(int arguments) {
+    Q_ASSERT(!m_th->isRunning);
+    m_executeError.clear();
+    m_arguments = arguments;
+    if (!lua_isfunction(m_th->state, -1 - arguments)) {
         m_executeError =
             QStringLiteral("thread stack does not contain a function");
-        Q_EMIT sigOnFinished(LUA_ERRRUN);
-        deleteLater();
+        finish(LUA_ERRRUN);
         return;
     }
     m_th->isRunning = true;
-    QTimer::singleShot(0, this, &LuauScheduler::step);
+    m_timer.start(0);
 }
 
-void LuauScheduler::requestStop() { m_th->requestStop = true; }
+void LuauScheduler::stop() {
+    m_timer.stop();
+    m_th->isRunning = false;
+}
 
 void LuauScheduler::step() {
+    if (m_machine.isExecuting()) {
+        m_timer.start(10);
+        return;
+    }
+    int status = LUA_OK;
     try {
         auto L = m_th->state;
-        if (m_th->requestStop) {
-            m_th->isRunning = false;
-            Q_EMIT sigOnFinished(LUA_OK);
-            deleteLater();
-            return;
-        }
-
-        int status = lua_resume(L, nullptr, 0);
-        if (status == LUA_YIELD) {
-            QTimer::singleShot(0, this, &LuauScheduler::step);
-        } else {
+        if (!m_th->requestStop) {
+            status = m_machine.resumeThread(m_th, m_arguments);
+            m_arguments = 0;
+            if (status == LUA_YIELD) {
+                m_timer.start(0);
+                return;
+            }
             if (m_th->requestStop) {
                 status = LUA_OK;
             }
-
             if (status != LUA_OK) {
                 size_t len;
                 const char *str = lua_tolstring(L, -1, &len);
@@ -67,17 +76,19 @@ void LuauScheduler::step() {
                 }
                 lua_pop(L, 1);
             }
-
-            m_th->isRunning = false;
-            Q_EMIT sigOnFinished(status);
-            deleteLater();
         }
     } catch (const std::exception &ex) {
         m_executeError = QString::fromUtf8(ex.what());
-        m_th->isRunning = false;
-        Q_EMIT sigOnFinished(LUA_ERRRUN);
-        deleteLater();
+        status = LUA_ERRRUN;
     }
+    finish(status);
+}
+
+void LuauScheduler::finish(int status) {
+    m_th->isRunning = false;
+    // Completion handlers may destroy the owner and this scheduler.
+    // Do not access members after emitting.
+    Q_EMIT sigOnFinished(status);
 }
 
 QString LuauScheduler::executeError() const { return m_executeError; }

@@ -31,9 +31,11 @@
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 
+#include "class/application/applicationmode.h"
 #include "class/application/logger.h"
 #include "class/file/fileaccesscheck.h"
 #include "class/file/workspacemanager.h"
+#include "class/security/wingcert.h"
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
@@ -50,7 +52,6 @@
 #include "luau/runtime/scriptdocumentregistry.h"
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptserviceapi.h"
-#include "wingplugincert.h"
 
 int PluginSystem::DocumentHandlePool::acquire() {
     if (!m_releasedIds.isEmpty()) {
@@ -131,6 +132,9 @@ PluginSystem::~PluginSystem() {}
 
 void PluginSystem::toast(const QObject *sender, const QPixmap &icon,
                          const QString &message) {
+    if (ApplicationMode::headless()) {
+        return;
+    }
     if (!checkThreadAff()) {
         return;
     }
@@ -139,7 +143,11 @@ void PluginSystem::toast(const QObject *sender, const QPixmap &icon,
         return;
     }
 
-    Toast::toast(m_win, icon, message);
+    QWidget *parent = m_win;
+    if (!parent) {
+        parent = QApplication::activeWindow();
+    }
+    Toast::toast(parent, icon, message);
 }
 
 void PluginSystem::logTrace(const QObject *sender, const QString &message) {
@@ -160,6 +168,10 @@ void PluginSystem::logError(const QObject *sender, const QString &message) {
 }
 
 bool PluginSystem::raiseDockWidget(const QObject *sender, QWidget *w) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (!checkThreadAff()) {
         return false;
     }
@@ -172,6 +184,10 @@ bool PluginSystem::raiseDockWidget(const QObject *sender, QWidget *w) {
 }
 
 QDialog *PluginSystem::createDialog(const QObject *sender, QWidget *content) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (!checkThreadAff()) {
         return nullptr;
     }
@@ -189,6 +205,10 @@ QDialog *PluginSystem::createDialog(const QObject *sender, QWidget *content) {
 
 QMainWindow *PluginSystem::createMainWindow(const QObject *sender,
                                             QWidget *content) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (!checkThreadAff()) {
         return nullptr;
     }
@@ -206,6 +226,10 @@ QMainWindow *PluginSystem::createMainWindow(const QObject *sender,
 
 void PluginSystem::msgAboutQt(const QObject *sender, QWidget *parent,
                               const QString &title) {
+    if (ApplicationMode::headless()) {
+        return;
+    }
+
     if (checkThreadAff()) {
         WingMessageBox::aboutQt(parent, title);
     }
@@ -216,6 +240,10 @@ PluginSystem::msgInformation(const QObject *sender, QWidget *parent,
                              const QString &title, const QString &text,
                              QMessageBox::StandardButtons buttons,
                              QMessageBox::StandardButton defaultButton) {
+    if (ApplicationMode::headless()) {
+        return QMessageBox::NoButton;
+    }
+
     if (checkThreadAff()) {
         return WingMessageBox::information(parent, title, text, buttons,
                                            defaultButton);
@@ -228,6 +256,10 @@ PluginSystem::msgQuestion(const QObject *sender, QWidget *parent,
                           const QString &title, const QString &text,
                           QMessageBox::StandardButtons buttons,
                           QMessageBox::StandardButton defaultButton) {
+    if (ApplicationMode::headless()) {
+        return QMessageBox::NoButton;
+    }
+
     if (checkThreadAff()) {
         return WingMessageBox::question(parent, title, text, buttons,
                                         defaultButton);
@@ -240,6 +272,10 @@ PluginSystem::msgWarning(const QObject *sender, QWidget *parent,
                          const QString &title, const QString &text,
                          QMessageBox::StandardButtons buttons,
                          QMessageBox::StandardButton defaultButton) {
+    if (ApplicationMode::headless()) {
+        return QMessageBox::NoButton;
+    }
+
     if (checkThreadAff()) {
         return WingMessageBox::warning(parent, title, text, buttons,
                                        defaultButton);
@@ -252,6 +288,10 @@ PluginSystem::msgCritical(const QObject *sender, QWidget *parent,
                           const QString &title, const QString &text,
                           QMessageBox::StandardButtons buttons,
                           QMessageBox::StandardButton defaultButton) {
+    if (ApplicationMode::headless()) {
+        return QMessageBox::NoButton;
+    }
+
     if (checkThreadAff()) {
         return WingMessageBox::critical(parent, title, text, buttons,
                                         defaultButton);
@@ -261,6 +301,10 @@ PluginSystem::msgCritical(const QObject *sender, QWidget *parent,
 
 void PluginSystem::msgAbout(const QObject *sender, QWidget *parent,
                             const QString &title, const QString &text) {
+    if (ApplicationMode::headless()) {
+        return;
+    }
+
     if (checkThreadAff()) {
         WingMessageBox::about(parent, title, text);
     }
@@ -271,6 +315,10 @@ PluginSystem::msgbox(const QObject *sender, QWidget *parent,
                      QMessageBox::Icon icon, const QString &title,
                      const QString &text, QMessageBox::StandardButtons buttons,
                      QMessageBox::StandardButton defaultButton) {
+    if (ApplicationMode::headless()) {
+        return QMessageBox::NoButton;
+    }
+
     if (checkThreadAff()) {
         return WingMessageBox::msgbox(parent, icon, title, text, buttons,
                                       defaultButton);
@@ -283,6 +331,13 @@ QString PluginSystem::dlgGetText(const QObject *sender, QWidget *parent,
                                  QLineEdit::EchoMode echo, const QString &text,
                                  bool *ok,
                                  Qt::InputMethodHints inputMethodHints) {
+    if (ApplicationMode::headless()) {
+        if (ok) {
+            *ok = false;
+        }
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingInputDialog::getText(parent, title, label, echo, text, ok,
                                         inputMethodHints);
@@ -295,6 +350,13 @@ PluginSystem::dlgGetMultiLineText(const QObject *sender, QWidget *parent,
                                   const QString &title, const QString &label,
                                   const QString &text, bool *ok,
                                   Qt::InputMethodHints inputMethodHints) {
+    if (ApplicationMode::headless()) {
+        if (ok) {
+            *ok = false;
+        }
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingInputDialog::getMultiLineText(parent, title, label, text, ok,
                                                  inputMethodHints);
@@ -307,6 +369,13 @@ QString PluginSystem::dlgGetItem(const QObject *sender, QWidget *parent,
                                  const QStringList &items, int current,
                                  bool editable, bool *ok,
                                  Qt::InputMethodHints inputMethodHints) {
+    if (ApplicationMode::headless()) {
+        if (ok) {
+            *ok = false;
+        }
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingInputDialog::getItem(parent, title, label, items, current,
                                         editable, ok, inputMethodHints);
@@ -318,6 +387,13 @@ int PluginSystem::dlgGetInt(const QObject *sender, QWidget *parent,
                             const QString &title, const QString &label,
                             int value, int minValue, int maxValue, int step,
                             bool *ok) {
+    if (ApplicationMode::headless()) {
+        if (ok) {
+            *ok = false;
+        }
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingInputDialog::getInt(parent, title, label, value, minValue,
                                        maxValue, step, ok);
@@ -330,6 +406,13 @@ double PluginSystem::dlgGetDouble(const QObject *sender, QWidget *parent,
                                   double value, double minValue,
                                   double maxValue, int decimals, bool *ok,
                                   double step) {
+    if (ApplicationMode::headless()) {
+        if (ok) {
+            *ok = false;
+        }
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingInputDialog::getDouble(parent, title, label, value, minValue,
                                           maxValue, decimals, ok, step);
@@ -342,6 +425,10 @@ QString PluginSystem::dlgGetExistingDirectory(const QObject *sender,
                                               const QString &caption,
                                               const QString &dir,
                                               QFileDialog::Options options) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingFileDialog::getExistingDirectory(parent, caption, dir,
                                                     options);
@@ -355,6 +442,10 @@ QString PluginSystem::dlgGetOpenFileName(const QObject *sender, QWidget *parent,
                                          const QString &filter,
                                          QString *selectedFilter,
                                          QFileDialog::Options options) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingFileDialog::getOpenFileName(parent, caption, dir, filter,
                                                selectedFilter, options);
@@ -366,6 +457,10 @@ QStringList PluginSystem::dlgGetOpenFileNames(
     const QObject *sender, QWidget *parent, const QString &caption,
     const QString &dir, const QString &filter, QString *selectedFilter,
     QFileDialog::Options options) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingFileDialog::getOpenFileNames(parent, caption, dir, filter,
                                                 selectedFilter, options);
@@ -379,6 +474,10 @@ QString PluginSystem::dlgGetSaveFileName(const QObject *sender, QWidget *parent,
                                          const QString &filter,
                                          QString *selectedFilter,
                                          QFileDialog::Options options) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (checkThreadAff()) {
         return WingFileDialog::getSaveFileName(parent, caption, dir, filter,
                                                selectedFilter, options);
@@ -388,6 +487,10 @@ QString PluginSystem::dlgGetSaveFileName(const QObject *sender, QWidget *parent,
 
 QColor PluginSystem::dlgGetColor(const QObject *sender, const QString &caption,
                                  QWidget *parent) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     if (checkThreadAff()) {
         ColorPickerDialog d(parent);
         d.setWindowTitle(caption);
@@ -409,6 +512,7 @@ bool PluginSystem::existsServiceHost(const QObject *sender,
 
 bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
                                      const WingHex::MetaCallInfo &infos) {
+
     QObject *obj = nullptr;
     QString rpuid;
     auto question = puid.indexOf('?');
@@ -1233,6 +1337,10 @@ bool PluginSystem::switchDocument(const QObject *sender, int handle) {
 }
 
 bool PluginSystem::raiseDocument(const QObject *sender, int handle) {
+    if (!m_win) {
+        return {};
+    }
+
     if (!checkThreadAff()) {
         return false;
     }
@@ -1425,8 +1533,7 @@ bool PluginSystem::endMarco(const QObject *sender) {
             }
 
             if (r != undo.rbegin()) {
-                Logger::warning(
-                    tr("Detected an abnormally pushed undo command"));
+                qWarning("Detected an abnormally pushed undo command");
                 undo.erase(r.base(), undo.end());
             }
 
@@ -2369,15 +2476,15 @@ bool PluginSystem::doneRegisterScriptObj() {
         machine.finishScriptRegistration();
         return true;
     } catch (const WingScriptBind::ScriptException &error) {
-        Logger::critical(QStringLiteral("Script registration failed [%1]: %2")
+        Logger::critical(tr("Script registration failed [%1]: %2")
                              .arg(currentPlugin, error.getErrorString()));
     } catch (const std::exception &error) {
         Logger::critical(
-            QStringLiteral("Script registration failed [%1]: %2")
+            tr("Script registration failed [%1]: %2")
                 .arg(currentPlugin, QString::fromUtf8(error.what())));
     } catch (...) {
-        Logger::critical(QStringLiteral("Script registration failed [%1]")
-                             .arg(currentPlugin));
+        Logger::critical(
+            tr("Script registration failed [%1]").arg(currentPlugin));
     }
     machine.destoryMachine();
     return false;
@@ -2396,6 +2503,10 @@ IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
 }
 
 int PluginSystem::closeCurrent(const QObject *sender) {
+    if (!m_win) {
+        return ErrFile::Error;
+    }
+
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2469,6 +2580,10 @@ QList<QUrl> PluginSystem::allOpenedFiles(const QObject *sender) {
 }
 
 int PluginSystem::openCurrent(const QObject *sender) {
+    if (!m_win) {
+        return ErrFile::Error;
+    }
+
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2496,6 +2611,9 @@ int PluginSystem::openCurrent(const QObject *sender) {
 }
 
 int PluginSystem::closeDocument(EditorView *view, bool force) {
+    if (!m_win) {
+        return ErrFile::Error;
+    }
     if (!view || view->isClosed()) {
         return ErrFile::NotExist;
     }
@@ -2541,6 +2659,9 @@ PluginSystem::DocumentUrlType PluginSystem::documentUrlType(const QUrl &file) {
 int PluginSystem::openDocument(const QUrl &file, EditorView **editor) {
     Q_ASSERT(editor);
     *editor = nullptr;
+    if (!m_win) {
+        return ErrFile::Error;
+    }
     switch (documentUrlType(file)) {
     case DocumentUrlType::File:
         return m_win->openFile(file.toLocalFile(), editor);
@@ -2559,6 +2680,10 @@ int PluginSystem::openDocument(const QUrl &file, EditorView **editor) {
 }
 
 int PluginSystem::openFile(const QObject *sender, const QUrl &file) {
+    if (!m_win) {
+        return ErrFile::Error;
+    }
+
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2631,6 +2756,10 @@ HexPosition PluginSystem::currentPos(const QObject *sender) {
 }
 
 AppTheme PluginSystem::currentAppTheme(const QObject *sender) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     auto theme = ThemeManager::instance().currentTheme();
     switch (theme) {
     case ThemeManager::Theme::Dark:
@@ -2644,11 +2773,19 @@ AppTheme PluginSystem::currentAppTheme(const QObject *sender) {
 
 QIcon PluginSystem::standardIcon(const QObject *sender,
                                  WingHex::StandardIcon icon) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     Q_UNUSED(sender);
     return ThemeManager::instance().standardIcon(icon);
 }
 
 QPixmap PluginSystem::appAuthorPixmap(const QObject *sender) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     Q_UNUSED(sender);
     return QPixmap(
         QStringLiteral(":/com.wingsummer.winghex/images/author.jpg"));
@@ -2656,12 +2793,20 @@ QPixmap PluginSystem::appAuthorPixmap(const QObject *sender) {
 
 QPixmap PluginSystem::standardPixmap(const QObject *sender,
                                      WingHex::StandardIcon icon) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     Q_UNUSED(sender);
     return ThemeManager::instance().standardPixmap(icon);
 }
 
 QByteArray PluginSystem::standardIconData(const QObject *sender,
                                           WingHex::StandardIcon icon) {
+    if (ApplicationMode::headless()) {
+        return {};
+    }
+
     Q_UNUSED(sender);
     return ThemeManager::instance().standardIconData(icon);
 }
@@ -2727,7 +2872,7 @@ EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
     if (ctx) {
         return ctx->view.data();
     }
-    return m_win->m_curEditor;
+    return m_win ? m_win->m_curEditor : nullptr;
 }
 
 EditorView *PluginSystem::handle2EditorView(IWingPlugin *plg, int handle) {
@@ -3083,7 +3228,9 @@ bool PluginSystem::dispatchAppClosingEvent() {
             Logger::warning(tr("Program shutdown canceled:") +
                             plg->pluginName() + QStringLiteral(" (") +
                             getPluginID(plg) + QStringLiteral(")"));
-            return false;
+            if (!ApplicationMode::headless()) {
+                return false;
+            }
         }
     }
     return true;
@@ -3504,7 +3651,7 @@ bool PluginSystem::checkPluginCert(const QFileInfo &item,
                  FileAccessCheck::Status::Deny;
         }
         if (ck) {
-            auto &ct = WingPluginCert::instance();
+            auto &ct = WingCert::instance();
             return ct.verify(item, certID);
         }
     }
@@ -3582,6 +3729,10 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 }
 
 void PluginSystem::registerHexContextMenu(IWingPlugin *plg) {
+    if (!m_win) {
+        return;
+    }
+
     Q_ASSERT(plg);
     auto menu = plg->registeredHexContextMenu();
     if (menu) {
@@ -3699,7 +3850,9 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
             }
 
             if (!p->init(setp)) {
-                setp->deleteLater();
+                if (setp) {
+                    setp->deleteLater();
+                }
                 throw tr("Could not initialize the plugin.");
             }
         }
@@ -3711,19 +3864,21 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
         Logger::debug(tr("Plugin author:") + meta.author);
         Logger::debug(tr("Registering plugin objects..."));
 
-        // ensure call only once
-        registerRibbonTools(p->registeredRibbonTools());
-        registerPluginDockWidgets(p);
-        registerHexContextMenu(p);
+        if (m_win) {
+            // ensure call only once
+            registerRibbonTools(p->registeredRibbonTools());
+            registerPluginDockWidgets(p);
+            registerHexContextMenu(p);
 
-        {
-            auto vieww = p->registeredEditorViewWidgets();
-            if (!vieww.isEmpty()) {
-                m_win->m_editorViewWidgets.insert(p, vieww);
+            {
+                auto vieww = p->registeredEditorViewWidgets();
+                if (!vieww.isEmpty()) {
+                    m_win->m_editorViewWidgets.insert(p, vieww);
+                }
             }
-        }
 
-        registeredSettingPages(p);
+            registeredSettingPages(p);
+        }
         registerEvents(p);
 
         // prepare for file contenxt
@@ -3767,7 +3922,9 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
             }
 
             if (!p->init(setp)) {
-                setp->deleteLater();
+                if (setp) {
+                    setp->deleteLater();
+                }
                 throw tr("Could not initialize the device extension plugin.");
             }
         }
@@ -3775,37 +3932,39 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
         m_loadeddevs.append(p);
         m_pinfos.insert(p, meta);
 
-        // ok register into menu open
-        auto menu =
-            m_win->m_toolBtneditors[MainWindow::ToolButtonIndex::OPEN_EXT]
-                ->menu();
-        menu->addAction(m_win->newAction(
-            p->supportedFileIcon(), p->supportedFileExtDisplayName(),
-            [p, this]() {
-                auto file = p->onOpenFileBegin();
-                if (file.isNull()) {
-                    return;
-                }
+        if (m_win) {
+            // ok register into menu open
+            auto menu =
+                m_win->m_toolBtneditors[MainWindow::ToolButtonIndex::OPEN_EXT]
+                    ->menu();
+            menu->addAction(m_win->newAction(
+                p->supportedFileIcon(), p->supportedFileExtDisplayName(),
+                [p, this]() {
+                    auto file = p->onOpenFileBegin();
+                    if (file.isNull()) {
+                        return;
+                    }
 
-                if (file.isEmpty()) {
-                    // common dialog
-                    file = WingFileDialog::getOpenFileName(
-                        m_win, tr("Select file"), m_win->m_lastusedpath);
-                }
+                    if (file.isEmpty()) {
+                        // common dialog
+                        file = WingFileDialog::getOpenFileName(
+                            m_win, tr("Select file"), m_win->m_lastusedpath);
+                    }
 
-                EditorView *view = nullptr;
-                auto ext = getPluginID(p);
-                auto res = m_win->openExtFile(ext, file, &view);
+                    EditorView *view = nullptr;
+                    auto ext = getPluginID(p);
+                    auto res = m_win->openExtFile(ext, file, &view);
 
-                if (res == ErrFile::AlreadyOpened) {
-                    view->raise();
-                }
-                if (m_win->reportErrFileError(res, {}, {}, {})) {
-                    RecentFileManager::RecentInfo info;
-                    info.url = WingHex::deviceUrl(ext, file);
-                    m_win->m_recentmanager->addRecentFile(info);
-                }
-            }));
+                    if (res == ErrFile::AlreadyOpened) {
+                        view->raise();
+                    }
+                    if (m_win->reportErrFileError(res, {}, {}, {})) {
+                        RecentFileManager::RecentInfo info;
+                        info.url = WingHex::deviceUrl(ext, file);
+                        m_win->m_recentmanager->addRecentFile(info);
+                    }
+                }));
+        }
 
     } catch (const QString &error) {
         Logger::critical(error);
@@ -3818,6 +3977,10 @@ bool PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 }
 
 void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
+    if (!m_win) {
+        return;
+    }
+
     const auto dockWidgets = p->registeredDockWidgets();
     if (!dockWidgets.isEmpty()) {
         for (const auto &info : dockWidgets) {
@@ -3896,6 +4059,10 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
 
 void PluginSystem::registerRibbonTools(
     const QList<WingRibbonToolBoxInfo> &tools) {
+    if (!m_win) {
+        return;
+    }
+
     if (!tools.isEmpty()) {
         for (const auto &item : tools) {
             if (m_win->m_ribbonMaps.contains(item.catagory)) {
@@ -3947,6 +4114,10 @@ void PluginSystem::registerRibbonTools(
 }
 
 void PluginSystem::registeredSettingPages(IWingPlugin *p) {
+    if (!m_win) {
+        return;
+    }
+
     Q_ASSERT(p);
     const auto pages = p->registeredSettingPages();
     if (!pages.isEmpty()) {
@@ -3960,7 +4131,7 @@ void PluginSystem::registeredSettingPages(IWingPlugin *p) {
 
 bool PluginSystem::checkThreadAff() {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Not allowed operation in non-ui thread"));
+        qWarning("Operation is not allowed outside the GUI thread");
         return false;
     }
     return true;
@@ -3981,7 +4152,7 @@ void PluginSystem::setMainWindow(MainWindow *win) { m_win = win; }
 QWidget *PluginSystem::mainWindow() const { return m_win; }
 
 void PluginSystem::loadAllPlugins() {
-    Q_ASSERT(m_win);
+    Q_ASSERT(m_win || !ApplicationMode::hasMainWindow());
 
     auto &set = SettingManager::instance();
     bool enableSet = set.enablePlugin();
@@ -4005,6 +4176,11 @@ void PluginSystem::loadAllPlugins() {
 
             if (enabled &&
                 qEnvironmentVariableBool("WINGHEX_CERT_SKIP", false)) {
+                if (ApplicationMode::headless()) {
+                    Logger::critical(tr("Certificate bypass requires "
+                                        "interactive confirmation"));
+                    throw CrashCode::PluginSetting;
+                }
                 if (WingMessageBox::critical(
                         m_win, qAppName(),
                         tr("Skipping certificate verification is dangerous. "
@@ -4065,7 +4241,12 @@ void PluginSystem::destory() {
                 udir.absoluteFilePath(m_pinfos[plg].id),
                 QSettings::Format::IniFormat);
         }
-        plg->unload(set);
+        try {
+            plg->unload(set);
+        } catch (...) {
+            qWarning("Plugin threw during unload: %s",
+                     qUtf8Printable(m_pinfos.value(plg).id));
+        }
         m_pinfos.remove(plg);
         delete plg;
     }
@@ -4078,7 +4259,12 @@ void PluginSystem::destory() {
                 udir.absoluteFilePath(m_pinfos[plg].id),
                 QSettings::Format::IniFormat);
         }
-        plg->unload(set);
+        try {
+            plg->unload(set);
+        } catch (...) {
+            qWarning("Plugin threw during unload: %s",
+                     qUtf8Printable(m_pinfos.value(plg).id));
+        }
         m_pinfos.remove(plg);
         delete plg;
     }
@@ -4089,7 +4275,7 @@ EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *plg) const {
     if (plg) {
         auto fid = m_plgviewMap[plg].currentFID;
         if (fid < 0) {
-            return m_win->currentEditor();
+            return m_win ? m_win->currentEditor() : nullptr;
         }
 
         auto ctx = pluginContextById(plg, fid);

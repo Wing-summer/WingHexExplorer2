@@ -34,7 +34,28 @@
 #include "Luau/Compiler.h"
 #include "Luau/StringUtils.h"
 
+#include "luau/runtime/luauscheduler.h"
+#include "luau/runtime/scriptexecution.h"
+
 namespace {
+
+void freezeModule(lua_State *L, int index, QSet<const void *> &seen) {
+    if (!lua_istable(L, index)) {
+        return;
+    }
+    const auto identity = lua_topointer(L, index);
+    if (seen.contains(identity)) {
+        return;
+    }
+    seen.insert(identity);
+    index = lua_absindex(L, index);
+    lua_pushnil(L);
+    while (lua_next(L, index)) {
+        freezeModule(L, -1, seen);
+        lua_pop(L, 1);
+    }
+    lua_setreadonly(L, index, true);
+}
 
 void appendRequireAlias(QStringList &aliases, const QString &alias) {
     if (!aliases.contains(alias)) {
@@ -370,8 +391,8 @@ void WingLuauRequire::installRequire() {
     luarequire_pushrequire(m_state, &WingLuauRequire::configInit, this);
     lua_pushlightuserdata(m_state, this);
     lua_pushboolean(m_state, false);
-    lua_pushcclosure(m_state, &WingLuauRequire::cbRequireDispatch, "require",
-                     3);
+    lua_pushcclosurek(m_state, &WingLuauRequire::cbRequireDispatch, "require",
+                      3, &WingLuauRequire::cbRequireContinuation);
     lua_setglobal(m_state, "require");
 
     LUAU_ASSERT(lua_gettop(m_state) == top);
@@ -386,8 +407,9 @@ void WingLuauRequire::installProxyRequire(const char *globalName) {
     luarequire_pushproxyrequire(m_state, &WingLuauRequire::configInit, this);
     lua_pushlightuserdata(m_state, this);
     lua_pushboolean(m_state, true);
-    lua_pushcclosure(m_state, &WingLuauRequire::cbRequireDispatch,
-                     "proxyrequire", 3);
+    lua_pushcclosurek(m_state, &WingLuauRequire::cbRequireDispatch,
+                      "proxyrequire", 3,
+                      &WingLuauRequire::cbRequireContinuation);
     lua_setglobal(m_state, globalName);
     LUAU_ASSERT(lua_gettop(m_state) == top);
 }
@@ -412,6 +434,10 @@ bool WingLuauRequire::registerBuiltinValue(const QString &moduleName,
         return false;
     }
 
+    if (m_options.readonlyBuiltins) {
+        QSet<const void *> seen;
+        freezeModule(m_state, absoluteValueIndex, seen);
+    }
     auto normalizedName = normalized.toUtf8();
     auto normalizedNameData = normalizedName.constData();
 
@@ -1714,7 +1740,16 @@ int WingLuauRequire::cbRequireDispatch(lua_State *L) {
     // fallback; only @b/ paths use Luau's registered-module fast path.
     lua_pushvalue(L, lua_upvalueindex(1));
     lua_insert(L, 1);
-    lua_call(L, isProxyRequire ? 2 : 1, 1);
+    return lua_callyieldable(L, isProxyRequire ? 2 : 1, 1);
+}
+
+// The native require continuation caches a module result when its loader
+// resumes. This adapter must also be yieldable so task scheduling can suspend
+// module execution without losing the caller's require frame.
+int WingLuauRequire::cbRequireContinuation(lua_State *L, int status) {
+    if (status != LUA_OK) {
+        lua_error(L);
+    }
     return 1;
 }
 
@@ -1999,7 +2034,7 @@ luarequire_WriteResult WingLuauRequire::cbGetLoadname(lua_State *, void *ctx,
     return writeString(loadName, buffer, bufferSize, sizeOut);
 }
 
-luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *, void *ctx,
+luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *L, void *ctx,
                                                       char *buffer,
                                                       size_t bufferSize,
                                                       size_t *sizeOut) {
@@ -2008,11 +2043,15 @@ luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    const QString cacheKey = self->cacheKeyForNode(self->m_current);
+    QString cacheKey = self->cacheKeyForNode(self->m_current);
     if (cacheKey.isEmpty()) {
         return WRITE_FAILURE;
     }
 
+    auto *data = static_cast<LuauThreadData *>(lua_getthreaddata(L));
+    if (data && data->execution) {
+        cacheKey = data->execution->moduleCacheKey(cacheKey);
+    }
     return writeString(cacheKey, buffer, bufferSize, sizeOut);
 }
 
@@ -2191,6 +2230,13 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
 
     if (FFlag::LuauCyclicRequireShortCircuit && lua_usesexport(ml, -1) != 0) {
         luarequire_createplaceholder(L);
+    }
+
+    auto *data = static_cast<LuauThreadData *>(lua_getthreaddata(L));
+    if (data && data->execution) {
+        data->execution->awaitModule(L, ml);
+        lua_pop(L, 1);
+        return -1;
     }
 
     const int resumeStatus = lua_resume(ml, L, 0);

@@ -27,7 +27,12 @@ enum class CrashCode : int {
     LanguageFile,
     PluginSetting,
     ScriptInitFailed,
-    OutofMemory
+    OutofMemory,
+    ScriptDisabled,
+    InvalidArguments,
+    ScriptFileError,
+    ScriptExecutionFailed,
+    InitializationFailed
 };
 
 #define WING_ASSERT(b)                                                         \

@@ -12,7 +12,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools OpenGLWidgets Netw
 find_package(Threads REQUIRED)
 find_library(WING_BINDINGS WingLuauBind PATHS "${HOST_BUILD_DIR}/luau-bindings" REQUIRED NO_DEFAULT_PATH)
 find_library(WING_PLUGIN WingPlugin PATHS "${HOST_BUILD_DIR}/WingPlugin" REQUIRED NO_DEFAULT_PATH)
-foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common)
+foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common Analysis)
   find_library(LUAU_${component} NAMES Luau.${component} PATHS "${HOST_BUILD_DIR}/luau" REQUIRED NO_DEFAULT_PATH)
   list(APPEND _luau_libraries "${LUAU_${component}}")
 endforeach()
@@ -29,7 +29,7 @@ target_include_directories(WingHexRegistrationSmoke PRIVATE
   "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/include"
   "${HOST_SOURCE_DIR}/src" "${HOST_SOURCE_DIR}"
   "${HOST_SOURCE_DIR}/3rdparty/LuaBridge3/Source")
-foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common)
+foreach(component IN ITEMS Require Config Compiler Ast Bytecode VM Common Analysis)
   target_include_directories(WingHexRegistrationSmoke PRIVATE
     "${HOST_SOURCE_DIR}/3rdparty/luau/${component}/include")
 endforeach()
@@ -86,3 +86,23 @@ target_compile_definitions(WingHexNetworkSmoke PRIVATE
   WING_NETWORK_FIXTURES="${HOST_SOURCE_DIR}/tests/luaubindings/fixtures/network")
 add_test(NAME network COMMAND WingHexNetworkSmoke)
 set_tests_properties(network PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 45)
+
+add_executable(WingHexNumberSmoke ../numbers.cpp
+  "${HOST_SOURCE_DIR}/src/luau/scriptbindingengine.cpp"
+  "${HOST_SOURCE_DIR}/src/luau/luauformatter.cpp"
+  "${HOST_SOURCE_DIR}/src/luau/runtime/scriptfilesystem.cpp")
+target_include_directories(WingHexNumberSmoke PRIVATE ${_network_includes})
+target_link_libraries(WingHexNumberSmoke PRIVATE ${_network_libraries})
+target_compile_features(WingHexNumberSmoke PRIVATE cxx_std_17)
+add_test(NAME numbers COMMAND WingHexNumberSmoke)
+set_tests_properties(numbers PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(WingHexInteger64Smoke ../numbers_runtime.cpp
+  "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/support/integer64.cpp")
+target_include_directories(WingHexInteger64Smoke PRIVATE
+  "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/include" ${_network_includes})
+target_link_libraries(WingHexInteger64Smoke PRIVATE ${_luau_libraries} Qt6::Core)
+target_compile_features(WingHexInteger64Smoke PRIVATE cxx_std_17)
+target_compile_definitions(WingHexInteger64Smoke PRIVATE
+  WING_NUMBER_SCRIPT="${HOST_SOURCE_DIR}/tests/luaubindings/numbers.luau")
+add_test(NAME integers64 COMMAND WingHexInteger64Smoke)

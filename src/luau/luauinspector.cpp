@@ -279,8 +279,7 @@ public:
             break;
         }
 
-        case LUA_TNUMBER:
-        case LUA_TINTEGER: {
+        case LUA_TNUMBER: {
             size_t len = 0;
             const char *s = luaL_tolstring(m_l, absIdx, &len);
 

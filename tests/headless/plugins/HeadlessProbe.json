@@ -1,0 +1,10 @@
+{
+  "Id": "HeadlessProbe",
+  "SDK": 22,
+  "Version": "1.0.0",
+  "Vendor": "WingCloudStudio",
+  "Dependencies": [],
+  "Author": "WingSummer",
+  "License": "AGPL-3.0-only",
+  "Url": "https://github.com/Wing-summer/WingHexExplorer2"
+}

@@ -43,6 +43,7 @@ option(WINGHEX_USE_FRAMELESS "Enable custom titlebar support" ON)
 option(WINGHEX_BUILD_WORKSPACE_MIGRATOR
        "Build the legacy JSON workspace migration tool" OFF)
 option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
+option(WINGHEX_BUILD_HEADLESS_TEST_PLUGINS "Build headless regression plugins" OFF)
 option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
 option(WINGHEX_OPTIMIZE_FOR_NATIVE
        "Build with native optimization(less portable)" OFF)
@@ -54,6 +55,10 @@ include(src/WingPlugin.cmake)
 if(WINGHEX_BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestDepPlugin)
+endif()
+
+if(WINGHEX_BUILD_HEADLESS_TEST_PLUGINS)
+    add_subdirectory(tests/headless/plugins)
 endif()
 
 if(WINGHEX_BUILD_SHARED_MEM_EXT)
@@ -144,6 +149,14 @@ set(CFFI_LIBFFI_GIT_REPOSITORY
     CACHE INTERNAL "Git URL of the CMake-buildable libffi fork to fetch" FORCE)
 add_subdirectory(3rdparty/cffi-luau)
 target_compile_definitions(libffi PRIVATE NO_JAVA_RAW_API)
+
+if(WIN32)
+    set(TERMINAL_PLATFORM_SOURCES
+        src/class/application/terminalservices_windows.cpp)
+else()
+    set(TERMINAL_PLATFORM_SOURCES
+        src/class/application/terminalservices_posix.cpp)
+endif()
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -299,6 +312,31 @@ set(CONTROL_SRC
     src/control/toast.h)
 
 set(CLASS_SRC
+    src/class/application/applicationclock.cpp
+    src/class/application/applicationclock.h
+    src/class/application/scriptrpcerror.h
+    src/class/application/applicationmode.cpp
+    src/class/application/applicationmode.h
+    src/class/application/standalonemodes.cpp
+    src/class/application/standalonemodes.h
+    src/class/application/scriptenvironment.cpp
+    src/class/application/scriptenvironment.h
+    src/class/application/uiservices.cpp
+    src/class/application/uiservices.h
+    src/class/application/terminalservices.h
+    src/class/file/documentloader.cpp
+    src/class/file/documentloader.h
+    src/class/application/headlessrunner.cpp
+    src/class/application/headlessrunner.h
+    ${TERMINAL_PLATFORM_SOURCES}
+    src/class/application/scriptservice.cpp
+    src/class/application/scriptservice.h
+    src/class/application/scriptrpcconnection.cpp
+    src/class/application/scriptrpcconnection.h
+    src/class/application/scriptservicetray.cpp
+    src/class/application/scriptservicetray.h
+    src/luau/runtime/scriptexecution.cpp
+    src/luau/runtime/scriptexecution.h
     src/class/application/appmanager.cpp
     src/class/application/appmanager.h
     src/class/application/crashhandler.cpp
@@ -329,8 +367,8 @@ set(CLASS_SRC
     src/class/layout/layoutmanager.h
     src/class/plugin/pluginsystem.cpp
     src/class/plugin/pluginsystem.h
-    src/class/plugin/wingplugincert.cpp
-    src/class/plugin/wingplugincert.h
+    src/class/security/wingcert.cpp
+    src/class/security/wingcert.h
     src/class/settings/languagemanager.cpp
     src/class/settings/languagemanager.h
     src/class/settings/settingmanager.cpp

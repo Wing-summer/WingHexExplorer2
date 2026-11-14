@@ -112,6 +112,12 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
     fallbacks = object_field(policy, "fallbacks")
     for group in object_list_field(manifest, "native_bindings"):
         namespace = text(group, "namespace")
+        module = text(group, "module")
+        if module in {"qt", "dialogs", "clipboard", "toast"}:
+            lines.append("if (!ApplicationMode::headless()) {")
+            ui_group = True
+        else:
+            ui_group = False
         lines.append("{")
         lines.append(f"{text(group, 'callback_type')} {namespace}Callbacks;")
         group_policy = object_field(groups, namespace)
@@ -145,12 +151,24 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
         module = text(group, "module")
         lines.append(f"{binding_namespace}::bind_{module or 'public'}_{namespace}(L, {namespace}Callbacks);")
         lines.append("}")
+        if ui_group:
+            lines.append("}")
     lines.extend(emit_private_helpers(policy))
     lines.extend(string_list_field(policy, "assignments"))
     destination = pathlib.Path(text(policy, "output"))
     if destination.is_absolute() or ".." in destination.parts:
         raise ValueError("forwarding output must remain inside the generated project")
     write(output / destination, "\n".join(lines) + "\n")
+    dependencies = json.loads((output / "module_dependencies.json").read_text())
+    modules = object_field(dependencies, "modules")
+    headless = ["// Generated non-UI eager registrations.", "bindings::registerPublicModule(L);"]
+    for name, entry in modules.items():
+        if not isinstance(entry, dict):
+            raise ValueError("Invalid generated module dependency entry")
+        if name and not entry.get("require") and name not in {"qt", "dialogs", "clipboard", "toast"}:
+            headless.append(f'bindings::registerModule(L, QStringLiteral("{name}"));')
+    write(output / "generated/headless_initializers.inc", "\n".join(headless) + "\n")
+
 
 
 def main() -> int:

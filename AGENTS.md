@@ -29,6 +29,8 @@
   Signals use the `sig` prefix and the `sigOn<SemanticEvent>` form, for example `sigOnTextChanged`; names must convey the trigger and object, avoiding generic names such as `log`, `triggered`, and `finished`. Update `Q_PROPERTY NOTIFY`, connections, `QSignalSpy`, and `.ui` connections together.
 - 头文件保护宏遵循相邻文件，新增头文件使用 `FILENAME_H` 与 `#endif // FILENAME_H`。实现文件首先包含对应头文件。声明须自包含；前置声明足够时优先使用，否则包含完整类型，兼顾模板、内联代码和 Qt MOC。
   Match neighboring header guards; new headers use `FILENAME_H` and `#endif // FILENAME_H`. Include the corresponding header first in implementation files. Keep declarations self-contained; prefer sufficient forward declarations, otherwise include complete types for templates, inline code, and Qt MOC.
+- 头文件中的具名函数定义显式添加 `inline`，包括类内定义、模板、`constexpr` 及默认化函数；只有声明、实现位于源文件的函数不添加。
+  Explicitly mark named function definitions in headers as `inline`, including in-class definitions, templates, `constexpr` functions, and defaulted functions. Do not add it to declarations whose definitions remain in source files.
 - 头文件按固定组排序：对应头文件 → `ui_*.h` → C++ 标准库 → C/POSIX/Windows 系统头 → Qt（含 `<private/...>`）→ Lua C API → Luau → LuaBridge3 → 其他第三方库 → 项目头文件。含 UI 的实现文件最前面两行必须是 `#include "foo.h"` 与 `#include "ui_foo.h"`，两者之间无空行；之后才允许空行和其他分组。组间一个空行，组内字母排序；条件包含留在所属组末尾。使用 LuaBridge3 时必须先包含 Luau 头文件，禁止把 LuaBridge3 排到 Luau 前面。由 clang-format 执行。
   Sort includes in fixed groups: corresponding header → `ui_*.h` → C++ standard library → C/POSIX/Windows system headers → Qt (including `<private/...>`) → Lua C API → Luau → LuaBridge3 → other third-party libraries → project headers. Files that use a generated UI header must start with `#include "foo.h"` followed immediately by `#include "ui_foo.h"` with no blank line between them; only then may a blank line and other groups follow. Separate groups with one blank line and sort alphabetically within a group; keep conditional includes at the end of their group. When using LuaBridge3, include the Luau headers first; never put LuaBridge3 before Luau. Let clang-format enforce this.
 - 每个实现文件的函数定义之间保留一个空行；构造函数、析构函数、运算符、命名空间级函数及类内联定义同样适用；不保留连续空行。由 `SeparateDefinitionBlocks: Always` 执行。
@@ -37,6 +39,14 @@
   The root `.clang-tidy` continuously checks private/protected data-member and local/parameter naming; type, function, and signal naming remain governed by this document and code review. `d_ptr`, `q_ptr`, and `ui` are exempt.
 - 使用 `nullptr`、const 正确性、`override` 和适当的 `explicit`。兼容 CMake 选择的 C++20 及 `WINGHEX_FORCE_CPP17` 回退路径。
   Use `nullptr`, const correctness, `override`, and appropriate `explicit` constructors. Support CMake's C++20 selection and the `WINGHEX_FORCE_CPP17` fallback.
+- 同一作用域内重复使用的查询结果应保存为有明确含义的局部变量，例如 `const auto mode = options.mode();`、`const auto suffix = file.suffix();`；不要反复展开相同表达式。缓存结果时须保持原有求值时机和动态状态语义。
+  Store repeatedly used query results in clearly named local variables within the same scope, such as `const auto mode = options.mode();` or `const auto suffix = file.suffix();`, instead of repeating the expression. Preserve evaluation timing and dynamic-state semantics when caching results.
+- 同一作用域内多次访问单例时，先取得局部引用，例如 `auto &sm = ScriptMachine::instance();`，再使用 `sm.xxx()`；不要连续调用 `ScriptMachine::instance().xxx()`。成员函数访问自身状态时直接使用当前对象，不绕经单例入口；不要为复用而引入生命周期不明确的成员或全局缓存。
+  When accessing a singleton repeatedly within one scope, obtain a local reference such as `auto &sm = ScriptMachine::instance();` and use `sm.xxx()` rather than repeating `ScriptMachine::instance().xxx()`. Member functions should access their current object directly instead of going through the singleton accessor. Do not introduce member or global caches with unclear lifetimes merely for reuse.
+- 尽量使用具名函数或成员函数承载逻辑，可复用或具有独立职责的 lambda 应提取为函数。仅在只使用一次且便于就地捕获参数、绑定上下文或转接回调时保留简短 lambda；信号槽和定时调用能直接使用函数指针时优先使用函数指针。
+  Prefer named functions or member functions for logic, and extract reusable lambdas or lambdas with independent responsibilities into functions. Keep short lambdas only when used once and convenient for capturing arguments, binding context, or adapting a callback. Prefer direct function pointers for signal connections and timers when possible.
+- 连续递增的枚举值使用默认赋值，不逐项重复指定数值；仅在指定起点、位标志、预留值或稳定数值契约等需要时显式赋值。简化赋值不得改变现有 SDK、协议或退出码的数值。
+  Use implicit values for consecutive enum entries instead of assigning each number explicitly. Use explicit assignments when needed for a starting value, bit flags, reserved values, or stable numeric contracts. Simplification must preserve existing SDK, protocol, and exit-code values.
 
 ## Qt 与接口 / Qt and interfaces
 
@@ -52,6 +62,17 @@
   Preserve public SDK signatures, plugin IDs, ownership, and Qt meta-object contracts unless explicitly required; update callers and examples together. Keep host details in the application.
 - 脚本集成沿用 Luau 绑定及插件注册路径，保留注册顺序、沙箱、错误传播和 userdata 所有权。编辑器定制使用扩展点，不改生成或上游高亮数据。
   Extend existing Luau bindings and plugin registration while preserving order, sandboxing, error propagation, and userdata ownership. Customize editors through extension points, not generated or upstream highlighting data.
+- 按职责提取可复用服务，将文档加载等底层能力与界面安装分离；不要为复用底层能力而构造完整编辑器或隐藏主窗口。平台相关代码隔离到独立后端，业务代码优先使用 Qt 的跨平台接口。
+  Extract reusable services by responsibility and separate capabilities such as document loading from UI installation. Do not construct full editors or hidden main windows merely to reuse underlying functionality. Isolate platform-specific code in separate backends and prefer Qt's cross-platform interfaces in business code.
+- 命令行使用 `QCommandLineParser`，集中处理帮助、版本等信息请求并使用 Qt 原生输出，避免分散、重复的判断和手工解析。`loadEnvConfig(argc, argv);` 始终保持为 `main()` 的第一条语句，先于跟踪、参数解析及应用对象创建。
+  Use `QCommandLineParser`, centralize help/version information requests, and use Qt's native output instead of scattered duplicate checks or manual parsing. Keep `loadEnvConfig(argc, argv);` as the first statement in `main()`, before tracing, argument parsing, and application creation.
+- 独立模式和初始化、退出阶段不得假定 `m_win` 等宿主窗口始终存在。调用 toast 等 UI 接口时检查窗口及生命周期，使用有效的父窗口；没有可用窗口时按接口约定返回失败、取消或不操作，无头模式不因此初始化 UI。
+  Do not assume host windows such as `m_win` always exist in standalone modes or during initialization and shutdown. Check window availability and lifetime when calling UI APIs such as toast, and use a valid parent. Without an available window, return failure or cancellation, or perform no action as specified by the interface; do not initialize UI in headless mode for this purpose.
+
+- 通过带明确错误码的返回结果或项目自有异常报告失败，不使用 `QString &error`、`bool &failed` 等可写输出参数旁路传递错误。适配既有 Qt、第三方或公开 SDK 接口时保留其契约。
+  Report failures through return results with explicit error codes or project-defined exceptions, rather than writable output parameters such as `QString &error` or `bool &failed`. Preserve existing Qt, third-party and public SDK contracts when adapting them.
+- Qt 对象构造函数中的 `QWidget *parent` 或 `QObject *parent` 放在最后；其他行为参数应在构造时明确，避免事后设置可随意修改的启动模式开关。
+  Place `QWidget *parent` or `QObject *parent` last in Qt object constructors. Make behavior parameters explicit at construction instead of adding freely mutable startup-mode setters.
 
 ## 文案 / UI text
 
@@ -61,6 +82,13 @@
   Avoid unnecessary final periods in short tooltips, buttons, and labels. Message boxes, text boxes, and extended explanations may retain punctuation. Preserve meaningful question/exclamation marks, including Chinese forms, and `...` for progress or further actions.
 - 显示文案不改变内部名称、配置键或脚本 API。编辑 `.ui`、`.qrc` 源文件而非生成代码，并检查布局及无障碍影响。
   Display-text changes must preserve internal names, settings keys, and script APIs. Edit `.ui` and `.qrc` sources, not generated code, and check layout and accessibility.
+- 日志按职责选择接口：UI 组件和插件注册相关的日志可以使用自定义 `Logger`；纯函数及一般业务逻辑使用 `qCritical`、`qWarning`、`qDebug`、`qInfo` 或对应分类日志等 Qt 原生接口，不引入对 UI 日志服务的依赖。
+  Choose logging APIs by responsibility: UI components and plugin registration may use the custom `Logger`; pure functions and general business logic use native Qt APIs such as `qCritical`, `qWarning`, `qDebug`, `qInfo`, or their categorized counterparts, without depending on the UI logging service.
+- 仅为翻译提供上下文的非 QObject 类使用轻量的 `Q_DECLARE_TR_FUNCTIONS`，不为 `tr()` 单独引入 QObject 继承。命令行说明、参数错误及自定义 `Logger` 日志中的固定文案维护国际化；Qt 原生日志调用中的诊断文本不做国际化。
+  Use lightweight `Q_DECLARE_TR_FUNCTIONS` for non-QObject classes that only need a translation context; do not inherit QObject solely for `tr()`. Internationalize fixed command-line descriptions, argument errors, and custom `Logger` messages. Do not internationalize diagnostic text in native Qt logging calls.
+
+- Qt 日志由接收端统一处理记录结束换行；调用方不主动追加末尾换行。保留多行诊断的内部换行，并将日志内容作为文本显示，避免富文本解释。流式和格式化日志均应只产生一条记录。
+  Let the Qt log receiver normalize the record terminator; callers should not add trailing newlines. Preserve internal line breaks in multiline diagnostics and display log content as text rather than interpreting markup. Both streaming and formatted logging should produce one record per call.
 
 ## 构建与验证 / Build and validation
 

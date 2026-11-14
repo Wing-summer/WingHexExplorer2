@@ -21,12 +21,32 @@
 
 #include "DockAreaWidget.h"
 
-#include "class/application/appmanager.h"
 #include "class/file/showinshell.h"
 #include "class/settings/thememanager.h"
 #include "control/editor/scripteditor.h"
 #include "control/editorview.h"
 #include "dialog/fileinfodialog.h"
+#include "dialog/mainwindow.h"
+#include "dialog/scriptingdialog.h"
+
+template <typename T>
+void closeEditorGroup(ads::CDockWidget *dockWidget, const QList<T *> &views) {
+    // The dock manager retains the owner even when a dock floats.
+    auto owner = dockWidget->dockManager();
+    for (QWidget *widget = owner; widget; widget = widget->parentWidget()) {
+        if constexpr (std::is_same_v<T, EditorView>) {
+            if (auto window = qobject_cast<MainWindow *>(widget)) {
+                window->try2CloseHexViews(views);
+                return;
+            }
+        } else {
+            if (auto window = qobject_cast<ScriptingDialog *>(widget)) {
+                window->try2CloseScriptViews(views);
+                return;
+            }
+        }
+    }
+}
 
 template <typename T,
           typename = std::enable_if<std::is_same_v<T, EditorView> ||
@@ -36,7 +56,6 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     Q_ASSERT(parent);
     auto cmenu = new QMenu(DockWidgetTab::tr("Close edit group"), parent);
     cmenu->addAction(DockWidgetTab::tr("Left"), parent, [dockWidget]() {
-        auto app = AppManager::instance();
         QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
@@ -61,14 +80,9 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
             return;
         }
 
-        if constexpr (std::is_same_v<T, EditorView>) {
-            app->mainWindow()->try2CloseHexViews(cviews);
-        } else {
-            app->mainWindow()->try2CloseScriptViews(cviews);
-        }
+        closeEditorGroup(dockWidget, cviews);
     });
     cmenu->addAction(DockWidgetTab::tr("Right"), parent, [dockWidget]() {
-        auto app = AppManager::instance();
         QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
@@ -93,14 +107,9 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
             return;
         }
 
-        if constexpr (std::is_same_v<T, EditorView>) {
-            app->mainWindow()->try2CloseHexViews(cviews);
-        } else {
-            app->mainWindow()->try2CloseScriptViews(cviews);
-        }
+        closeEditorGroup(dockWidget, cviews);
     });
     cmenu->addAction(DockWidgetTab::tr("All"), parent, [dockWidget]() {
-        auto app = AppManager::instance();
         QList<T *> cviews;
 
         auto area = dockWidget->dockAreaWidget();
@@ -117,14 +126,9 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
             }
         }
 
-        if constexpr (std::is_same_v<T, EditorView>) {
-            app->mainWindow()->try2CloseHexViews(cviews);
-        } else {
-            app->mainWindow()->try2CloseScriptViews(cviews);
-        }
+        closeEditorGroup(dockWidget, cviews);
     });
     cmenu->addAction(DockWidgetTab::tr("Other"), parent, [dockWidget]() {
-        auto app = AppManager::instance();
         QList<T *> cviews;
         for (const auto &view : T::instances()) {
             if (view->isClosed()) {
@@ -134,11 +138,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
                 cviews.append(view);
             }
         }
-        if constexpr (std::is_same_v<T, EditorView>) {
-            app->mainWindow()->try2CloseHexViews(cviews);
-        } else {
-            app->mainWindow()->try2CloseScriptViews(cviews);
-        }
+        closeEditorGroup(dockWidget, cviews);
     });
     menu->addMenu(cmenu);
 }
@@ -219,9 +219,8 @@ void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
                                  ThemeManager::StandardIcon::FileManager),
                              tr("Show in file manager"), menu);
         auto file = path.toLocalFile();
-        connect(a, &QAction::triggered, this, [file]() {
-            ShowInShell::showInGraphicalShell(
-                AppManager::instance()->mainWindow(), file, false);
+        connect(a, &QAction::triggered, this, [this, file]() {
+            ShowInShell::showInGraphicalShell(window(), file, false);
         });
         menu->addAction(a);
     }

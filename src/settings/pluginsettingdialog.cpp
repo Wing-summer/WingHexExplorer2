@@ -22,7 +22,7 @@
 
 #include "class/file/showinshell.h"
 #include "class/plugin/pluginsystem.h"
-#include "class/plugin/wingplugincert.h"
+#include "class/security/wingcert.h"
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
 #include "control/common/eventfilter.h"
@@ -344,7 +344,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             &PluginSettingDialog::onAnchorClicked);
 
     auto cicon = theme.standardIcon(ThemeManager::StandardIcon::Certificate);
-    auto &ct = WingPluginCert::instance();
+    auto &ct = WingCert::instance();
     for (auto &&[c, loc] : ct.certificates().asKeyValueRange()) {
         auto name = c.subjectDisplayName();
         bool s = ct.isSysCert(c);
@@ -555,7 +555,7 @@ void PluginSettingDialog::loadPluginInfo(
 
         auto certID = info->certID;
         if (!certID.isEmpty()) {
-            auto &ct = WingPluginCert::instance();
+            auto &ct = WingCert::instance();
             auto c = ct.cert(certID);
             if (ct.isSysCert(c)) {
                 t->append(getWrappedText(

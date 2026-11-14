@@ -4,9 +4,9 @@
 
 `filesystem` 是全局模块，`file`、`fileinfo`、`dir` 构造器分别公开 SDK 扫描的 QFile、QFileInfo、QDir 接口，方法为 snake_case。Qt 别名复用同一类型注册。模块选择、宿主适配及排除项放在 `codegen/bindings.json`，注册、定义及符号页随 build 生成。
 
-The host's `sdk_bindings.type_annotations` describes its native 64-bit integer representation. File sizes and write counts return Luau `integer`, preserving all 64 bits; they are distinct from ordinary `number` values. `tostring()` preserves their exact decimal representation.
+The host's `sdk_bindings.type_annotations` describes its native 64-bit integer representation. File sizes and write counts return `number` within the safe integer range ±(2^53−1). Larger 64-bit values use `int64`/`uint64` userdata, preserving all bits; pass the value back to integer APIs without converting through `number`.
 
-宿主通过 `sdk_bindings.type_annotations` 声明原生 64 位整数表示。文件大小及写入计数返回 Luau `integer`，保留全部 64 位，与普通 `number` 不同；`tostring()` 保留精确的十进制表示。
+宿主通过 `sdk_bindings.type_annotations` 声明原生 64 位整数表示。文件大小及写入计数在安全整数范围 ±(2^53−1) 内返回 `number`；更大的 64 位数值使用 `int64`/`uint64` userdata 包装并保留全部位数。可将包装值直接传回整数接口，避免转成 `number` 丢失精度。
 
 ```luau
 local fs = filesystem

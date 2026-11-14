@@ -1033,8 +1033,6 @@ void LuauFormat::formatExpr(Luau::AstExpr *expr) {
         formatConstantBool(e->value);
     } else if (auto e = expr->as<Luau::AstExprConstantNumber>()) {
         formatConstantNumberWithCst(e);
-    } else if (auto e = expr->as<Luau::AstExprConstantInteger>()) {
-        formatConstantInteger(e);
     } else if (auto e = expr->as<Luau::AstExprConstantString>()) {
         formatConstantString(e);
     } else if (auto e = expr->as<Luau::AstExprLocal>()) {
@@ -1082,7 +1080,8 @@ void LuauFormat::formatConstantBool(bool value) {
 }
 
 void LuauFormat::formatConstantNumber(double value) {
-    if (value == (long long)value && value > -1e15 && value < 1e15) {
+    if (value > -1e15 && value < 1e15 &&
+        value == static_cast<qlonglong>(value)) {
         writeLiteral(QByteArray::number(static_cast<qlonglong>(value)));
     } else {
         writeLiteral(QByteArray::number(value, 'g', 17));
@@ -1097,15 +1096,6 @@ void LuauFormat::formatConstantNumberWithCst(
         writeLiteral(QByteArray(cst->value.data, cst->value.size));
     } else {
         formatConstantNumber(expr->value);
-    }
-}
-
-void LuauFormat::formatConstantInteger(Luau::AstExprConstantInteger *expr) {
-    auto cst = getCstNode<Luau::CstExprConstantInteger>(expr);
-    if (cst) {
-        writeLiteral(QByteArray(cst->value.data, cst->value.size));
-    } else {
-        writeLiteral(QByteArray::number(expr->value));
     }
 }
 

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -83,17 +83,18 @@ private:
     void refreshSysScriptsDbCats();
 
 private:
-    static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
-                                        ThemeManager::StandardIcon icon,
-                                        const QString &title,
-                                        QMenu *menu = nullptr) {
+    inline static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
+                                               ThemeManager::StandardIcon icon,
+                                               const QString &title,
+                                               QMenu *menu = nullptr) {
         return addPannelAction(
             pannel, ThemeManager::instance().standardIcon(icon), title, menu);
     }
 
-    static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
-                                        const QIcon &icon, const QString &title,
-                                        QMenu *menu = nullptr) {
+    inline static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
+                                               const QIcon &icon,
+                                               const QString &title,
+                                               QMenu *menu = nullptr) {
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)

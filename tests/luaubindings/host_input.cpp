@@ -3,11 +3,14 @@
 // See 3rdparty/WingLuauQt/LICENSE for license information.
 
 #include <iostream>
+#include <limits>
 #include <stdexcept>
+#include <thread>
 
 #include <QApplication>
 #include <QDataStream>
 #include <QElapsedTimer>
+#include <QEventLoop>
 #include <QFile>
 #include <QKeyEvent>
 #include <QMenuBar>
@@ -15,6 +18,7 @@
 #include <QScopeGuard>
 #include <QStatusBar>
 #include <QTemporaryDir>
+#include <QTextBrowser>
 #include <QTextDocument>
 #include <QTimer>
 #include <QToolBar>
@@ -28,6 +32,7 @@
 #include "qtluau/execution.hpp"
 #include "qtluau/value_conversion.hpp"
 
+#include "class/application/inspectqtloghelper.h"
 #include "class/settings/settingmanager.h"
 #include "control/console/scriptingconsole.h"
 #include "control/objtreewidget.h"
@@ -36,6 +41,241 @@
 #include "luau/runtime/scriptmachine.h"
 #include "luau/runtime/scriptwindowfactory.h"
 
+namespace {
+struct RuntimeDiagnostic {
+    QtMsgType type;
+    QString message;
+};
+
+QList<RuntimeDiagnostic> runtimeDiagnostics;
+
+void captureRuntimeDiagnostic(QtMsgType type, const QMessageLogContext &,
+                              const QString &message) {
+    runtimeDiagnostics.append({type, message});
+}
+
+class RuntimeDiagnosticTranslator final : public QTranslator {
+public:
+    virtual bool isEmpty() const override { return false; }
+
+    virtual QString translate(const char *, const char *sourceText,
+                              const char *, int) const override {
+        const auto source = QString::fromUtf8(sourceText);
+        if (source == QStringLiteral("The script engine is not initialized") ||
+            source == QStringLiteral("Code must execute on the main thread")) {
+            return QStringLiteral("Unexpected translated runtime diagnostic");
+        }
+        return {};
+    }
+};
+
+void ignoreCodeCompletion(bool) {}
+
+void checkRuntimeLogging(ScriptMachine &machine) {
+    RuntimeDiagnosticTranslator translator;
+    qApp->installTranslator(&translator);
+    const auto previousHandler =
+        qInstallMessageHandler(captureRuntimeDiagnostic);
+    auto restore = qScopeGuard([previousHandler, &translator] {
+        qInstallMessageHandler(previousHandler);
+        qApp->removeTranslator(&translator);
+    });
+    runtimeDiagnostics.clear();
+    auto result = ScriptMachine::ExecutionResult::Success;
+    machine.executeScriptWithResult(
+        ScriptMachine::Background, QStringLiteral("not-executed.luau"), false,
+        [&result](ScriptMachine::ExecutionResult value) { result = value; });
+    machine.executeCode(ScriptMachine::Interactive, QStringLiteral("return"),
+                        ignoreCodeCompletion);
+    std::thread worker([&machine] {
+        machine.executeCode(ScriptMachine::Interactive,
+                            QStringLiteral("return"), ignoreCodeCompletion);
+    });
+    worker.join();
+    if (result != ScriptMachine::ExecutionResult::Failed ||
+        runtimeDiagnostics.size() != 3) {
+        throw std::runtime_error("Runtime diagnostics did not use Qt logging");
+    }
+    for (int index = 0; index < runtimeDiagnostics.size(); ++index) {
+        const auto &diagnostic = runtimeDiagnostics[index];
+        const auto expected =
+            index < 2 ? QStringLiteral("The script engine is not initialized")
+                      : QStringLiteral("Code must execute on the main thread");
+        if (diagnostic.type != QtWarningMsg || diagnostic.message != expected) {
+            throw std::runtime_error(
+                "Runtime diagnostics were translated or changed severity");
+        }
+    }
+    std::cout << "Qt runtime diagnostic routing passed" << std::endl;
+}
+
+void checkQtLogRecords() {
+    auto &helper = InspectQtLogHelper::instance();
+    const auto previous = qInstallMessageHandler(captureRuntimeDiagnostic);
+    auto restore = qScopeGuard([&helper, previous] {
+        helper.destory();
+        qInstallMessageHandler(previous);
+    });
+    helper.init();
+    QTextBrowser *browser = nullptr;
+    for (auto widget : QApplication::topLevelWidgets()) {
+        browser = widget->findChild<QTextBrowser *>(
+            QStringLiteral("inspectQtLog.output"));
+        if (browser) {
+            break;
+        }
+    }
+    if (!browser) {
+        throw std::runtime_error("Qt log inspector is missing");
+    }
+    browser->clear();
+    qWarning().noquote() << "stream" << "message\n";
+    qWarning("printf message\r\n");
+    qCritical().noquote() << "<literal>&\n  second\n\n";
+    std::thread worker([] { qWarning().noquote() << "worker record\n"; });
+    worker.join();
+    QCoreApplication::processEvents();
+    const auto expected =
+        QStringLiteral("[Warn] stream message\n[Warn] printf message\n"
+                       "[Error] <literal>&\n  second\n[Warn] worker record");
+    if (browser->toPlainText() != expected) {
+        throw std::runtime_error(
+            "Qt log records gained blank lines or lost plain text: " +
+            browser->toPlainText().toStdString());
+    }
+    helper.destory();
+    runtimeDiagnostics.clear();
+    qWarning("restored handler");
+    if (runtimeDiagnostics.size() != 1 ||
+        runtimeDiagnostics.first().message !=
+            QStringLiteral("restored handler")) {
+        throw std::runtime_error(
+            "Qt log inspector did not restore the previous handler");
+    }
+    std::cout << "Qt log record termination and plain-text rendering passed"
+              << std::endl;
+}
+
+void finishSchedulerShutdown(ScriptMachine &machine, QEventLoop &loop,
+                             bool &completed) {
+    completed = true;
+    machine.destoryMachine();
+    loop.quit();
+}
+
+void finishSchedulerReuse(QEventLoop &loop, bool &completed, int &completions) {
+    ++completions;
+    completed = true;
+    loop.quit();
+}
+
+void checkSchedulerLifecycle(ScriptMachine &machine,
+                             const QString &scriptPath) {
+    QFile script(scriptPath);
+    if (!script.open(QIODevice::WriteOnly) || script.write("return\n") != 7) {
+        throw std::runtime_error("Cannot create scheduler lifecycle fixture");
+    }
+    script.close();
+
+    for (const auto mode :
+         {ScriptMachine::Interactive, ScriptMachine::Background}) {
+        int completions = 0;
+        for (int attempt = 0; attempt < 3; ++attempt) {
+            QEventLoop loop;
+            QTimer timeout;
+            timeout.setSingleShot(true);
+            QObject::connect(&timeout, &QTimer::timeout, &loop,
+                             &QEventLoop::quit);
+            bool completed = false;
+            if (mode == ScriptMachine::Interactive) {
+                machine.executeCode(mode, QStringLiteral("return"),
+                                    [&loop, &completed, &completions](bool) {
+                                        finishSchedulerReuse(loop, completed,
+                                                             completions);
+                                    });
+            } else {
+                machine.executeScriptWithResult(
+                    mode, scriptPath, false,
+                    [&loop, &completed,
+                     &completions](ScriptMachine::ExecutionResult) {
+                        finishSchedulerReuse(loop, completed, completions);
+                    });
+            }
+            if (!completed) {
+                timeout.start(5000);
+                loop.exec();
+            }
+            if (!completed || completions != attempt + 1) {
+                throw std::runtime_error(
+                    "Reused scheduler repeated a prior completion callback");
+            }
+        }
+    }
+
+    bool interactiveCompleted = false;
+    bool fileCompleted = false;
+    machine.executeCode(
+        ScriptMachine::Interactive, QStringLiteral("return"),
+        [&interactiveCompleted](bool) { interactiveCompleted = true; });
+    machine.executeScriptWithResult(
+        ScriptMachine::Background, scriptPath, false,
+        [&fileCompleted](ScriptMachine::ExecutionResult) {
+            fileCompleted = true;
+        });
+    if (!machine.isRunning(ScriptMachine::Interactive) ||
+        !machine.isRunning(ScriptMachine::Background)) {
+        throw std::runtime_error("Scheduler fixtures did not start");
+    }
+    machine.destoryMachine();
+    QCoreApplication::processEvents();
+    if (interactiveCompleted || fileCompleted) {
+        throw std::runtime_error("A scheduler completed after VM shutdown");
+    }
+
+    for (const auto mode :
+         {ScriptMachine::Interactive, ScriptMachine::Background}) {
+        if (!machine.init()) {
+            throw std::runtime_error(
+                "Cannot reinitialize the VM after scheduler shutdown");
+        }
+        machine.finishScriptRegistration();
+        QEventLoop loop;
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+        bool completed = false;
+        auto result = ScriptMachine::ExecutionResult::Success;
+        if (mode == ScriptMachine::Interactive) {
+            machine.executeCode(mode, QStringLiteral("return"),
+                                [&machine, &loop, &completed](bool) {
+                                    finishSchedulerShutdown(machine, loop,
+                                                            completed);
+                                });
+        } else {
+            machine.executeScriptWithResult(
+                mode, scriptPath, false,
+                [&machine, &loop, &completed,
+                 &result](ScriptMachine::ExecutionResult value) {
+                    result = value;
+                    finishSchedulerShutdown(machine, loop, completed);
+                });
+        }
+        if (!completed) {
+            timeout.start(5000);
+            loop.exec();
+        }
+        if (!completed || machine.isInited() ||
+            result != ScriptMachine::ExecutionResult::Success) {
+            throw std::runtime_error(
+                "VM shutdown from a scheduler completion failed");
+        }
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QCoreApplication::processEvents();
+    }
+    std::cout << "Scheduler ownership and VM teardown passed" << std::endl;
+}
+} // namespace
+
 static void run(lua_State *state, const QString &source, bool succeeds = true) {
     QString error;
     if (qtluau::executeLuau(state, source, &error) != succeeds) {
@@ -43,6 +283,10 @@ static void run(lua_State *state, const QString &source, bool succeeds = true) {
                                  "\nSource: " + source.toStdString());
     }
 }
+
+static qint64 echoSigned64(qint64 value) { return value; }
+
+static quint64 echoUnsigned64(quint64 value) { return value; }
 
 static void checkFileSystem(lua_State *state) {
     auto &settings = SettingManager::instance();
@@ -333,6 +577,12 @@ static void checkSymbolTree(lua_State *state, bool testPlugin) {
 static void checkHostWindows() {
     auto &settings = SettingManager::instance();
     for (const bool native : {true, false}) {
+#ifndef WINGHEX_USE_FRAMELESS
+        // A build without frameless support always uses the native title bar.
+        if (!native) {
+            continue;
+        }
+#endif
         settings.setUseNativeTitleBar(native);
         QString error;
         const QByteArray xml =
@@ -425,6 +675,7 @@ int main(int argc, char **argv) {
     const bool testPlugin =
         app.arguments().contains(QStringLiteral("--test-plugin"));
     try {
+        checkRuntimeLogging(machine);
         if (!machine.init()) {
             throw std::runtime_error("Cannot initialize real host bindings");
         }
@@ -440,6 +691,27 @@ int main(int argc, char **argv) {
         {
             auto scope = machine.scriptEngine()->global().beginNamespace(
                 QStringLiteral("NativeProbe"));
+            auto integers = machine.scriptEngine()->global().beginNamespace(
+                QStringLiteral("IntegerProbe"));
+            integers.addFunction("signed64", &echoSigned64)
+                .addFunction("unsigned64", &echoUnsigned64)
+                .addConstant("minimum64", std::numeric_limits<qint64>::min())
+                .addConstant("maximum64", std::numeric_limits<qint64>::max())
+                .addConstant("unsigned_maximum64",
+                             std::numeric_limits<quint64>::max());
+            run(interactive, QStringLiteral(R"(
+local low = int64("-9223372036854775808")
+local high = int64("9223372036854775807")
+local unsignedHigh = uint64("18446744073709551615")
+assert(IntegerProbe.minimum64 == low)
+assert(IntegerProbe.maximum64 == high)
+assert(IntegerProbe.unsigned_maximum64 == unsignedHigh)
+assert(IntegerProbe.signed64(low) == low)
+assert(IntegerProbe.signed64(high) == high)
+assert(IntegerProbe.unsigned64(unsignedHigh) == unsignedHigh)
+assert(not pcall(IntegerProbe.signed64, unsignedHigh))
+assert(not pcall(IntegerProbe.unsigned64, low))
+)"));
             scope.addConstant("enabled", true)
                 .addDefinitionFile(definitionFile.fileName())
                 .addDefinitionFile(definitionFile.fileName());
@@ -717,7 +989,8 @@ print("network-scheduler-complete")
                 const auto resetCallbacks = qScopeGuard(
                     [&machine, mode] { machine.registerCallBack(mode, {}); });
                 timeout.start(5000);
-                auto *runner = new LuauScheduler(context);
+                LuauScheduler scheduler(machine, context);
+                auto *runner = &scheduler;
                 QObject::connect(runner, &LuauScheduler::sigOnFinished, &loop,
                                  [&](int status) {
                                      messages += runner->executeError();
@@ -745,6 +1018,9 @@ print("network-scheduler-complete")
                          "cleanup passed\n";
         }
         checkHostWindows();
+        checkQtLogRecords();
+        checkSchedulerLifecycle(machine, directory.filePath(QStringLiteral(
+                                             "scheduler-lifecycle.luau")));
         machine.destoryMachine();
         std::cout << "Host input and helper checks passed\n";
         return 0;

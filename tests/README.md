@@ -1,7 +1,7 @@
 # 回归测试 / Regression tests
 
-各套测试独立构建，直接使用仓库内的生产代码，不需要先构建完整应用。所有命令均从仓库根目录运行，构建产物应放在源码目录之外。
-Each suite builds independently against production code in this repository, without building the full application first. Run the commands from the repository root and keep build artifacts outside the source tree.
+各套测试直接使用仓库内的生产代码；独立测试不需要先构建完整应用，无头进程测试复用完整宿主构建。所有命令均从仓库根目录运行，构建产物应放在源码目录之外。
+Suites test production code in this repository; standalone tests need no full application build, while headless process tests reuse a completed host build. Run the commands from the repository root and keep build artifacts outside the source tree.
 
 ## 测试入口 / Test suites
 
@@ -18,6 +18,7 @@ Each suite builds independently against production code in this repository, with
 | [luaulsp](luaulsp/README.md) | Luau 诊断、补全、类型与模块解析 / Luau diagnostics, completion, types, and module resolution | CTest |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |
 | [plugindocument](plugindocument/README.md) | 插件文档对象、句柄生命周期与宿主集成 / Plugin document objects, handle lifecycle and host integration | Qt Test / Python |
+| [headless](headless/README.md) | 无头脚本、服务生命周期、标准流、socket 和插件注册 / Headless scripts, service lifetime, standard streams, sockets and plugin registration | CTest + Python |
 | [i18n](i18n/README.md) | 语言加载、回退、插件翻译与 UI 尺寸 / Language loading, fallback, plugin translation, and UI sizing | Python |
 
 ## 环境与运行 / Environment and execution
@@ -45,3 +46,7 @@ These standalone tests do not replace a full application build or manual interac
 - [ThemeManager / 主题与标准图标](theme/README.md)：独立验证深浅主题、高 DPI、
   图标状态及 SDK 调用。Standalone checks for themes, high DPI, icon states,
   and SDK calls.
+
+独立 diff、脚本编辑及无头模式的集成验证见 [headless](headless/README.md)。
+
+See [headless](headless/README.md) for integration checks of independent diff, script editing and headless modes.

@@ -19,6 +19,7 @@
 #define LUAUSCHEDULER_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "lua.h"
 
@@ -26,6 +27,8 @@
 
 struct LuauThread;
 class LuauDebugger;
+class ScriptExecution;
+class ScriptMachine;
 
 struct LuauThreadData {
     LuauThread *parent = nullptr;
@@ -34,6 +37,7 @@ struct LuauThreadData {
     quint64 timeOutTime = 0;
     LuauDebugger *debugger = nullptr;
     int mode = 0;
+    ScriptExecution *execution = nullptr;
 };
 
 struct LuauThread {
@@ -67,12 +71,13 @@ struct LuauThread {
 class LuauScheduler final : public QObject {
     Q_OBJECT
 public:
-    explicit LuauScheduler(LuauThread *th);
-    virtual ~LuauScheduler();
+    explicit LuauScheduler(ScriptMachine &machine, LuauThread *th,
+                           QObject *parent = nullptr);
+    virtual ~LuauScheduler() override;
 
 public:
-    void start();
-    void requestStop();
+    void start(int arguments = 0);
+    void stop();
 
     QString executeError() const;
 
@@ -83,8 +88,14 @@ private Q_SLOTS:
     void step();
 
 private:
+    void finish(int status);
+
+private:
+    ScriptMachine &m_machine;
     LuauThread *m_th;
+    QTimer m_timer;
     QString m_executeError;
+    int m_arguments = 0;
 };
 
 #endif // LUAUSCHEDULER_H

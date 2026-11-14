@@ -67,7 +67,12 @@ private:
     };
 
 public:
-    explicit ScriptingDialog(SettingDialog *setdlg, QWidget *parent = nullptr);
+    enum class CloseBehavior { HideWithOpenEditors, CloseEditors };
+
+    explicit ScriptingDialog(
+        SettingDialog *setdlg,
+        CloseBehavior closeBehavior = CloseBehavior::HideWithOpenEditors,
+        QWidget *parent = nullptr);
     virtual ~ScriptingDialog();
 
     void initConsole();
@@ -118,8 +123,8 @@ private:
     QMessageBox::StandardButton saveRequest();
 
 private:
-    void addPerformClickShortcut(QToolButton *btn,
-                                 const QKeySequence &shortcut) {
+    inline void addPerformClickShortcut(QToolButton *btn,
+                                        const QKeySequence &shortcut) {
         Q_ASSERT(btn && !shortcut.isEmpty());
         auto shortCut = new QShortcut(shortcut, this);
         shortCut->setContext(Qt::WindowShortcut);
@@ -243,6 +248,8 @@ private:
 
 public:
     ScriptEditor *openFile(const QString &filename, bool *opened = nullptr);
+    ScriptEditor *openFileWithFeedback(const QString &filename,
+                                       bool *opened = nullptr);
 
     void addRecentFile(ScriptEditor *editor, const QString &fileName);
     void updateRecentFile(ScriptEditor *editor);
@@ -313,6 +320,7 @@ private:
     void reportBusyScriptRun();
 
 private:
+    const CloseBehavior m_closeBehavior;
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
     QStatusBar *m_status = nullptr;

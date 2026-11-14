@@ -36,8 +36,6 @@ extern "C" int luaopen_cffi(lua_State *L);
 #include <QScopeGuard>
 #include <QTimer>
 
-LUAU_FASTFLAG(LuauIntegerType2)
-
 namespace {
 void inspectMethods(lua_State *L, int index, std::set<const void *> &visited,
                     std::set<std::string> &invalid) {
@@ -260,7 +258,6 @@ int runRegistrationTest() {
     qputenv(environmentNames[2], "999999999999999999999999");
     qputenv(environmentNames[3], QString::fromUtf8("中文 😀").toUtf8());
     lua_State *L = luaL_newstate();
-    FFlag::LuauIntegerType2.value = true;
     luaL_openlibs(L);
     WingLuauRequire require;
     if (!require.initRequire(L, WingLuauRequire::Options{})) {
@@ -292,7 +289,7 @@ int runRegistrationTest() {
         return 1;
     }
     const auto modules = bindings::moduleFiles();
-    if (modules.size() != 3 || !modules.contains(QStringLiteral("qt")) ||
+    if (!modules.contains(QStringLiteral("qt")) ||
         !modules.contains(QStringLiteral("cffi")) ||
         !modules.contains(QStringLiteral("network"))) {
         std::cerr << "Required module catalog is incorrect\n";
@@ -351,7 +348,7 @@ int runRegistrationTest() {
     bindings::bind_toast_toast(L, qtluau::NativeCallbacks_0_toast{});
     bindings::bind_service_service(L, qtluau::NativeCallbacks_1_service{});
     qtluau::NativeCallbacks_0_service callbacks;
-    callbacks.existsServiceHost = [](const QString &puid) {
+    callbacks.existsServiceHost = [](const QString &puid, lua_State *) {
         return puid == QStringLiteral("example");
     };
     bindings::bind_service_service(L, callbacks);
@@ -617,7 +614,6 @@ assert(path == "" and typeof(selected_filter) == "string")
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
     if (app.arguments().contains(QStringLiteral("--eager-baseline"))) {
-        FFlag::LuauIntegerType2.value = true;
         auto *state = luaL_newstate();
         luaL_openlibs(state);
         QElapsedTimer timer;

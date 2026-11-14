@@ -15,14 +15,16 @@
 ** =============================================================================
 */
 
-#include "wingplugincert.h"
+#include "wingcert.h"
 
 #include <QByteArray>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSslConfiguration>
 #include <QSslKey>
+#include <QSslSocket>
 #include <QString>
 
 #include <openssl/evp.h>
@@ -72,15 +74,32 @@ EVP_PKEY *loadPkeyFromCertificate(const QSslCertificate &cert) {
     return pkey;
 }
 
+bool matchingKey(const QSslCertificate &cert, const QByteArray &key) {
+    const auto pem = cert.toPem();
+    BIO *certBio = BIO_new_mem_buf(pem.constData(), int(pem.size()));
+    BIO *keyBio = BIO_new_mem_buf(key.constData(), int(key.size()));
+    X509 *certificate =
+        certBio ? PEM_read_bio_X509(certBio, nullptr, nullptr, nullptr)
+                : nullptr;
+    EVP_PKEY *privateKey =
+        keyBio ? PEM_read_bio_PrivateKey(keyBio, nullptr, nullptr, nullptr)
+               : nullptr;
+    const bool matches = certificate && privateKey &&
+                         X509_check_private_key(certificate, privateKey) == 1;
+    EVP_PKEY_free(privateKey);
+    X509_free(certificate);
+    BIO_free(keyBio);
+    BIO_free(certBio);
+    return matches;
+}
 } // namespace
 
-WingPluginCert &WingPluginCert::instance() {
-    static WingPluginCert ins;
+WingCert &WingCert::instance() {
+    static WingCert ins;
     return ins;
 }
 
-bool WingPluginCert::verify(const QFileInfo &plg,
-                            const QByteArray &fprint) const {
+bool WingCert::verify(const QFileInfo &plg, const QByteArray &fprint) const {
     if (!m_cs.contains(fprint)) {
         return false;
     }
@@ -125,7 +144,7 @@ bool WingPluginCert::verify(const QFileInfo &plg,
     return verify(data, sig, c);
 }
 
-QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
+QFileInfo WingCert::certLocation(const QByteArray &fprint) {
     auto c = cert(fprint);
     if (c.isNull()) {
         return {};
@@ -133,34 +152,34 @@ QFileInfo WingPluginCert::certLocation(const QByteArray &fprint) {
     return certLocation(c);
 }
 
-QFileInfo WingPluginCert::certLocation(const QSslCertificate &cert) {
+QFileInfo WingCert::certLocation(const QSslCertificate &cert) {
     return m_certs.value(cert);
 }
 
-QSslCertificate WingPluginCert::cert(const QByteArray &fprint) {
+QSslCertificate WingCert::cert(const QByteArray &fprint) {
     return m_cs.value(fprint);
 }
 
-bool WingPluginCert::isSysCert(const QSslCertificate &cert) const {
+bool WingCert::isSysCert(const QSslCertificate &cert) const {
     if (m_sysCert.isNull()) {
         return false;
     }
     return m_sysCert == cert;
 }
 
-QHash<QSslCertificate, QFileInfo> WingPluginCert::certificates() const {
+QHash<QSslCertificate, QFileInfo> WingCert::certificates() const {
     return m_certs;
 }
 
-bool WingPluginCert::isValidFingerPrint(const QSslCertificate &cert) const {
+bool WingCert::isValidFingerPrint(const QSslCertificate &cert) const {
     return m_cs.contains(fingerPrint(cert));
 }
 
-QByteArray WingPluginCert::fingerPrint(const QSslCertificate &cert) {
+QByteArray WingCert::fingerPrint(const QSslCertificate &cert) {
     return cert.digest(QCryptographicHash::Sha256);
 }
 
-bool WingPluginCert::isValidCert(const QSslCertificate &cert) {
+bool WingCert::isValidCert(const QSslCertificate &cert) {
     // valid crt file but it's invalid
     if (cert.isNull() || cert.isBlacklisted()) {
         return false;
@@ -173,8 +192,8 @@ bool WingPluginCert::isValidCert(const QSslCertificate &cert) {
     return true;
 }
 
-bool WingPluginCert::verify(const QByteArray &file, const QByteArray &sig,
-                            const QSslCertificate &cert) const {
+bool WingCert::verify(const QByteArray &file, const QByteArray &sig,
+                      const QSslCertificate &cert) const {
     if (!isValidCert(cert)) {
         return false;
     }
@@ -208,7 +227,7 @@ bool WingPluginCert::verify(const QByteArray &file, const QByteArray &sig,
     return ok;
 }
 
-WingPluginCert::WingPluginCert() {
+WingCert::WingCert() {
     // load internal cert
     QFile f(QStringLiteral(":/com.wingsummer.winghex/src/WingCloudStudio.crt"));
     if (f.open(QFile::ReadOnly)) {
@@ -267,4 +286,83 @@ WingPluginCert::WingPluginCert() {
         m_certs.insert(cert, c);
         m_cs.insert(fingerPrint(cert), cert);
     }
+}
+
+bool WingCert::isTrustedCertificate(const QSslCertificate &certificate) const {
+    return isValidFingerPrint(certificate) && isValidCert(certificate);
+}
+
+QList<QSslCertificate> WingCert::trustedCertificates() const {
+    QList<QSslCertificate> trusted;
+    for (const auto &certificate : m_cs) {
+        if (isValidCert(certificate)) {
+            trusted.append(certificate);
+        }
+    }
+    return trusted;
+}
+
+bool WingCert::verifyPeer(const QSslCertificate &certificate,
+                          const QList<QSslError> &errors) const {
+    if (!isTrustedCertificate(certificate)) {
+        return false;
+    }
+    // A registered leaf is explicitly pinned, not implicitly trusted through
+    // system CAs. Only chain-trust errors can be replaced by that pin.
+    for (const auto &error : errors) {
+        switch (error.error()) {
+        case QSslError::SelfSignedCertificate:
+        case QSslError::SelfSignedCertificateInChain:
+        case QSslError::UnableToGetLocalIssuerCertificate:
+        case QSslError::UnableToVerifyFirstCertificate:
+        case QSslError::CertificateUntrusted:
+            break;
+        default:
+            return false;
+        }
+    }
+    return true;
+}
+
+WingCert::ServerConfigurationResult
+WingCert::serverConfiguration(const QString &certificateFile,
+                              const QString &keyFilePath) const {
+    if (!QSslSocket::supportsSsl()) {
+        return {ConfigurationError::BackendUnavailable,
+                {},
+                QStringLiteral("TLS backend is unavailable")};
+    }
+    QFile certificate(certificateFile);
+    QFile keyFile(keyFilePath);
+    if (!certificate.open(QIODevice::ReadOnly) ||
+        !keyFile.open(QIODevice::ReadOnly) ||
+        certificate.size() > MaxCertSize || keyFile.size() > MaxCertSize) {
+        return {ConfigurationError::FileError,
+                {},
+                QStringLiteral(
+                    "Cannot read service TLS certificate or private key")};
+    }
+    const auto chain = QSslCertificate::fromData(certificate.readAll());
+    const auto keyData = keyFile.readAll();
+    QSslKey key;
+    for (const auto algorithm : {QSsl::Rsa, QSsl::Ec, QSsl::Dsa}) {
+        key = QSslKey(keyData, algorithm);
+        if (!key.isNull()) {
+            break;
+        }
+    }
+    if (chain.isEmpty() || !isValidCert(chain.first()) || key.isNull() ||
+        !matchingKey(chain.first(), keyData)) {
+        return {ConfigurationError::InvalidCredentials,
+                {},
+                QStringLiteral("Invalid, expired or mismatched service TLS "
+                               "certificate and private key")};
+    }
+    auto configuration = QSslConfiguration::defaultConfiguration();
+    configuration.setProtocol(QSsl::TlsV1_2OrLater);
+    configuration.setLocalCertificateChain(chain);
+    configuration.setPrivateKey(key);
+    configuration.setCaCertificates(trustedCertificates());
+    configuration.setPeerVerifyMode(QSslSocket::VerifyPeer);
+    return {ConfigurationError::None, configuration, {}};
 }

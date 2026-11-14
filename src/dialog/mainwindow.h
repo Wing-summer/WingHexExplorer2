@@ -18,6 +18,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <memory>
+
 #include <QFutureWatcher>
 #include <QMainWindow>
 #include <QPixmap>
@@ -57,6 +59,7 @@
 #include "utilities.h"
 
 class PluginSystem;
+class ScriptEnvironment;
 
 class MainWindow : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
@@ -439,7 +442,7 @@ private:
 
     /* =============== some templates for async execution ===============*/
     template <typename ReturnType, typename ExecFunc, typename FinishFunc>
-    void ExecAsync(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
+    inline void ExecAsync(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
         QFutureWatcher<ReturnType> *watcher = new QFutureWatcher<ReturnType>();
 
         QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished, this,
@@ -454,7 +457,7 @@ private:
     }
 
     template <typename ExecFunc, typename FinishFunc>
-    void ExecAsync_VOID(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
+    inline void ExecAsync_VOID(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
         QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
 
         QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
@@ -467,7 +470,8 @@ private:
         watcher->setFuture(fu);
     }
 
-    static void blinkWidget(QWidget *widget, int timesLeft, int interval) {
+    inline static void blinkWidget(QWidget *widget, int timesLeft,
+                                   int interval) {
         Q_ASSERT(widget);
         if (timesLeft <= 0) {
             widget->setEnabled(true);
@@ -586,6 +590,9 @@ private:
     QHash<IWingPlugin *, QList<QSharedPointer<WingEditorViewWidget::Creator>>>
         m_editorViewWidgets;
     QList<SettingPage *> m_settingPages;
+
+    // Also releases partially initialized services if construction fails.
+    std::unique_ptr<ScriptEnvironment> m_scriptEnvironment;
 
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;

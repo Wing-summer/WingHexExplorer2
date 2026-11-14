@@ -17,13 +17,11 @@
 
 #include "appmanager.h"
 
-#include <QFont>
 #include <QScopeGuard>
 #include <QSettings>
 
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
-#include <KSyntaxHighlighting/Repository>
 
 #include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
@@ -41,6 +39,7 @@
 #include "settings/settings.h"
 #include "startupfeedback.h"
 #include "startuptrace.h"
+#include "uiservices.h"
 #include "utilities.h"
 
 AppManager *AppManager::m_instance = nullptr;
@@ -48,16 +47,19 @@ AppManager *AppManager::m_instance = nullptr;
 AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
     StartupTrace::mark("application.qt_constructed");
-    StartupTrace::PhaseTimer startupPhases;
     ASSERT_SINGLETON;
 
     m_instance = this;
+}
 
+void AppManager::initialize(const QStringList &files) {
+    StartupTrace::PhaseTimer startupPhases;
     LanguageManager::instance();
     InspectQtLogHelper::instance().init();
     CrashHandler::instance().init();
 
-    auto args = arguments();
+    auto args = files;
+    args.prepend(applicationFilePath());
     if (this->isRunning()) {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::WriteOnly);
@@ -73,20 +75,13 @@ AppManager::AppManager(int &argc, char *argv[])
     startupPhases.checkpoint("application.language_and_services");
     auto &set = SettingManager::instance();
     Logger::instance();
-    QFont font(set.appFontFamily(), set.appfontSize());
-    setFont(font);
-
     auto &theme = ThemeManager::instance();
     theme.setStyleSheetDeferred(true);
     auto finishStyle =
         qScopeGuard([&theme] { theme.setStyleSheetDeferred(false); });
-    theme.setTheme(ThemeManager::Theme(set.themeID()));
+    initializeUiServices(true);
 
     startupPhases.checkpoint("application.settings_and_theme");
-
-    // add luau highlight support
-    auto &repo = WingCodeEdit::syntaxRepo();
-    repo.addCustomSearchPath(QStringLiteral(":/WingScript/Luau"));
 
     auto dontSplash = set.dontUseSplash();
     QString splashHistoryKey;
@@ -111,8 +106,6 @@ AppManager::AppManager(int &argc, char *argv[])
     for (const auto &cmd : cmdlist) {
         his.add(cmd);
     }
-
-    m_timer.start();
 
     startupPhases.checkpoint("application.syntax_history_and_splash");
     m_w = new MainWindow(m_splash);
@@ -195,7 +188,9 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
-    ScriptMachine::instance().destoryMachine();
+    if (!m_w) {
+        return;
+    }
     InspectQtLogHelper::instance().destory();
     CommandHistoryManager::save(QConsoleWidget::history().strings);
 
@@ -206,8 +201,6 @@ AppManager::~AppManager() {
 AppManager *AppManager::instance() { return m_instance; }
 
 MainWindow *AppManager::mainWindow() const { return m_w; }
-
-quint64 AppManager::currentMSecsSinceEpoch() { return m_timer.elapsed(); }
 
 ErrFile AppManager::openFile(const QString &file, bool autoDetect,
                              bool skipScripting, bool *isWorkSpace) {

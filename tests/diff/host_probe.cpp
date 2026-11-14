@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     CHECK(right->hexEditor()->document()->insert(0, bytes));
     auto clone = std::unique_ptr<EditorView>(left->clone());
     CHECK(clone);
-    QPointer<DiffDialog> dialog = new DiffDialog(clone.get());
+    QPointer<DiffDialog> dialog = new DiffDialog();
     bool settingsOpened = false;
     bool settingValuesFit = false;
     QObject::connect(
@@ -149,11 +149,10 @@ int main(int argc, char **argv) {
             configuration->showConfig(page);
             settingsOpened = true;
         });
-    for (auto button : dialog->findChildren<QToolButton *>()) {
-        if (button->text() == QStringLiteral("Comparison settings...")) {
-            button->click();
-        }
-    }
+    const auto settingsButton =
+        dialog->findChild<QToolButton *>(QStringLiteral("diff.settings"));
+    CHECK(settingsButton);
+    settingsButton->click();
     CHECK(settingsOpened && settingValuesFit);
     CHECK(configuration->findChild<QStackedWidget *>()->currentWidget() ==
           page);
@@ -164,15 +163,19 @@ int main(int argc, char **argv) {
     auto second =
         dialog->findChild<QComboBox *>(QStringLiteral("diff.right.source"));
     CHECK(first && second && first->count() == 2 && second->count() == 2);
+    for (const auto name : {"diff.left.open", "diff.right.open",
+                            "diff.left.close", "diff.right.close"}) {
+        CHECK(!dialog->findChild<QToolButton *>(QString::fromLatin1(name)));
+    }
     auto view = dialog->findChild<QHexView *>(QStringLiteral("diff.left.view"));
-    CHECK(view && view->document() == left->hexEditor()->document());
+    CHECK(first->currentIndex() == -1 && second->currentIndex() == -1);
+    CHECK(view && view->document() != left->hexEditor()->document());
     CHECK(view->cursor() != left->hexEditor()->cursor());
     CHECK(view->isReadOnly() && !left->hexEditor()->isReadOnly());
     auto run = dialog->findChild<QToolButton *>(QStringLiteral("diff.compare"));
     auto status = dialog->findChild<QLabel *>(QStringLiteral("diff.status"));
     auto progress =
         dialog->findChild<QProgressBar *>(QStringLiteral("diff.progress"));
-    auto state = dialog->findChild<QLabel *>(QStringLiteral("diff.state"));
     QToolButton *automatic = nullptr;
     QToolButton *cancel = nullptr;
     for (auto button : dialog->findChildren<QToolButton *>()) {
@@ -183,12 +186,38 @@ int main(int argc, char **argv) {
             cancel = button;
         }
     }
-    CHECK(run && status && state && progress && automatic && cancel &&
-          run->isEnabled());
+    CHECK(run && status && progress && automatic && cancel &&
+          !run->isEnabled());
+    CHECK(automatic->isChecked());
+    QElapsedTimer unselected;
+    unselected.start();
+    CHECK(waitFor([&] { return unselected.elapsed() > 650; }));
+    CHECK(first->currentIndex() == -1 && second->currentIndex() == -1);
+    CHECK(!progress->isVisible());
+    const auto leftIndex = first->findText(left->infoFileName());
+    const auto rightIndex = second->findText(right->infoFileName());
+    CHECK(leftIndex >= 0 && rightIndex >= 0);
+    first->setCurrentIndex(leftIndex);
+    CHECK(view->document() == left->hexEditor()->document());
+    QElapsedTimer oneSource;
+    oneSource.start();
+    CHECK(waitFor([&] { return oneSource.elapsed() > 650; }));
+    CHECK(!run->isEnabled() && !progress->isVisible());
+    second->setCurrentIndex(second->findText(left->infoFileName()));
+    QElapsedTimer sameSource;
+    sameSource.start();
+    CHECK(waitFor([&] { return sameSource.elapsed() > 650; }));
+    CHECK(!run->isEnabled() && !progress->isVisible());
+    second->setCurrentIndex(rightIndex);
+    CHECK(waitFor([&] {
+        return run->isEnabled() &&
+               status->text().startsWith(QStringLiteral("Complete"));
+    }));
+    CHECK(dialog->findChild<DiffResultModel *>()->rowCount() > 2048);
     CHECK(!progress->isVisible());
     run->click();
     CHECK(progress->isVisible());
-    CHECK(state->text() == QStringLiteral("Comparing..."));
+    CHECK(!run->isEnabled());
     CHECK(waitFor([&] {
         return run->isEnabled() &&
                status->text().startsWith(QStringLiteral("Complete"));
@@ -197,7 +226,7 @@ int main(int argc, char **argv) {
     CHECK(model && model->rowCount() > 2048);
     const auto rows = model->rowCount();
     CHECK(!progress->isVisible());
-    CHECK(state->text().startsWith(QStringLiteral("Comparison complete")));
+    CHECK(status->text().startsWith(QStringLiteral("Complete")));
     auto document = left->hexEditor()->document();
     document->setBaseAddress(0x1000);
     document->setMetabgVisible(!document->metabgVisible());
@@ -276,18 +305,18 @@ int main(int argc, char **argv) {
     CHECK(left->hexEditor()->document()->read(0, 20) == before);
     CHECK(left->hexEditor()->document()->replace(0, QByteArray("Z")));
     CHECK(model->rowCount() == 0);
-    CHECK(state->text().contains(QStringLiteral("waiting")));
+    CHECK(!progress->isVisible() && automatic->isChecked());
     dialog->grab().save(QStringLiteral("/tmp/wing-diff-state-waiting.png"));
     CHECK(waitFor([&] {
         return run->isEnabled() && model->rowCount() > 0 &&
-               state->text().startsWith(QStringLiteral("Comparison complete"));
+               status->text().startsWith(QStringLiteral("Complete"));
     }));
     CHECK(!progress->isVisible());
     automatic->click();
     CHECK(!automatic->isChecked());
     CHECK(document->replace(1, QByteArray("Q")));
     CHECK(model->rowCount() == 0);
-    CHECK(state->text().contains(QStringLiteral("out of date")));
+    CHECK(!automatic->isChecked() && !progress->isVisible());
     QElapsedTimer paused;
     paused.start();
     CHECK(waitFor([&] { return paused.elapsed() > 650; }));
@@ -297,7 +326,9 @@ int main(int argc, char **argv) {
     cancel->click();
     CHECK(waitFor([&] { return run->isEnabled() && !progress->isVisible(); }));
     CHECK(!automatic->isChecked());
-    CHECK(state->text().startsWith(QStringLiteral("Cancelled")));
+    CHECK(waitFor([&] {
+        return status->text().startsWith(QStringLiteral("Cancelled"));
+    }));
     // Closing a selected editor detaches its document even if a clone survives.
     left.reset();
     CHECK(waitFor([&] {

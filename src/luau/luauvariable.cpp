@@ -142,7 +142,7 @@ QString LuauVariable::setValue(LuauScope scope, const QString &value) {
             // -4: env
             lua_checkstack(m_state, 2);
             if (m_index.has_value()) {
-                lua_pushinteger(m_state, m_index.value());
+                lua_pushnumber(m_state, m_index.value());
             } else {
                 lua_pushstring(m_state, m_name.toUtf8());
             }
@@ -315,15 +315,11 @@ LuauVariable::Ptr LuauVariable::addField(lua_State *L,
     int keyType = lua_type(L, -2);
     auto fieldName = LuauTypes::toString(L, -2);
     if (keyType == LUA_TNUMBER) {
-        fieldName = QStringLiteral("[%1]").arg(lua_tointeger(L, -2));
-    } else if (keyType == LUA_TINTEGER) {
-        fieldName = QStringLiteral("[%1]").arg(lua_tointeger64(L, -2, nullptr));
+        fieldName = QStringLiteral("[%1]").arg(fieldName);
     }
     auto variable = registry->createVariable(L, fieldName, scope.getLevel());
     if (keyType == LUA_TNUMBER) {
-        variable->m_index = lua_tointeger(L, -2);
-    } else if (keyType == LUA_TINTEGER) {
-        variable->m_index = static_cast<int>(lua_tointeger64(L, -2, nullptr));
+        variable->m_index = lua_tonumber(L, -2);
     }
     return variable;
 }

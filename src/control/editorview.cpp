@@ -28,6 +28,7 @@
 #include "WingPlugin/wingplugincalls_p.h"
 
 #include "class/application/logger.h"
+#include "class/file/documentloader.h"
 #include "class/file/workspacemanager.h"
 #include "class/plugin/pluginsystem.h"
 #include "class/settings/settingmanager.h"
@@ -417,42 +418,17 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
         return ErrFile::ClonedFile;
     }
 
-    QFileInfo info(filename);
-    if (!info.exists()) {
-        return ErrFile::NotExist;
+    auto loaded = loadFileDocument(filename);
+    if (loaded.error != ErrFile::Success) {
+        return loaded.error;
     }
-
-    if (Q_UNLIKELY(!info.isReadable())) {
-        return ErrFile::Permission;
-    }
-
-    if (!info.isFile()) {
-        return ErrFile::InvalidFormat;
-    }
-
-    bool retry;
-    auto readonly = !info.isWritable();
-    QHexDocument *p;
-    do {
-        retry = false;
-        p = QHexDocument::fromFile(filename, readonly);
-        if (Q_UNLIKELY(p == nullptr)) {
-            if (!readonly) {
-                // retry to open with readonly
-                readonly = true;
-                retry = true;
-                continue;
-            }
-            return ErrFile::Permission;
-        }
-    } while (retry);
-
-    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-    m_hex->setLockedFile(readonly);
+    auto p = loaded.document.data();
+    m_hex->setDocument(loaded.document);
+    m_hex->setLockedFile(loaded.readOnly);
     m_hex->setKeepSize(true);
 
     m_docType = DocumentType::File;
-    auto fName = info.absoluteFilePath();
+    auto fName = loaded.path;
     m_isNewFile = false;
     m_checkSumInvalid = false;
     m_workSpaceName.clear();
@@ -1201,7 +1177,7 @@ bool EditorView::checkErrAndReport(const QObject *sender, const char *func) {
 
 bool EditorView::checkThreadAff() {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Not allowed operation in non-ui thread"));
+        qWarning("Operation is not allowed outside the GUI thread");
         return false;
     }
     return true;

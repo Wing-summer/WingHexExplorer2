@@ -287,8 +287,8 @@
           "pass_lua_state": true
         }
       ],
-      "integer_type": "integer",
-      "unsigned_integer_type": "integer | _qtluau_QVariant"
+      "integer_type": "number | Int64",
+      "unsigned_integer_type": "number | UInt64"
     },
     {
       "headers": [
@@ -448,7 +448,7 @@
           "name": "elapsed_time",
           "parameters": [],
           "returns": [
-            "integer"
+            "number | Int64"
           ],
           "native": "&ScriptMachine::debugElapsedTime"
         }
@@ -590,6 +590,9 @@
         ],
         "guard": "ScriptFileSystem::checkResourceAccess",
         "guard_selector": "local_endpoint_access"
+      },
+      "QTimer": {
+        "context_owned": true
       }
     },
     "modules": {
@@ -618,44 +621,47 @@
         "ssl_key": "QSslKey",
         "ssl_error": "QSslError",
         "ssl_cipher": "QSslCipher"
+      },
+      "core": {
+        "timer": "QTimer"
       }
     },
     "type_annotations": {
       "qint64": {
-        "argument": "number | integer",
-        "result": "integer"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | Int64"
       },
       "qlonglong": {
-        "argument": "number | integer",
-        "result": "integer"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | Int64"
       },
       "long long": {
-        "argument": "number | integer",
-        "result": "integer"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | Int64"
       },
       "quint64": {
-        "argument": "number | integer | _qtluau_QVariant",
-        "result": "integer | _qtluau_QVariant"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | UInt64"
       },
       "qulonglong": {
-        "argument": "number | integer | _qtluau_QVariant",
-        "result": "integer | _qtluau_QVariant"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | UInt64"
       },
       "unsigned long long": {
-        "argument": "number | integer | _qtluau_QVariant",
-        "result": "integer | _qtluau_QVariant"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | UInt64"
       },
       "QByteArray": {
         "argument": "string | bytearray",
         "result": "string"
       },
       "qintptr": {
-        "argument": "number | integer",
-        "result": "integer"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | Int64"
       },
       "quintptr": {
-        "argument": "number | integer | _qtluau_QVariant",
-        "result": "integer | _qtluau_QVariant"
+        "argument": "number | Int64 | UInt64",
+        "result": "number | UInt64"
       }
     },
     "guard_selectors": {
@@ -815,6 +821,9 @@
     },
     "network": {
       "require": true
+    },
+    "core": {
+      "require": true
     }
   },
   "lua_c_apis": [
@@ -833,6 +842,8 @@
     "ustring": "values",
     "bytearray": "values",
     "variant": "values",
+    "int64": "values",
+    "uint64": "values",
     "color": "values",
     "url": "values",
     "char": "values",

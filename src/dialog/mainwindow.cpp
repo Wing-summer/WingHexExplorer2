@@ -50,7 +50,9 @@
 #include "class/application/appmanager.h"
 #include "class/application/inspectqtloghelper.h"
 #include "class/application/logger.h"
+#include "class/application/scriptenvironment.h"
 #include "class/application/startuptrace.h"
+#include "class/application/uiservices.h"
 #include "class/application/wingupdater.h"
 #include "class/file/workspacemanager.h"
 #include "class/layout/layoutmanager.h"
@@ -111,6 +113,7 @@ void configureTableColumns(QTableViewExt *view,
 } // namespace
 
 MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
+    m_scriptEnvironment = std::make_unique<ScriptEnvironment>();
     QPointer<SplashDialog> splash(splashDialog);
     StartupTrace::PhaseTimer startupPhases;
     this->setUpdatesEnabled(false);
@@ -277,8 +280,7 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
                 }
             });
 
-    plg.setMainWindow(this);
-    plg.loadAllPlugins();
+    m_scriptEnvironment->loadPlugins(this);
     startupPhases.checkpoint("mainwindow.plugins");
 
     // recent file manager init
@@ -337,9 +339,9 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
     // functions. Code completions of them will be not worked out.
     if (set.scriptEnabled()) {
         auto &sm = ScriptMachine::instance();
-        auto smr = sm.init();
+        auto smr = ScriptEnvironment::initializeMachine();
         if (smr) {
-            smr = plg.doneRegisterScriptObj();
+            smr = ScriptEnvironment::finishRegistration();
         }
         if (smr) {
             // register the callback for output error message
@@ -500,6 +502,15 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
 }
 
 MainWindow::~MainWindow() {
+    delete m_scriptDialog;
+    m_scriptDialog = nullptr;
+    if (m_scriptObjView) {
+        m_scriptObjView->dataModel()->resetRoot();
+    }
+    m_scriptObjReg.clear();
+    // Plugins may still call host APIs while unloading. Keep the window's
+    // members alive until the VM and plugins have both been released.
+    m_scriptEnvironment->shutdown();
     qDeleteAll(m_hexContextMenu);
     Logger::instance().disconnect();
 }
@@ -1983,34 +1994,7 @@ void MainWindow::ensureScriptSettingsDialog() {
     if (m_scriptsetdlg) {
         return;
     }
-    auto &set = SettingManager::instance();
-    // script settings
-    m_scriptsetdlg =
-        new SettingDialog(ThemeManager::instance().standardIcon(
-                              ThemeManager::StandardIcon::ScriptSettings),
-                          tr("Scripting environment"), this);
-    auto edit = new QEditConfig(false, m_scriptsetdlg);
-    m_scriptsetdlg->addPage(edit);
-    connect(edit, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    edit = new QEditConfig(true, m_scriptsetdlg);
-    m_scriptsetdlg->addPage(edit);
-    connect(edit, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    auto lspset = new LspSettingDialog(this);
-    m_scriptsetdlg->addPage(lspset);
-    connect(lspset, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,
-            QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
-    m_scriptsetdlg->build();
-
-    const auto ge = set.settingsScriptLayout();
-    if (!ge.isEmpty()) {
-        m_scriptsetdlg->restoreLayout(ge);
-    }
-    connect(m_scriptsetdlg, &SettingDialog::sigOnClosing, this, [this]() {
-        SettingManager::instance().setSettingsScriptLayout(
-            m_scriptsetdlg->saveLayout());
-    });
+    m_scriptsetdlg = createScriptSettingsDialog(this);
 }
 
 void MainWindow::installPluginEditorWidgets() {
@@ -3298,7 +3282,7 @@ void MainWindow::on_scriptwindow() { createScriptDialog(nullptr); }
 
 void MainWindow::on_compare() {
     if (!m_diffDialog) {
-        m_diffDialog = new DiffDialog(currentEditor(), this);
+        m_diffDialog = new DiffDialog(this);
         connect(m_diffDialog.data(), &DiffDialog::sigOnSettingsRequested, this,
                 &MainWindow::on_settingCompare);
     }
@@ -3482,10 +3466,9 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         for (const auto &w : p->second) {
             auto v = w->create(editor);
             if (v->creator() != w) {
-                Logger::warning(
-                    QStringLiteral(
-                        "[%1|%2] No matching creator with eidtor view widget")
-                        .arg(w->id(), w->name()));
+                Logger::warning(tr("[%1|%2] The editor view widget has an "
+                                   "unexpected creator")
+                                    .arg(w->id(), w->name()));
                 v->deleteLater();
                 continue;
             }
@@ -4175,7 +4158,7 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
 
 void MainWindow::openScriptFile(const QString &filename, SplashDialog *splash) {
     createScriptDialog(splash);
-    if (auto e = m_scriptDialog->openFile(filename)) {
+    if (auto e = m_scriptDialog->openFileWithFeedback(filename)) {
         m_scriptDialog->addRecentFile(e, filename);
     }
     QTimer::singleShot(100, this, [this] { m_scriptDialog->raise(); });
@@ -4594,7 +4577,9 @@ void MainWindow::createScriptDialog(SplashDialog *d) {
         splash->setInfoText(tr("Initializing script editor"));
 
         ensureScriptSettingsDialog();
-        m_scriptDialog = new ScriptingDialog(m_scriptsetdlg, this);
+        m_scriptDialog = new ScriptingDialog(
+            m_scriptsetdlg, ScriptingDialog::CloseBehavior::HideWithOpenEditors,
+            this);
         connect(m_scriptDialog, &ScriptingDialog::destroyed, this,
                 [this]() { m_scriptDialog = nullptr; });
         m_scriptDialog->initConsole();
@@ -4898,7 +4883,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     // plugin first checking
-    auto closing = PluginSystem::instance().dispatchAppClosingEvent();
+    auto closing = m_scriptEnvironment->requestClose();
     if (!closing) {
         event->ignore();
         return;
@@ -4933,6 +4918,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     const auto &views = EditorView::instances();
     if (!try2CloseHexViews(views)) {
         event->ignore();
+        return;
     }
 
     auto &set = SettingManager::instance();
@@ -4941,8 +4927,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         set.setRecentFiles(m_recentmanager->saveRecent());
     }
     set.setLastUsedPath(m_lastusedpath);
-
-    PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);
     Q_EMIT sigOnClosed();

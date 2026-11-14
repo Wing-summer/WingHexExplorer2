@@ -8,7 +8,8 @@ Keep the top-level layers organized by technical responsibility, with subdirecto
 | `class/application` | 应用入口服务、日志、崩溃处理和更新 / Application services, logging, crash handling, and updates |
 | `class/file` | 文件访问、最近文件、工作区和系统文件管理器集成 / File access, recent files, workspaces, and shell integration |
 | `class/layout` | 窗口布局保存与恢复 / Window layout persistence |
-| `class/plugin` | 宿主插件加载、注册和证书 / Host plugin loading, registration, and certificates |
+| `class/plugin` | 宿主插件加载和注册 / Host plugin loading and registration |
+| `class/security` | 证书注册、签名验证和 TLS 信任策略 / Certificate registration, signature verification, and TLS trust policy |
 | `class/settings` | 设置持久化、语言、主题和本地化元数据 / Settings persistence, language, themes, and localized metadata |
 | `class/util` | 非控件通用辅助类 / General utilities independent of widgets |
 | `control` | 通用控件、十六进制视图和导航控件 / General widgets, hex views, and navigation widgets |

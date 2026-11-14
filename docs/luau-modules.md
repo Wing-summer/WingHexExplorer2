@@ -55,7 +55,7 @@ Native plugin registrations provide a `QList<ScriptSymbol>` value snapshot with 
 
 `input()` 保持返回 ustring。`__tostring` 由 generator 根据配置选择的 SDK 转换方法生成，宿主输出检查器通过受保护调用使用它。手写宿主集成头文件使用 `.h`，框架生成头文件继续位于 build 目录。
 
-The runtime also supplies the Luau standard libraries (`coroutine`, `table`, `os`, `string`, `math`, `debug`, `utf8`, `bit32`, `buffer`, `vector`, and `integer` when enabled), base functions, `require` and `proxyrequire`. Host globals are `print/println/warnprint/warnprintln/infoprint/infoprintln/errprint/errprintln`, `input`, `stringify` and `assert_x`. Host debugging extends `debug` with `set_break` and `elapsed_time` while retaining native `debug.traceback`. Plugins/devices contribute namespaces under their actual PUID; these are marked as plugin extensions.
+The runtime also supplies the Luau standard libraries (`coroutine`, `table`, `os`, `string`, `math`, `debug`, `utf8`, `bit32`, `buffer`, `vector`), base functions, `require` and `proxyrequire`. Host globals are `print/println/warnprint/warnprintln/infoprint/infoprintln/errprint/errprintln`, `input`, `stringify` and `assert_x`. Host debugging extends `debug` with `set_break` and `elapsed_time` while retaining native `debug.traceback`. Plugins/devices contribute namespaces under their actual PUID; these are marked as plugin extensions.
 
 运行时另外提供 Luau 标准库、基础函数、require/proxyrequire，以及上述宿主输出和辅助函数。`debug` 保留原生能力并增加宿主调试方法。插件和设备按实际 PUID 动态公开命名空间，目录标记为插件扩展。
 
@@ -124,3 +124,35 @@ Generated files in the build directory:
 QMdiArea, QMdiSubWindow, QWizardPage, QProcessEnvironment and QProcess remain excluded from discovery, dependencies, generated APIs and UI factories. Unsupported signatures are omitted, never converted to `any` to expose an excluded pointer.
 
 上述排除类型不会通过依赖、方法或 UI 工厂重新公开，无法安全表达的签名被跳过，不通过 any 泄露指针。
+
+## 64-bit integers / 64 位整数
+
+The global constructors `int64(value)` and `uint64(value)` create immutable integer userdata.
+Use decimal, `0x` hexadecimal or `0b` binary strings for full-width input; numeric input must be integral and within the safe double integer range.
+Signed values cover −2^63 through 2^63−1; unsigned values cover 0 through 2^64−1.
+Qt and host plugin bindings pass these values without converting through double. Small native results remain ordinary `number` values; results outside the safe range become integer userdata.
+
+全局构造器 `int64(value)` 和 `uint64(value)` 创建不可变的整数 userdata。
+完整位宽输入应使用十进制、`0x` 十六进制或 `0b` 二进制字符串；数值参数必须是 double 安全整数范围内的整数。
+有符号范围为 −2^63 到 2^63−1，无符号范围为 0 到 2^64−1。
+Qt 和宿主插件绑定直接传递这些值，避免经过 double。较小的原生返回值仍使用普通 `number`；超出安全范围的返回值使用整数 userdata。
+
+```luau
+local offset = uint64("0xffffffffffffffff")
+print(tostring(offset)) -- 18446744073709551615
+print(offset:band(255):to_number()) -- 255
+local next = int64("9007199254740993") + int64(1)
+print(next:to_string()) -- 9007199254740994
+```
+
+Arithmetic supports `+`, `-`, `*`, `/`, `//`, `%` and unary minus with checked overflow and division by zero.
+Both division operators round down; modulo follows the divisor's sign. Comparisons between integer userdata preserve signed/unsigned ranges; wrap ordinary numbers before comparison and convert explicitly when mixing arithmetic domains.
+Methods are `to_string()`, `to_hex()` (two's complement bits), `to_number()` (checked for precision), `high()`, `low()`, `band`, `bor`, `bxor`, `bnot`, `lshift`, `rshift` (logical) and `arshift` (sign extension). Shift counts range from 0 to 64; bit operations retain the low 64 bits.
+Use `tostring()` or `to_string()` for exact decimal text. `type()` remains `"userdata"`; separately constructed values used as table keys have distinct identities.
+Registration is once per VM; repeated initialization reuses constructors and metatables, including after sandboxing.
+
+算术支持 `+`、`-`、`*`、`/`、`//`、`%` 和一元负号，检查溢出与除零。
+两种除法都向下取整，取模结果与除数同号；整数 userdata 之间的比较保留有符号/无符号范围；比较普通数值前应先包装，跨域算术应显式转换。
+方法包括 `to_string()`、`to_hex()`（补码位模式）、`to_number()`（检查精度）、`high()`、`low()`、`band`、`bor`、`bxor`、`bnot`、`lshift`、`rshift`（逻辑右移）和 `arshift`（符号扩展）。移位量范围为 0 到 64；位运算保留低 64 位。
+精确十进制输出使用 `tostring()` 或 `to_string()`。`type()` 仍返回 `"userdata"`；分别构造的值作为表键时具有不同身份。
+每个 VM 只注册一次，重复初始化会复用构造器及元表，启用沙箱后也不重复注册。

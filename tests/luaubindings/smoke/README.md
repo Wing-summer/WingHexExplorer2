@@ -59,3 +59,15 @@ ctest --test-dir build/Debug/dialog-smoke --output-on-failure --timeout 30
 Pass `--network` to the host probe to run loopback UDP through the real Scripting/Background scheduler. The independent `network` CTest additionally covers TCP, UDP, local sockets, TLS, suspended coroutine callback delivery and context cleanup; these tests require permission to create local sockets.
 
 宿主探针传入 `--network` 可通过真实 Scripting/Background 调度器验证回环 UDP。独立 network CTest 另覆盖 TCP、UDP、本地 socket、TLS、暂停协程回调及上下文清理；测试环境需要允许创建本地 socket。
+
+The `numbers` test covers 32-bit boundaries, the ±(2^53−1) safe-number limit,
+signed/unsigned 64-bit userdata round trips and overflow rejection in plugin bindings.
+
+`numbers` 测试覆盖 32 位边界、±(2^53−1) 安全整数范围、有符号/无符号
+64 位 userdata 往返，以及插件绑定的溢出拒绝。
+
+The `integers64` test exercises the generic integer runtime in three independent
+VMs, repeated registration before/after sandboxing, arithmetic and bit operations.
+
+`integers64` 测试覆盖三个独立 VM 中的通用整数运行时、沙箱前后重复注册、
+算术及位运算。

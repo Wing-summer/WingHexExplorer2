@@ -74,8 +74,10 @@ void configureScriptTree(QTreeView *tree) {
 }
 } // namespace
 
-ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
-    : FramelessMainWindow(parent), m_setdialog(setdlg) {
+ScriptingDialog::ScriptingDialog(SettingDialog *setdlg,
+                                 CloseBehavior closeBehavior, QWidget *parent)
+    : FramelessMainWindow(parent), m_closeBehavior(closeBehavior),
+      m_setdialog(setdlg) {
     this->setUpdatesEnabled(false);
 
     // recent file manager init
@@ -84,7 +86,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     connect(m_recentmanager, &RecentFileManager::sigOnRecentFileTriggered, this,
             [this](const RecentFileManager::RecentInfo &rinfo) {
                 bool o;
-                auto e = openFile(rinfo.url.toLocalFile(), &o);
+                auto e = openFileWithFeedback(rinfo.url.toLocalFile(), &o);
                 if (e) {
                     e->setTabToolTip(
                         RecentFileManager::getDisplayTooltip(rinfo, true));
@@ -302,7 +304,7 @@ void ScriptingDialog::buildUpRibbonBar() {
             [this](const QStringList &files) {
                 for (const auto &file : files) {
                     if (ScriptManager::isScriptFile(file)) {
-                        if (auto e = openFile(file)) {
+                        if (auto e = openFileWithFeedback(file)) {
                             addRecentFile(e, file);
                             m_lastusedpath =
                                 Utilities::getAbsoluteDirPath(file);
@@ -1028,7 +1030,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             [this](const QString &path, int line, int character) {
                 auto target = findEditorView(path);
                 if (!target) {
-                    target = openFile(path);
+                    target = openFileWithFeedback(path);
                 }
                 if (target) {
                     editorGotoPos(target, line + 1, character);
@@ -1239,10 +1241,6 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
             *opened = true;
         }
         e->raise();
-        Toast::toast(this,
-                     ThemeManager::instance().standardPixmap(
-                         ThemeManager::StandardIcon::File),
-                     tr("This file is already open"));
         return e;
     } else {
         if (opened) {
@@ -1253,9 +1251,6 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
     auto editor = std::make_unique<ScriptEditor>(this);
     auto res = editor->openFile(filename);
     if (!res) {
-        WingMessageBox::critical(
-            this, tr("Error"),
-            tr("Invalid file format or insufficient file access permissions"));
         return nullptr;
     }
 
@@ -1273,6 +1268,26 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename, bool *opened) {
                           editorViewArea());
     editor->setFocus();
     return editor.release();
+}
+
+ScriptEditor *ScriptingDialog::openFileWithFeedback(const QString &filename,
+                                                    bool *opened) {
+    bool alreadyOpen = false;
+    auto editor = openFile(filename, &alreadyOpen);
+    if (opened) {
+        *opened = alreadyOpen;
+    }
+    if (!editor) {
+        WingMessageBox::critical(
+            this, tr("Error"),
+            tr("Invalid file format or insufficient file access permissions"));
+    } else if (alreadyOpen) {
+        Toast::toast(this,
+                     ThemeManager::instance().standardPixmap(
+                         ThemeManager::StandardIcon::File),
+                     tr("This file is already open"));
+    }
+    return editor;
 }
 
 bool ScriptingDialog::try2CloseScriptViews(const QList<ScriptEditor *> views) {
@@ -1360,7 +1375,7 @@ void ScriptingDialog::goRunFileLine(const QString &file, int lineNr) {
         }
 
         if (e == nullptr) {
-            e = openFile(file);
+            e = openFileWithFeedback(file);
             if (e) {
                 e->setReadOnly(true);
                 m_reditors.append(e);
@@ -1738,7 +1753,7 @@ void ScriptingDialog::on_openfile() {
                                         QStringLiteral("Luau (*.luau *.lua)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
-        if (auto e = openFile(filename)) {
+        if (auto e = openFileWithFeedback(filename)) {
             addRecentFile(e, filename);
         }
     }
@@ -2118,6 +2133,10 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
+    if (m_closeBehavior == CloseBehavior::CloseEditors && !about2Close()) {
+        event->ignore();
+        return;
+    }
     if (!ScriptEditor::isAllClosed()) {
         event->ignore();
         this->hide();
@@ -2161,7 +2180,7 @@ bool ScriptingDialog::eventFilter(QObject *watched, QEvent *event) {
                     if (info.isClickable) {
                         auto view = findEditorView(info.section);
                         if (!view) {
-                            view = openFile(info.section);
+                            view = openFileWithFeedback(info.section);
                         }
                         if (view && info.canGoto()) {
                             editorGotoPos(view, info.goToLine, info.goToCol);
