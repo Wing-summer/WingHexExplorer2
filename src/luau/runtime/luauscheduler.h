@@ -28,13 +28,11 @@
 struct LuauThread;
 class LuauDebugger;
 class ScriptExecution;
-class ScriptMachine;
 
 struct LuauThreadData {
     LuauThread *parent = nullptr;
     quint64 startTime = 0;
     quint64 lastInteruptTime = 0;
-    quint64 timeOutTime = 0;
     LuauDebugger *debugger = nullptr;
     int mode = 0;
     ScriptExecution *execution = nullptr;
@@ -46,9 +44,12 @@ struct LuauThread {
     int refID = LUA_REFNIL;
     bool isRunning = false;
     bool requestStop = false;
+    bool clearContextOnReset = true;
 
     inline void reset() {
-        qtluau::clearLuaContext(state);
+        if (clearContextOnReset) {
+            qtluau::clearLuaContext(state);
+        }
         lua_resetthread(state);
         isRunning = false;
         requestStop = false;
@@ -68,10 +69,17 @@ struct LuauThread {
     }
 };
 
+class LuauExecutor {
+public:
+    inline virtual ~LuauExecutor() = default;
+    virtual bool isExecuting() const = 0;
+    virtual int resumeThread(LuauThread *thread, int arguments) = 0;
+};
+
 class LuauScheduler final : public QObject {
     Q_OBJECT
 public:
-    explicit LuauScheduler(ScriptMachine &machine, LuauThread *th,
+    explicit LuauScheduler(LuauExecutor &executor, LuauThread *thread,
                            QObject *parent = nullptr);
     virtual ~LuauScheduler() override;
 
@@ -91,7 +99,7 @@ private:
     void finish(int status);
 
 private:
-    ScriptMachine &m_machine;
+    LuauExecutor &m_executor;
     LuauThread *m_th;
     QTimer m_timer;
     QString m_executeError;

@@ -32,6 +32,7 @@
 #include "control/common/compositeiconengine.h"
 #include "dbghelper.h"
 #include "dialog/common/wingmessagebox.h"
+#include "scriptchunk.h"
 #include "scriptmachine.h"
 #include "utilities.h"
 
@@ -64,9 +65,12 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
         return {};
     }
     QStringList ret;
-    const auto files = dir.entryInfoList({"*.lua", "*.luau"}, QDir::Files);
+    const auto files = dir.entryInfoList(
+        scriptFileCandidates(QStringLiteral("*")), QDir::Files);
     for (const auto &info : files) {
-        ret << info.absoluteFilePath();
+        if (scriptChunkFormat(info.fileName())) {
+            ret << info.absoluteFilePath();
+        }
     }
     return ret;
 }
@@ -134,14 +138,13 @@ void ScriptManager::setIndicatorBusy(bool b) {
 
 bool ScriptManager::isScriptFile(const QString &file) {
     QFileInfo info(file);
-    auto suffix = info.suffix();
-    return info.exists() && Utilities::isTextFile(info) &&
-           isScriptFileSuffix(suffix);
+    return info.isFile() && scriptChunkFormat(file).has_value() &&
+           (scriptChunkFormat(file) == ScriptChunkFormat::Bytecode ||
+            Utilities::isTextFile(info));
 }
 
 bool ScriptManager::isScriptFileSuffix(const QString &suffix) {
-    return suffix.compare(QStringLiteral("luau"), Qt::CaseInsensitive) == 0 ||
-           suffix.compare(QStringLiteral("lua"), Qt::CaseInsensitive) == 0;
+    return scriptChunkFormat(QStringLiteral("script.") + suffix).has_value();
 }
 
 QStringList ScriptManager::sysScriptsDbCats() const {
@@ -177,7 +180,8 @@ void ScriptManager::refreshUsrScriptsDbCats() {
             scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
-            auto files = dir.entryList({"*.lua", "*.luau"}, QDir::Files);
+            auto files = dir.entryList(
+                scriptFileCandidates(QStringLiteral("*")), QDir::Files);
             m_usrScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = false;
@@ -196,7 +200,8 @@ void ScriptManager::refreshSysScriptsDbCats() {
             sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
-            auto files = dir.entryList({"*.lua", "*.luau"}, QDir::Files);
+            auto files = dir.entryList(
+                scriptFileCandidates(QStringLiteral("*")), QDir::Files);
             m_sysScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = true;

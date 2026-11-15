@@ -22,6 +22,7 @@
 #include <QList>
 
 #include "class/plugin/pluginsystem.h"
+#include "luau/plugin/scriptplugin.h"
 
 bool invokeScriptService(PluginSystem &system, const QObject *sender,
                          const QString &puid, const QByteArray &method,
@@ -47,4 +48,54 @@ bool invokeScriptService(PluginSystem &system, const QObject *sender,
         std::make_tuple(method.constData(), Qt::DirectConnection, count,
                         data.constData(), names.constData(),
                         types.constData()));
+}
+
+bool invokeScriptPluginService(ScriptPluginRuntime &runtime,
+                               const QObject *sender,
+                               const WingHex::MetaCallInfo &info) {
+    const auto &[method, connection, count, parameters, names, types] = info;
+    if (!method || count < 1 || !parameters || !names || !types ||
+        (connection != Qt::DirectConnection &&
+         connection != Qt::AutoConnection)) {
+        return false;
+    }
+    QVariantList arguments;
+    for (qsizetype i = 1; i < count; ++i) {
+        if (!types[i] || !parameters[i]) {
+            return false;
+        }
+        arguments.append(QVariant(QMetaType(types[i]), parameters[i]));
+    }
+    try {
+        if (auto *caller = scriptPluginRuntime(sender)) {
+            for (auto &argument : arguments) {
+                argument = caller->serviceValue(argument);
+            }
+        }
+    } catch (const std::exception &error) {
+        qWarning("Script service argument transfer failed: %s", error.what());
+        return false;
+    }
+    QVariant result;
+    if (!runtime.invokeExport(QByteArray(method), arguments, result)) {
+        return false;
+    }
+    const QMetaType returnType(types[0]);
+    if (returnType.id() == QMetaType::Void) {
+        return true;
+    }
+    if (!parameters[0]) {
+        return false;
+    }
+    auto *destination = const_cast<void *>(parameters[0]);
+    if (returnType == QMetaType::fromType<QVariant>()) {
+        *static_cast<QVariant *>(destination) = result;
+        return true;
+    }
+    if (!result.convert(returnType)) {
+        return false;
+    }
+    returnType.destruct(destination);
+    returnType.construct(destination, result.constData());
+    return true;
 }

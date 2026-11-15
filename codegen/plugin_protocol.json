@@ -1,0 +1,323 @@
+{
+  "callbacks": [
+    {
+      "name": "init",
+      "arguments": [],
+      "returns": "boolean",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "default": "return true"
+    },
+    {
+      "name": "unload",
+      "arguments": [],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "default": ""
+    },
+    {
+      "name": "plugin_name",
+      "arguments": [],
+      "returns": "string | ustring",
+      "required": true,
+      "device_only": false,
+      "synchronous": true
+    },
+    {
+      "name": "plugin_comment",
+      "arguments": [],
+      "returns": "string | ustring",
+      "required": true,
+      "device_only": false,
+      "synchronous": true
+    },
+    {
+      "name": "plugin_icon",
+      "arguments": [],
+      "returns": "(string | ustring)?",
+      "required": false,
+      "device_only": false,
+      "synchronous": true
+    },
+    {
+      "name": "retranslate",
+      "arguments": [
+        "text: string | ustring"
+      ],
+      "returns": "string | ustring",
+      "required": false,
+      "device_only": false,
+      "synchronous": true
+    },
+    {
+      "name": "registered_events",
+      "arguments": [],
+      "returns": "number",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "event_ready",
+      "arguments": [],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "default": "",
+      "ordinary_only": true
+    },
+    {
+      "name": "event_closing",
+      "arguments": [],
+      "returns": "boolean",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "default": "return true",
+      "ordinary_only": true
+    },
+    {
+      "name": "event_selection_changed",
+      "arguments": [
+        "selections: {string | bytearray}",
+        "preview: boolean"
+      ],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "event_cursor_position_changed",
+      "arguments": [
+        "position: _ext_hex_HexPosition"
+      ],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "event_plugin_file",
+      "arguments": [
+        "event: number",
+        "file_type: number",
+        "url: _qt_QUrl",
+        "handle: number",
+        "old_url: _qt_QUrl"
+      ],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "registered_hex_context_menu",
+      "arguments": [],
+      "returns": "_qt_QMenu?",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "registered_ribbon_tools",
+      "arguments": [],
+      "returns": "{WingRibbonDescription}",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "registered_dock_widgets",
+      "arguments": [],
+      "returns": "{WingDockDescription}",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "registered_setting_pages",
+      "arguments": [],
+      "returns": "{WingSettingDescription}",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "registered_editor_view_widgets",
+      "arguments": [],
+      "returns": "{WingViewFactory}",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "on_paint_hex_editor_view",
+      "arguments": [
+        "painter: _ext__plugin_paint_PaintContext",
+        "widget: _qt_QWidget",
+        "context: {[string]: unknown}"
+      ],
+      "returns": "()",
+      "required": false,
+      "device_only": false,
+      "synchronous": true,
+      "ordinary_only": true
+    },
+    {
+      "name": "supported_file_ext_display_name",
+      "arguments": [],
+      "returns": "string | ustring",
+      "required": true,
+      "device_only": true,
+      "synchronous": true
+    },
+    {
+      "name": "supported_file_icon",
+      "arguments": [],
+      "returns": "(string | ustring)?",
+      "required": false,
+      "device_only": true,
+      "synchronous": true
+    },
+    {
+      "name": "on_open_file_begin",
+      "arguments": [],
+      "returns": "(string | ustring)?",
+      "required": false,
+      "device_only": true,
+      "synchronous": true
+    },
+    {
+      "name": "on_open_file",
+      "arguments": [
+        "path: string | ustring"
+      ],
+      "returns": "WingDeviceObject?",
+      "required": true,
+      "device_only": true,
+      "synchronous": true
+    },
+    {
+      "name": "on_close_file",
+      "arguments": [
+        "device: WingDeviceObject"
+      ],
+      "returns": "boolean",
+      "required": true,
+      "device_only": true,
+      "synchronous": true
+    }
+  ],
+  "helpers": [
+    {
+      "scope": "service",
+      "merge": true,
+      "functions": [
+        {
+          "name": "export",
+          "native": "exportServices",
+          "arguments": [
+            "callbacks: {[string]: unknown}"
+          ],
+          "returns": "()"
+        }
+      ]
+    },
+    {
+      "scope": "task",
+      "functions": [
+        {
+          "name": "spawn",
+          "native": "spawnTask",
+          "arguments": [
+            "callback: () -> ()"
+          ],
+          "returns": "()"
+        }
+      ]
+    },
+    {
+      "scope": "settings",
+      "functions": [
+        {
+          "name": "get",
+          "native": "settingGet",
+          "arguments": [
+            "key: string | ustring"
+          ],
+          "returns": "unknown"
+        },
+        {
+          "name": "set",
+          "native": "settingSet",
+          "arguments": [
+            "key: string | ustring",
+            "value: unknown"
+          ],
+          "returns": "()"
+        }
+      ]
+    },
+    {
+      "scope": "resources",
+      "functions": [
+        {
+          "name": "path",
+          "native": "resourcePath",
+          "arguments": [
+            "path: string | ustring"
+          ],
+          "returns": "ustring"
+        },
+        {
+          "name": "read",
+          "native": "resourceRead",
+          "arguments": [
+            "path: string | ustring"
+          ],
+          "returns": "bytearray"
+        }
+      ]
+    },
+    {
+      "scope": "i18n",
+      "functions": [
+        {
+          "name": "tr",
+          "native": "translateText",
+          "arguments": [
+            "text: string | ustring"
+          ],
+          "returns": "ustring"
+        }
+      ]
+    },
+    {
+      "scope": "script",
+      "functions": [
+        {
+          "name": "add_definition_file",
+          "native": "addDefinitionFile",
+          "arguments": [
+            "path: string | ustring"
+          ],
+          "returns": "()"
+        }
+      ]
+    }
+  ]
+}

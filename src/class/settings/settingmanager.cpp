@@ -64,7 +64,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_RECENTFILES, ("script.recentfiles"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                           ("script.allowUsrScriptRoot"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE, ("script.enable"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_TIMEOUT, ("script.timeout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_WATCH_VARS, ("script.watchexps"))
@@ -91,6 +90,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_DETAIL_LIMIT, ("diff.detailLimit"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_PRECISE, ("diff.precise"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_VERTICAL, ("diff.vertical"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_SYNC_SCROLL, ("diff.syncScroll"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DIFF_SYNC_CURSOR, ("diff.syncCursor"))
 
 SettingManager::SettingManager() {
     m_defaultFont = qApp->font();
@@ -216,8 +216,6 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_scriptEnabled, SCRIPT_ENABLE, true);
     READ_CONFIG_BOOL(m_allowUsrScriptInRoot, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                      false);
-    READ_CONFIG_INT(m_scriptTimeout, SCRIPT_TIMEOUT, 10);
-    m_scriptTimeout = qBound(0, m_scriptTimeout, 312480);
     m_usrHideCats = READ_CONFIG(SCRIPT_USRHIDECATS, {}).toStringList();
     m_sysHideCats = READ_CONFIG(SCRIPT_SYSHIDECATS, {}).toStringList();
     m_watchExpressions = READ_CONFIG(SCRIPT_WATCH_VARS, {}).toStringList();
@@ -269,6 +267,7 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_diffPrecise, DIFF_PRECISE, false);
     READ_CONFIG_BOOL(m_diffVertical, DIFF_VERTICAL, false);
     READ_CONFIG_BOOL(m_diffSyncScroll, DIFF_SYNC_SCROLL, true);
+    READ_CONFIG_BOOL(m_diffSyncCursor, DIFF_SYNC_CURSOR, true);
     m_diffFileLimit = qBound(WingDiff::Limits::MinimumFileSize, m_diffFileLimit,
                              WingDiff::Limits::MaximumFileSize);
     if (!WingDiff::Limits::isMemoryBudget(m_diffMemoryLimit)) {
@@ -440,23 +439,12 @@ void SettingManager::setEnabledExtPlugins(
     }
 }
 
-int SettingManager::scriptTimeout() const { return m_scriptTimeout; }
-
 bool SettingManager::scriptFileEnableOverwrite() const {
     return m_scriptFileEnableOverwrite;
 }
 
 bool SettingManager::scriptFileSystemWrite() const {
     return m_scriptFileSystemWrite;
-}
-
-void SettingManager::setScriptTimeout(int newScriptTimeout) {
-    newScriptTimeout = qBound(0, newScriptTimeout, 312480);
-    if (m_scriptTimeout != newScriptTimeout) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(SCRIPT_TIMEOUT, newScriptTimeout);
-        m_scriptTimeout = newScriptTimeout;
-    }
 }
 
 qsizetype SettingManager::logCount() const { return m_logCount; }
@@ -707,6 +695,7 @@ void SettingManager::__reset(Settings cat) {
         WRITE_CONFIG(DIFF_PRECISE, false);
         WRITE_CONFIG(DIFF_VERTICAL, false);
         WRITE_CONFIG(DIFF_SYNC_SCROLL, true);
+        WRITE_CONFIG(DIFF_SYNC_CURSOR, true);
     }
     if (cat.testFlag(Setting::Editor)) {
         WRITE_CONFIG(EDITOR_FONTSIZE, m_defaultFont.pointSize());
@@ -720,7 +709,6 @@ void SettingManager::__reset(Settings cat) {
     }
     if (cat.testFlag(Setting::Script)) {
         WRITE_CONFIG(SCRIPT_ENABLE, true);
-        WRITE_CONFIG(SCRIPT_TIMEOUT, 10);
         WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
         WRITE_CONFIG(SCRIPT_ENABLE_FILE_OVERWRITE, false);
         WRITE_CONFIG(SCRIPT_ENABLE_FILESYS_WRITE, false);
@@ -925,6 +913,17 @@ void SettingManager::setDiffSyncScroll(bool value) {
         HANDLE_CONFIG;
         WRITE_CONFIG(DIFF_SYNC_SCROLL, value);
         m_diffSyncScroll = value;
+        Q_EMIT sigOnDiffSettingsChanged();
+    }
+}
+
+bool SettingManager::diffSyncCursor() const { return m_diffSyncCursor; }
+
+void SettingManager::setDiffSyncCursor(bool value) {
+    if (m_diffSyncCursor != value) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DIFF_SYNC_CURSOR, value);
+        m_diffSyncCursor = value;
         Q_EMIT sigOnDiffSettingsChanged();
     }
 }

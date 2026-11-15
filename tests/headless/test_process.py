@@ -3,16 +3,15 @@
 """One-shot headless regression / 一次性无头脚本回归。"""
 import argparse
 import os
-from pathlib import Path
 import signal
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--binary", type=Path, required=True)
 parser.add_argument("--plugins", action="store_true")
-parser.add_argument("--slow", action="store_true")
 args = parser.parse_args()
 binary = args.binary.resolve()
 assert "HeadlessProbe" in binary.name
@@ -22,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix="wing-oneshot-") as directory:
     config = temporary / "config"
     ini = config / "WingCloudStudio/WingHexExplorer2.conf"
     ini.parent.mkdir(parents=True)
-    ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\nscript.timeout=1\n")
+    ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\n")
     env = os.environ.copy()
     env.update(QT_QPA_PLATFORM="offscreen", XDG_CONFIG_HOME=str(config),
                XDG_DATA_HOME=str(temporary / "data"), XDG_CACHE_HOME=str(temporary / "cache"),
@@ -35,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix="wing-oneshot-") as directory:
         path.write_text(source)
         result = subprocess.run([str(binary), "--headless", str(path)], env=env,
                                 input=b"must not be read\n", capture_output=True,
-                                timeout=75 if args.slow else 10)
+                                timeout=10)
         assert result.returncode == code, (source, result)
         if output is not None:
             assert result.stdout == output, result
@@ -53,6 +52,12 @@ with tempfile.TemporaryDirectory(prefix="wing-oneshot-") as directory:
     for module in ["qt", "dialogs", "toast", "clipboard"]:
         run(f'require("@b/{module}")', code=8)
     run('assert(filesystem.dir("."):exists()); require("@b/network"); require("@b/cffi")')
+    run('local io = require("@b/_plugin_device_io"); '
+        'assert(require("@b/_plugin_device_types").IODevice); '
+        'assert(require("@b/_plugin_paint").PaintContext); '
+        'assert(type(io.open_file)=="function"); '
+        'local ok, message = pcall(io.open_file, "unavailable-device-file", 1); '
+        'assert(not ok and tostring(message):find("context is unavailable", 1, true))')
     missing = subprocess.run([str(binary), "--headless", str(temporary / "missing.luau")],
                              env=env, capture_output=True, timeout=10)
     assert missing.returncode == 7
@@ -63,9 +68,7 @@ with tempfile.TemporaryDirectory(prefix="wing-oneshot-") as directory:
     run('error("must not execute")', code=5, output=b"")
     assert subprocess.run([str(binary), "--headless", "--live"], env=env,
                           capture_output=True, timeout=10).returncode == 5
-    ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\nscript.timeout=1\n")
-    if args.slow:
-        assert b"timed-out" in run('while true do end', code=8).stderr
+    ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\n")
     entry = temporary / "loop.luau"
     entry.write_text('while true do end')
     for number, code in [(signal.SIGINT, 130)] + ([(signal.SIGTERM, 143)] if os.name != "nt" else []):

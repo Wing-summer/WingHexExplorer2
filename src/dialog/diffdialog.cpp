@@ -27,6 +27,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QProgressBar>
+#include <QScopedValueRollback>
 #include <QScrollBar>
 #include <QSet>
 #include <QShortcut>
@@ -227,6 +228,13 @@ void DiffDialog::buildViewPage() {
     m_syncButton =
         addPannelAction(arrangement, tr("Sync scrolling"), Icon::SyncScroll,
                         &DiffDialog::setSyncScrolling, true);
+    m_cursorSyncButton =
+        addPannelAction(arrangement, tr("Sync cursors"), Icon::Address,
+                        &DiffDialog::setSyncCursors, true);
+    m_cursorSyncButton->setObjectName(QStringLiteral("diff.syncCursors"));
+    m_cursorSyncButton->setToolTip(
+        tr("Synchronize cursor positions using comparison results"));
+    m_cursorSyncButton->setAccessibleDescription(m_cursorSyncButton->toolTip());
     m_listButton =
         addPannelAction(arrangement, tr("Difference list"), Icon::Structure,
                         &DiffDialog::setListVisible, true);
@@ -267,6 +275,13 @@ void DiffDialog::showStacked() { setOrientation(true); }
 
 void DiffDialog::setSyncScrolling(bool enabled) {
     SettingManager::instance().setDiffSyncScroll(enabled);
+}
+
+void DiffDialog::setSyncCursors(bool enabled) {
+    SettingManager::instance().setDiffSyncCursor(enabled);
+    if (enabled) {
+        cursorTogether(m_cursorSide);
+    }
 }
 
 void DiffDialog::setListVisible(bool visible) {
@@ -363,6 +378,8 @@ void DiffDialog::buildViews() {
         panelLayout->addWidget(m_views[side], 1);
         connect(choice, &QComboBox::currentIndexChanged, this,
                 [this, side] { bindSource(side); });
+        connect(m_views[side], &QHexView::sigOnCursorLocationChanged, this,
+                [this, side] { cursorTogether(side); });
         connect(m_views[side]->verticalScrollBar(), &QScrollBar::valueChanged,
                 this, [this, side] { scrollTogether(side); });
     }
@@ -464,6 +481,7 @@ void DiffDialog::reloadSettings() {
     m_arrangementButtons[PaneLayout::Stacked]->setChecked(
         manager.diffVertical());
     m_syncButton->setChecked(manager.diffSyncScroll());
+    m_cursorSyncButton->setChecked(manager.diffSyncCursor());
 }
 
 DiffDialog::~DiffDialog() {
@@ -1014,7 +1032,8 @@ void DiffDialog::navigate(int direction) {
 }
 
 void DiffDialog::scrollTogether(Side side) {
-    if (m_scrolling || !m_syncButton->isChecked() || !m_results) {
+    if (m_scrolling || m_syncingCursor || !m_syncButton->isChecked() ||
+        !m_results) {
         return;
     }
     const auto source = m_views[side];
@@ -1035,6 +1054,34 @@ void DiffDialog::scrollTogether(Side side) {
     m_scrolling = true;
     target->verticalScrollBar()->setValue(int(row / factor));
     m_scrolling = false;
+}
+
+void DiffDialog::cursorTogether(Side side) {
+    if (m_scrolling || m_syncingCursor) {
+        return;
+    }
+    m_cursorSide = side;
+    if (!m_cursorSyncButton->isChecked() || m_invalid || !m_results ||
+        !usable()) {
+        return;
+    }
+    const auto sourcePosition = m_views[side]->cursor()->position();
+    if (sourcePosition.offset() < 0) {
+        return;
+    }
+    const auto mapped = m_results->mapOffset(quint64(sourcePosition.offset()),
+                                             side == Side::Right);
+    const auto target = m_views[oppositeSide(side)];
+    if (mapped == std::numeric_limits<quint64>::max() ||
+        mapped > quint64(target->document()->length())) {
+        return;
+    }
+    QScopedValueRollback<bool> guard(m_syncingCursor, true);
+    const auto width = quint64(target->document()->hexLineWidth());
+    target->cursor()->moveTo(qsizetype(mapped / width), int(mapped % width),
+                             sourcePosition.nibbleindex);
+    target->renderer()->setCursorVisible(true);
+    target->ensureCurrentLineVisible();
 }
 
 void DiffDialog::setOrientation(bool vertical) {

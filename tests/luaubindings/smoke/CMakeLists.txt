@@ -20,6 +20,7 @@ add_executable(WingHexRegistrationSmoke ../registration.cpp
   "${HOST_SOURCE_DIR}/src/luau/runtime/scriptfilesystem.cpp"
   "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/support/execute_luau.cpp"
   "${HOST_SOURCE_DIR}/src/luau/wingluaurequire.cpp"
+  "${HOST_SOURCE_DIR}/src/luau/runtime/scriptchunk.cpp"
   "${HOST_SOURCE_DIR}/src/dialog/framelessdialogbase.cpp"
   "${HOST_SOURCE_DIR}/src/dialog/framelessmainwindow.cpp")
 target_compile_features(WingHexRegistrationSmoke PRIVATE cxx_std_17)
@@ -76,6 +77,7 @@ endif()
 add_executable(WingHexNetworkSmoke ../network.cpp
   "${HOST_SOURCE_DIR}/src/luau/runtime/scriptfilesystem.cpp"
   "${HOST_SOURCE_DIR}/src/luau/wingluaurequire.cpp"
+  "${HOST_SOURCE_DIR}/src/luau/runtime/scriptchunk.cpp"
   "${HOST_SOURCE_DIR}/3rdparty/WingLuauQt/support/execute_luau.cpp")
 get_target_property(_network_includes WingHexRegistrationSmoke INCLUDE_DIRECTORIES)
 get_target_property(_network_libraries WingHexRegistrationSmoke LINK_LIBRARIES)

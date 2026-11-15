@@ -6,14 +6,56 @@
 #include <QClipboard>
 #include <QFontDatabase>
 #include <QImage>
+#include <QLoggingCategory>
 #include <QSignalSpy>
 #include <QStringEncoder>
+#include <QTableView>
 #include <QTemporaryFile>
 #include <QtTest>
 
 #include "QHexEdit2/chunks.h"
 
+#include "control/delegate/binarytextitemdelegate.h"
+#include "model/numshowmodel.h"
 #include "qhexview.h"
+
+namespace {
+class FontMessageRecorder {
+public:
+    FontMessageRecorder()
+        : m_previousHandler(qInstallMessageHandler(&handleMessage)) {
+        s_current = this;
+    }
+
+    ~FontMessageRecorder() {
+        qInstallMessageHandler(m_previousHandler);
+        s_current = nullptr;
+    }
+
+    int count() const { return m_count; }
+
+    const QString &firstMessage() const { return m_firstMessage; }
+
+private:
+    static void handleMessage(QtMsgType type, const QMessageLogContext &context,
+                              const QString &message) {
+        if (message.contains(QStringLiteral("OpenType support missing"))) {
+            if (s_current->m_count++ == 0) {
+                s_current->m_firstMessage = message;
+            }
+        } else if (s_current->m_previousHandler) {
+            s_current->m_previousHandler(type, context, message);
+        }
+    }
+
+    static FontMessageRecorder *s_current;
+    QtMessageHandler m_previousHandler;
+    int m_count = 0;
+    QString m_firstMessage;
+};
+
+FontMessageRecorder *FontMessageRecorder::s_current = nullptr;
+} // namespace
 
 class QHexViewTests : public QObject {
     Q_OBJECT
@@ -25,6 +67,15 @@ private:
             qFatal("Cannot prepare test document");
         }
         return doc;
+    }
+
+    static QImage renderHexLine(QHexView &view) {
+        QImage image(1600, 200, QImage::Format_ARGB32);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setFont(view.font());
+        view.renderer()->render(&painter, 0, 1, 0);
+        return image;
     }
 
     static QColor backgroundAt(QHexView &view, int column = 0, int line = 0,
@@ -51,14 +102,52 @@ private:
 
 private slots:
 
+    void initTestCase() {
+        QLoggingCategory::setFilterRules(
+            QStringLiteral("qt.text.font.db.info=true"));
+    }
+
+    void numberPreviewAvoidsFontFallback() {
+        FontMessageRecorder messages;
+        NumShowModel model;
+        const auto value = QString::fromUtf8("A\xde\x80\xde\xa6\xe4\xb8\xad");
+        model.setNumData(NumShowModel::UTF16_STR, value);
+        QTableView table;
+        table.setModel(&model);
+        table.setItemDelegate(new BinaryTextItemDelegate(&table));
+        table.resize(500, 500);
+        table.resizeColumnsToContents();
+        table.resizeRowsToContents();
+        QImage image(table.size(), QImage::Format_ARGB32);
+        table.render(&image);
+        QCOMPARE(model.numData(NumShowModel::UTF16_STR), value);
+        QCOMPARE(
+            model.data(model.index(NumShowModel::UTF16_STR, 0), Qt::DisplayRole)
+                .toString(),
+            value);
+        const auto cell =
+            table.visualRect(model.index(NumShowModel::UTF16_STR, 0))
+                .translated(table.viewport()->pos());
+        model.setNumData(NumShowModel::UTF16_STR, QStringLiteral("...."));
+        QImage placeholder(table.size(), QImage::Format_ARGB32);
+        table.render(&placeholder);
+        QVERIFY(image.copy(cell) != placeholder.copy(cell));
+        model.setNumData(NumShowModel::UTF16_STR, value);
+        table.selectRow(NumShowModel::UTF16_STR);
+        table.render(&placeholder);
+        table.setColumnWidth(0, 30);
+        table.render(&placeholder);
+        QVERIFY2(messages.count() == 0, qPrintable(messages.firstMessage()));
+    }
+
     void unicodeCellsAvoidFontScan_data() {
         QTest::addColumn<int>("encoding");
         QTest::addColumn<QByteArray>("bytes");
         QTest::addColumn<QByteArray>("placeholderBytes");
         QTest::addColumn<bool>("hasGlyph");
-        const QList<char32_t> characters = {0x0041, 0x4e2d,  0x0628,  0x0915,
-                                            0x0780, 0x10400, 0x1f600, 0xffffd,
-                                            0x0378, 0x202e};
+        const QList<char32_t> characters = {0x0041,  0x4e2d, 0x0628,  0x0915,
+                                            0x0780,  0x07a6, 0x10400, 0x1f600,
+                                            0xffffd, 0x0378, 0x202e};
         for (auto character : characters) {
             const auto text = QString::fromUcs4(&character, 1);
             bool hasGlyph = false;
@@ -110,38 +199,18 @@ private slots:
         renderer->setStringEncoding(QStringConverter::Encoding(encoding));
         renderer->enableCursor(false);
 
-        static int fontMessages = 0;
-        static QtMessageHandler previousHandler = nullptr;
-        fontMessages = 0;
-        previousHandler = qInstallMessageHandler(
-            [](QtMsgType type, const QMessageLogContext &context,
-               const QString &message) {
-                if (message.contains(
-                        QStringLiteral("OpenType support missing"))) {
-                    ++fontMessages;
-                } else if (previousHandler) {
-                    previousHandler(type, context, message);
-                }
-            });
-        const auto render = [&] {
-            QImage image(1600, 200, QImage::Format_ARGB32);
-            image.fill(Qt::transparent);
-            QPainter painter(&image);
-            renderer->render(&painter, 0, 1, 0);
-            return image;
-        };
-        const auto first = render();
-        const auto second = render();
+        FontMessageRecorder messages;
+        const auto first = renderHexLine(view);
+        const auto second = renderHexLine(view);
         // Application fonts can be installed or removed while a view exists.
         QMetaObject::invokeMethod(qGuiApp, "fontDatabaseChanged");
-        const auto afterInvalidation = render();
-        qInstallMessageHandler(previousHandler);
-        QCOMPARE(fontMessages, 0);
+        const auto afterInvalidation = renderHexLine(view);
+        QVERIFY2(messages.count() == 0, qPrintable(messages.firstMessage()));
         QCOMPARE(first, second);
         QCOMPARE(first, afterInvalidation);
 
         QVERIFY(doc->replace(0, placeholderBytes));
-        const auto placeholder = render();
+        const auto placeholder = renderHexLine(view);
         const QRect asciiRect(
             qCeil(renderer->getAsciiColumnX() + renderer->borderSize()),
             qCeil(renderer->headerLineCount() * renderer->lineHeight()),

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -23,7 +23,6 @@
 
 #include <cctype>
 
-#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPainterPath>
 #include <QPainterPathStroker>
@@ -139,8 +138,7 @@ QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
     : QObject(parent), m_document(document), m_cursor(cursor),
       m_fontmetrics(fontmetrics) {
     connect(qGuiApp, &QGuiApplication::fontDatabaseChanged, this, [this] {
-        m_cellFonts.clear();
-        m_scriptFamilies.clear();
+        m_glyphRenderer.clearCache();
         Q_EMIT sigOnRepaintRequested();
     });
 }
@@ -213,7 +211,7 @@ void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
 
 void QHexRenderer::updateMetrics(const QFontMetricsF &fm) {
     m_fontmetrics = fm;
-    m_cellFonts.clear();
+    m_glyphRenderer.clearCache();
     Q_EMIT sigOnLayoutChanged();
 }
 
@@ -1039,72 +1037,6 @@ void QHexRenderer::applyBookmark(QPainter *painter, const QRectF &rect,
     painter->restore();
 }
 
-QRawFont QHexRenderer::cellFont(const QFont &font, char32_t codepoint) const {
-    const auto key = font.key();
-    auto *fonts = m_cellFonts.object(key);
-    if (!fonts) {
-        fonts = new CellFonts;
-        fonts->families.insert(QString(), QRawFont::fromFont(font));
-        m_cellFonts.insert(key, fonts);
-    }
-    if (auto *cached = fonts->characters.object(codepoint)) {
-        return *cached;
-    }
-
-    auto rawFont = fonts->families.value(QString());
-    if (!rawFont.supportsCharacter(codepoint)) {
-        rawFont = {};
-        const auto script = QChar::script(codepoint);
-        auto families = m_scriptFamilies.constFind(script);
-        if (families == m_scriptFamilies.cend()) {
-            QStringList candidates;
-            // Qt exposes writing systems rather than a script-to-family API.
-            // Derive the preferred groups from its Unicode sample strings.
-            if (script != QChar::Script_Common &&
-                script != QChar::Script_Inherited &&
-                script != QChar::Script_Unknown) {
-                for (auto system : QFontDatabase::writingSystems()) {
-                    const auto sample =
-                        QFontDatabase::writingSystemSample(system);
-                    for (auto character : sample.toUcs4()) {
-                        if (QChar::script(character) == script) {
-                            candidates.append(QFontDatabase::families(system));
-                            break;
-                        }
-                    }
-                }
-            }
-            candidates.append(QFontDatabase::families());
-            candidates.removeDuplicates();
-            m_scriptFamilies.insert(script, candidates);
-            families = m_scriptFamilies.constFind(script);
-        }
-        auto candidates = font.families();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-        candidates.append(
-            QFontDatabase::applicationFallbackFontFamilies(script));
-#endif
-        candidates.append(*families);
-        for (const auto &family : candidates) {
-            auto candidate = fonts->families.constFind(family);
-            if (candidate == fonts->families.cend()) {
-                auto fallback = font;
-                fallback.setFamily(family);
-                fallback.setStyleName(QString());
-                fonts->families.insert(family, QRawFont::fromFont(fallback));
-                candidate = fonts->families.constFind(family);
-            }
-            if (candidate->supportsCharacter(codepoint)) {
-                rawFont = *candidate;
-                break;
-            }
-        }
-    }
-    // Cache misses too: unsupported characters in binary data are common.
-    fonts->characters.insert(codepoint, new QRawFont(rawFont));
-    return rawFont;
-}
-
 void QHexRenderer::drawText(QPainter *painter, const QRectF &rect,
                             const QString &text, const CellFormat &fmt) const {
     painter->save();
@@ -1117,29 +1049,37 @@ void QHexRenderer::drawText(QPainter *painter, const QRectF &rect,
     font.setStrikeOut(fmt.strikeOut);
     font.setUnderline(false);
 
-    QTextLayout layout(text);
-    layout.setFont(font);
+    auto displayText = text;
     const bool singleCodepoint =
         text.size() == 1 ||
         (text.size() == 2 && text.front().isHighSurrogate() &&
          text.back().isLowSurrogate());
     if (singleCodepoint) {
-        const char32_t codepoint =
+        char32_t codepoint =
             text.size() == 1
                 ? text.front().unicode()
                 : QChar::surrogateToUcs4(text.front(), text.back());
-        // Data cells show isolated code points, not runs of shaped text.
-        // Select by actual glyph coverage and use a raw layout so Qt cannot
-        // reject a usable font for missing script-specific OpenType tables.
-        const auto rawFont =
-            QChar::isPrint(codepoint) ? cellFont(font, codepoint) : QRawFont();
-        if (rawFont.isValid()) {
-            layout.setRawFont(rawFont);
-        } else {
-            layout.setText(QString(HEX_UNPRINTABLE_CHAR));
+        // Resolve and draw the scalar's glyph directly. A raw QTextLayout
+        // still has a shaping/fallback path, and setRawFont() together with
+        // QTextLayout::draw() is explicitly unsupported by Qt.
+        auto rawFont = QChar::isPrint(codepoint)
+                           ? m_glyphRenderer.fontForCharacter(font, codepoint)
+                           : QRawFont();
+        if (!rawFont.isValid()) {
+            codepoint = HEX_UNPRINTABLE_CHAR;
+            rawFont = m_glyphRenderer.fontForCharacter(font, codepoint);
         }
+        if (rawFont.isValid()) {
+            m_glyphRenderer.drawGlyph(
+                painter, rect, rawFont, codepoint,
+                {fmt.foreground, fmt.outline, fmt.strikeOut});
+            painter->restore();
+            return;
+        }
+        displayText = QString(HEX_UNPRINTABLE_CHAR);
     }
 
+    QTextLayout layout(displayText, font);
     QVector<QTextLayout::FormatRange> formats;
     QTextLayout::FormatRange range;
     range.start = 0;

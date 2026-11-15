@@ -57,6 +57,8 @@ add_library(
     document/qhexdocument.h
     document/qhexmetadata.cpp
     document/qhexmetadata.h
+    document/glyphrenderer.cpp
+    document/glyphrenderer.h
     document/qhexrenderer.cpp
     document/qhexrenderer.h
     document/qhexregionobject.h

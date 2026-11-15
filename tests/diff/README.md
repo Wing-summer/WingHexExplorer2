@@ -15,6 +15,10 @@ Use `-DWINGHEX_FORCE_CPP17=ON` for the C++17 fallback. Requires Qt Widgets, Conc
 覆盖增删改、随机修改、跨缓存重同步、取消、连续百万行列表、64 GiB 偏移、详细／内存上限、共享文档只读隔离、未保存修改读取和设备线程取消。
 Coverage includes edits, random edits, cross-cache resynchronization, cancellation, a continuous million-row list, 64 GiB offsets, detail/memory limits, shared-document read-only isolation, unsaved reads and owner-thread cancellation.
 
+
+局部细化对插入、删除和替换均计一次编辑；同等成本时优先替换，避免数字字段被错位配对。重复填充优先沿用经字节验证的当前对齐。零长度侧仅显示边界下划线，不填充未修改字节的背景。
+Local refinement assigns unit cost to insertion, deletion and substitution, preferring substitution on ties to keep numeric fields aligned. Repeated padding prefers the current alignment after byte verification. Empty sides show an underline boundary without filling the unchanged byte background.
+
 ## 宿主探针 / Host probe
 
 先以 Ninja 和 `CMAKE_EXPORT_COMPILE_COMMANDS=ON` 配置并构建主项目，然后运行：
@@ -22,6 +26,7 @@ Configure and build the application with Ninja and `CMAKE_EXPORT_COMPILE_COMMAND
 
 ```sh
 python3 tests/diff/run_host_probe.py --build-dir build
+python3 tests/diff/run_host_probe.py --build-dir build --cursor-sync
 ```
 
 探针链接真实宿主对象，使用隔离的临时设置，验证 `instances()`、clone 去重、共享文档、只读、连续滚动、应用设置页与按对象定位、布局切换、表格自适应宽度、底部搜索栏、源修改后的自动重比、非内容操作保留结果、进度条显隐和运行中关闭。生成 `/tmp/wing-diff-ui-light.png` 和 `/tmp/wing-diff-ui-dark.png`。
@@ -66,3 +71,6 @@ Rendering extensions use `QHexView::setRenderer()` and protected `applyLineForma
 
 窗口打开时左右来源均不默认选择。开启“自动比较”后，左右选好不同文档即自动比较；字节内容变动停止 500 ms 后自动重比；可通过“自动比较”关闭。取消当前任务同时暂停自动比较，已提交的部分结果仍保留。基址、书签、标注显示和未改字节的保存保留有效结果；关闭来源或检测到外部文件变化会明确提示失效，外部变化须重新加载或手动比较。比较状态在 Ribbon 下方持续显示，进度条仅在任务运行时显示。
 Both sources start unselected when the window opens. With Auto compare enabled, choosing two different documents automatically starts comparison, and byte changes trigger recomparison once edits have settled for 500 ms; Auto compare can disable this. Cancellation also pauses automatic comparison and retains committed partial results. Base-address changes, bookmarks, annotation visibility and saves without byte changes preserve valid results. Closing a source or detecting external file changes explicitly invalidates results; external changes require reload or manual comparison. The comparison state remains visible below the Ribbon, while the progress bar appears only during a running task.
+
+“视图 → 同步光标”默认开启并持久化，可独立于同步滚动切换。双向映射使用已提交的 diff 区间：相等区间按偏移、不等长替换按比例、增删区间对应另一侧边界。来源失效或移至尚未比较的区域时停止映射，不影响原编辑器光标和选区。`--cursor-sync` 专项宿主探针覆盖双向移动、插入边界、半字节、文件末尾、开关、差异导航、失效及设置持久化。
+View → Sync cursors is enabled by default, persisted, and independent of synchronized scrolling. Bidirectional mapping uses committed diff ranges: equal ranges preserve relative offsets, unequal replacements use relative positions, and insertions/deletions map to the other side's boundary. Invalidated sources and unprocessed regions disable mapping. Original editor cursors and selections remain independent. The `--cursor-sync` focused host probe covers bidirectional movement, insertion boundaries, nibbles, EOF, toggling, difference navigation, invalidation and settings persistence.

@@ -29,8 +29,7 @@ enum class ScriptFailure {
     FileError,
     CompilationError,
     ExecutionError,
-    CallbackError,
-    Timeout
+    CallbackError
 };
 
 // One independently owned entry and its serial asynchronous invocations.
@@ -92,12 +91,10 @@ private:
     QSet<QByteArray> m_moduleCacheKeys;
     QSet<lua_State *> m_hostYields;
     quint64 m_sliceStart = 0;
-    quint64 m_executionTime = 0;
     LuauThreadData m_data;
     LuauThread m_thread;
     LuauScheduler m_scheduler;
     QQueue<qtluau::LuaCallbackInvocation> m_pending;
     State m_state = State::Pending;
-    bool m_timedOut = false;
 };
 #endif // SCRIPTEXECUTION_H

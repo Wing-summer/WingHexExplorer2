@@ -204,8 +204,21 @@ QVector<Range> ResultStore::intersect(quint64 offset, quint64 length,
 
 quint64 ResultStore::mapOffset(quint64 offset, bool fromRight) const {
     QMutexLocker lock(&m_mutex);
+    if (!m_publishedCount) {
+        return std::numeric_limits<quint64>::max();
+    }
+    const auto last = atUnlocked(m_publishedCount - 1);
+    const auto coveredEnd = fromRight ? last.rightOffset + last.rightLength
+                                      : last.leftOffset + last.leftLength;
+    if (offset > coveredEnd) {
+        return std::numeric_limits<quint64>::max();
+    }
+    if (offset == coveredEnd) {
+        return fromRight ? last.leftOffset + last.leftLength
+                         : last.rightOffset + last.rightLength;
+    }
     const auto index = lowerBoundUnlocked(offset, fromRight);
-    if (index >= m_count) {
+    if (index >= m_publishedCount) {
         return std::numeric_limits<quint64>::max();
     }
     const auto r = atUnlocked(index);
@@ -340,7 +353,8 @@ public:
     template <typename Verify>
     bool find(QByteArrayView bytes, quint64 minimum, quint64 *old,
               quint64 *position, const Verify &verify,
-              const BinaryDiff::Cancel &cancel) const {
+              const BinaryDiff::Cancel &cancel,
+              QByteArrayView aligned = {}) const {
         if (bytes.size() < MatchSize) {
             return false;
         }
@@ -351,6 +365,15 @@ public:
             }
             const auto bit = hash % (filter.size() * 64);
             if (filter[size_t(bit / 64)] & (quint64(1) << (bit % 64))) {
+                // Repeated padding can match many sampled offsets. Prefer
+                // the current alignment when cached bytes verify it.
+                if (i + MatchSize <= aligned.size() &&
+                    std::memcmp(aligned.data() + i, bytes.data() + i,
+                                MatchSize) == 0) {
+                    *old = minimum + quint64(i);
+                    *position = quint64(i);
+                    return true;
+                }
                 auto it = std::lower_bound(
                     index.begin(), index.end(), Anchor{hash, minimum},
                     [](const Anchor &a, const Anchor &b) {
@@ -376,8 +399,38 @@ public:
     }
 };
 
-// Bounded Myers trace. The trace itself and output are charged to the local
-// budget.
+// A unit-cost substitution keeps changed bytes in fixed-position fields
+// aligned. Insertions and deletions still resynchronize genuinely shifted data.
+struct LocalStep {
+    int x = -1;
+    int previousDiagonal = 0;
+    Type type = Type::Equal;
+};
+
+LocalStep localStep(const std::vector<int> &previous, int zero, int diagonal,
+                    int n, int m) {
+    LocalStep step;
+    const int replacedX = previous[size_t(zero + diagonal)];
+    const int replacedY = replacedX - diagonal;
+    if (replacedX >= 0 && replacedX < n && replacedY >= 0 && replacedY < m) {
+        step = {replacedX + 1, diagonal, Type::Replace};
+    }
+    const int deletedX = previous[size_t(zero + diagonal - 1)];
+    const int deletedY = deletedX - (diagonal - 1);
+    if (deletedX >= 0 && deletedX < n && deletedY >= 0 && deletedY <= m &&
+        deletedX + 1 > step.x) {
+        step = {deletedX + 1, diagonal - 1, Type::Delete};
+    }
+    const int insertedX = previous[size_t(zero + diagonal + 1)];
+    const int insertedY = insertedX - (diagonal + 1);
+    if (insertedX >= 0 && insertedX <= n && insertedY >= 0 && insertedY < m &&
+        insertedX > step.x) {
+        step = {insertedX, diagonal + 1, Type::Insert};
+    }
+    return step;
+}
+
+// Bounded edit-distance wavefront. Trace and output share the local budget.
 bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
                quint64 budget, quint64 workLimit,
                const BinaryDiff::Cancel &cancel, std::vector<Range> &output) {
@@ -389,27 +442,27 @@ bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
     if (width * sizeof(int) > budget / 2) {
         return false;
     }
-    std::vector<int> v(width, 0);
+    std::vector<int> v(width, -1);
     std::vector<std::vector<int>> trace;
     const int zero = maximum + 1;
+    v[size_t(zero)] = 0;
     quint64 work = 0;
     int distance = -1;
-    for (int d = 0; d <= maximum; ++d) {
+    for (int d = 0; d <= std::max(n, m); ++d) {
         if ((cancel && cancel()) ||
             (trace.size() + 2) * width * sizeof(int) > budget / 2) {
             return false;
         }
         trace.push_back(v);
-        for (int k = -d; k <= d; k += 2) {
+        const auto &previous = trace.back();
+        for (int k = -d; k <= d; ++k) {
             if (++work > workLimit) {
                 return false;
             }
-            int ax;
-            if (k == -d ||
-                (k != d && v[size_t(zero + k - 1)] < v[size_t(zero + k + 1)])) {
-                ax = v[size_t(zero + k + 1)];
-            } else {
-                ax = v[size_t(zero + k - 1)] + 1;
+            int ax = d ? localStep(previous, zero, k, n, m).x : 0;
+            if (ax < 0) {
+                v[size_t(zero + k)] = -1;
+                continue;
             }
             int by = ax - k;
             while (ax < n && by < m && a[ax] == b[by]) {
@@ -417,7 +470,7 @@ bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
                 ++by;
             }
             v[size_t(zero + k)] = ax;
-            if (ax >= n && by >= m) {
+            if (ax == n && by == m) {
                 distance = d;
                 break;
             }
@@ -435,14 +488,9 @@ bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
     for (int d = distance; d >= 0; --d) {
         const auto &previous = trace[size_t(d)];
         const int k = ax - by;
-        const int previousK =
-            (k == -d || (k != d && previous[size_t(zero + k - 1)] <
-                                       previous[size_t(zero + k + 1)]))
-                ? k + 1
-                : k - 1;
-        const int previousX = previous[size_t(zero + previousK)];
-        const int previousY = previousX - previousK;
-        while (ax > previousX && by > previousY) {
+        const auto step = d ? localStep(previous, zero, k, n, m)
+                            : LocalStep{0, 0, Type::Equal};
+        while (ax > step.x && by > step.x - k) {
             reversed.push_back(Type::Equal);
             --ax;
             --by;
@@ -450,13 +498,9 @@ bool localDiff(QByteArrayView a, QByteArrayView b, quint64 x, quint64 y,
         if (!d) {
             break;
         }
-        if (ax == previousX) {
-            reversed.push_back(Type::Insert);
-            --by;
-        } else {
-            reversed.push_back(Type::Delete);
-            --ax;
-        }
+        reversed.push_back(step.type);
+        ax = previous[size_t(zero + step.previousDiagonal)];
+        by = ax - step.previousDiagonal;
     }
     const auto maximumRanges =
         std::min(quint64(maximum), budget / 4 / sizeof(Range));
@@ -711,7 +755,7 @@ Outcome BinaryDiff::compare(QIODevice *left, QIODevice *right,
                 return std::memcmp(aa.constData() + (offset - x), bytes,
                                    MatchSize) == 0;
             },
-            cancel);
+            cancel, localLeft);
         quint64 newPosition = y + position;
         // Only detailed mode builds a global index. Summary keeps sequential
         // bounded windows.

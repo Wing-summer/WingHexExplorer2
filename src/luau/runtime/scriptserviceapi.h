@@ -23,12 +23,19 @@
 #include <QString>
 #include <QVariant>
 
+#include "WingPlugin/wingcore.h"
+
 class QObject;
 class PluginSystem;
+class ScriptPluginRuntime;
 
 bool invokeScriptService(PluginSystem &system, const QObject *sender,
                          const QString &puid, const QByteArray &method,
                          QMetaType returnType, const QVariantList &arguments,
                          QVariant &result);
+
+bool invokeScriptPluginService(ScriptPluginRuntime &runtime,
+                               const QObject *sender,
+                               const WingHex::MetaCallInfo &info);
 
 #endif

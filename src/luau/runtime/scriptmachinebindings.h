@@ -82,12 +82,14 @@ class ScriptMachineBindings {
 
 public:
     inline static Codec initialize(lua_State *L, Codec fallback,
-                                   WingLuauRequire &require, bool ui) {
+                                   WingLuauRequire &require, bool ui,
+                                   PluginIOService &ioService) {
         if (!ui) {
 #include "headless_initializers.inc"
         } else {
             bindings::registerEagerModules(L);
         }
+        bindings::bind__plugin_device_io_io(L, &ioService);
         const auto modules = bindings::moduleFiles();
 
         // The statically linked factory is registered by the host.
@@ -233,10 +235,6 @@ public:
             return previous && previous(state, value);
         };
         return codec;
-    }
-
-    inline static QHash<QString, QString> moduleFiles() {
-        return bindings::moduleFiles();
     }
 
     inline static QHash<QString, QString> definitions() {

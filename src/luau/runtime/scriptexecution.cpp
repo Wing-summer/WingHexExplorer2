@@ -25,7 +25,6 @@
 
 #include "class/application/applicationclock.h"
 #include "class/plugin/pluginsystem.h"
-#include "class/settings/settingmanager.h"
 #include "luau/luauutil.h"
 #include "scriptmachine.h"
 
@@ -36,8 +35,6 @@ ScriptExecution::ScriptExecution(ScriptMachine &machine, const QString &path)
     m_data.execution = this;
     m_data.mode = ScriptMachine::Background;
     m_cacheNamespace = QStringLiteral("task:%1:").arg(++nextContext);
-    m_data.timeOutTime =
-        quint64(SettingManager::instance().scriptTimeout()) * 60000;
     m_thread.data = &m_data;
     m_data.parent = &m_thread;
     connect(&m_scheduler, &LuauScheduler::sigOnFinished, this,
@@ -78,8 +75,6 @@ void ScriptExecution::start() {
 }
 
 void ScriptExecution::startJob(int arguments) {
-    m_executionTime = 0;
-    m_timedOut = false;
     m_data.startTime = ApplicationClock::elapsed();
     m_data.lastInteruptTime = m_data.startTime;
     m_scheduler.start(arguments);
@@ -91,12 +86,11 @@ void ScriptExecution::finishJob(int status) {
         finishStop();
         return;
     }
-    if (status != LUA_OK || m_timedOut) {
+    if (status != LUA_OK) {
         fail(error.isEmpty() ? QStringLiteral("Script execution failed")
                              : error,
-             m_timedOut                   ? ScriptFailure::Timeout
-             : m_state == State::Resident ? ScriptFailure::CallbackError
-                                          : ScriptFailure::ExecutionError);
+             m_state == State::Resident ? ScriptFailure::CallbackError
+                                        : ScriptFailure::ExecutionError);
         return;
     }
     // Reset only the Lua stack. The task's globals, callbacks and owned Qt
@@ -221,9 +215,7 @@ void ScriptExecution::awaitModule(lua_State *caller, lua_State *module) {
 
 int ScriptExecution::resumeThread(lua_State *root, int arguments) {
     m_sliceStart = ApplicationClock::elapsed();
-    const auto status = resumeInvocation(root, arguments);
-    m_executionTime += ApplicationClock::elapsed() - m_sliceStart;
-    return status;
+    return resumeInvocation(root, arguments);
 }
 
 void ScriptExecution::interrupt(lua_State *thread) {
@@ -232,10 +224,6 @@ void ScriptExecution::interrupt(lua_State *thread) {
         m_state == State::Stopping || m_thread.requestStop) {
         m_state = State::Stopping;
         LuauUtil::throwError(thread, "Script execution was aborted");
-    } else if (m_data.timeOutTime &&
-               m_executionTime + elapsed > m_data.timeOutTime) {
-        m_timedOut = true;
-        LuauUtil::throwError(thread, "Thread execution is timed-out");
     } else if (elapsed >= 10 && lua_isyieldable(thread)) {
         m_hostYields.insert(thread);
         lua_yield(thread, 0);

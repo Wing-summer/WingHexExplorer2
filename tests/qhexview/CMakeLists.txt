@@ -16,9 +16,12 @@ find_package(
 get_filename_component(WING_SOURCE_ROOT "../.." ABSOLUTE)
 add_subdirectory("${WING_SOURCE_ROOT}/3rdparty/QHexView" QHexView)
 
-add_executable(qhexview_tests tst_qhexview.cpp)
+add_executable(qhexview_tests tst_qhexview.cpp
+    "${WING_SOURCE_ROOT}/src/model/numshowmodel.cpp"
+    "${WING_SOURCE_ROOT}/src/control/delegate/binarytextitemdelegate.cpp")
 target_include_directories(
     qhexview_tests PRIVATE "${WING_SOURCE_ROOT}/3rdparty/QHexView"
+    "${WING_SOURCE_ROOT}/3rdparty" "${WING_SOURCE_ROOT}/src"
 )
 target_link_libraries(
     qhexview_tests

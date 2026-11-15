@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -30,12 +30,11 @@
 #include <functional>
 
 #include <QCache>
-#include <QHash>
 #include <QPainter>
-#include <QRawFont>
 #include <QStringConverter>
 #include <QVector>
 
+#include "glyphrenderer.h"
 #include "qhexdocument.h"
 
 class QHexRenderer : public QObject {
@@ -241,7 +240,6 @@ private:
                        const QColor &fallbackColor) const;
     void drawText(QPainter *painter, const QRectF &rect, const QString &text,
                   const CellFormat &fmt) const;
-    QRawFont cellFont(const QFont &font, char32_t codepoint) const;
     void drawBackgrounds(QPainter *painter, const QVector<CellFormat> &formats,
                          const std::function<QRectF(int)> &rectAt) const;
     void drawUnderLine(
@@ -255,13 +253,7 @@ private:
     QFontMetricsF m_fontmetrics;
 
     // caches
-    struct CellFonts {
-        QHash<QString, QRawFont> families;
-        QCache<quint32, QRawFont> characters{1024};
-    };
-
-    mutable QCache<QString, CellFonts> m_cellFonts{8};
-    mutable QHash<int, QStringList> m_scriptFamilies;
+    GlyphRenderer m_glyphRenderer;
     mutable QCache<qsizetype,
                    QPair<QByteArray, QVector<QHexRenderer::AsciiCell>>>
         m_lineCaches{30};

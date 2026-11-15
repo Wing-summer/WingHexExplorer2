@@ -58,9 +58,9 @@
 #include "Luau/FileResolver.h"
 #include "Luau/Require.h"
 
-LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
+#include "runtime/scriptchunk.h"
 
-constexpr auto DEFAULT_SCRIPT_FILE_SIZE_LIMIT = 1024 * 1024;
+LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
 
 class WingLuauRequire final {
 public:
@@ -75,18 +75,20 @@ public:
         //   ~/.wing/packages/<package>/...
         QString userRoot;
 
-        // Runtime execution timeout for .config.luau.
-        int luauConfigTimeoutMs = 2000;
+        // Maximum configuration file size accepted by get_config().
+        qsizetype maxConfigBytes = DefaultScriptFileSizeLimit;
 
-        // Maximum configuration file size accepted by get_config(). This is a
-        // host-side safety limit; Luau still applies its own execution timeout.
-        qsizetype maxConfigBytes = DEFAULT_SCRIPT_FILE_SIZE_LIMIT;
+        // Optional boundary for module and configuration reads. Empty permits
+        // ordinary filesystem resolution, including registered package stores.
+        QString readRoot;
 
         // called within cbLoad
         std::function<bool(lua_State *L, lua_State *ml, const QString &path,
-                           const QByteArray &source)>
+                           const QByteArray &source, ScriptChunkFormat format)>
             onLuauFileLoading;
 
+        std::function<QString(lua_State *, const QString &)> moduleCacheKey;
+        std::function<bool(lua_State *, lua_State *)> awaitModule;
         bool readonlyBuiltins = false;
 
         inline Options() {}
@@ -325,9 +327,9 @@ private:
 
     static bool pathEqualOrBelow(const QString &path, const QString &root);
 
-    static QString relativePath(const QString &root, const QString &path);
+    bool canReadPath(const QString &path) const;
 
-    static QString stripModuleSuffix(QString path);
+    static QString relativePath(const QString &root, const QString &path);
 
     static bool isFileModuleCandidate(const QFileInfo &info);
 
@@ -378,9 +380,12 @@ private:
 
     QString configDirectory() const;
 
-    luarequire_ConfigStatus configStatus() const;
+    struct ConfigFile {
+        luarequire_ConfigStatus status = CONFIG_ABSENT;
+        QString path;
+    };
 
-    QString configPath() const;
+    ConfigFile configFile() const;
 
     // Maps an absolute path to the same logical Node representation used by
     // normal navigation. This is used for absolute alias targets supplied by

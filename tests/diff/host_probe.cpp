@@ -54,6 +54,93 @@ static bool waitFor(const std::function<bool()> &predicate) {
         }                                                                      \
     } while (false)
 
+static int verifyCursorSynchronization() {
+    auto &manager = SettingManager::instance();
+    manager.reset(SettingManager::Diff);
+    CHECK(manager.diffSyncCursor());
+    auto left = std::make_unique<EditorView>();
+    auto right = std::make_unique<EditorView>();
+    CHECK(left->newFile(1) == WingHex::ErrFile::Success);
+    CHECK(right->newFile(2) == WingHex::ErrFile::Success);
+    QByteArray bytes(1024, Qt::Uninitialized);
+    std::mt19937 generator(89);
+    for (auto &byte : bytes) {
+        byte = char(generator());
+    }
+    CHECK(left->hexEditor()->document()->insert(0, bytes));
+    bytes.insert(128, QByteArray(64, 'I'));
+    CHECK(right->hexEditor()->document()->insert(0, bytes));
+    QPointer<DiffDialog> dialog = new DiffDialog();
+    dialog->show();
+    auto first =
+        dialog->findChild<QComboBox *>(QStringLiteral("diff.left.source"));
+    auto second =
+        dialog->findChild<QComboBox *>(QStringLiteral("diff.right.source"));
+    auto a = dialog->findChild<QHexView *>(QStringLiteral("diff.left.view"));
+    auto b = dialog->findChild<QHexView *>(QStringLiteral("diff.right.view"));
+    auto sync =
+        dialog->findChild<QToolButton *>(QStringLiteral("diff.syncCursors"));
+    auto status = dialog->findChild<QLabel *>(QStringLiteral("diff.status"));
+    CHECK(first && second && a && b && sync && status && sync->isChecked());
+    first->setCurrentIndex(first->findText(left->infoFileName()));
+    second->setCurrentIndex(second->findText(right->infoFileName()));
+    CHECK(waitFor(
+        [&] { return status->text().startsWith(QStringLiteral("Complete")); }));
+    a->cursor()->moveTo(qsizetype(400));
+    CHECK(b->currentOffset() == 464);
+    b->cursor()->moveTo(qsizetype(544));
+    CHECK(a->currentOffset() == 480);
+    b->cursor()->moveTo(qsizetype(180));
+    CHECK(a->currentOffset() == 128 && b->currentOffset() == 180);
+    a->cursor()->moveTo(qsizetype(3), 4, 0);
+    CHECK(b->currentOffset() == 52 && b->cursor()->position().nibbleindex == 0);
+    a->cursor()->moveTo(qsizetype(1024));
+    CHECK(b->currentOffset() == 1088);
+    b->cursor()->moveTo(qsizetype(0));
+    CHECK(a->currentOffset() == 0);
+    sync->click();
+    CHECK(!manager.diffSyncCursor());
+    a->cursor()->moveTo(qsizetype(400));
+    CHECK(b->currentOffset() == 0);
+    a->setFocus();
+    sync->click();
+    CHECK(manager.diffSyncCursor() && b->currentOffset() == 464);
+    sync->click();
+    b->cursor()->moveTo(qsizetype(600));
+    sync->click();
+    CHECK(a->currentOffset() == 536 && b->currentOffset() == 600);
+    manager.setDiffSyncScroll(false);
+    a->cursor()->moveTo(qsizetype(400));
+    CHECK(b->currentOffset() == 464);
+    CHECK(left->hexEditor()->currentOffset() == 0);
+    CHECK(right->hexEditor()->currentOffset() == 0);
+    for (auto button : dialog->findChildren<QToolButton *>()) {
+        if (button->text() == QStringLiteral("First")) {
+            button->click();
+        }
+    }
+    CHECK(a->currentOffset() == 128 && b->currentOffset() == 128);
+    CHECK(left->hexEditor()->document()->replace(0, QByteArray("Z")));
+    a->cursor()->moveTo(qsizetype(600));
+    CHECK(b->currentOffset() == 128);
+    sync->click();
+    {
+        QSettings saved(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME));
+        CHECK(!saved.value(QStringLiteral("diff.syncCursor")).toBool());
+    }
+    manager.reset(SettingManager::Diff);
+    CHECK(manager.diffSyncCursor() && sync->isChecked());
+    dialog->close();
+    CHECK(waitFor([&] { return dialog.isNull(); }));
+    CHECK(waitFor([] {
+        return QThreadPool::globalInstance()->activeThreadCount() == 0;
+    }));
+    std::puts("DIFF_CURSOR_SYNC_PASS: bidirectional mapping, insertion "
+              "boundary, nibble, EOF, toggle, navigation, invalidation, editor "
+              "isolation, settings");
+    return 0;
+}
+
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("WingCloudStudio"));
@@ -62,6 +149,9 @@ int main(int argc, char **argv) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
                        config.path());
+    if (app.arguments().contains(QStringLiteral("--cursor-sync"))) {
+        return verifyCursorSynchronization();
+    }
     {
         QSettings settings(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME));
         settings.setValue(QStringLiteral("diff.fileLimit"),

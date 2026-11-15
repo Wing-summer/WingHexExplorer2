@@ -45,6 +45,7 @@
 #include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauinspector.h"
 #include "luau/luauutil.h"
+#include "luau/plugin/pluginiodevice.h"
 #include "luau/wingluaurequire.h"
 #include "scriptexecution.h"
 #include "utilities.h"
@@ -56,7 +57,6 @@ int luaopen_cffi(lua_State *L);
 LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
 
 namespace {
-
 class DbgStackPusher {
 public:
     DbgStackPusher(lua_State *L) : m_state(L) {
@@ -202,7 +202,7 @@ void ScriptMachine::finishScriptRegistration() {
     opts.userModuleRoot = ropts.userRoot;
     opts.systemModuleRoot = ropts.systemRoot;
     opts.definitionsFiles = ScriptMachineBindings::definitions();
-    opts.builtinModuleFiles = ScriptMachineBindings::moduleFiles();
+    opts.builtinModuleFiles = bindings::moduleFiles();
     opts.symbolCatalogFile = bindings::symbolCatalogFile();
     QSet<QString> loadedDefinitions;
     for (const auto &file : std::as_const(opts.definitionsFiles)) {
@@ -265,6 +265,19 @@ bool ScriptMachine::configureEngine(
 
     WingLuauRequire::Options ropts;
     ropts.readonlyBuiltins = m_runtimeOptions.retainContext;
+    ropts.moduleCacheKey = [](lua_State *thread, const QString &key) {
+        auto *data = contextData(thread);
+        return data && data->execution ? data->execution->moduleCacheKey(key)
+                                       : key;
+    };
+    ropts.awaitModule = [](lua_State *parent, lua_State *module) {
+        auto *data = contextData(parent);
+        if (!data || !data->execution) {
+            return false;
+        }
+        data->execution->awaitModule(parent, module);
+        return true;
+    };
     auto lualib = QStringLiteral("luaulib");
 
     QDir appDir(QApplication::applicationDirPath());
@@ -272,8 +285,8 @@ bool ScriptMachine::configureEngine(
     QDir usrDir(Utilities::getAppDataPath());
     ropts.userRoot = usrDir.absoluteFilePath(lualib);
     ropts.onLuauFileLoading = [](lua_State *L, lua_State *ml,
-                                 const QString &path,
-                                 const QByteArray &source) -> bool {
+                                 const QString &path, const QByteArray &source,
+                                 ScriptChunkFormat format) -> bool {
         auto data = contextData(L);
         if (data == nullptr) {
             return false;
@@ -283,7 +296,7 @@ bool ScriptMachine::configureEngine(
         lua_setthreaddata(ml, data);
 
         auto dbg = data->debugger;
-        if (dbg) {
+        if (dbg && format == ScriptChunkFormat::Source) {
             dbg->onLuaFileLoaded(L, path, source);
         }
         return true;
@@ -307,8 +320,10 @@ bool ScriptMachine::configureEngine(
 
     luabridge::enableExceptions(L);
 
-    codec = ScriptMachineBindings::initialize(L, std::move(codec), m_luaReq,
-                                              m_runtimeOptions.ui);
+    m_pluginIoService = std::make_unique<PluginIOService>(
+        std::make_shared<PluginIOContext>(), nullptr);
+    codec = ScriptMachineBindings::initialize(
+        L, std::move(codec), m_luaReq, m_runtimeOptions.ui, *m_pluginIoService);
 
     PluginSystem::instance().installAPI(L);
 
@@ -392,18 +407,13 @@ void ScriptMachine::destoryMachine() {
     }
     if (m_main) {
         qtluau::clearLuaCallbacks(m_main);
-        qtluau::setUiWidgetResolver({});
-        qtluau::setUiWidgetCreatedCallback({});
-        qtluau::setUiWidgetFinalizer({});
-        qtluau::setWidgetContentResolver({});
-        qtluau::setWidgetContentMutators({}, {});
-        qtluau::setWindowMenuAccessors({}, {});
     }
     m_bindings.reset();
     if (m_main) {
         lua_close(m_main);
     }
     m_main = nullptr;
+    m_pluginIoService.reset();
 }
 
 QVector<lua_State *> ScriptMachine::getThreadAncestors(lua_State *L) const {
@@ -608,16 +618,9 @@ void ScriptMachine::onLuauInterrupt(lua_State *L, int gc) {
         return;
     }
 
-    if (d->timeOutTime) {
-        if (nowTime - d->startTime > d->timeOutTime) {
-            LuauUtil::throwError(L, "Thread execution is timed-out");
-            return;
-        }
-    }
-
     if (lua_isyieldable(L)) {
-        constexpr auto timeOutTime = 10; // 10ms
-        if (nowTime - lastTime >= timeOutTime) {
+        constexpr auto TimeSliceMs = 10;
+        if (nowTime - lastTime >= TimeSliceMs) {
             lua_yield(L, 0);
         }
         d->lastInteruptTime = nowTime;
@@ -645,6 +648,16 @@ void ScriptMachine::outputMessage(const MessageInfo &info) {
     }
 }
 
+void ScriptMachine::outputError(ConsoleMode mode, const QString &message,
+                                const QString &section) {
+    MessageInfo info;
+    info.type = MessageType::Error;
+    info.mode = mode;
+    info.section = section;
+    info.message = message;
+    outputMessage(info);
+}
+
 void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
                                   bool isInDebug,
                                   const std::function<void(bool)> &onFinished) {
@@ -657,51 +670,66 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
 ScriptMachine::ScriptLoadResult
 ScriptMachine::loadScript(lua_State *thread, const QString &path,
                           ConsoleMode mode, bool debug, bool native) {
-    QFile file(path);
-    if (file.size() > DEFAULT_SCRIPT_FILE_SIZE_LIMIT) {
-        return {ExecutionResult::FileError,
-                {},
-                QStringLiteral("Excessive script file size")};
+    const auto file = readScriptFile(path);
+    if (!file) {
+        return {ExecutionResult::FileError, {}, file.message};
     }
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return {ExecutionResult::FileError,
+    return loadChunk(thread, file.bytes, path, file.format, mode, debug,
+                     native);
+}
+
+ScriptMachine::ScriptLoadResult
+ScriptMachine::loadChunk(lua_State *thread, const QByteArray &source,
+                         const QString &path, ScriptChunkFormat format,
+                         ConsoleMode mode, bool debug, bool native) {
+    if (debug && format == ScriptChunkFormat::Bytecode) {
+        return {ExecutionResult::Failed,
                 {},
-                QStringLiteral("Cannot read script: ") + file.errorString()};
-    }
-    auto source = file.read(DEFAULT_SCRIPT_FILE_SIZE_LIMIT + 1);
-    if (source.size() > DEFAULT_SCRIPT_FILE_SIZE_LIMIT) {
-        return {ExecutionResult::FileError,
-                {},
-                QStringLiteral("Excessive script file size")};
-    }
-    if (file.error() != QFileDevice::NoError) {
-        return {ExecutionResult::FileError,
-                {},
-                QStringLiteral("Cannot read script: ") + file.errorString()};
+                QStringLiteral("Source debugging is unavailable for bytecode")};
     }
     Luau::CompileOptions options;
     if (mode == Scripting) {
         options.debugLevel = debug ? 2 : 0;
         options.optimizationLevel = debug ? 1 : 2;
     }
-    const auto bytecode =
-        Luau::compile(std::string(source.constData(), source.size()), options);
-    const QByteArray chunk = QByteArray("@") + path.toUtf8();
-    if (luau_load(thread, chunk.constData(), bytecode.data(), bytecode.size(),
-                  0) != LUA_OK) {
-        const auto message = QString::fromUtf8(lua_tostring(thread, -1));
-        lua_pop(thread, 1);
-        return {ExecutionResult::Failed, {}, message};
+    const auto loaded = loadScriptChunk(
+        thread, source, QStringLiteral("@") + path, format, options);
+    if (!loaded) {
+        return {ExecutionResult::Failed, {}, loaded.message};
     }
     if (native && Luau::CodeGen::isSupported()) {
         Luau::CodeGen::CompilationOptions nativeOptions;
         Luau::CodeGen::compile(thread, -1, nativeOptions);
     }
-    return {ExecutionResult::Success, std::move(source), {}};
+    return {ExecutionResult::Success, source, {}};
 }
 
 void ScriptMachine::executeScriptWithResult(
     ConsoleMode mode, const QString &fileName, bool isInDebug,
+    const std::function<void(ExecutionResult)> &onFinished) {
+    const auto file = readScriptFile(fileName);
+    if (!file) {
+        outputError(mode, file.message, fileName);
+        onFinished(ExecutionResult::FileError);
+        return;
+    }
+    executeChunkWithResult(mode, file.bytes, fileName, file.format, isInDebug,
+                           onFinished);
+}
+
+void ScriptMachine::executeChunk(ConsoleMode mode, const QByteArray &bytes,
+                                 const QString &name, ScriptChunkFormat format,
+                                 bool debug,
+                                 const std::function<void(bool)> &finished) {
+    executeChunkWithResult(mode, bytes, name, format, debug,
+                           [finished](ExecutionResult result) {
+                               finished(result != ExecutionResult::Busy);
+                           });
+}
+
+void ScriptMachine::executeChunkWithResult(
+    ConsoleMode mode, const QByteArray &bytes, const QString &fileName,
+    ScriptChunkFormat format, bool isInDebug,
     const std::function<void(ExecutionResult)> &onFinished) {
     Q_ASSERT(onFinished);
     if (m_main == nullptr || !m_scriptRegistrationFinished) {
@@ -752,13 +780,10 @@ void ScriptMachine::executeScriptWithResult(
     lua_setthreaddata(T, ctx->data);
     luaL_sandboxthread(T);
 
-    const auto loaded = loadScript(T, fileName, mode, isInDebug, !isInDebug);
+    const auto loaded =
+        loadChunk(T, bytes, fileName, format, mode, isInDebug, !isInDebug);
     if (loaded.result != ExecutionResult::Success) {
-        MessageInfo info;
-        info.type = MessageType::Error;
-        info.mode = mode;
-        info.message = loaded.message;
-        outputMessage(info);
+        outputError(mode, loaded.message, fileName);
         ctx->destory();
         onFinished(loaded.result);
         return;
@@ -787,9 +812,6 @@ void ScriptMachine::executeScriptWithResult(
     Q_ASSERT(d);
     d->startTime = ApplicationClock::elapsed();
     d->lastInteruptTime = d->startTime;
-    // min -> ms
-    d->timeOutTime =
-        quint64(SettingManager::instance().scriptTimeout()) * 60000;
 
     if (isInDebug) {
         d->debugger = m_debugger;
@@ -811,12 +833,7 @@ void ScriptMachine::executeScriptWithResult(
             if (status != LUA_OK) {
                 auto err = runner->executeError();
                 if (!err.isEmpty()) {
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.section = fileName;
-                    info.message = err;
-                    info.type = MessageType::Error;
-                    outputMessage(info);
+                    outputError(mode, err, fileName);
                 }
             }
 
@@ -928,66 +945,55 @@ LuauDebugger *ScriptMachine::debugger() const { return m_debugger; }
 void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                                 const std::function<void(bool)> &onFinished) {
 
-#define RETURN_NEED_MORE_CODE                                                  \
-    onFinished(false);                                                         \
-    return
-
-#define RETURN_DEFAULT                                                         \
-    onFinished(true);                                                          \
-    return
-
     if (QThread::currentThread() != qApp->thread()) {
         qWarning("Code must execute on the main thread");
-        RETURN_DEFAULT;
+        onFinished(true);
+        return;
     }
 
     if (m_main == nullptr || !m_scriptRegistrationFinished) {
         qWarning("The script engine is not initialized");
-        RETURN_DEFAULT;
+        onFinished(true);
+        return;
     }
 
     if (code.isEmpty()) {
-        RETURN_DEFAULT;
+        onFinished(true);
+        return;
     }
 
     auto ctx = context(mode);
 
     if (isRunning(mode)) {
-        RETURN_DEFAULT;
+        onFinished(true);
+        return;
     }
 
     auto T = ctx->state;
-    auto source = code.toUtf8();
-    auto bytecode = Luau::compile(source.data());
+    const auto source = code.toUtf8();
+    const auto loaded = loadScriptChunk(T, source, QStringLiteral("=stdin"),
+                                        ScriptChunkFormat::Source);
 
-    if (luau_load(T, "=stdin", bytecode.data(), bytecode.size(), 0) != LUA_OK) {
-        size_t len;
-        const char *msg = lua_tolstring(T, -1, &len);
-        auto error = QString::fromUtf8(msg, len);
-        lua_pop(T, 1);
+    if (!loaded) {
+        const auto error = loaded.message;
         if (error.endsWith(QLatin1String("<eof>"))) {
-            RETURN_NEED_MORE_CODE;
+            onFinished(false);
+            return;
         }
-        MessageInfo info;
-        info.type = MessageType::Error;
-        info.mode = mode;
-        info.message = error;
-        outputMessage(info);
-        RETURN_DEFAULT;
+        outputError(mode, error);
+        onFinished(true);
+        return;
     }
 
     auto d = contextData(mode);
     Q_ASSERT(d);
     d->startTime = ApplicationClock::elapsed();
     d->lastInteruptTime = d->startTime;
-    // min -> ms
-    d->timeOutTime =
-        quint64(SettingManager::instance().scriptTimeout()) * 60000;
 
     auto runner = createScheduler(ctx);
     QObject::connect(
         runner, &LuauScheduler::sigOnFinished, runner,
-        [this, mode, onFinished](int status) {
+        [this, runner, mode, onFinished](int status) {
             auto &&R = m_ctx[consoleModeIdx(mode)];
             auto T = R.state;
             if (status == LUA_OK) {
@@ -1006,17 +1012,11 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                     lua_pcall(T, n, 0, 0);
                 }
             } else {
-                size_t len;
-                const char *str = lua_tolstring(T, -1, &len);
-                if (str) {
-                    auto error = QString::fromUtf8(str, len);
+                auto error = runner->executeError();
+                if (!error.isEmpty()) {
                     error += QStringLiteral("\nstack backtrace:\n");
                     error += QString::fromUtf8(lua_debugtrace(T));
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.message = error;
-                    info.type = MessageType::Error;
-                    outputMessage(info);
+                    outputError(mode, error);
                 }
             }
             R.reset();
@@ -1025,6 +1025,4 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         Qt::SingleShotConnection);
 
     runner->start();
-#undef RETURN_DEFAULT
-#undef RETURN_NEED_MORE_CODE
 }

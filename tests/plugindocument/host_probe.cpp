@@ -742,7 +742,7 @@ public:
         ProbeDriver driver;
         PluginInfo driverInfo;
         driverInfo.id = QStringLiteral("probedriver");
-        host.m_loadeddevs.append(&driver);
+        host.m_loadedPlugins.append(&driver);
         host.m_pinfos.insert(&driver, driverInfo);
         QTemporaryDir directory;
         REQUIRE(directory.isValid());
@@ -952,7 +952,7 @@ public:
         }
         REQUIRE(plugin.acquired == plugin.released);
         REQUIRE(host.m_plgviewMap[&plugin].contexts.isEmpty());
-        host.m_loadeddevs.removeAll(&driver);
+        host.m_loadedPlugins.removeAll(&driver);
         host.m_pinfos.remove(&driver);
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         REQUIRE(EditorView::instances().size() == initialViews);

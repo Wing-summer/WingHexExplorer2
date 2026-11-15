@@ -50,11 +50,11 @@ Requests use JSON-RPC 2.0 with named object parameters and support batches. Noti
 | `task.stop` | `{ "taskId": "id" }` | 停止该任务，返回当前记录 / Stops the task and returns its current record |
 | `task.remove` | `{ "taskId": "id" }` | 删除 stopped/failed 记录 / Removes a stopped/failed record |
 
-记录包含 `taskId`、规范化 `path`、`state`、UTC 的 `createdAt`/`updatedAt`/`finishedAt`，以及为空或含 `code`、`message` 的 `error`。未结束时 `finishedAt` 为空字符串。任务错误码为 `file-error`、`compilation-error`、`execution-error`、`callback-error` 或 `timeout`。订阅连接收到 `task.changed`（完整记录）和 `task.removed`（`taskId`）通知；客户端断开不会停止任务。
-Records contain `taskId`, canonical `path`, `state`, UTC `createdAt`/`updatedAt`/`finishedAt`, and a null `error` or an object with `code` and `message`. `finishedAt` is an empty string until termination. Task error codes are `file-error`, `compilation-error`, `execution-error`, `callback-error` and `timeout`. Subscribers receive `task.changed` with a complete record and `task.removed` with `taskId`. Disconnecting a client never stops its tasks.
+记录包含 `taskId`、规范化 `path`、`state`、UTC 的 `createdAt`/`updatedAt`/`finishedAt`，以及为空或含 `code`、`message` 的 `error`。未结束时 `finishedAt` 为空字符串。任务错误码为 `file-error`、`compilation-error`、`execution-error`、`callback-error`。订阅连接收到 `task.changed`（完整记录）和 `task.removed`（`taskId`）通知；客户端断开不会停止任务。
+Records contain `taskId`, canonical `path`, `state`, UTC `createdAt`/`updatedAt`/`finishedAt`, and a null `error` or an object with `code` and `message`. `finishedAt` is an empty string until termination. Task error codes are `file-error`, `compilation-error`, `execution-error`, and `callback-error`. Subscribers receive `task.changed` with a complete record and `task.removed` with `taskId`. Disconnecting a client never stops its tasks.
 
-状态为 `queued → running → resident`。入口正常返回后继续驻留，包括没有活动资源的任务；停止经过 `stopping → stopped`，编译、入口、异步回调及超时错误进入 `failed`，不结束其他任务或服务。停止或失败后保留记录，显式删除后才可复用 ID。
-States progress through `queued → running → resident`. A returned entry remains resident, even without active resources. Stopping progresses through `stopping → stopped`; compilation, entry, asynchronous callback and timeout errors produce `failed` without terminating other tasks or the service. Final records remain until explicitly removed, after which the ID may be reused.
+状态为 `queued → running → resident`。入口正常返回后继续驻留，包括没有活动资源的任务；停止经过 `stopping → stopped`，编译、入口及异步回调错误进入 `failed`，不结束其他任务或服务。停止或失败后保留记录，显式删除后才可复用 ID。
+States progress through `queued → running → resident`. A returned entry remains resident, even without active resources. Stopping progresses through `stopping → stopped`; compilation, entry and asynchronous callback errors produce `failed` without terminating other tasks or the service. Final records remain until explicitly removed, after which the ID may be reused.
 
 标准 RPC 错误之外，`-32001` 未知任务、`-32002` 重复 ID、`-32003` 状态冲突、`-32004` 容量不足、`-32005` 文件无效、`-32006` 服务正在退出。文件错误在接受任务前返回；接受后的错误保存在任务记录。
 Besides standard RPC errors: `-32001` means unknown task, `-32002` duplicate ID, `-32003` state conflict, `-32004` capacity reached, `-32005` invalid file and `-32006` service stopping. File validation errors reject acceptance; subsequent errors are stored in the task record.
@@ -77,8 +77,8 @@ python examples/headless/rpc-client.py service.status --address server.example -
 
 ## 调度、托盘和退出 / Scheduling, tray and exit
 
-插件实例和 VM 只初始化一次。任务使用独立 Luau 根线程、沙箱全局变量及文件模块缓存，Qt 对象和回调按上下文归属清理；插件原生状态仍然共享，并非进程隔离。主线程按约 10 ms 时间片执行入口、模块和异步回调，同一任务不会重入。超时按一次入口或回调的执行时间累计，不计驻留或调度等待；编译及同步原生插件调用不能被 Luau 调度器抢占。
-Plugins and the VM initialize once. Each task has its own Luau root thread, sandbox globals and file-module cache, with context-owned Qt objects and callbacks. Native plugin state remains shared; this is not process isolation. Entries, modules and asynchronous callbacks use approximately 10 ms time slices on the main thread, without reentering a task. Timeouts accumulate execution time per entry or callback, excluding residency and scheduling waits. Compilation and synchronous native plugin calls cannot be preempted by the Luau scheduler.
+插件实例和 VM 只初始化一次。任务使用独立 Luau 根线程、沙箱全局变量及文件模块缓存，Qt 对象和回调按上下文归属清理；插件原生状态仍然共享，并非进程隔离。主线程按约 10 ms 时间片执行入口、模块和异步回调，同一任务不会重入。脚本没有自动执行时限，可显式停止；编译及同步原生插件调用不能被 Luau 调度器抢占。
+Plugins and the VM initialize once. Each task has its own Luau root thread, sandbox globals and file-module cache, with context-owned Qt objects and callbacks. Native plugin state remains shared; this is not process isolation. Entries, modules and asynchronous callbacks use approximately 10 ms time slices on the main thread, without reentering a task. Scripts have no automatic execution time limit and can be stopped explicitly. Compilation and synchronous native plugin calls cannot be preempted by the Luau scheduler.
 
 有桌面配置时使用桌面 Qt 后端，系统托盘可用时显示菜单，提供任务状态、停止任务和强制清理退出。不创建宿主主窗口、编辑器或托盘辅助进程。没有桌面配置时使用 offscreen；显式 Qt 后端设置会被尊重，无效桌面配置仍可能导致 Qt 初始化失败。
 With a configured desktop, the service uses a desktop Qt backend and shows a menu when the system tray is available, listing task states, task stopping and forced cleanup shutdown. It creates no host main window, editor or tray helper process. Without desktop configuration it uses offscreen. Explicit Qt backend settings are respected; invalid desktop configuration may still cause Qt initialization failure.

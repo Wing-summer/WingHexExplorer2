@@ -18,11 +18,14 @@
 #ifndef WINGCERT_H
 #define WINGCERT_H
 
+#include <QByteArrayView>
 #include <QFileInfo>
 #include <QHash>
 #include <QSslCertificate>
 #include <QSslConfiguration>
 #include <QSslError>
+
+class QIODevice;
 
 class WingCert {
 public:
@@ -55,7 +58,16 @@ public:
     serverConfiguration(const QString &certificateFile,
                         const QString &keyFile) const;
 
-    bool verify(const QFileInfo &plg, const QByteArray &fprint) const;
+    bool verify(const QFileInfo &file, const QByteArray &fingerprint) const;
+    bool verify(QIODevice &content, const QByteArray &fingerprint,
+                const QString &signatureFile = {}) const;
+
+    // Cryptographic proof only;
+    // verify() additionally enforces certificate trust.
+    static bool verifySignature(QByteArrayView content,
+                                QByteArrayView signature,
+                                const QSslCertificate &certificate);
+    static QString signatureFilePath(const QFileInfo &file);
 
     QFileInfo certLocation(const QByteArray &fprint);
     QFileInfo certLocation(const QSslCertificate &cert);
@@ -67,10 +79,6 @@ public:
 
 private:
     static bool isValidCert(const QSslCertificate &cert);
-
-private:
-    bool verify(const QByteArray &file, const QByteArray &sig,
-                const QSslCertificate &cert) const;
 
 private:
     WingCert();

@@ -87,11 +87,9 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
         }
     });
     m_menu->addAction(a);
-
     m_menu->addSeparator();
-
-    for (auto pitem = files.rbegin(); pitem != files.rend(); ++pitem) {
-        addRecentFile(*pitem);
+    for (const auto &item : files) {
+        addRecentFile(item);
     }
 }
 
@@ -235,14 +233,6 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                 }
                 auto f = m_recents.at(idx);
                 if (existsPath(f)) {
-                    auto idx = m_hitems.indexOf(a);
-                    if (idx > 0) {
-                        m_menu->removeAction(a);
-                        m_menu->insertAction(m_hitems.first(), a);
-                        m_hitems.move(idx, 0);
-                        m_recents.move(idx, 0);
-                        m_dirty = true;
-                    }
                     Q_EMIT sigOnRecentFileTriggered(f);
                 } else {
                     auto index = m_hitems.indexOf(send);
@@ -270,15 +260,6 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         }
         m_recents.prepend(info);
         m_hitems.prepend(a);
-    } else {
-        if (m_hitems.count() > 1) {
-            auto a = m_hitems.at(o);
-            m_menu->removeAction(a);
-            m_menu->insertAction(m_hitems.first(), a);
-            m_hitems.move(o, 0);
-            m_recents.move(o, 0);
-            m_dirty = true;
-        }
     }
 }
 

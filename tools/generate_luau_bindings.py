@@ -13,6 +13,7 @@ import re
 from string import Template
 
 from hexdoc_codegen import generate_hexdoc
+from plugin_protocol import generate as generate_plugin_protocol
 from qtluau_codegen.extensions import identifier, write
 from qtluau_codegen.models import (
     JsonObject,
@@ -145,7 +146,7 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
                 "fallback": text(fallbacks, native, result + "{}"),
             }
             body = Template(text(override, "body", text(group_policy, "body", text(policy, "default_body")))).substitute(substitutions)
-            if caller:
+            if caller and "scriptContexts" in captures:
                 body = "auto *scriptContext = scriptContexts->forCaller(caller); " + body
             lines.append(f"{namespace}Callbacks.{callback} = [{captures}]({params}) -> {result} {{ {body} }};")
         module = text(group, "module")
@@ -171,6 +172,24 @@ def emit_host_forwarders(manifest: JsonObject, policy: JsonObject, output: pathl
 
 
 
+def emit_forwarders(manifest: JsonObject, forwarding: JsonObject, output: pathlib.Path) -> None:
+    ordinary = dict(manifest)
+
+    emit_host_forwarders(ordinary, forwarding, output)
+    plugin = dict(manifest)
+
+    rules: JsonObject = {
+        "preamble": [], "captures": ["this", "sender"],
+        "default_body": 'if (!sender) { throw std::runtime_error("Plugin has expired"); } $return_prefix this->$native(sender.data()$comma_arguments);',
+        "method_rules": {"invokeScriptService": {"body": "return ::invokeScriptService(*this, sender.data(), $arguments);"}},
+        "assignments": [], "output": "generated/plugin_forwarders.inc"
+    }
+    for name in ("foreground", "background", "comment"):
+        object_field(rules, "method_rules")[name] = object_field(object_field(forwarding, "method_rules"), name)
+    emit_host_forwarders(plugin, rules, output)
+    generate_plugin_protocol(pathlib.Path(__file__).resolve().parents[1], output)
+
+
 def main() -> int:
     """Generate from codegen configuration; command-line paths override defaults."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -194,7 +213,7 @@ def main() -> int:
     config: JsonObject = json.loads(config_path.read_text())
     forwarding: JsonObject = json.loads((project_path.parent / text(project, "forwarding")).read_text())
     def postprocess(manifest: JsonObject, staging: pathlib.Path) -> None:
-        emit_host_forwarders(manifest, forwarding, staging)
+        emit_forwarders(manifest, forwarding, staging)
         generate_hexdoc(manifest, config, staging)
 
     manifest = export_project(config, output, host, postprocess=postprocess)

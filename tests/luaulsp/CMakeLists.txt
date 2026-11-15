@@ -38,6 +38,7 @@ add_executable(
     ${WING_SOURCE_ROOT}/src/luau/lsp/semantictokensvisitor.cpp
     ${WING_SOURCE_ROOT}/src/luau/lsp/typehelpers.cpp
     ${WING_SOURCE_ROOT}/src/luau/wingluaurequire.cpp
+    ${WING_SOURCE_ROOT}/src/luau/runtime/scriptchunk.cpp
 )
 target_include_directories(
     wing_luau_lsp_tests PRIVATE "${WING_SOURCE_ROOT}/src"

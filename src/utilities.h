@@ -357,10 +357,16 @@ public:
     }
 
     inline static bool isTextFile(const QMimeType &type) {
-        return type.inherits(QStringLiteral("text/plain"));
+        // shared-mime-info represents empty content separately from text/plain.
+        return type.inherits(QStringLiteral("text/plain")) ||
+               type.inherits(QStringLiteral("application/x-zerosize")) ||
+               type.inherits(QStringLiteral("inode/x-empty"));
     }
 
     inline static bool isTextFile(const QFileInfo &info) {
+        if (!info.isFile() || !info.isReadable()) {
+            return false;
+        }
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(info, QMimeDatabase::MatchContent);
         return isTextFile(t);

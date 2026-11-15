@@ -1,4 +1,5 @@
 #include <cstring>
+#include <limits>
 #include <random>
 
 #include <QBuffer>
@@ -96,22 +97,67 @@ private slots:
         compare(left, right);
     }
 
-    void localMinimality() {
+    void fixedPositionHeaderEdits() {
+        // Octal fields from the reported tar headers. Repeated digits must
+        // not pull equal runs away from their unchanged offsets.
+        const auto oldFields =
+            QByteArray::fromHex("3033333433373200313431363233303732343000303037"
+                                "34323500203000000000");
+        const auto newFields =
+            QByteArray::fromHex("3033333732343200313432363433303734303000303037"
+                                "34323500203000000000");
+        QByteArray a(128 * int(KiB), '\0');
+        auto b = a;
+        a.replace(0x80, oldFields.size(), oldFields);
+        b.replace(0x80, newFields.size(), newFields);
+        for (const bool precise : {false, true}) {
+            QBuffer left(&a), right(&b);
+            QVERIFY(left.open(QIODevice::ReadOnly));
+            QVERIFY(right.open(QIODevice::ReadOnly));
+            Options options;
+            options.precise = precise;
+            ResultStore store(24 * MiB);
+            QCOMPARE(BinaryDiff().compare(&left, &right, options, store).status,
+                     Status::Complete);
+            QCOMPARE(store.differences(), quint64(4));
+            for (const auto &range : store.page(0)) {
+                QCOMPARE(range.type, Type::Replace);
+                QVERIFY(!range.coarse);
+                QCOMPARE(range.leftOffset, range.rightOffset);
+                QCOMPARE(range.leftLength, range.rightLength);
+            }
+            for (int offset = 0; offset < 0xA0; ++offset) {
+                const bool changed = a[offset] != b[offset];
+                QCOMPARE(!store.intersect(offset, 1, false).isEmpty(), changed);
+                QCOMPARE(!store.intersect(offset, 1, true).isEmpty(), changed);
+            }
+        }
+    }
+
+    void localEditDistance() {
         std::mt19937 generator(77);
         for (int attempt = 0; attempt < 60; ++attempt) {
-            QByteArray a(40, Qt::Uninitialized), b(40, Qt::Uninitialized);
+            const int n = int(generator() % 41);
+            const int m = int(generator() % 41);
+            QByteArray a(n, Qt::Uninitialized), b(m, Qt::Uninitialized);
             for (auto &c : a) {
                 c = char(generator() % 5);
             }
             for (auto &c : b) {
                 c = char(generator() % 5);
             }
-            std::array<std::array<int, 41>, 41> lcs{};
-            for (int i = 1; i <= 40; ++i) {
-                for (int j = 1; j <= 40; ++j) {
-                    lcs[i][j] = a[i - 1] == b[j - 1]
-                                    ? lcs[i - 1][j - 1] + 1
-                                    : std::max(lcs[i - 1][j], lcs[i][j - 1]);
+            std::array<std::array<int, 41>, 41> distance{};
+            for (int i = 0; i <= n; ++i) {
+                distance[i][0] = i;
+            }
+            for (int j = 0; j <= m; ++j) {
+                distance[0][j] = j;
+            }
+            for (int i = 1; i <= n; ++i) {
+                for (int j = 1; j <= m; ++j) {
+                    distance[i][j] = std::min(
+                        {distance[i - 1][j] + 1, distance[i][j - 1] + 1,
+                         distance[i - 1][j - 1] + (a[i - 1] != b[j - 1])});
                 }
             }
             QBuffer left(&a), right(&b);
@@ -124,9 +170,9 @@ private slots:
             quint64 cost = 0;
             for (const auto &range : store.page(0)) {
                 QVERIFY(!range.coarse);
-                cost += range.leftLength + range.rightLength;
+                cost += std::max(range.leftLength, range.rightLength);
             }
-            QCOMPARE(cost, quint64(80 - 2 * lcs[40][40]));
+            QCOMPARE(cost, quint64(distance[n][m]));
         }
     }
 
@@ -279,6 +325,39 @@ private slots:
         QCOMPARE(changed.count(), 0);
         QVERIFY(!doc->metadata()->hasMetadata());
         QCOMPARE(second.grab().toImage(), original);
+    }
+
+    void emptySideDoesNotFillUnchangedByte() {
+        QSharedPointer<QHexDocument> doc(
+            QHexDocument::fromInternalBuffer(false));
+        QVERIFY(doc->insert(0, QByteArray("A")));
+        QHexView view;
+        view.setDocument(doc);
+        view.resize(640, 180);
+        view.show();
+        QApplication::processEvents();
+        auto renderer =
+            new DiffRenderer(doc.data(), view.cursor(),
+                             QFontMetricsF(view.font()), &view, false);
+        QVERIFY(view.setRenderer(renderer));
+        renderer->enableCursor(false);
+        const auto original = view.viewport()->grab().toImage();
+        auto store = std::make_shared<ResultStore>(MiB);
+        QVERIFY(store->append({0, 0, 0, 1, Type::Insert, false}));
+        store->publish();
+        renderer->setResults(store);
+        const auto decorated = view.viewport()->grab().toImage();
+        QVERIFY(original != decorated);
+        // The boundary underline remains visible in both panes, while the
+        // byte glyph and its background above the underline are unchanged.
+        auto upperLine = renderer->getLineRect(0, 0);
+        upperLine.setHeight(upperLine.height() / 2);
+        const auto scale = original.devicePixelRatio();
+        const QRect pixels(qRound(upperLine.x() * scale),
+                           qRound(upperLine.y() * scale),
+                           qRound(upperLine.width() * scale),
+                           qRound(upperLine.height() * scale));
+        QCOMPARE(decorated.copy(pixels), original.copy(pixels));
     }
 
     void rendererReplacementPreservesViewState() {
@@ -453,7 +532,41 @@ private slots:
         ResultStore large(MiB);
         QVERIFY(large.append(
             {0, 64 * 1024 * MiB, 0, 48 * 1024 * MiB, Type::Replace, true}));
+        large.publish();
         QCOMPARE(large.mapOffset(32 * 1024 * MiB, false), 24 * 1024 * MiB);
+    }
+
+    void cursorMappingUsesPublishedRanges() {
+        ResultStore store(MiB);
+        const auto unmapped = std::numeric_limits<quint64>::max();
+        QCOMPARE(store.mapOffset(0, false), unmapped);
+        QVERIFY(store.append({0, 8, 0, 8, Type::Equal, false}));
+        QVERIFY(store.append({8, 8, 8, 4, Type::Replace, false}));
+        QVERIFY(store.append({16, 4, 12, 0, Type::Delete, false}));
+        QVERIFY(store.append({20, 0, 12, 4, Type::Insert, false}));
+        QVERIFY(store.append({20, 8, 16, 8, Type::Equal, false}));
+        QCOMPARE(store.mapOffset(4, false), unmapped);
+        store.publish();
+        QCOMPARE(store.mapOffset(4, false), quint64(4));
+        QCOMPARE(store.mapOffset(12, false), quint64(10));
+        QCOMPARE(store.mapOffset(10, true), quint64(12));
+        QCOMPARE(store.mapOffset(18, false), quint64(12));
+        QCOMPARE(store.mapOffset(14, true), quint64(20));
+        QCOMPARE(store.mapOffset(22, false), quint64(18));
+        QCOMPARE(store.mapOffset(18, true), quint64(22));
+        QCOMPARE(store.mapOffset(28, false), quint64(24));
+        QCOMPARE(store.mapOffset(24, true), quint64(28));
+        QVERIFY(store.append({28, 4, 24, 4, Type::Equal, false}));
+        QCOMPARE(store.mapOffset(30, false), unmapped);
+        QCOMPARE(store.mapOffset(26, true), unmapped);
+        store.publish();
+        QCOMPARE(store.mapOffset(30, false), quint64(26));
+        ResultStore emptySide(MiB);
+        QVERIFY(emptySide.append({0, 0, 0, 5, Type::Insert, false}));
+        emptySide.publish();
+        QCOMPARE(emptySide.mapOffset(0, false), quint64(5));
+        QCOMPARE(emptySide.mapOffset(2, true), quint64(0));
+        QCOMPARE(emptySide.mapOffset(5, true), quint64(0));
     }
 
     void memoryAndDetailDegradation() {

@@ -12,6 +12,7 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--build-dir", type=Path, required=True)
+parser.add_argument("--cursor-sync", action="store_true")
 args = parser.parse_args()
 build = args.build_dir.resolve()
 root = Path(__file__).resolve().parents[2]
@@ -47,4 +48,7 @@ executable = build / "diff_host_probe"
 link_args[link_args.index("-o") + 1] = str(executable)
 subprocess.run(link_args, cwd=build, check=True)
 env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
-subprocess.run([str(executable)], cwd=build, env=env, check=True, timeout=90)
+probe_args = [str(executable)]
+if args.cursor_sync:
+    probe_args.append("--cursor-sync")
+subprocess.run(probe_args, cwd=build, env=env, check=True, timeout=90)

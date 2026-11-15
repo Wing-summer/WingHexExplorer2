@@ -34,9 +34,6 @@
 #include "Luau/Compiler.h"
 #include "Luau/StringUtils.h"
 
-#include "luau/runtime/luauscheduler.h"
-#include "luau/runtime/scriptexecution.h"
-
 namespace {
 
 void freezeModule(lua_State *L, int index, QSet<const void *> &seen) {
@@ -377,6 +374,7 @@ bool WingLuauRequire::initRequire(lua_State *L, Options options) {
     m_options = std::move(options);
     m_options.systemRoot = normalizeRoot(m_options.systemRoot);
     m_options.userRoot = normalizeRoot(m_options.userRoot);
+    m_options.readRoot = normalizeRoot(m_options.readRoot);
     return true;
 }
 
@@ -627,6 +625,11 @@ bool WingLuauRequire::pathEqualOrBelow(const QString &path,
     return p.startsWith(prefix);
 }
 
+bool WingLuauRequire::canReadPath(const QString &path) const {
+    return m_options.readRoot.isEmpty() ||
+           pathEqualOrBelow(path, m_options.readRoot);
+}
+
 QString WingLuauRequire::relativePath(const QString &root,
                                       const QString &path) {
     QString relative = QDir(root).relativeFilePath(path);
@@ -635,15 +638,6 @@ QString WingLuauRequire::relativePath(const QString &root,
         relative.clear();
     }
     return relative;
-}
-
-QString WingLuauRequire::stripModuleSuffix(QString path) {
-    if (path.endsWith(QLatin1String(".luau"), Qt::CaseInsensitive)) {
-        path.chop(5);
-    } else if (path.endsWith(QLatin1String(".lua"), Qt::CaseInsensitive)) {
-        path.chop(4);
-    }
-    return path;
 }
 
 bool WingLuauRequire::isFileModuleCandidate(const QFileInfo &info) {
@@ -679,18 +673,19 @@ WingLuauRequire::resolveFileModule(const QString &basePath,
         return {};
     }
 
-    const QString luauPath = targetPath + QStringLiteral(".luau");
-    const QString luaPath = targetPath + QStringLiteral(".lua");
-    const bool hasLuauFile = isFileModuleCandidate(QFileInfo(luauPath));
-    const bool hasLuaFile = isFileModuleCandidate(QFileInfo(luaPath));
+    QStringList candidates;
+    for (const auto &candidate : scriptFileCandidates(targetPath)) {
+        if (isFileModuleCandidate(QFileInfo(candidate))) {
+            candidates.append(candidate);
+        }
+    }
     const bool hasDirectory = targetInfo.exists() && targetInfo.isDir();
-    if (int(hasLuauFile) + int(hasLuaFile) + int(hasDirectory) > 1) {
+    if (candidates.size() + int(hasDirectory) > 1) {
         return {FileModuleResolution::Kind::Ambiguous, {}};
     }
-
-    if (hasLuauFile || hasLuaFile) {
+    if (!candidates.isEmpty()) {
         return {FileModuleResolution::Kind::File,
-                normalizeExistingPath(hasLuauFile ? luauPath : luaPath)};
+                normalizeExistingPath(candidates.first())};
     }
     if (!hasDirectory) {
         return {};
@@ -1036,23 +1031,21 @@ QString WingLuauRequire::sourcePrefixForNode(const Node &node) const {
 WingLuauRequire::InitStatus
 WingLuauRequire::directoryInitStatus(const QString &directory,
                                      QString *loadPath) {
-    const QString luau = joinPath(directory, QStringLiteral("init.luau"));
-    const QFileInfo luauInfo(luau);
-
-    const QString lua = joinPath(directory, QStringLiteral("init.lua"));
-    const QFileInfo luaInfo(lua);
-
-    const bool hasLuau = isFileModuleCandidate(luauInfo);
-    const bool hasLua = isFileModuleCandidate(luaInfo);
-
-    if (hasLuau && hasLua) {
+    QStringList candidates;
+    for (const auto &candidate :
+         scriptFileCandidates(joinPath(directory, QStringLiteral("init")))) {
+        if (isFileModuleCandidate(QFileInfo(candidate))) {
+            candidates.append(candidate);
+        }
+    }
+    if (candidates.size() > 1) {
         return InitStatus::Ambiguous;
     }
-    if (!hasLuau && !hasLua) {
+    if (candidates.isEmpty()) {
         return InitStatus::None;
     }
     if (loadPath) {
-        *loadPath = normalizeExistingPath(hasLuau ? luau : lua);
+        *loadPath = normalizeExistingPath(candidates.first());
     }
     return InitStatus::Present;
 }
@@ -1267,7 +1260,7 @@ QString WingLuauRequire::chunknameForNode(const Node &node) const {
         // and:
         //   foo.luau
         // as package root "foo".
-        const QString firstLogical = stripModuleSuffix(parts.front());
+        const QString firstLogical = stripScriptFileSuffix(parts.front());
 
         if (firstLogical.compare(node.packageName, Qt::CaseInsensitive) == 0) {
             parts.removeFirst();
@@ -1276,7 +1269,7 @@ QString WingLuauRequire::chunknameForNode(const Node &node) const {
 
     // A file module contributes its filename without .luau/.lua.
     if (node.kind == NodeKind::ModuleFile && !parts.isEmpty()) {
-        parts.last() = stripModuleSuffix(parts.last());
+        parts.last() = stripScriptFileSuffix(parts.last());
     }
 
     const QString rest = parts.join('/');
@@ -1345,47 +1338,26 @@ QString WingLuauRequire::configDirectory() const {
     return {};
 }
 
-luarequire_ConfigStatus WingLuauRequire::configStatus() const {
-    const QString dir = configDirectory();
-    if (dir.isEmpty()) {
-        return CONFIG_ABSENT;
-    }
-
-    const bool hasJson =
-        QFileInfo(joinPath(dir, QStringLiteral(".luaurc"))).isFile();
-    const bool hasLuau =
-        QFileInfo(joinPath(dir, QStringLiteral(".config.luau"))).isFile();
-
-    if (hasJson && hasLuau) {
-        return CONFIG_AMBIGUOUS;
-    }
-    if (hasJson) {
-        return CONFIG_PRESENT_JSON;
-    }
-    if (hasLuau) {
-        return CONFIG_PRESENT_LUAU;
-    }
-    return CONFIG_ABSENT;
-}
-
-QString WingLuauRequire::configPath() const {
-    const QString dir = configDirectory();
-    if (dir.isEmpty()) {
+WingLuauRequire::ConfigFile WingLuauRequire::configFile() const {
+    const auto dir = configDirectory();
+    if (dir.isEmpty() || !canReadPath(dir)) {
         return {};
     }
-
-    const QString json = joinPath(dir, QStringLiteral(".luaurc"));
-    const QString luau = joinPath(dir, QStringLiteral(".config.luau"));
-    const bool hasJson = QFileInfo(json).isFile();
-    const bool hasLuau = QFileInfo(luau).isFile();
-
-    if (hasJson && !hasLuau) {
-        return json;
+    ConfigFile result;
+    const std::pair<QString, luarequire_ConfigStatus> candidates[] = {
+        {QStringLiteral(".luaurc"), CONFIG_PRESENT_JSON},
+        {QStringLiteral(".config.luau"), CONFIG_PRESENT_LUAU}};
+    for (const auto &candidate : candidates) {
+        const auto path = joinPath(dir, candidate.first);
+        if (!canReadPath(path) || !QFileInfo(path).isFile()) {
+            continue;
+        }
+        if (result.status != CONFIG_ABSENT) {
+            return {CONFIG_AMBIGUOUS, {}};
+        }
+        result = {candidate.second, path};
     }
-    if (hasLuau && !hasJson) {
-        return luau;
-    }
-    return {};
+    return result;
 }
 
 std::optional<WingLuauRequire::Node>
@@ -1409,7 +1381,7 @@ WingLuauRequire::mapAbsolutePathToNode(Scope scope, const QString &root,
     }
 
     if (info.isFile() && parts.size() == 1) {
-        node.packageName = stripModuleSuffix(parts.front());
+        node.packageName = stripScriptFileSuffix(parts.front());
     } else {
         node.packageName = parts.front();
     }
@@ -1433,19 +1405,15 @@ WingLuauRequire::mapAbsolutePathToNode(Scope scope, const QString &root,
 
     const QString fileName = info.fileName();
     const QString parent = normalizeExistingPath(info.absolutePath());
-    const bool isInitLuau =
-        fileName.compare(QLatin1String("init.luau"), Qt::CaseInsensitive) == 0;
-    const bool isInitLua =
-        fileName.compare(QLatin1String("init.lua"), Qt::CaseInsensitive) == 0;
-
-    if (isInitLuau || isInitLua) {
+    if (stripScriptFileSuffix(fileName).compare(QStringLiteral("init"),
+                                                Qt::CaseInsensitive) == 0 &&
+        scriptChunkFormat(fileName)) {
         node.kind = NodeKind::ModuleDirectory;
         node.physicalPath = parent;
         return node;
     }
 
-    if (fileName.endsWith(QLatin1String(".luau"), Qt::CaseInsensitive) ||
-        fileName.endsWith(QLatin1String(".lua"), Qt::CaseInsensitive)) {
+    if (scriptChunkFormat(fileName)) {
         node.kind = NodeKind::ModuleFile;
         node.physicalPath = physical;
         return node;
@@ -1684,8 +1652,7 @@ WingLuauRequire::jumpToAbsolutePath(const char *path) {
     QFileInfo info(physical);
     if (info.isFile()) {
         auto filename = info.fileName();
-        if (!filename.endsWith(QLatin1String(".luau"), Qt::CaseInsensitive) &&
-            !filename.endsWith(QLatin1String(".lua"), Qt::CaseInsensitive)) {
+        if (!scriptChunkFormat(filename)) {
             return NAVIGATE_NOT_FOUND;
         }
 
@@ -2048,9 +2015,8 @@ luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *L, void *ctx,
         return WRITE_FAILURE;
     }
 
-    auto *data = static_cast<LuauThreadData *>(lua_getthreaddata(L));
-    if (data && data->execution) {
-        cacheKey = data->execution->moduleCacheKey(cacheKey);
+    if (self->m_options.moduleCacheKey) {
+        cacheKey = self->m_options.moduleCacheKey(L, cacheKey);
     }
     return writeString(cacheKey, buffer, bufferSize, sizeOut);
 }
@@ -2058,7 +2024,7 @@ luarequire_WriteResult WingLuauRequire::cbGetCacheKey(lua_State *L, void *ctx,
 luarequire_ConfigStatus WingLuauRequire::cbGetConfigStatus(lua_State *,
                                                            void *ctx) {
     auto *self = static_cast<WingLuauRequire *>(ctx);
-    return self ? self->configStatus() : CONFIG_ABSENT;
+    return self ? self->configFile().status : CONFIG_ABSENT;
 }
 
 luarequire_WriteResult WingLuauRequire::cbGetConfig(lua_State *, void *ctx,
@@ -2070,42 +2036,33 @@ luarequire_WriteResult WingLuauRequire::cbGetConfig(lua_State *, void *ctx,
         return WRITE_FAILURE;
     }
 
-    const QString path = self->configPath();
+    const QString path = self->configFile().path;
     if (path.isEmpty()) {
         return WRITE_FAILURE;
     }
 
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
+    if (!self->canReadPath(path)) {
         return WRITE_FAILURE;
     }
-
-    if (self->m_options.maxConfigBytes >= 0 &&
-        file.size() > self->m_options.maxConfigBytes) {
+    const auto data = readScriptData(path, self->m_options.maxConfigBytes);
+    if (!data || data.bytes.contains('\0')) {
         return WRITE_FAILURE;
     }
-
-    const auto contentSize = file.size();
-    if (self->m_options.maxConfigBytes >= 0 &&
-        contentSize > self->m_options.maxConfigBytes) {
-        return WRITE_FAILURE;
-    }
-
-    const size_t required = contentSize + 1;
+    const auto &contents = data.bytes;
+    const size_t required = size_t(contents.size()) + 1;
     if (bufferSize < required) {
         *sizeOut = required;
         return WRITE_BUFFER_TOO_SMALL;
     }
-
-    file.read(buffer, contentSize);
-    buffer[contentSize] = '\0';
+    std::memcpy(buffer, contents.constData(), size_t(contents.size()));
+    buffer[contents.size()] = '\0';
     *sizeOut = required;
     return WRITE_SUCCESS;
 }
 
-int WingLuauRequire::cbGetLuauConfigTimeout(lua_State *, void *ctx) {
-    auto *self = static_cast<WingLuauRequire *>(ctx);
-    return self ? self->m_options.luauConfigTimeoutMs : 2000;
+int WingLuauRequire::cbGetLuauConfigTimeout(lua_State *, void *) {
+    // Luau uses a negative duration for unlimited configuration execution.
+    return -1;
 }
 
 int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
@@ -2186,41 +2143,30 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
     // new thread needs to have the globals sandboxed
     luaL_sandboxthread(ml);
 
-    bool hadContents = false;
     int loadStatus = LUA_OK;
 
-    // Handle C++ RAII objects in a scope which doesn't cause a Luau error
+    // Physical and virtual files use the same Qt reader; policy is separate.
     {
-        const auto loadFile = QString::fromUtf8(loadname);
-        QFile file(loadFile);
-        if (file.size() > DEFAULT_SCRIPT_FILE_SIZE_LIMIT) {
-            luaL_error(L, "excessive module file size");
+        if (!self->canReadPath(loadName)) {
+            luaL_error(L, "module path is outside the allowed root: %s",
+                       loadname);
         }
-        if (file.open(QFile::ReadOnly | QFile::Text)) {
-            const QByteArray source = file.readAll();
-
-            auto *self = static_cast<WingLuauRequire *>(ctx);
-            if (self) {
-                const auto &cb = self->m_options.onLuauFileLoading;
-                if (cb) {
-                    auto r = cb(L, ml, loadFile, source);
-                    if (!r) {
-                        luaL_error(L, "failed to load module '%s'", loadname);
-                    }
-                }
-            }
-
-            hadContents = true;
-            const std::string sourceString(source.constData(), source.size());
-            const auto bytecode = Luau::compile(sourceString);
-            loadStatus =
-                luau_load(ml, chunkname, bytecode.data(), bytecode.size(), 0);
+        const auto file = readScriptFile(loadName);
+        if (!file) {
+            luaL_error(L, "%s", file.message.toUtf8().constData());
+        }
+        const auto &callback = self->m_options.onLuauFileLoading;
+        if (callback && !callback(L, ml, loadName, file.bytes, file.format)) {
+            luaL_error(L, "failed to load module '%s'", loadname);
+        }
+        const auto loaded = loadScriptChunk(
+            ml, file.bytes, QString::fromUtf8(chunkname), file.format);
+        if (!loaded) {
+            lua_pushstring(ml, loaded.message.toUtf8().constData());
+            loadStatus = LUA_ERRSYNTAX;
         }
     }
 
-    if (!hadContents) {
-        luaL_error(L, "could not read file '%s'", loadname);
-    }
     if (loadStatus != LUA_OK) {
         if (lua_isstring(ml, -1)) {
             luaL_error(L, "error loading module: %s", lua_tostring(ml, -1));
@@ -2232,9 +2178,9 @@ int WingLuauRequire::cbLoad(lua_State *L, void *ctx, const char *,
         luarequire_createplaceholder(L);
     }
 
-    auto *data = static_cast<LuauThreadData *>(lua_getthreaddata(L));
-    if (data && data->execution) {
-        data->execution->awaitModule(L, ml);
+    auto *owner = static_cast<WingLuauRequire *>(ctx);
+    if (owner && owner->m_options.awaitModule &&
+        owner->m_options.awaitModule(L, ml)) {
         lua_pop(L, 1);
         return -1;
     }

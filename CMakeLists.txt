@@ -242,6 +242,8 @@ set(CONTROL_SRC
     src/control/console/wingconsolehighligher.h
     src/control/delegate/mutisavebuttondelegate.cpp
     src/control/delegate/mutisavebuttondelegate.h
+    src/control/delegate/binarytextitemdelegate.cpp
+    src/control/delegate/binarytextitemdelegate.h
     src/control/delegate/richtextitemdelegate.cpp
     src/control/delegate/richtextitemdelegate.h
     src/control/delegate/wrappingitemdelegate.cpp
@@ -367,6 +369,8 @@ set(CLASS_SRC
     src/class/layout/layoutmanager.h
     src/class/plugin/pluginsystem.cpp
     src/class/plugin/pluginsystem.h
+    src/class/plugin/pluginloader.h
+    src/class/plugin/pluginloader.cpp
     src/class/security/wingcert.cpp
     src/class/security/wingcert.h
     src/class/settings/languagemanager.cpp
@@ -427,6 +431,20 @@ set(LUAU_MOD_SRC
     src/luau/luauvariableregistry.h
     src/luau/runtime/luauscheduler.cpp
     src/luau/runtime/luauscheduler.h
+    src/luau/plugin/pluginpaintcontext.h
+    src/luau/plugin/pluginpaintcontext.cpp
+    src/luau/plugin/scriptplugin.h
+    src/luau/plugin/scriptplugin.cpp
+    src/luau/plugin/scriptpluginruntime.h
+    src/luau/plugin/scriptpluginruntime.cpp
+    src/luau/plugin/scriptpluginpackage.h
+    src/class/file/memoryfilesystem.cpp
+    src/class/file/memoryfilesystem.h
+    src/luau/plugin/scriptpluginpackage.cpp
+    src/luau/plugin/pluginiodevice.h
+    src/luau/plugin/pluginiodevice.cpp
+    src/luau/runtime/scriptchunk.cpp
+    src/luau/runtime/scriptchunk.h
     src/luau/runtime/scriptmachine.cpp
     src/luau/runtime/scriptmachine.h
     src/luau/runtime/scriptmanager.cpp
@@ -529,7 +547,8 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/luaucompile.cpp)
 
 qt_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
                       -no-obsolete)
@@ -799,3 +818,9 @@ target_link_options(
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
 
 enable_reproducible_paths(WingHexExplorer2)
+
+# Matching bytecode compiler for .wingplg/.wingdrv package tooling.
+add_executable(WingLuauCompile tools/luaucompile.cpp)
+target_link_libraries(WingLuauCompile PRIVATE Luau.Compiler Qt6::Core)
+target_compile_features(WingLuauCompile PRIVATE cxx_std_17)
+set_target_properties(WingLuauCompile PROPERTIES OUTPUT_NAME wing-luau-compile)

@@ -4,21 +4,20 @@
 通过带长度帧的 JSON-RPC 验证真实常驻脚本服务。
 """
 import argparse
-from contextlib import contextmanager
 import json
 import os
-from pathlib import Path
-from queue import Queue, Empty
-import re
 import shutil
 import signal
-import sys
 import socket
 import ssl
 import subprocess
+import sys
 import tempfile
-from threading import Thread
 import time
+from contextlib import contextmanager
+from pathlib import Path
+from queue import Empty, Queue
+from threading import Thread
 
 
 class Rpc:
@@ -137,7 +136,11 @@ def main():
         config = temporary / "config"
         ini = config / "WingCloudStudio/WingHexExplorer2.conf"
         ini.parent.mkdir(parents=True)
-        ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\nscript.timeout=1\n")
+        ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\n")
+        if args.slow:
+            # An obsolete one-minute setting must not terminate running tasks.
+            with ini.open("a") as legacy:
+                legacy.write("script.timeout=1\n")
         runtime = temporary / "runtime"
         runtime.mkdir(mode=0o700)
         env = os.environ.copy()
@@ -152,7 +155,6 @@ def main():
             return str(path)
         ok = script("入口", 'println("entry-output"); return')
         failure = script("failure", 'error("entry failure")')
-        fake_timeout = script("fake-timeout", 'error("timed-out is just user text")')
         syntax = script("syntax", ') invalid')
         forever = script("forever", 'while true do end')
         input_file = script("input", 'input()')
@@ -247,7 +249,7 @@ timer:start(5)
             rpc.call("task.get", {"taskId": "absent"}, error=-32001)
             rpc.call("task.execute", {"taskId": "absent", "path": ok + ".missing"}, error=-32005)
             for task_id, path in [("a", isolated), ("b", isolated), ("nested", nested), ("nested2", nested),
-                                  ("coroutines", coroutine_checks), ("repeated", repeated), ("normal", ok), ("bad", failure), ("syntax", syntax), ("fake-timeout", fake_timeout),
+                                  ("coroutines", coroutine_checks), ("repeated", repeated), ("normal", ok), ("bad", failure), ("syntax", syntax),
                                   ("stdin", input_file), ("old-host", no_host), ("async", async_failure)]:
                 rpc.call("task.execute", {"taskId": task_id, "path": path})
             for task_id in ["a", "b", "nested", "nested2", "normal", "coroutines", "repeated"]:
@@ -258,7 +260,6 @@ timer:start(5)
                 time.sleep(.01)
             for task_id in ["bad", "syntax", "stdin", "old-host", "async"]:
                 assert rpc.state(task_id, "failed")["error"]["message"]
-            assert rpc.state("fake-timeout", "failed")["error"]["code"] == "execution-error"
             rpc.call("task.execute", {"taskId": "a", "path": ok}, error=-32002)
             rpc.call("task.remove", {"taskId": "a"}, error=-32003)
             # Entry, module and callback CPU loops must all yield to management I/O.
@@ -332,8 +333,10 @@ timer:start(5)
             echo_port = None
             while time.monotonic() < deadline:
                 for line in list(output):
-                    if line.strip().isdigit(): echo_port = int(line)
-                if echo_port: break
+                    if line.strip().isdigit():
+                        echo_port = int(line)
+                if echo_port:
+                    break
                 time.sleep(.01)
             assert echo_port, output
             with socket.create_connection(("127.0.0.1", echo_port), timeout=3) as peer:
@@ -356,8 +359,13 @@ timer:start(5)
                 delayed = script("delayed", timer.replace("t:start(10)", "t:start(61000)") % 'println("late-timer")')
                 rpc.call("task.execute", {"taskId": "late", "path": delayed})
                 rpc.state("late", "resident")
-                rpc.call("task.execute", {"taskId": "timeout", "path": forever})
-                assert rpc.state("timeout", "failed", timeout=70)["error"]["code"] == "timeout"
+                rpc.call("task.execute", {"taskId": "long-running", "path": forever})
+                deadline = time.monotonic() + 62
+                while time.monotonic() < deadline:
+                    assert rpc.call("task.get", {"taskId": "long-running"})["state"] == "running"
+                    time.sleep(.25)
+                rpc.call("task.stop", {"taskId": "long-running"})
+                rpc.state("long-running", "stopped")
                 assert rpc.state("a", "resident")["state"] == "resident"
                 deadline = time.monotonic() + 5
                 while b"late-timer\n" not in b"".join(output):
@@ -420,8 +428,10 @@ def check_tls(binary, temporary, env):
     app = temporary / "application"
     app.mkdir()
     executable = app / binary.name
-    try: os.link(binary, executable)
-    except OSError: shutil.copy2(binary, executable)
+    try:
+        os.link(binary, executable)
+    except OSError:
+        shutil.copy2(binary, executable)
     for name in ["lang", "luaulib", "luaudef", "plugin", "devdrv"]:
         if (binary.parent / name).exists():
             (app / name).symlink_to(binary.parent / name, target_is_directory=True)
@@ -490,7 +500,7 @@ def check_tls(binary, temporary, env):
                     other = connect(port, rejected)
                     other.call("service.status")
                     failures.append("Unregistered or missing client certificate was accepted")
-                except socket.timeout:
+                except TimeoutError:
                     failures.append("Certificate rejection timed out")
                 except (ssl.SSLError, OSError, AssertionError):
                     pass

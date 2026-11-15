@@ -187,11 +187,9 @@ int ScriptService::activeTasks() const {
 
 bool ScriptService::validScript(const QString &path) {
     const QFileInfo file(path);
-    const auto suffix = file.suffix();
     return file.isFile() && file.isReadable() &&
-           file.size() <= DEFAULT_SCRIPT_FILE_SIZE_LIMIT &&
-           (suffix.compare(QLatin1String("lua"), Qt::CaseInsensitive) == 0 ||
-            suffix.compare(QLatin1String("luau"), Qt::CaseInsensitive) == 0);
+           file.size() <= DefaultScriptFileSizeLimit &&
+           scriptChunkFormat(path).has_value();
 }
 
 ScriptRpcResult ScriptService::invoke(const QString &method,
@@ -349,9 +347,6 @@ void ScriptService::taskFailed(const std::shared_ptr<Task> &task,
             break;
         case ScriptFailure::CallbackError:
             code = QStringLiteral("callback-error");
-            break;
-        case ScriptFailure::Timeout:
-            code = QStringLiteral("timeout");
             break;
         }
         task->error = {{QStringLiteral("code"), code},

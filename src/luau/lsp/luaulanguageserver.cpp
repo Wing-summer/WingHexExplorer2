@@ -2612,14 +2612,16 @@ LuauLanguageServer::getOrCreateTextDocumentFromModuleName(
 
 std::optional<Luau::SourceCode>
 LuauLanguageServer::readSource(const Luau::ModuleName &name) {
+    const auto path = QString::fromUtf8(name);
+    if (scriptChunkFormat(path) == ScriptChunkFormat::Bytecode) {
+        return std::nullopt;
+    }
     auto doc = getTextDocument(name);
     if (doc) {
         const auto text = doc->toPlainText();
         return std::make_optional<Luau::SourceCode>(
             {text.toStdString(), sourceCodeTypeFromPath(name)});
     }
-
-    auto path = QString::fromUtf8(name);
     QFile f(path);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
         qCritical("[LuauLanguageServer] Failed to open source '%s': %s",
@@ -2680,6 +2682,9 @@ LuauLanguageServer::resolveStringRequire(const Luau::ModuleInfo *context,
     if (result.kind == WingLuauRequire::FileModuleResolution::Kind::File ||
         result.kind ==
             WingLuauRequire::FileModuleResolution::Kind::ModuleDirectory) {
+        if (scriptChunkFormat(result.path) == ScriptChunkFormat::Bytecode) {
+            return std::nullopt;
+        }
         return Luau::ModuleInfo{result.path.toStdString()};
     }
     return std::nullopt;

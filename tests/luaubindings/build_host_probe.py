@@ -27,6 +27,8 @@ def main() -> None:
     """Compile one test entry point and link the already-built application objects."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--build", type=pathlib.Path, required=True)
+    parser.add_argument("--source", type=pathlib.Path, help="Optional host probe entry point")
+    parser.add_argument("--output", default="WingLuauHostInputProbe")
     parser.add_argument("--sdk-override", action="append", default=[],
                         help="Compile one generated SDK registration before linking the existing archive")
     args = parser.parse_args()
@@ -42,7 +44,7 @@ def main() -> None:
     includes = [root / "3rdparty/WingLuauQt/include", root / "3rdparty/LuaBridge3/Source", *(root / "3rdparty/luau").glob("*/include")]
     compile_args[1:1] = ["-I" + str(path) for path in includes]
     compile_args[compile_args.index("-o") + 1] = str(test_object)
-    compile_args[-1] = str(root / "tests/luaubindings/host_input.cpp")
+    compile_args[-1] = str(args.source.resolve() if args.source else root / "tests/luaubindings/host_input.cpp")
     subprocess.run(compile_args, cwd=build, check=True)
     sdk_objects: list[str] = []
     for native in args.sdk_override:
@@ -69,7 +71,7 @@ def main() -> None:
     subprocess.run(compile_args, cwd=build, check=True)
     link_args = command(build, "WingHexExplorer2")
     link_args[1:1] = [str(support_object), str(resource_object), *sdk_objects]
-    link_args[link_args.index("-o") + 1] = str(build / "WingLuauHostInputProbe")
+    link_args[link_args.index("-o") + 1] = str(build / args.output)
     link_args = [str(test_object) if value.endswith("/WingHexExplorer2.dir/main.cpp.o") else value for value in link_args]
     # Keep the application's linker dependency file separate.
     link_args = [value for value in link_args if not value.startswith("-Wl,--dependency-file=")]

@@ -85,7 +85,6 @@ public:
     bool dontUseSplash() const;
     bool checkUpdate() const;
     qsizetype logCount() const;
-    int scriptTimeout() const;
 
     bool scriptFileEnableOverwrite() const;
     bool scriptFileSystemWrite() const;
@@ -99,6 +98,7 @@ public:
     bool diffPrecise() const;
     bool diffVertical() const;
     bool diffSyncScroll() const;
+    bool diffSyncCursor() const;
 
     QByteArray settingsLayout() const;
     QByteArray settingsScriptLayout() const;
@@ -141,7 +141,6 @@ public slots:
     void setDontUseSplash(bool newDontUseSplash);
     void setCheckUpdate(bool newCheckUpdate);
     void setLogCount(qsizetype newLogCount);
-    void setScriptTimeout(int newScriptTimeout);
 
     void setEnabledExtPlugins(const QStringList &newEnabledPlugins);
     void setEnabledDevPlugins(const QStringList &newEnabledDevPlugins);
@@ -152,6 +151,7 @@ public slots:
     void setDiffPrecise(bool value);
     void setDiffVertical(bool value);
     void setDiffSyncScroll(bool value);
+    void setDiffSyncCursor(bool value);
 
     void setSettingsLayout(const QByteArray &newSetLayout);
     void setSettingsScriptLayout(const QByteArray &newSetScriptLayout);
@@ -198,6 +198,7 @@ private:
     bool m_diffPreviews = true;
     bool m_diffVertical = false;
     bool m_diffSyncScroll = true;
+    bool m_diffSyncCursor = true;
 
     int m_themeID = 0;
     int m_appfontSize = 18;
@@ -246,8 +247,6 @@ private:
     bool m_checkUpdate = false;
     int m_logLevel = 0;
     qsizetype m_logCount = 20;
-
-    int m_scriptTimeout = 60; // min
 
     QVector<bool> m_metaHeaderHidden; // fixed size = 5
     bool m_findStrDecShow = true;

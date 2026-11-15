@@ -29,6 +29,7 @@
 #include "luau/scriptbindingengine.h"
 #include "luau/wingluaurequire.h"
 #include "luauscheduler.h"
+#include "scriptchunk.h"
 
 struct ScriptRuntimeOptions {
     bool ui = true;
@@ -37,11 +38,12 @@ struct ScriptRuntimeOptions {
     bool retainContext = false;
 };
 
-class ScriptMachine : public QObject {
+class PluginIOService;
+
+class ScriptMachine : public QObject, public LuauExecutor {
     Q_OBJECT
     friend class ScriptMachineBindings;
     friend class ScriptExecution;
-    friend class LuauScheduler;
 
 public:
     // we have three console modes
@@ -91,9 +93,9 @@ private:
     constexpr static int consoleModeIdx(ConsoleMode mode);
     LuauScheduler *createScheduler(LuauThread *context);
 
-    inline bool isExecuting() const { return m_executing; }
+    inline bool isExecuting() const override { return m_executing; }
 
-    int resumeThread(LuauThread *thread, int arguments);
+    int resumeThread(LuauThread *thread, int arguments) override;
 
 public:
     static ScriptMachine &instance();
@@ -149,6 +151,11 @@ public:
                        bool isInDebug,
                        const std::function<void(bool)> &onFinished);
 
+    void executeChunk(ConsoleMode mode, const QByteArray &bytes,
+                      const QString &name, ScriptChunkFormat format,
+                      bool isInDebug,
+                      const std::function<void(bool)> &onFinished);
+
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
 
@@ -188,12 +195,23 @@ private:
     static void onLuauThreadCreated(lua_State *lp, lua_State *L);
 
 private:
+    void outputError(ConsoleMode mode, const QString &message,
+                     const QString &section = {});
+    void executeChunkWithResult(
+        ConsoleMode mode, const QByteArray &bytes, const QString &name,
+        ScriptChunkFormat format, bool debug,
+        const std::function<void(ExecutionResult)> &finished);
+
     struct ScriptLoadResult {
         ExecutionResult result = ExecutionResult::Failed;
         QByteArray source;
         QString message;
     };
 
+    static ScriptLoadResult
+    loadChunk(lua_State *thread, const QByteArray &bytes, const QString &path,
+              ScriptChunkFormat format, ConsoleMode mode, bool debug,
+              bool native);
     static ScriptLoadResult loadScript(lua_State *thread, const QString &path,
                                        ConsoleMode mode, bool debug,
                                        bool native);
@@ -207,6 +225,7 @@ private:
     bool m_scriptRegistrationFinished = false;
     lua_State *m_main = nullptr;
     std::unique_ptr<WingScriptBind::ScriptBindingEngine> m_bindings;
+    std::unique_ptr<PluginIOService> m_pluginIoService;
     LuauDebugger *m_debugger = nullptr;
     mutable LuauThread m_ctx[ConsoleModeCount]{};
     mutable LuauThreadData m_tdata[ConsoleModeCount]{};

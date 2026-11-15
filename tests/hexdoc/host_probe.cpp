@@ -314,7 +314,7 @@ public:
         ProbeDriver driver;
         PluginInfo driverInfo;
         driverInfo.id = QStringLiteral("probedriver");
-        host.m_loadeddevs.append(&driver);
+        host.m_loadedPlugins.append(&driver);
         host.m_pinfos.insert(&driver, driverInfo);
         QTemporaryDir directory;
         REQUIRE(directory.isValid());
@@ -360,7 +360,8 @@ public:
         options.systemRoot =
             QCoreApplication::applicationDirPath() + QStringLiteral("/luaulib");
         options.onLuauFileLoading = [](lua_State *parent, lua_State *child,
-                                       const QString &, const QByteArray &) {
+                                       const QString &, const QByteArray &,
+                                       ScriptChunkFormat) {
             lua_setthreaddata(child, lua_getthreaddata(parent));
             return true;
         };
@@ -628,7 +629,7 @@ public:
         REQUIRE(findView(path));
         machine.destoryMachine();
         REQUIRE(window.closeEditor(findView(path), true) == ErrFile::Success);
-        host.m_loadeddevs.removeAll(&driver);
+        host.m_loadedPlugins.removeAll(&driver);
         host.m_pinfos.remove(&driver);
         std::cout << "hexdoc host integration passed\n";
         return true;

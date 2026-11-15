@@ -17,12 +17,10 @@
 
 #include "luauscheduler.h"
 
-#include "scriptmachine.h"
-
-LuauScheduler::LuauScheduler(ScriptMachine &machine, LuauThread *th,
+LuauScheduler::LuauScheduler(LuauExecutor &executor, LuauThread *thread,
                              QObject *parent)
-    : QObject(parent), m_machine(machine), m_th(th) {
-    Q_ASSERT(th);
+    : QObject(parent), m_executor(executor), m_th(thread) {
+    Q_ASSERT(thread);
     m_timer.setSingleShot(true);
     connect(&m_timer, &QTimer::timeout, this, &LuauScheduler::step);
 }
@@ -49,7 +47,7 @@ void LuauScheduler::stop() {
 }
 
 void LuauScheduler::step() {
-    if (m_machine.isExecuting()) {
+    if (m_executor.isExecuting()) {
         m_timer.start(10);
         return;
     }
@@ -57,7 +55,7 @@ void LuauScheduler::step() {
     try {
         auto L = m_th->state;
         if (!m_th->requestStop) {
-            status = m_machine.resumeThread(m_th, m_arguments);
+            status = m_executor.resumeThread(m_th, m_arguments);
             m_arguments = 0;
             if (status == LUA_YIELD) {
                 m_timer.start(0);

@@ -133,7 +133,76 @@
       "WingPlugin"
     ]
   },
-  "extensions": [],
+  "extensions": [
+    {
+      "module": "_plugin_device_types",
+      "headers": [
+        "src/luau/plugin/pluginiodevice.h"
+      ],
+      "include_dirs": [
+        "."
+      ],
+      "classes": {
+        "PluginIODevice": {
+          "name": "IODevice",
+          "constructible": false,
+          "members": [
+            "methods"
+          ],
+          "exclude": [
+            "openFile",
+            "wrap"
+          ]
+        }
+      },
+      "compile_moc": false
+    },
+    {
+      "module": "_plugin_paint",
+      "headers": [
+        "src/luau/plugin/pluginpaintcontext.h"
+      ],
+      "include_dirs": [
+        "."
+      ],
+      "compile_moc": false,
+      "classes": {
+        "PluginPaintContext": {
+          "name": "PaintContext",
+          "constructible": false,
+          "members": [
+            "methods"
+          ],
+          "exclude": [
+            "expire"
+          ]
+        }
+      }
+    },
+    {
+      "module": "_plugin_device_io",
+      "headers": [
+        "src/luau/plugin/pluginiodevice.h"
+      ],
+      "include_dirs": [
+        "."
+      ],
+      "compile_moc": false,
+      "classes": {
+        "PluginIOService": {
+          "name": "io",
+          "binding": "functions",
+          "members": [
+            "methods"
+          ],
+          "include": [
+            "openFile",
+            "wrap"
+          ]
+        }
+      }
+    }
+  ],
   "native_apis": [
     {
       "headers": [
@@ -823,6 +892,15 @@
       "require": true
     },
     "core": {
+      "require": true
+    },
+    "_plugin_paint": {
+      "require": true
+    },
+    "_plugin_device_io": {
+      "require": true
+    },
+    "_plugin_device_types": {
       "require": true
     }
   },

@@ -83,6 +83,7 @@ private:
 class PluginSystem : public QObject {
     Q_OBJECT
     friend class PluginDocumentHostProbe;
+    friend class PluginLoader;
 
 public:
     enum class PluginStatus : int {
@@ -158,16 +159,27 @@ public:
     QWidget *mainWindow() const;
 
     void loadAllPlugins();
+
+private:
+    // Dependency order; unload in reverse order.
+    QList<WingHex::IWingPluginBase *> m_loadedPlugins;
+    // Disabled objects retained until unload (e.g. devices used by editors).
+    QSet<WingHex::IWingPluginBase *> m_inactivePlugins;
+    void removePluginEvents(IWingPluginBase *plugin);
+    void deactivatePluginDependents(IWingPluginBase *plugin);
+    void detachPluginUi(IWingPluginBase *plugin);
+
+public:
     void unloadAllPlugins();
 
     bool doneRegisterScriptObj();
 
     void destory();
 
-    const QList<IWingPlugin *> &plugins() const;
+    QList<IWingPlugin *> plugins() const;
     IWingPlugin *plugin(qsizetype index) const;
 
-    const QList<IWingDevice *> &devices() const;
+    QList<IWingDevice *> devices() const;
     IWingDevice *device(qsizetype index) const;
 
     void cleanUpEditorViewHandle(EditorView *view);
@@ -175,6 +187,8 @@ public:
     IWingDevice *ext2Device(const QString &ext);
 
     void installAPI(lua_State *L);
+    void deactivatePlugin(IWingPluginBase *plugin);
+    void installPluginAPI(lua_State *L, WingHex::IWingPluginBase *plugin);
 
 public:
     void dispatchSelectionChangedEvent(const QByteArrayList &selections,
@@ -216,9 +230,6 @@ public:
     static QString getPUID(IWingPluginBase *p);
 
 private:
-    void loadExtPlugin();
-    void loadDevicePlugin();
-
     static QList<QFileInfo> findPlugins(const QString &dir,
                                         const QString &filter);
 
@@ -678,9 +689,6 @@ private:
     MainWindow *m_win = nullptr;
     QHash<IWingPluginBase *, PluginInfo> m_pinfos;
     QHash<QWidget *, ads::CDockWidget *> m_raisedw;
-
-    QList<IWingPlugin *> m_loadedplgs;
-    QList<IWingDevice *> m_loadeddevs;
 
     QStringList m_enabledExtIDs;
     QStringList m_enabledDevIDs;

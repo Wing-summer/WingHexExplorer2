@@ -17,11 +17,14 @@
 
 #include "wingcert.h"
 
+#include <optional>
+
 #include <QByteArray>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QIODevice>
 #include <QSslConfiguration>
 #include <QSslKey>
 #include <QSslSocket>
@@ -34,12 +37,30 @@
 #include "class/file/fileaccesscheck.h"
 
 namespace {
-constexpr qint64 MaxPluginSize = 500LL * 1024 * 1024; // 500 MB
-constexpr qint64 MaxCertSize = 64 * 1024;             // 64 KB
-constexpr qint64 ExpectedSigSize = 64;                // Ed25519 fixed size
+constexpr qint64 MaxSignedContentSize = 500LL * 1024 * 1024; // 500 MB
+constexpr qint64 MaxCertSize = 64 * 1024;                    // 64 KB
+constexpr qint64 ExpectedSigSize = 64; // Ed25519 fixed size
 constexpr char Magic[8]{'W', 'I', 'N', 'G', 'S', 'I', 'G', '1'};
 constexpr qint64 MagicSize = sizeof(Magic);
 constexpr qint64 InternalSigSize = MagicSize + ExpectedSigSize;
+
+std::optional<QByteArray> readSignedContent(QIODevice &device) {
+    if (!device.isReadable() ||
+        (!device.isSequential() &&
+         device.size() - device.pos() > MaxSignedContentSize)) {
+        return std::nullopt;
+    }
+    QByteArray data;
+    char buffer[64 * 1024];
+    while (!device.atEnd()) {
+        const auto count = device.read(buffer, sizeof(buffer));
+        if (count <= 0 || data.size() + count > MaxSignedContentSize) {
+            return std::nullopt;
+        }
+        data.append(buffer, qsizetype(count));
+    }
+    return data;
+}
 
 EVP_PKEY *loadPkeyFromCertificate(const QSslCertificate &cert) {
     const QByteArray pem = cert.toPem();
@@ -99,22 +120,31 @@ WingCert &WingCert::instance() {
     return ins;
 }
 
-bool WingCert::verify(const QFileInfo &plg, const QByteArray &fprint) const {
-    if (!m_cs.contains(fprint)) {
-        return false;
-    }
-    if (plg.size() <= 0 || plg.size() > MaxPluginSize) {
-        return false;
-    }
+QString WingCert::signatureFilePath(const QFileInfo &file) {
+    return file.absoluteDir().filePath(file.baseName() +
+                                       QStringLiteral(".sig"));
+}
 
-    QFile fplg(plg.absoluteFilePath());
-    if (!fplg.open(QIODevice::ReadOnly)) {
+bool WingCert::verify(const QFileInfo &file,
+                      const QByteArray &fingerprint) const {
+    QFile content(file.absoluteFilePath());
+    return file.isFile() && content.open(QIODevice::ReadOnly) &&
+           verify(content, fingerprint, signatureFilePath(file));
+}
+
+bool WingCert::verify(QIODevice &content, const QByteArray &fingerprint,
+                      const QString &signatureFile) const {
+    const auto certificate = m_cs.constFind(fingerprint);
+    if (certificate == m_cs.cend() || !isValidCert(certificate.value())) {
         return false;
     }
-    auto data = fplg.readAll();
-
+    auto contents = readSignedContent(content);
+    if (!contents) {
+        return false;
+    }
+    auto &data = *contents;
     QByteArray sig;
-    if (data.size() > InternalSigSize) {
+    if (data.size() >= InternalSigSize) {
         auto maySig = data.last(InternalSigSize);
         if (QByteArrayView(maySig).first(MagicSize) ==
             QByteArrayView::fromArray(Magic)) {
@@ -124,24 +154,21 @@ bool WingCert::verify(const QFileInfo &plg, const QByteArray &fprint) const {
     }
 
     if (sig.isEmpty()) {
-        const auto sigFileName = plg.absoluteDir().absoluteFilePath(
-            plg.baseName() + QStringLiteral(".sig"));
-        QFileInfo sigInfo(sigFileName);
+        const QFileInfo sigInfo(signatureFile);
         if (!sigInfo.exists() || !sigInfo.isFile() || !sigInfo.isReadable()) {
             return false;
         }
         if (sigInfo.size() != ExpectedSigSize) {
             return false;
         }
-        QFile fsig(sigFileName);
+        QFile fsig(signatureFile);
         if (fsig.open(QIODevice::ReadOnly)) {
             sig = fsig.readAll();
             fsig.close();
         }
     }
 
-    auto c = m_cs.value(fprint);
-    return verify(data, sig, c);
+    return verifySignature(data, sig, certificate.value());
 }
 
 QFileInfo WingCert::certLocation(const QByteArray &fprint) {
@@ -192,9 +219,9 @@ bool WingCert::isValidCert(const QSslCertificate &cert) {
     return true;
 }
 
-bool WingCert::verify(const QByteArray &file, const QByteArray &sig,
-                      const QSslCertificate &cert) const {
-    if (!isValidCert(cert)) {
+bool WingCert::verifySignature(QByteArrayView file, QByteArrayView sig,
+                               const QSslCertificate &cert) {
+    if (cert.isNull()) {
         return false;
     }
 

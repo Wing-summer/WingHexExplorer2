@@ -61,6 +61,7 @@
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
 #include "class/util/qkeysequences.h"
+#include "control/delegate/binarytextitemdelegate.h"
 #include "control/delegate/richtextitemdelegate.h"
 #include "control/docking/dockcomponentsfactory.h"
 #include "control/searchabletextbrowser.h"
@@ -914,6 +915,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
 
     m_numshowtable->setSearchEnabled(true);
     m_numshowtable->setModel(m_numsitem);
+    m_numshowtable->setItemDelegate(new BinaryTextItemDelegate(m_numshowtable));
     configureTableColumns(m_numshowtable, {{1, 16}});
 
     auto a = new QAction(this);

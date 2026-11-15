@@ -16,6 +16,8 @@ Suites test production code in this repository; standalone tests need no full ap
 | [diff](diff/README.md) | 二进制比较、读取会话、预算和宿主 UI / Binary diff, read sessions, budgets and host UI | CTest / Python |
 | [qhexview](qhexview/README.md) | 十六进制视图、选区、剪贴板与撤销 / Hex view, selections, clipboard, and undo | CTest |
 | [luaulsp](luaulsp/README.md) | Luau 诊断、补全、类型与模块解析 / Luau diagnostics, completion, types, and module resolution | CTest |
+| [scriptintegration](scriptintegration/README.md) | MIME 与通用签名 / MIME and shared signatures | CTest |
+| [luauplugins](luauplugins/README.md) | Luau 插件包、源码／字节码、隔离及设备 IO / Plugin packages, source/bytecode, isolation, and device IO | CTest + host probe |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |
 | [plugindocument](plugindocument/README.md) | 插件文档对象、句柄生命周期与宿主集成 / Plugin document objects, handle lifecycle and host integration | Qt Test / Python |
 | [headless](headless/README.md) | 无头脚本、服务生命周期、标准流、socket 和插件注册 / Headless scripts, service lifetime, standard streams, sockets and plugin registration | CTest + Python |

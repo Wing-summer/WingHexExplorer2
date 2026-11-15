@@ -61,9 +61,13 @@ void DiffRenderer::applyLineFormats(qsizetype line,
             if ((length && pos >= start && pos - start < length) ||
                 (!length && pos == start)) {
                 auto &format = formats[column];
-                format.background = color;
-                format.fillBackground = true;
-                format.underline = !length;
+                if (length) {
+                    format.background = color;
+                    format.fillBackground = true;
+                } else {
+                    // An empty side marks a boundary, not a changed byte.
+                    format.underline = true;
+                }
             }
         }
     }

@@ -8,7 +8,10 @@
     "tools/generate_luau_bindings.py",
     "WingPlugin/*.h",
     "3rdparty/cffi-luau/src/*.cc",
-    "tools/hexdoc_codegen.py"
+    "tools/hexdoc_codegen.py",
+    "tools/plugin_protocol.py",
+    "src/luau/plugin/pluginiodevice.h",
+    "src/luau/plugin/pluginpaintcontext.h"
   ],
   "cmake": {
     "native_sources": {

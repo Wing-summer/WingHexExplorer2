@@ -122,6 +122,7 @@ private:
     void showStacked();
     void resetLayout();
     void setSyncScrolling(bool enabled);
+    void setSyncCursors(bool enabled);
     void setListVisible(bool visible);
     void setAsciiVisible(bool visible);
     void setAddressesVisible(bool visible);
@@ -154,6 +155,7 @@ private:
     void selectDifference(quint64 row);
     void navigate(int direction);
     void scrollTogether(Side side);
+    void cursorTogether(Side side);
     void search(bool backwards);
     void showSearch();
     void setOrientation(bool vertical);
@@ -196,6 +198,7 @@ private:
     QToolButton *m_swapButton;
     QToolButton *m_autoCompareButton;
     QToolButton *m_syncButton;
+    QToolButton *m_cursorSyncButton;
     QToolButton *m_arrangementButtons[LayoutCount] = {};
     QToolButton *m_listButton;
 
@@ -214,11 +217,13 @@ private:
     quint64 m_selected = 0;
     quint64 m_lastCount = 0;
     Phase m_phase = Phase::Idle;
+    Side m_cursorSide = Side::Left;
     bool m_hasCompared = false;
     bool m_recomparePending = false;
     bool m_running = false;
     bool m_invalid = false;
     bool m_scrolling = false;
+    bool m_syncingCursor = false;
     qint64 m_durationMs = 0;
     QString m_finalStatus;
 };
