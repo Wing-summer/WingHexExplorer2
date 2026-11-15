@@ -112,6 +112,13 @@ with tempfile.TemporaryDirectory(prefix="wing-modes-") as directory:
         env.pop("WINGHEX_HEADLESS_TEST_TRACE")
     # The full-mode process remains alive while standalone windows run.
     ini.write_text("[General]\nscript.enable=true\nplugin.enableplugin=false\nsys.dontUseSplash=true\n")
+    for name, source in (("background-loop.luau", "while true do end"),
+                         ("background-input.luau", "input()")):
+        shutdown = temporary / name
+        shutdown.write_text(source)
+        env["WINGHEX_MODE_BG_CLOSE"] = str(shutdown)
+        assert b"background-close-clean" in run([left], mode="full", files=1).stdout
+    env.pop("WINGHEX_MODE_BG_CLOSE")
     full_env = env.copy()
     full_env["WINGHEX_MODE_TEST"] = "full"
     first = subprocess.Popen([str(binary), str(left)], env=full_env,

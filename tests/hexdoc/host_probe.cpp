@@ -308,6 +308,9 @@ public:
         auto &settings = SettingManager::instance();
         settings.setScriptEnabled(false);
         settings.setCheckUpdate(false);
+        settings.setEnablePlugin(false);
+        settings.setDontUseSplash(true);
+        AppManager::instance()->initialize({});
         ThemeManager::instance();
         auto &window = *AppManager::instance()->mainWindow();
         auto &host = PluginSystem::instance();
@@ -563,6 +566,7 @@ public:
         callbacks.printMsgFn = [&](const ScriptMachine::MessageInfo &info) {
             if (info.type == ScriptMachine::MessageType::Error) {
                 errors.append(info.message);
+                std::cerr << info.message.toStdString() << '\n';
             }
         };
         machine.registerCallBack(ScriptMachine::Interactive, callbacks);
@@ -575,7 +579,68 @@ public:
                 .arg(path);
         REQUIRE(runConsole(openCode));
         REQUIRE(errors.isEmpty());
+        REQUIRE(runConsole(QStringLiteral(R"(
+            local binary = require("@s/binary")
+            local analysis = require("@s/analysis")
+            local hexdoc = require("@s/hexdoc")
+            local icons = require("@s/icons")
+            assert(not icons.pixmap(icons.Id.CopyHex):is_null())
+            assert(#icons.data(icons.Id.CopyHex) > 0)
+            assert(not pcall(icons.pixmap, -100))
+            local document = hexdoc.new()
+            assert(document:open_file([[%1]]) == 0)
+            assert(document:activate())
+            local schema = binary.register("transaction-host", {fields = {{name = "value", type = "u8"}}})
+            document:use(function(d)
+                assert(d:set_locked_file(false))
+                local snapshot = analysis.read(d, schema, 1)
+                local updated = analysis.write(d, snapshot, {value = 90})
+                assert(updated.offset == 1 and updated.values.value == 90)
+                assert(d:read_bytes(0, 3) == "aZc")
+                assert(not pcall(analysis.write, d, snapshot, {value = 89}))
+                local success = pcall(analysis.transaction, d, "rollback", function()
+                    assert(d:write_bytes(0, "X"))
+                    error("expected rollback")
+                end)
+                assert(not success and d:read_bytes(0, 3) == "aZc")
+                assert(analysis.annotate(d, updated.fields, {offset = updated.offset}) == 1)
+                assert(d:write_bytes(1, "b"))
+            end)
+            assert(document:close_handle() == 0)
+        )")
+                               .arg(path)));
+        REQUIRE(errors.isEmpty());
         REQUIRE(findView(path));
+        window.show();
+        findView(path)->raise();
+        findView(path)->hexEditor()->setFocus(Qt::OtherFocusReason);
+        QApplication::processEvents();
+        REQUIRE(window.currentEditor() == findView(path));
+        REQUIRE(runConsole(
+            QStringLiteral("require(\"@s/analysis\").current(function(d) "
+                           "assert(d:read_bytes(0, 3) == \"abc\") end)")));
+        REQUIRE(errors.isEmpty());
+        {
+            auto *undo = findView(path)->hexEditor()->document()->undoStack();
+            REQUIRE(undo->canUndo());
+            const auto index = undo->index();
+            undo->undo();
+            REQUIRE(undo->index() == index - 1);
+            undo->redo();
+            REQUIRE(undo->index() == index);
+        }
+        auto &theme = ThemeManager::instance();
+        const auto previousTheme = theme.requestedTheme();
+        theme.setTheme(ThemeManager::Theme::Dark);
+        REQUIRE(runConsole(QStringLiteral(
+            "icon_snapshot = "
+            "require(\"@s/icons\").data(require(\"@s/icons\").Id.CopyHex)")));
+        theme.setTheme(ThemeManager::Theme::Light);
+        REQUIRE(runConsole(
+            QStringLiteral("assert(require(\"@s/icons\").data(require(\"@s/"
+                           "icons\").Id.CopyHex) ~= icon_snapshot)")));
+        theme.setTheme(previousTheme);
+        REQUIRE(errors.isEmpty());
         REQUIRE(
             runConsole(QStringLiteral("assert(not pcall(function() "
                                       "saved_doc:use(function() end) end))")));

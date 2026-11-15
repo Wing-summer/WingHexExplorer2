@@ -34,7 +34,7 @@
 #include "scriptrpcerror.h"
 
 namespace {
-constexpr int MaxActiveTasks = 64;
+constexpr int MaxActiveTasks = ScriptMachine::MaxBackgroundTasks;
 constexpr int MaxTaskRecords = 1024;
 constexpr int MaxConnections = 64;
 
@@ -251,7 +251,14 @@ ScriptRpcResult ScriptService::invoke(const QString &method,
         task->path = QFileInfo(path).canonicalFilePath();
         task->createdAt = timestamp();
         task->updatedAt = task->createdAt;
-        task->execution = ScriptMachine::instance().createExecution(task->path);
+        const auto created =
+            ScriptMachine::instance().createBackgroundExecution(
+                task->path, ScriptExecution::Lifetime::Resident);
+        if (created.result == ScriptMachine::ExecutionResult::Capacity) {
+            return rpcFailure(ScriptRpcError::TaskCapacity,
+                              QStringLiteral("Task capacity reached"));
+        }
+        task->execution = created.execution;
         if (!task->execution) {
             return rpcFailure(ScriptRpcError::InternalError,
                               QStringLiteral("Script engine is unavailable"));

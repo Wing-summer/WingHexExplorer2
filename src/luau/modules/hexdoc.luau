@@ -60,6 +60,18 @@ local function open(document: any, url: any): number
     return hex.ErrFile.Success
 end
 
+function methods.open_current(self: any): number
+    local state = stateOf(self)
+    if state.handle >= 0 then
+        local result = methods.close_handle(self)
+        if result ~= hex.ErrFile.Success then return result end
+    end
+    local handle = ctl.open_current()
+    if handle < 0 then return handle end
+    state.handle = handle
+    return hex.ErrFile.Success
+end
+
 function methods.open_file(self: any, path: any): number
     return open(self, native._file_url(path))
 end

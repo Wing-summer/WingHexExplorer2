@@ -23,6 +23,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QSet>
 
 #include "luau/luaudebugger.h"
 #include "luau/luauinspector.h"
@@ -30,6 +31,7 @@
 #include "luau/wingluaurequire.h"
 #include "luauscheduler.h"
 #include "scriptchunk.h"
+#include "scriptexecution.h"
 
 struct ScriptRuntimeOptions {
     bool ui = true;
@@ -46,7 +48,7 @@ class ScriptMachine : public QObject, public LuauExecutor {
     friend class ScriptExecution;
 
 public:
-    // we have three console modes
+    // Execution sources; Background tasks have independent contexts.
     enum ConsoleMode : int {
         Console_Begin = 0,
         Interactive, // in a shell
@@ -62,6 +64,7 @@ public:
 
     struct MessageInfo {
         ConsoleMode mode = ConsoleMode::Background;
+        quint64 taskId = 0;
         QString section;
         qint64 row = -1;
         qint64 col = -1;
@@ -137,7 +140,28 @@ public:
     void executeCode(ScriptMachine::ConsoleMode mode, const QString &code,
                      const std::function<void(bool)> &onFinished);
 
-    enum class ExecutionResult { Success, Busy, FileError, Failed, Aborted };
+    enum class ExecutionResult {
+        Success,
+        Busy,
+        FileError,
+        Failed,
+        Aborted,
+        Capacity
+    };
+    static constexpr int MaxBackgroundTasks = 16;
+
+    struct BackgroundCreationResult {
+        ExecutionResult result = ExecutionResult::Failed;
+        ScriptExecution *execution = nullptr;
+    };
+
+    BackgroundCreationResult
+    createBackgroundExecution(const QString &path,
+                              ScriptExecution::Lifetime lifetime);
+    int activeBackgroundTasks() const;
+    ScriptExecution *backgroundTask(quint64 taskId) const;
+    void abortBackgroundTask(quint64 taskId);
+    void setBackgroundInputHandler(std::function<QString(quint64)> handler);
     void executeScriptWithResult(
         ConsoleMode mode, const QString &fileName, bool isInDebug,
         const std::function<void(ExecutionResult)> &onFinished);
@@ -160,6 +184,9 @@ public:
     void abortScript(ScriptMachine::ConsoleMode mode);
 
 private:
+    void observeBackgroundCompletion(
+        ScriptExecution *execution,
+        const std::function<void(ExecutionResult)> &onFinished);
     static int __output(MessageType type, lua_State *L);
     static int __outputln(MessageType type, lua_State *L);
     static int __outputsep(MessageType type, lua_State *L, QChar sep);
@@ -189,6 +216,10 @@ private:
 
 signals:
     void sigOnInputCancelled(ScriptMachine::ConsoleMode mode);
+    void sigOnBackgroundInputCancelled(quint64 taskId);
+    void sigOnBackgroundTaskStateChanged(quint64 taskId,
+                                         ScriptExecution::State state);
+    void sigOnBackgroundTasksChanged();
 
 private:
     static void onLuauInterrupt(lua_State *L, int gc);
@@ -220,6 +251,9 @@ private:
     std::array<std::unique_ptr<LuauScheduler>, ConsoleModeCount>
         m_consoleSchedulers;
     QHash<const void *, ScriptExecution *> m_executions;
+    QSet<QByteArray> m_consoleModuleCacheKeys;
+    quint64 m_nextBackgroundTaskId = 0;
+    std::function<QString(quint64)> m_backgroundInput;
     bool m_executing = false;
     bool m_inited = false;
     bool m_scriptRegistrationFinished = false;

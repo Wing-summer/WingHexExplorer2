@@ -18,6 +18,8 @@
 #ifndef SCRIPTMANAGER_H
 #define SCRIPTMANAGER_H
 
+#include <functional>
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileSystemWatcher>
@@ -26,10 +28,6 @@
 #include "QWingRibbon/ribbonbuttongroup.h"
 
 #include "class/settings/thememanager.h"
-
-namespace ads {
-class CDockWidgetTab;
-} // namespace ads
 
 class ScriptManager {
     Q_DECLARE_TR_FUNCTIONS(ScriptManager)
@@ -121,10 +119,7 @@ private:
 public:
     void runScript(const QString &filename);
 
-    ads::CDockWidgetTab *indicator() const;
-    void setIndicator(ads::CDockWidgetTab *newIndicator);
-
-    void setIndicatorBusy(bool b);
+    void setBackgroundRunner(std::function<void(const QString &)> runner);
 
     static bool isScriptFile(const QString &file);
 
@@ -149,7 +144,7 @@ private:
                                        const QStringList &files, bool isSys);
 
 private:
-    ads::CDockWidgetTab *m_indicator = nullptr;
+    std::function<void(const QString &)> m_backgroundRunner;
 
     QString m_sysScriptsPath;
     QString m_usrScriptsPath;

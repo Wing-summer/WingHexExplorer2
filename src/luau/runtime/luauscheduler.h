@@ -35,6 +35,7 @@ struct LuauThreadData {
     quint64 lastInteruptTime = 0;
     LuauDebugger *debugger = nullptr;
     int mode = 0;
+    quint64 taskId = 0;
     ScriptExecution *execution = nullptr;
 };
 

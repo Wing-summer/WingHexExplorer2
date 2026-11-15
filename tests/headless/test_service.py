@@ -320,7 +320,8 @@ timer:start(5)
             for client in held:
                 client.close()
             active = rpc.call("service.status")["activeTasks"]
-            for i in range(64 - active):
+            assert rpc.call("service.status")["limits"]["activeTasks"] == 16
+            for i in range(16 - active):
                 rpc.call("task.execute", {"taskId": f"capacity-{i}", "path": ok})
             rpc.call("task.execute", {"taskId": "overflow", "path": ok}, error=-32004)
             # Script socket data and management frames use different listening ports.
@@ -381,7 +382,7 @@ timer:start(5)
                 time.sleep(.01)
             records = rpc.call("service.status")["taskRecords"]
             while records < 1024:
-                size = min(32, 1024 - records)
+                size = min(rpc.call("service.status")["limits"]["activeTasks"], 1024 - records)
                 batch = [dict(jsonrpc="2.0", id=f"record-{records + i}", method="task.execute",
                               params=dict(taskId=f"record-{records + i}", path=syntax)) for i in range(size)]
                 rpc.socket.sendall(Rpc.frame(batch))

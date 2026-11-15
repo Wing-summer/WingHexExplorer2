@@ -28,15 +28,23 @@
 #include "luau/luauutil.h"
 #include "scriptmachine.h"
 
-ScriptExecution::ScriptExecution(ScriptMachine &machine, const QString &path)
+ScriptExecution::ScriptExecution(ScriptMachine &machine, const QString &path,
+                                 quint64 taskId, Lifetime lifetime)
     : QObject(&machine), m_machine(machine), m_path(path),
-      m_scheduler(machine, &m_thread) {
+      m_scheduler(machine, &m_thread),
+      m_callbackScheduler(machine, &m_callbackThread), m_taskId(taskId),
+      m_lifetime(lifetime) {
     static quint64 nextContext = 0;
     m_data.execution = this;
     m_data.mode = ScriptMachine::Background;
+    m_data.taskId = taskId;
     m_cacheNamespace = QStringLiteral("task:%1:").arg(++nextContext);
     m_thread.data = &m_data;
     m_data.parent = &m_thread;
+    m_callbackThread.data = &m_data;
+    m_callbackThread.clearContextOnReset = false;
+    connect(&m_callbackScheduler, &LuauScheduler::sigOnFinished, this,
+            &ScriptExecution::finishCallback);
     connect(&m_scheduler, &LuauScheduler::sigOnFinished, this,
             &ScriptExecution::finishJob);
 }
@@ -51,7 +59,11 @@ void ScriptExecution::start() {
         QTimer::singleShot(10, this, &ScriptExecution::start);
         return;
     }
-    m_state = State::Entry;
+    setState(State::Running);
+    output(QStringLiteral("Run > ") + m_path);
+    if (m_state != State::Running) {
+        return;
+    }
     try {
         auto *main = m_machine.m_main;
         m_thread.state = lua_newthread(main);
@@ -59,8 +71,13 @@ void ScriptExecution::start() {
         lua_pop(main, 1);
         lua_setthreaddata(m_thread.state, &m_data);
         luaL_sandboxthread(m_thread.state);
-        const auto loaded = m_machine.loadScript(
-            m_thread.state, m_path, ScriptMachine::Background, false, false);
+        const auto loaded =
+            m_hasChunk
+                ? m_machine.loadChunk(m_thread.state, m_chunk, m_path, m_format,
+                                      ScriptMachine::Background, false, true)
+                : m_machine.loadScript(m_thread.state, m_path,
+                                       ScriptMachine::Background, false,
+                                       m_lifetime == Lifetime::OneShot);
         if (loaded.result != ScriptMachine::ExecutionResult::Success) {
             fail(loaded.message,
                  loaded.result == ScriptMachine::ExecutionResult::FileError
@@ -89,15 +106,24 @@ void ScriptExecution::finishJob(int status) {
     if (status != LUA_OK) {
         fail(error.isEmpty() ? QStringLiteral("Script execution failed")
                              : error,
-             m_state == State::Resident ? ScriptFailure::CallbackError
-                                        : ScriptFailure::ExecutionError);
+             m_entryCompleted ? ScriptFailure::CallbackError
+                              : ScriptFailure::ExecutionError);
         return;
     }
     // Reset only the Lua stack. The task's globals, callbacks and owned Qt
     // resources remain alive while entry and callback invocations share it.
     lua_resetthread(m_thread.state);
-    if (m_state == State::Entry) {
-        m_state = State::Resident;
+    if (!m_entryCompleted) {
+        m_entryCompleted = true;
+        if (m_lifetime == Lifetime::OneShot) {
+            output(QStringLiteral("The script exited with 0"));
+            dispose();
+            setState(State::Success);
+            Q_EMIT sigOnEntryCompleted();
+            Q_EMIT sigOnExecutionCompleted();
+            return;
+        }
+        setState(State::Resident);
         Q_EMIT sigOnEntryCompleted();
     }
     QTimer::singleShot(0, this, &ScriptExecution::startNextCallback);
@@ -209,12 +235,13 @@ void ScriptExecution::awaitModule(lua_State *caller, lua_State *module) {
     lua_pushthread(module);
     const auto reference = lua_ref(module, -1);
     lua_pop(module, 1);
-    m_modules.append({caller, module, reference});
+    m_modules[m_activeRoot].append({caller, module, reference});
     m_hostYields.insert(caller);
 }
 
 int ScriptExecution::resumeThread(lua_State *root, int arguments) {
     m_sliceStart = ApplicationClock::elapsed();
+    m_activeRoot = root;
     return resumeInvocation(root, arguments);
 }
 
@@ -222,7 +249,7 @@ void ScriptExecution::interrupt(lua_State *thread) {
     const auto elapsed = ApplicationClock::elapsed() - m_sliceStart;
     if ((m_machine.m_interruptionCheck && m_machine.m_interruptionCheck()) ||
         m_state == State::Stopping || m_thread.requestStop) {
-        m_state = State::Stopping;
+        setState(State::Stopping);
         LuauUtil::throwError(thread, "Script execution was aborted");
     } else if (elapsed >= 10 && lua_isyieldable(thread)) {
         m_hostYields.insert(thread);
@@ -237,12 +264,12 @@ QString ScriptExecution::moduleCacheKey(const QString &key) {
 }
 
 int ScriptExecution::resumeInvocation(lua_State *root, int arguments) {
-    if (m_modules.isEmpty()) {
+    if (m_modules.value(root).isEmpty()) {
         m_hostYields.remove(root);
         return lua_resume(root, nullptr,
                           m_moduleResults.remove(root) ? 1 : arguments);
     }
-    const auto pending = m_modules.last();
+    const auto pending = m_modules.value(root).last();
     auto *thread = pending.thread;
     const auto status =
         lua_resume(thread, nullptr, m_moduleResults.remove(thread) ? 1 : 0);
@@ -261,20 +288,23 @@ int ScriptExecution::resumeInvocation(lua_State *root, int arguments) {
     lua_xmove(thread, pending.caller, 1);
     m_moduleResults.insert(pending.caller);
     lua_unref(m_machine.m_main, pending.reference);
-    m_modules.removeLast();
+    m_modules[root].removeLast();
     return LUA_YIELD;
 }
 
 void ScriptExecution::enqueueCallback(
     qtluau::LuaCallbackInvocation invocation) {
-    if (m_state != State::Stopping && m_state != State::Finished) {
+    if (m_state != State::Stopping && active()) {
         m_pending.enqueue(std::move(invocation));
         QTimer::singleShot(0, this, &ScriptExecution::startNextCallback);
     }
 }
 
 void ScriptExecution::startNextCallback() {
-    if (m_state != State::Resident || m_thread.isRunning ||
+    const bool entryCallback =
+        m_lifetime == Lifetime::OneShot && m_state == State::Running;
+    if ((!entryCallback && m_state != State::Resident) ||
+        m_callbackThread.isRunning || (!entryCallback && m_thread.isRunning) ||
         m_pending.isEmpty()) {
         return;
     }
@@ -288,56 +318,73 @@ void ScriptExecution::startNextCallback() {
         return;
     }
     try {
-        auto *thread = m_thread.state;
+        if (entryCallback && !m_callbackThread.state) {
+            m_callbackThread.state = lua_newthread(m_thread.state);
+            m_callbackThread.refID = lua_ref(m_thread.state, -1);
+            lua_pop(m_thread.state, 1);
+            lua_setthreaddata(m_callbackThread.state, &m_data);
+        }
+        auto *thread = entryCallback ? m_callbackThread.state : m_thread.state;
         const auto args = invocation.arguments(thread);
         invocation.callback.push(thread);
         for (const auto &arg : args) {
             arg.push(thread);
         }
-        startJob(int(args.size()));
+        if (entryCallback) {
+            m_callbackScheduler.start(int(args.size()));
+        } else {
+            startJob(int(args.size()));
+        }
     } catch (const std::exception &error) {
         fail(QString::fromUtf8(error.what()), ScriptFailure::CallbackError);
     }
 }
 
 void ScriptExecution::stop() {
-    if (m_state == State::Stopping || m_state == State::Finished) {
+    if (m_state == State::Stopping || !active()) {
         return;
     }
-    m_state = State::Stopping;
+    setState(State::Stopping);
+    Q_EMIT m_machine.sigOnBackgroundInputCancelled(m_taskId);
     m_thread.requestStop = true;
     QTimer::singleShot(0, this, &ScriptExecution::finishStop);
 }
 
 void ScriptExecution::finishStop() {
-    if (m_state == State::Finished) {
+    if (!active()) {
         return;
     }
     if (m_machine.isExecuting()) {
         QTimer::singleShot(10, this, &ScriptExecution::finishStop);
         return;
     }
+    output(QStringLiteral("Script execution was aborted"));
     dispose();
+    setState(State::Aborted);
     Q_EMIT sigOnExecutionStopped();
 }
 
 void ScriptExecution::fail(const QString &error, ScriptFailure failure) {
+    output(error, true);
     dispose();
+    setState(State::Failed);
     Q_EMIT sigOnExecutionFailed(failure, error);
 }
 
 void ScriptExecution::dispose() {
-    m_state = State::Finished;
     m_scheduler.stop();
+    m_callbackScheduler.stop();
     m_pending.clear();
     if (!m_thread.state) {
         return;
     }
     qtluau::clearLuaContext(m_thread.state);
     PluginSystem::instance().cleanScriptHandles(m_thread.state, {});
-    for (const auto &module : std::as_const(m_modules)) {
-        lua_resetthread(module.thread);
-        lua_unref(m_machine.m_main, module.reference);
+    for (const auto &modules : std::as_const(m_modules)) {
+        for (const auto &module : modules) {
+            lua_resetthread(module.thread);
+            lua_unref(m_machine.m_main, module.reference);
+        }
     }
     m_modules.clear();
     m_moduleResults.clear();
@@ -346,5 +393,59 @@ void ScriptExecution::dispose() {
         m_machine.m_luaReq.clearRequireCacheEntry(key.constData());
     }
     m_moduleCacheKeys.clear();
+    m_callbackThread.destory();
     m_thread.destory();
+}
+
+void ScriptExecution::startChunk(const QByteArray &bytes,
+                                 ScriptChunkFormat format) {
+    if (m_state != State::Pending) {
+        return;
+    }
+    m_chunk = bytes;
+    m_format = format;
+    m_hasChunk = true;
+    start();
+}
+
+void ScriptExecution::setState(State state) {
+    if (m_state == state) {
+        return;
+    }
+    m_state = state;
+    Q_EMIT sigOnExecutionStateChanged(state);
+}
+
+void ScriptExecution::setWaitingInput(bool waiting) {
+    if (m_state == State::Stopping || !active()) {
+        return;
+    }
+    setState(waiting            ? State::WaitingInput
+             : m_entryCompleted ? State::Resident
+                                : State::Running);
+}
+
+void ScriptExecution::output(const QString &message, bool error) {
+    ScriptMachine::MessageInfo info;
+    info.taskId = m_taskId;
+    info.section = m_path;
+    info.message = message;
+    info.type = error ? ScriptMachine::MessageType::Error
+                      : ScriptMachine::MessageType::ExecInfo;
+    m_machine.outputMessage(info);
+}
+
+void ScriptExecution::finishCallback(int status) {
+    if (m_state == State::Stopping) {
+        finishStop();
+        return;
+    }
+    if (status != LUA_OK) {
+        fail(m_callbackScheduler.executeError(), ScriptFailure::CallbackError);
+        return;
+    }
+    // A callback uses a separate stack while the entry is yielded. Both
+    // invocation threads share the task's globals and resource context.
+    lua_resetthread(m_callbackThread.state);
+    QTimer::singleShot(0, this, &ScriptExecution::startNextCallback);
 }

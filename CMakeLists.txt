@@ -210,6 +210,8 @@ set(DIALOG_SRC
     src/dialog/layoutdeldialog.cpp
     src/dialog/layoutdeldialog.h
     src/dialog/layoutdeldialog.ui
+    src/control/console/backgroundscriptoutput.cpp
+    src/control/console/backgroundscriptoutput.h
     src/dialog/mainwindow.cpp
     src/dialog/mainwindow.h
     src/dialog/metadialog.cpp
@@ -749,10 +751,28 @@ set(_hexdoc_module_source
 set(_hexdoc_api_source "${_binding_output_dir}/generated/hexdoc_api.luau")
 
 # Deploy modules for the normal @s/ resolver used by runtime and LSP.
-set(_luau_modules_runtime_dir "$<TARGET_FILE_DIR:WingHexExplorer2>/luaulib")
+set(WINGHEX_LUAULIB_DEPLOY_DIR "" CACHE PATH
+    "System Luau module deployment directory (default: beside the executable)")
+if(WINGHEX_LUAULIB_DEPLOY_DIR)
+    get_filename_component(_luau_modules_runtime_dir "${WINGHEX_LUAULIB_DEPLOY_DIR}"
+                           ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    target_compile_definitions(WingHexExplorer2 PRIVATE
+        WINGHEX_LUAULIB_DIR="${_luau_modules_runtime_dir}")
+else()
+    set(_luau_modules_runtime_dir "$<TARGET_FILE_DIR:WingHexExplorer2>/luaulib")
+    target_compile_definitions(WingHexExplorer2 PRIVATE WINGHEX_LUAULIB_DIR="luaulib")
+endif()
+set(_luau_modules_stage "${CMAKE_CURRENT_BINARY_DIR}/luau-system-modules")
+file(GLOB_RECURSE _luau_modules_sources CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/luaulib/*")
 
 add_custom_target(
     WingHexSystemModules ALL
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/luaulib_codegen.py"
+            --source "${CMAKE_CURRENT_SOURCE_DIR}/luaulib"
+            --output "${_luau_modules_stage}"
+            --icons "${CMAKE_CURRENT_SOURCE_DIR}/WingPlugin/wingplugin_global.h"
+            --deploy "${_luau_modules_runtime_dir}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${_luau_modules_runtime_dir}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${_hexdoc_module_source}"
             "${_hexdoc_api_source}" "${_luau_modules_runtime_dir}"
@@ -786,6 +806,8 @@ install(
     FILES "${_hexdoc_module_source}" "${_hexdoc_api_source}"
     DESTINATION "${_luau_modules_install_dir}"
     COMPONENT LuauModules)
+install(DIRECTORY "${_luau_modules_stage}/"
+        DESTINATION "${_luau_modules_install_dir}" COMPONENT LuauModules)
 
 target_compile_options(
     WingHexExplorer2

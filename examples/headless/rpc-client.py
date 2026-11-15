@@ -1,5 +1,5 @@
 # Copyright (C) 2026 WingSummer
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: BSD-3-Clause
 """Minimal Content-Length JSON-RPC client / 简单的长度帧 JSON-RPC 客户端。"""
 import argparse
 import json

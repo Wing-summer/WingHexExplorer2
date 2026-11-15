@@ -1,5 +1,5 @@
 -- Copyright (C) 2026 WingSummer
--- SPDX-License-Identifier: AGPL-3.0-only
+-- SPDX-License-Identifier: BSD-3-Clause
 local core = require("@b/core")
 local timer = core.timer()
 local count = 0

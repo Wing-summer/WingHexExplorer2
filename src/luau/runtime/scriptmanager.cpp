@@ -24,8 +24,6 @@
 #include <QMenu>
 #include <QSettings>
 
-#include "DockWidgetTab.h"
-
 #include "class/settings/languagemanager.h"
 #include "class/settings/localizedmetadata.h"
 #include "class/settings/settingmanager.h"
@@ -33,7 +31,6 @@
 #include "dbghelper.h"
 #include "dialog/common/wingmessagebox.h"
 #include "scriptchunk.h"
-#include "scriptmachine.h"
 #include "utilities.h"
 
 ScriptManager &ScriptManager::instance() {
@@ -118,22 +115,9 @@ QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
     return menu;
 }
 
-ads::CDockWidgetTab *ScriptManager::indicator() const { return m_indicator; }
-
-void ScriptManager::setIndicator(ads::CDockWidgetTab *newIndicator) {
-    m_indicator = newIndicator;
-}
-
-void ScriptManager::setIndicatorBusy(bool b) {
-    if (m_indicator == nullptr) {
-        return;
-    }
-    if (b) {
-        m_indicator->setIcon(ThemeManager::instance().standardIcon(
-            ThemeManager::StandardIcon::DebugRun));
-    } else {
-        m_indicator->setIcon({});
-    }
+void ScriptManager::setBackgroundRunner(
+    std::function<void(const QString &)> runner) {
+    m_backgroundRunner = std::move(runner);
 }
 
 bool ScriptManager::isScriptFile(const QString &file) {
@@ -395,27 +379,9 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
 }
 
 void ScriptManager::runScript(const QString &filename) {
-    auto &ins = ScriptMachine::instance();
-    if (ins.isRunning(ScriptMachine::Background)) {
-        auto ret = WingMessageBox::question(
-            nullptr, tr("Script running"),
-            tr("The script is still running. Do you want to terminate the "
-               "previous script before proceeding?"));
-        if (ret == QMessageBox::Yes) {
-            ins.abortScript(ScriptMachine::Background);
-        } else {
-            return;
-        }
+    if (m_backgroundRunner) {
+        m_backgroundRunner(filename);
     }
-
-    Q_ASSERT(m_indicator);
-    setIndicatorBusy(true);
-    ins.executeScript(ScriptMachine::Background, filename, false,
-                      [this](bool isNotBusy) {
-                          if (isNotBusy) {
-                              setIndicatorBusy(false);
-                          }
-                      });
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {

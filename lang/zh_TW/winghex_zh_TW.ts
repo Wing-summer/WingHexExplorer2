@@ -70,6 +70,125 @@
     </message>
 </context>
 <context>
+    <name>BackgroundScriptOutput</name>
+    <message>
+        <location filename="../../src/control/console/backgroundscriptoutput.cpp" line="+126"/>
+        <location line="+11"/>
+        <source>Background scripts</source>
+        <translation>背景指令碼</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Clear</source>
+        <translation>清空</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Terminate script</source>
+        <translation>終止指令碼</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Close output</source>
+        <translation>關閉輸出</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Run a script to view its output</source>
+        <translation>執行指令碼以檢視輸出</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Starting</source>
+        <translation>正在啟動</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Running</source>
+        <translation>執行中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Waiting for input</source>
+        <translation>等待輸入</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Resident</source>
+        <translation>常駐中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stopping</source>
+        <translation>正在停止</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Succeeded</source>
+        <translation>已成功</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Terminated</source>
+        <translation>已終止</translation>
+    </message>
+    <message>
+        <location line="+46"/>
+        <source>Run script</source>
+        <translation>執行指令碼</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>All 16 background script environments are in use. Stop a script before starting another.</source>
+        <translation>16 個背景指令碼環境均在使用中。請先停止一個指令碼再啟動新指令碼。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The script engine is unavailable.</source>
+        <translation>指令碼引擎無法使用。</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Script output</source>
+        <translation>指令碼輸出</translation>
+    </message>
+    <message>
+        <location line="+77"/>
+        <source>Active script environments</source>
+        <translation>使用中的指令碼環境</translation>
+    </message>
+    <message>
+        <location line="+92"/>
+        <source>[Error]</source>
+        <translation>【錯誤】</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>[Warn]</source>
+        <translation>【警告】</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>[Info]</source>
+        <translation>【資訊】</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Enter a value for %1:</source>
+        <translation>為 %1 輸入一個值：</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Input request</source>
+        <translation>輸入請求</translation>
+    </message>
+</context>
+<context>
     <name>BookMarksModel</name>
     <message>
         <location filename="../../src/model/bookmarksmodel.cpp" line="+58"/>
@@ -1491,29 +1610,29 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="+530"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="+513"/>
         <source>File</source>
         <translation>檔</translation>
     </message>
     <message>
         <location line="+4"/>
-        <location line="+1152"/>
+        <location line="+1113"/>
         <source>View</source>
         <translation>視圖</translation>
     </message>
     <message>
-        <location line="-1136"/>
+        <location line="-1097"/>
         <source>About</source>
         <translation>關於</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.ui" line="+14"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="+3354"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="+3315"/>
         <source>WingHexExplorer</source>
         <translation>羽雲十六進制編輯器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="-3734"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="-3679"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
@@ -1523,7 +1642,7 @@
         <translation>選取範圍</translation>
     </message>
     <message>
-        <location line="+352"/>
+        <location line="+336"/>
         <source>Edit</source>
         <translation>編輯</translation>
     </message>
@@ -1534,24 +1653,24 @@
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1149"/>
+        <location line="+1110"/>
         <location line="+107"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location line="-1252"/>
+        <location line="-1213"/>
         <source>Settings</source>
         <translation>設置</translation>
     </message>
     <message>
         <location line="+219"/>
-        <location line="+1099"/>
+        <location line="+1060"/>
         <source>Log</source>
         <translation>日誌</translation>
     </message>
     <message>
-        <location line="-1016"/>
+        <location line="-977"/>
         <source>Export search results</source>
         <translation>導出搜索結果</translation>
     </message>
@@ -1572,22 +1691,21 @@
         <location line="+89"/>
         <location line="+85"/>
         <location line="+87"/>
-        <location line="+314"/>
-        <location line="+154"/>
+        <location line="+429"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location line="-631"/>
+        <location line="-592"/>
         <location line="+86"/>
         <location line="+84"/>
-        <location line="+1354"/>
+        <location line="+1315"/>
         <location line="+262"/>
         <source>Copy to clipboard</source>
         <translation>數據已拷貝到粘貼板</translation>
     </message>
     <message>
-        <location line="-1681"/>
+        <location line="-1642"/>
         <source>Little-endian</source>
         <translation>小端</translation>
     </message>
@@ -1603,45 +1721,45 @@
     </message>
     <message>
         <location line="+55"/>
-        <location line="+466"/>
+        <location line="+427"/>
         <source>Checksum</source>
         <translation>校驗和</translation>
     </message>
     <message>
-        <location line="-422"/>
-        <location line="+463"/>
+        <location line="-383"/>
+        <location line="+424"/>
         <source>Delete bookmark</source>
         <translation>刪除書簽</translation>
     </message>
     <message>
-        <location line="-436"/>
-        <location line="+440"/>
+        <location line="-397"/>
+        <location line="+401"/>
         <source>Clear bookmarks</source>
         <translation>清空書簽</translation>
     </message>
     <message>
-        <location line="-427"/>
-        <location line="+418"/>
+        <location line="-388"/>
+        <location line="+379"/>
         <location line="+1196"/>
         <location line="+8"/>
         <source>Bookmark</source>
         <translation>書簽</translation>
     </message>
     <message>
-        <location line="-1925"/>
+        <location line="-1886"/>
         <location line="+433"/>
-        <location line="+3259"/>
+        <location line="+3220"/>
         <location line="+5"/>
         <source>Decoded text</source>
         <translation>解碼文字</translation>
     </message>
     <message>
-        <location line="-3239"/>
+        <location line="-3200"/>
         <source>Script console</source>
         <translation>腳本控制臺</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+75"/>
         <location line="+382"/>
         <source>Basic</source>
         <translation>基礎</translation>
@@ -1750,8 +1868,8 @@
         <translation>跳轉</translation>
     </message>
     <message>
-        <location line="-706"/>
-        <location line="+913"/>
+        <location line="-667"/>
+        <location line="+874"/>
         <source>Encoding</source>
         <translation>編碼</translation>
     </message>
@@ -1793,21 +1911,21 @@
         <translation>填充零</translation>
     </message>
     <message>
-        <location line="-293"/>
-        <location line="+374"/>
+        <location line="-254"/>
+        <location line="+335"/>
         <location line="+17"/>
         <source>Annotations</source>
         <translation>標註</translation>
     </message>
     <message>
-        <location line="-435"/>
-        <location line="+366"/>
+        <location line="-396"/>
+        <location line="+327"/>
         <source>Delete annotation</source>
         <translation>刪除標註</translation>
     </message>
     <message>
-        <location line="-341"/>
-        <location line="+345"/>
+        <location line="-302"/>
+        <location line="+306"/>
         <source>Clear annotations</source>
         <translation>清空標註</translation>
     </message>
@@ -1828,12 +1946,12 @@
     </message>
     <message>
         <location line="+1568"/>
-        <location line="+1650"/>
+        <location line="+1584"/>
         <source>Restoring layout...</source>
         <translation>恢復 Dock 佈局</translation>
     </message>
     <message>
-        <location line="-4329"/>
+        <location line="-4224"/>
         <source>Startup complete</source>
         <translation>啟動完畢</translation>
     </message>
@@ -1849,7 +1967,7 @@
         <translation>導出結果</translation>
     </message>
     <message>
-        <location line="+3087"/>
+        <location line="+3048"/>
         <source>There is nothing to save</source>
         <translation>沒有保存的數據</translation>
     </message>
@@ -1894,8 +2012,8 @@
         <translation>檔狀態</translation>
     </message>
     <message>
-        <location line="-1449"/>
-        <location line="+1453"/>
+        <location line="-1394"/>
+        <location line="+1398"/>
         <source>Saved</source>
         <translation>是否保存</translation>
     </message>
@@ -1905,8 +2023,8 @@
         <translation>唯讀</translation>
     </message>
     <message>
-        <location line="-3617"/>
-        <location line="+1443"/>
+        <location line="-3562"/>
+        <location line="+1388"/>
         <source>Editing lock</source>
         <translation>編輯鎖定</translation>
     </message>
@@ -1916,18 +2034,13 @@
         <translation>鎖定編輯失敗</translation>
     </message>
     <message>
-        <location line="-2778"/>
-        <location line="+1436"/>
+        <location line="-2723"/>
+        <location line="+1381"/>
         <source>File resizing</source>
         <translation>檔案大小調整</translation>
     </message>
     <message>
-        <location line="-1296"/>
-        <source>Input request</source>
-        <translation>輸入請求</translation>
-    </message>
-    <message>
-        <location line="+48"/>
+        <location line="-1209"/>
         <source>The script engine failed to start and will be automatically disabled.</source>
         <translation>腳本引擎啟動失敗，將自動禁用該功能。</translation>
     </message>
@@ -1937,33 +2050,17 @@
         <translation>無符號 Hex</translation>
     </message>
     <message>
-        <location line="+329"/>
-        <source>Background script output appears here.</source>
-        <translation>後臺腳本執行將會在這裏輸出。</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Select all</source>
-        <translation>全選</translation>
-    </message>
-    <message>
-        <location line="-297"/>
-        <location line="+310"/>
+        <location line="+44"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Terminate script</source>
-        <translation>終止腳本</translation>
-    </message>
-    <message>
-        <location line="+23"/>
+        <location line="+290"/>
         <source>Background script output</source>
         <translation>後臺腳本輸出</translation>
     </message>
     <message>
-        <location line="+1659"/>
+        <location line="+1669"/>
         <source>Could not lock the file size</source>
         <translation>鎖定檔大小失敗</translation>
     </message>
@@ -2055,15 +2152,15 @@
         <translation>保存佈局</translation>
     </message>
     <message>
-        <location line="-2393"/>
-        <location line="+1109"/>
+        <location line="-2354"/>
+        <location line="+1070"/>
         <location line="+1382"/>
         <source>Export logs</source>
         <translation>導出日誌</translation>
     </message>
     <message>
-        <location line="-2488"/>
-        <location line="+1108"/>
+        <location line="-2449"/>
+        <location line="+1069"/>
         <source>Clear logs</source>
         <translation>清空日誌</translation>
     </message>
@@ -2197,7 +2294,7 @@
         <translation>未知錯誤</translation>
     </message>
     <message>
-        <location line="-3537"/>
+        <location line="-3498"/>
         <source>Custom header</source>
         <translation>自定義表頭</translation>
     </message>
@@ -2207,7 +2304,7 @@
         <translation>請選擇字節序列。</translation>
     </message>
     <message>
-        <location line="+514"/>
+        <location line="+475"/>
         <source>Remove layout</source>
         <translation>刪除佈局</translation>
     </message>
@@ -2230,12 +2327,12 @@
         <location line="+125"/>
         <location line="+747"/>
         <location line="+1229"/>
-        <location line="+782"/>
+        <location line="+733"/>
         <source>Please select the file save location</source>
         <translation>請選擇保存檔路徑</translation>
     </message>
     <message>
-        <location line="-2674"/>
+        <location line="-2625"/>
         <location line="+262"/>
         <source>Paste failed. Please check permissions or content length</source>
         <translation>粘貼失敗，請注意許可權或者內容長度</translation>
@@ -2339,32 +2436,17 @@
         <translation>打開的檔過多，無法繼續操作！</translation>
     </message>
     <message>
-        <location line="+97"/>
-        <source>[Info]</source>
-        <translation>【資訊】</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>[Warn]</source>
-        <translation>【警告】</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>[Error]</source>
-        <translation>【錯誤】</translation>
-    </message>
-    <message>
-        <location line="+38"/>
+        <location line="+85"/>
         <source>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</source>
         <translation>編輯視圖不在同一區域，恢復佈局會破壞現有的同時可見編輯視圖的佈局，恢復後會合並，確認繼續？</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+74"/>
         <source>A script is still running. Exit anyway?</source>
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>
     <message>
-        <location line="-550"/>
+        <location line="-493"/>
         <source>File saved</source>
         <translation>保存成功</translation>
     </message>
@@ -2426,13 +2508,13 @@
     </message>
     <message>
         <location line="+1167"/>
-        <location line="+1640"/>
+        <location line="+1591"/>
         <location line="+30"/>
         <source>Could not save the file.</source>
         <translation>保存失敗！</translation>
     </message>
     <message>
-        <location line="-2825"/>
+        <location line="-2776"/>
         <source>Exporting...</source>
         <translation>導出中...</translation>
     </message>
@@ -2491,7 +2573,7 @@
         <translation>查找中...</translation>
     </message>
     <message>
-        <location line="-2320"/>
+        <location line="-2265"/>
         <source>Initializing interface</source>
         <translation>初始化介面</translation>
     </message>
@@ -2526,7 +2608,7 @@
         <translation>啟動最近檔服務</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+87"/>
         <source>Initializing script console</source>
         <translation>啟動腳本控制臺</translation>
     </message>
@@ -2561,7 +2643,7 @@
         <translation>啟動即將完成</translation>
     </message>
     <message>
-        <location line="+915"/>
+        <location line="+876"/>
         <source>Open a file for editing</source>
         <translation>開啟檔案進行編輯</translation>
     </message>
@@ -2775,19 +2857,18 @@
         <translation>非法檔格式</translation>
     </message>
     <message>
-        <location line="+355"/>
+        <location line="+306"/>
         <location line="+30"/>
         <source>File saved.</source>
         <translation>檔案已儲存。</translation>
     </message>
     <message>
-        <location line="-1937"/>
+        <location line="-1888"/>
         <source>Layout saving...</source>
         <translation>佈局保存中...</translation>
     </message>
     <message>
-        <location line="-2773"/>
-        <location line="+2780"/>
+        <location line="+7"/>
         <source>Enter a value:</source>
         <translation>請輸入</translation>
     </message>
@@ -2822,8 +2903,8 @@
         <translation>當前軟體為最新版本</translation>
     </message>
     <message>
-        <location line="-2794"/>
-        <location line="+2789"/>
+        <location line="-2755"/>
+        <location line="+2750"/>
         <source>You are using an outdated version of the software. We recommend downloading the latest release from the GitHub and Gitee repositories.</source>
         <translation>你使用的軟體為老版本，建議到 Github 和 Gitee 的倉庫發行版下載更新。</translation>
     </message>
@@ -3649,7 +3730,7 @@
 <context>
     <name>ScriptManager</name>
     <message>
-        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="+110"/>
+        <location filename="../../src/luau/runtime/scriptmanager.cpp" line="+107"/>
         <source>Run script</source>
         <translation>執行腳本</translation>
     </message>
@@ -3657,16 +3738,6 @@
         <location line="+1"/>
         <source>User scripts cannot run as root under the current security policy.</source>
         <translation>由於限制策略，無法在 Root 模式下運行用戶腳本！</translation>
-    </message>
-    <message>
-        <location line="+290"/>
-        <source>Script running</source>
-        <translation>腳本運行中</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The script is still running. Do you want to terminate the previous script before proceeding?</source>
-        <translation>腳本仍在運行中，是否終止上一個腳本再執行？</translation>
     </message>
 </context>
 <context>

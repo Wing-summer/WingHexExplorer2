@@ -18,10 +18,13 @@
 #ifndef SCRIPTEXECUTION_H
 #define SCRIPTEXECUTION_H
 
+#include <QHash>
 #include <QQueue>
 #include <QSet>
+#include <QVector>
 
 #include "luauscheduler.h"
+#include "scriptchunk.h"
 
 class ScriptMachine;
 
@@ -36,7 +39,37 @@ enum class ScriptFailure {
 class ScriptExecution final : public QObject {
     Q_OBJECT
 public:
-    explicit ScriptExecution(ScriptMachine &machine, const QString &path);
+    enum class Lifetime { OneShot, Resident };
+    enum class State {
+        Pending,
+        Running,
+        WaitingInput,
+        Resident,
+        Stopping,
+        Success,
+        Failed,
+        Aborted
+    };
+
+private:
+    friend class ScriptMachine;
+    explicit ScriptExecution(ScriptMachine &machine, const QString &path,
+                             quint64 taskId, Lifetime lifetime);
+
+public:
+    inline quint64 taskId() const { return m_taskId; }
+
+    inline QString path() const { return m_path; }
+
+    inline State state() const { return m_state; }
+
+    inline bool active() const {
+        return m_state != State::Success && m_state != State::Failed &&
+               m_state != State::Aborted;
+    }
+
+    void setWaitingInput(bool waiting);
+    void startChunk(const QByteArray &bytes, ScriptChunkFormat format);
     virtual ~ScriptExecution() override;
 
 public:
@@ -54,6 +87,8 @@ public:
 
 signals:
     void sigOnEntryCompleted();
+    void sigOnExecutionStateChanged(ScriptExecution::State state);
+    void sigOnExecutionCompleted();
     void sigOnExecutionFailed(ScriptFailure failure, const QString &message);
     void sigOnExecutionStopped();
 
@@ -67,6 +102,7 @@ private:
     int resumeInvocation(lua_State *root, int arguments);
     void startNextCallback();
     void finishJob(int status);
+    void finishCallback(int status);
     void finishStop();
     void fail(const QString &error,
               ScriptFailure failure = ScriptFailure::ExecutionError);
@@ -74,7 +110,8 @@ private:
     void startJob(int arguments = 0);
 
 private:
-    enum class State { Pending, Entry, Resident, Stopping, Finished };
+    void setState(State state);
+    void output(const QString &message, bool error = false);
 
     struct PendingModule {
         lua_State *caller;
@@ -83,7 +120,8 @@ private:
     };
 
 private:
-    QVector<PendingModule> m_modules;
+    QHash<lua_State *, QVector<PendingModule>> m_modules;
+    lua_State *m_activeRoot = nullptr;
     QSet<lua_State *> m_moduleResults;
     ScriptMachine &m_machine;
     QString m_path;
@@ -94,7 +132,15 @@ private:
     LuauThreadData m_data;
     LuauThread m_thread;
     LuauScheduler m_scheduler;
+    LuauThread m_callbackThread;
+    LuauScheduler m_callbackScheduler;
     QQueue<qtluau::LuaCallbackInvocation> m_pending;
+    const quint64 m_taskId;
+    const Lifetime m_lifetime;
+    QByteArray m_chunk;
+    ScriptChunkFormat m_format = ScriptChunkFormat::Source;
+    bool m_hasChunk = false;
+    bool m_entryCompleted = false;
     State m_state = State::Pending;
 };
 #endif // SCRIPTEXECUTION_H

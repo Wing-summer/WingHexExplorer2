@@ -216,8 +216,13 @@ int ScriptDocumentContext::closeFileHandle(int handle) {
     if (m_macroDepth > 0) {
         return WingHex::ErrFile::Error;
     }
-    return handle >= 0 && m_handles.remove(handle) ? WingHex::ErrFile::Success
-                                                   : WingHex::ErrFile::NotExist;
+    if (handle < 0 || !m_handles.remove(handle)) {
+        return WingHex::ErrFile::NotExist;
+    }
+    if (m_active == handle) {
+        m_active = -1;
+    }
+    return WingHex::ErrFile::Success;
 }
 
 int ScriptDocumentContext::closeCurrent() {

@@ -26,3 +26,6 @@ An existing probe can also be registered with CTest:
 cmake -S tests/headless -B build/headless-tests -DWINGHEX_SERVICE_BINARY="$PWD/build/WingHexHeadlessProbe"
 ctest --test-dir build/headless-tests --output-on-failure
 ```
+
+启动模式回归还覆盖后台 CPU 循环及模态输入期间关闭主窗口：确认退出后先完成环境清理，再继续关闭。
+Startup-mode regression also closes the main window during a background CPU loop and modal input, verifying cleanup before confirmed shutdown completes.

@@ -307,6 +307,62 @@ private slots:
         QCOMPARE(c->dockAreaWidget()->currentDockWidget(), c);
     }
 
+    void missingClosedCentralTabKeepsSideWidth_data() {
+        QTest::addColumn<bool>("nested");
+        QTest::newRow("direct") << false;
+        QTest::newRow("nested") << true;
+    }
+
+    void missingClosedCentralTabKeepsSideWidth() {
+        QFETCH(bool, nested);
+        QByteArray bytes;
+        int savedSideWidth = 0;
+        for (int launch = 0; launch < 4; ++launch) {
+            QMainWindow window;
+            window.resize(1200, 600);
+            auto manager = new CDockManager(&window);
+            auto b = dock(manager, QStringLiteral("central"));
+            auto area = manager->setCentralWidget(b);
+            auto a =
+                launch < 2 ? dock(manager, QStringLiteral("plugin")) : nullptr;
+            if (a) {
+                manager->addDockWidget(CenterDockWidgetArea, a, area);
+            }
+            if (nested) {
+                auto bottom = dock(manager, QStringLiteral("bottom"));
+                manager->addDockWidget(BottomDockWidgetArea, bottom, area);
+            }
+            auto c = dock(manager, QStringLiteral("side"));
+            manager->addDockWidget(RightDockWidgetArea, c);
+            if (!bytes.isEmpty()) {
+                QVERIFY(manager->restoreState(bytes));
+            }
+            window.show();
+            drain();
+            if (launch == 0) {
+                c->dockAreaWidget()->parentSplitter()->setSizes({800, 396});
+            }
+            if (launch == 0) {
+                savedSideWidth = c->dockAreaWidget()->width();
+            } else {
+                QCOMPARE(c->dockAreaWidget()->width(), savedSideWidth);
+            }
+            if (launch == 1) {
+                a->toggleView(false);
+                drain();
+            }
+            if (launch >= 1) {
+                const int sideWidth = c->dockAreaWidget()->width();
+                window.resize(1400, 600);
+                drain();
+                QCOMPARE(c->dockAreaWidget()->width(), sideWidth);
+                window.resize(1200, 600);
+                drain();
+            }
+            bytes = manager->saveState();
+        }
+    }
+
     void invalidInputDoesNotMutate() {
         QMainWindow window;
         auto manager = new CDockManager(&window);

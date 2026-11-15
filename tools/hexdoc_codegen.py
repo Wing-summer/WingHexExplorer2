@@ -79,6 +79,7 @@ def generate_hexdoc(manifest: JsonObject, config: JsonObject, output: Path) -> N
         "export type Document = {\n"
         + "\n".join(
             [
+                "    open_current: (self: Document) -> number,",
                 "    open_file: (self: Document, path: string | ustring) -> number,",
                 "    open_ext: (self: Document, driver: string | ustring, path: string | ustring) -> number,",
                 "    open_workspace: (self: Document, path: string | ustring) -> number,",

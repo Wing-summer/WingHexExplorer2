@@ -19,6 +19,7 @@
 #include <stdexcept>
 
 #include <QDir>
+#include <QDirIterator>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QGuiApplication>
@@ -1003,10 +1004,101 @@ static void testHexdocModule() {
     server.onCloseDocument(moduleUri);
 }
 
+static void testSystemLibraryDeclarations() {
+    const QDir output(qEnvironmentVariable("WING_BINDINGS_DIR"));
+    const QDir deployed(qEnvironmentVariable("WING_STDLIB_DIR"));
+    require(deployed.exists("env.d.luau"), "system declarations unavailable");
+    QTemporaryDir directory;
+    require(directory.isValid(), "temporary module directory unavailable");
+    const QDir modules(directory.path());
+    QDirIterator sources(deployed.path(), {QStringLiteral("*.luau")},
+                         QDir::Files, QDirIterator::Subdirectories);
+    while (sources.hasNext()) {
+        const auto source = sources.next();
+        const auto fileName = sources.fileName();
+        // Native builtins use their registered declaration path. Script modules
+        // must retain their public types without any adjacent declaration file.
+        if (fileName.endsWith(QStringLiteral(".d.luau")) &&
+            fileName != QStringLiteral("winghex.d.luau")) {
+            continue;
+        }
+        const auto relative = deployed.relativeFilePath(source);
+        require(modules.mkpath(QFileInfo(relative).path()),
+                "cannot stage module directory");
+        require(QFile::copy(source, modules.filePath(relative)),
+                "cannot stage module source");
+    }
+    QFile manifest(output.filePath("manifest.json"));
+    require(manifest.open(QIODevice::ReadOnly), "binding manifest unavailable");
+    const auto model = QJsonDocument::fromJson(manifest.readAll()).object();
+    LuauLanguageServer::InitializationOptions options;
+    const QDir definitions(output.filePath("definitions"));
+    int index = 0;
+    for (const auto &name : model.value("definition_preload").toArray()) {
+        options.definitionsFiles.insert(
+            QString::number(index++).rightJustified(5, '0'),
+            definitions.filePath(name.toString()));
+    }
+    options.systemModuleRoot = modules.path();
+    options.builtinModuleFiles.insert(QStringLiteral("winghex"),
+                                      modules.filePath("winghex.d.luau"));
+    LuauLanguageServer server;
+    QVector<lsp::Diagnostic> diagnostics;
+    QObject::connect(
+        &server, &LuauLanguageServer::sigOnPublishDiagnostic, &server,
+        [&](const lsp::DocumentUri &, const QVector<lsp::Diagnostic> &items) {
+            diagnostics = items;
+            for (const auto &item : items) {
+                std::cerr << item.message.toStdString() << '\n';
+            }
+        });
+    server.initialize(options);
+    const QString valid = QStringLiteral(
+        "--!strict\nlocal env = require(\"@s/env\")\n"
+        "local native = require(\"@b/winghex\")\n"
+        "local patch: number = native.env.app.version.patch\nprint(patch)\n"
+        "local icons = require(\"@s/icons\")\n"
+        "local bytes = require(\"@s/bytes\")\n"
+        "local binary = require(\"@s/binary\")\n"
+        "local analysis = require(\"@s/analysis\")\n"
+        "local mcp = require(\"@s/mcp\")\n"
+        "local i18n = require(\"@s/i18n\")\n"
+        "local major: number = env.qt.version.major\n"
+        "local id: number = icons.Id.CopyHex\n"
+        "local encoded: string = bytes.to_hex(\"abc\")\n"
+        "local tr = i18n.create({zh_CN = {Hello = \"你好\"}})\n"
+        "local text: string = tr(\"Hello\")\n"
+        "local schema: binary.Schema = binary.register(\"test\", {fields = "
+        "{{name = \"x\", type = \"u8\"}}})\n"
+        "local result: binary.Result = binary.decode(schema, \"x\")\n"
+        "local server = mcp.new({name = \"test\", version = \"1\"})\n"
+        "server:stop()\nprint(major, id, encoded, text, result, "
+        "analysis.current)\n");
+    QTextDocument document(valid);
+    const auto uri = QUrl::fromLocalFile(modules.filePath("stdlib-probe.luau"));
+    server.onOpenDocument(uri, &document);
+    require(diagnostics.isEmpty(),
+            "system module declarations failed strict checking");
+    const auto completions = server.completion(
+        {uri, positionOf(valid, "icons.Id.CopyHex", 9), std::nullopt}, nullptr);
+    require(hasCompletion(completions, QStringLiteral("CopyHex")),
+            "icon enum completion unavailable");
+    server.onCloseDocument(uri);
+    document.setPlainText(
+        QStringLiteral("--!strict\nlocal bytes = require(\"@s/bytes\")\nlocal "
+                       "wrong: number = bytes.to_hex(\"x\")\n"));
+    server.onOpenDocument(uri, &document);
+    require(!diagnostics.isEmpty(), "system API signatures were silently any");
+    server.onCloseDocument(uri);
+}
+
 int main(int argc, char **argv) {
     QGuiApplication application(argc, argv);
     try {
         const auto scenario = application.arguments().value(1);
+        if (scenario == QLatin1String("stdlib")) {
+            testSystemLibraryDeclarations();
+        }
         if (scenario == QLatin1String("hexdoc")) {
             testHexdocModule();
         }

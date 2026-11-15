@@ -61,6 +61,7 @@
 #include "class/settings/settingmanager.h"
 #include "class/settings/thememanager.h"
 #include "class/util/qkeysequences.h"
+#include "control/console/backgroundscriptoutput.h"
 #include "control/delegate/binarytextitemdelegate.h"
 #include "control/delegate/richtextitemdelegate.h"
 #include "control/docking/dockcomponentsfactory.h"
@@ -82,10 +83,8 @@
 #include "settings/diffsettingdialog.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
-#include "settings/lspsettingdialog.h"
 #include "settings/othersettingsdialog.h"
 #include "settings/pluginsettingdialog.h"
-#include "settings/qeditconfig.h"
 #include "settings/scriptsettingdialog.h"
 
 constexpr auto EMPTY_FUNC = [] {};
@@ -360,32 +359,16 @@ MainWindow::MainWindow(SplashDialog *splashDialog) : FramelessMainWindow() {
 
             m_scriptConsole->setMode(QConsoleWidget::Output);
             ScriptMachine::RegCallBacks backgroundCallbacks;
-            backgroundCallbacks.getInputFn = [this]() -> QString {
-                auto *input = new QInputDialog;
-                input->setLabelText(tr("Enter a value:"));
-                input->setWindowFlag(Qt::Widget);
-                FramelessDialogBase dialog(this);
-                dialog.buildUpContent(input);
-                dialog.setWindowTitle(tr("Input request"));
-                connect(input, &QInputDialog::finished, &dialog,
-                        &QDialog::done);
-                connect(&ScriptMachine::instance(),
-                        &ScriptMachine::sigOnInputCancelled, &dialog,
-                        [&dialog](ScriptMachine::ConsoleMode mode) {
-                            if (mode == ScriptMachine::Background) {
-                                dialog.reject();
-                            }
-                        });
-                return dialog.exec() == QDialog::Accepted ? input->textValue()
-                                                          : QString();
-            };
-            backgroundCallbacks.clearFn = [this]() {
-                m_bgScriptOutput->clear();
-                m_lastOutputType = ScriptMachine::MessageType::Unknown;
-            };
+            const QPointer<BackgroundScriptOutput> output(m_bgScriptOutput);
+            sm.setBackgroundInputHandler([output](quint64 taskId) {
+                return output ? output->requestInput(taskId) : QString();
+            });
             backgroundCallbacks.printMsgFn =
-                std::bind(&MainWindow::onOutputBgScriptOutput, this,
-                          std::placeholders::_1);
+                [output](const ScriptMachine::MessageInfo &message) {
+                    if (output) {
+                        output->appendOutput(message);
+                    }
+                };
             sm.registerCallBack(ScriptMachine::Background, backgroundCallbacks);
 
             if (splash) {
@@ -1299,67 +1282,28 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
                                       ads::CDockAreaWidget *areaw) {
 
-    m_bgScriptOutput = new QPlainTextEdit(this);
-    m_bgScriptOutput->setPlaceholderText(
-        tr("Background script output appears here."));
-    m_bgScriptOutput->setReadOnly(true);
-
+    m_bgScriptOutput = new BackgroundScriptOutput(this);
     m_hlAnim = new ConsoleHighlighAnim(m_bgScriptOutput);
-
-    connect(m_bgScriptOutput, &QPlainTextEdit::customContextMenuRequested, this,
-            [this](const QPoint &pos) {
-                auto &theme = ThemeManager::instance();
-
-                QMenu menu;
-                auto a = newAction(
-                    theme.standardIcon(ThemeManager::StandardIcon::String),
-                    tr("Select all"),
-                    [this]() { m_bgScriptOutput->selectAll(); },
-                    QKeySequence::SelectAll);
-                a->setShortcutContext(Qt::WidgetShortcut);
-                menu.addAction(a);
-                a = newAction(
-                    theme.standardIcon(ThemeManager::StandardIcon::Copy),
-                    tr("Copy"), [this]() { m_bgScriptOutput->copy(); },
-                    QKeySequence::Copy);
-                a->setShortcutContext(Qt::WidgetShortcut);
-                menu.addAction(a);
-                a = newAction(
-                    theme.standardIcon(ThemeManager::StandardIcon::Delete),
-                    tr("Clear"), [this]() { m_bgScriptOutput->clear(); });
-                menu.addAction(a);
-                menu.addSeparator();
-                menu.addAction(a);
-                a = newAction(
-                    theme.standardIcon(ThemeManager::StandardIcon::DebugStop),
-                    tr("Terminate script"),
-                    []() {
-                        ScriptMachine::instance().abortScript(
-                            ScriptMachine::Background);
-                    },
-                    QKeySequence(Qt::ControlModifier | Qt::Key_Q));
-                a->setShortcutContext(Qt::WidgetShortcut);
-                a->setEnabled(ScriptMachine::instance().isRunning(
-                    ScriptMachine::Background));
-                menu.addAction(a);
-                menu.exec(m_bgScriptOutput->mapToGlobal(pos));
+    connect(&ScriptMachine::instance(),
+            &ScriptMachine::sigOnBackgroundTasksChanged, this,
+            &MainWindow::resumeCloseAfterBackgroundStop);
+    auto *dw =
+        buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
+                        tr("Background script output"), m_bgScriptOutput);
+    m_hlAnim->setWidget(dw->tabWidget());
+    connect(m_bgScriptOutput,
+            &BackgroundScriptOutput::sigOnUnreadOutputReceived, this, [this] {
+                if (!m_bgScriptOutput->isVisible()) {
+                    m_hlAnim->start();
+                }
             });
-
-    auto sc = new QShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_Q),
-                            m_bgScriptOutput);
-    sc->setContext(Qt::WidgetShortcut);
-    connect(sc, &QShortcut::activated, m_bgScriptOutput, []() {
-        ScriptMachine::instance().abortScript(ScriptMachine::Background);
-    });
-
-    m_bgScriptOutput->setContextMenuPolicy(Qt::CustomContextMenu);
-
-    auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
-                              tr("Background script output"), m_bgScriptOutput);
-    auto tab = dw->tabWidget();
-    m_hlAnim->setWidget(tab);
-    ScriptManager::instance().setIndicator(tab);
-
+    const QPointer<BackgroundScriptOutput> output(m_bgScriptOutput);
+    ScriptManager::instance().setBackgroundRunner(
+        [output](const QString &path) {
+            if (output) {
+                output->runScript(path);
+            }
+        });
     m_bgScriptOutput->installEventFilter(this);
 
     return dock->addDockWidget(area, dw, areaw);
@@ -4758,72 +4702,6 @@ ads::CDockAreaWidget *MainWindow::editorViewArea() const {
     return m_dock->centralWidget()->dockAreaWidget();
 }
 
-void MainWindow::onOutputBgScriptOutput(
-    const ScriptMachine::MessageInfo &message) {
-    auto doc = m_bgScriptOutput->document();
-    auto lastLine = doc->lastBlock();
-    // each empty block has a QChar::ParagraphSeparator
-    auto isNotBlockStart = lastLine.length() > 1;
-
-    auto cursor = m_bgScriptOutput->textCursor();
-    cursor.movePosition(QTextCursor::End);
-
-    auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
-        if (message.row <= 0 || message.col <= 0) {
-            return message.message;
-        } else {
-            return QStringLiteral("(") + QString::number(message.row) +
-                   QStringLiteral(", ") + QString::number(message.col) +
-                   QStringLiteral(") ") + message.message;
-        }
-    };
-
-    auto msgtype = message.type;
-    if (m_lastOutputType == ScriptMachine::MessageType::Unknown) {
-        m_lastOutputType = msgtype;
-    }
-    switch (msgtype) {
-    case ScriptMachine::MessageType::ExecInfo:
-    case ScriptMachine::MessageType::Info:
-        if (isNotBlockStart) {
-            cursor.insertBlock();
-        }
-        cursor.insertText(tr("[Info]") + fmtMsg(message), {});
-        break;
-    case ScriptMachine::MessageType::Warn: {
-        if (isNotBlockStart) {
-            cursor.insertBlock();
-        }
-        auto fmt = cursor.charFormat();
-        fmt.setForeground(QColorConstants::Svg::gold);
-        cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
-    } break;
-    case ScriptMachine::MessageType::Error: {
-        if (isNotBlockStart) {
-            cursor.insertBlock();
-        }
-        auto fmt = cursor.charFormat();
-        fmt.setForeground(Qt::red);
-        cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
-    } break;
-    case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart && m_lastOutputType != message.type) {
-            cursor.insertBlock();
-        }
-        cursor.insertText(message.message, {});
-        break;
-    case ScriptMachine::MessageType::Unknown:
-        break;
-    }
-
-    m_lastOutputType = message.type;
-    if (message.type != ScriptMachine::MessageType::ExecInfo) {
-        if (!m_bgScriptOutput->isVisible()) {
-            m_hlAnim->start();
-        }
-    }
-}
-
 void MainWindow::restoreLayout(const QByteArray &layout) {
     showStatus(tr("Restoring layout..."));
     updateUI();
@@ -4883,38 +4761,55 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
     showStatus({});
 }
 
+void MainWindow::resumeCloseAfterBackgroundStop() {
+    if (m_backgroundCloseState == BackgroundCloseState::Stopping &&
+        !ScriptMachine::instance().isRunning(ScriptMachine::Background)) {
+        m_backgroundCloseState = BackgroundCloseState::Ready;
+        QTimer::singleShot(0, this, &QWidget::close);
+    }
+}
+
 void MainWindow::closeEvent(QCloseEvent *event) {
-    // plugin first checking
-    auto closing = m_scriptEnvironment->requestClose();
-    if (!closing) {
+    if (m_backgroundCloseState == BackgroundCloseState::Stopping) {
         event->ignore();
         return;
     }
-
     auto &sm = ScriptMachine::instance();
-
-    // then checking the scripting dialog
-    if (m_scriptDialog) {
-        if (!m_scriptDialog->about2Close()) {
+    const bool approved = m_backgroundCloseState == BackgroundCloseState::Ready;
+    m_backgroundCloseState = BackgroundCloseState::Idle;
+    if (!approved) {
+        // Check plugin and scripting-dialog vetoes before asking to stop tasks.
+        if (!m_scriptEnvironment->requestClose()) {
             event->ignore();
             return;
         }
-
-        sm.abortDbgScript();
-        m_scriptDialog->close();
+        if (m_scriptDialog) {
+            if (!m_scriptDialog->about2Close()) {
+                event->ignore();
+                return;
+            }
+            sm.abortDbgScript();
+            m_scriptDialog->close();
+        }
+        if (sm.isRunning(ScriptMachine::Interactive) ||
+            sm.isRunning(ScriptMachine::Background)) {
+            const auto result = WingMessageBox::warning(
+                this, qAppName(), tr("A script is still running. Exit anyway?"),
+                QMessageBox::Yes | QMessageBox::No);
+            if (result == QMessageBox::No) {
+                event->ignore();
+                return;
+            }
+            sm.abortScript(ScriptMachine::Interactive);
+        }
     }
-
-    if (sm.isRunning(ScriptMachine::Interactive) ||
-        sm.isRunning(ScriptMachine::Background)) {
-        auto ret = WingMessageBox::warning(
-            this, qAppName(), tr("A script is still running. Exit anyway?"),
-            QMessageBox::Yes | QMessageBox::No);
-        if (ret == QMessageBox::No) {
-            event->ignore();
-            return;
-        }
-        sm.abortScript(ScriptMachine::Interactive);
+    if (sm.isRunning(ScriptMachine::Background)) {
+        m_backgroundCloseState = BackgroundCloseState::Stopping;
         sm.abortScript(ScriptMachine::Background);
+        // Return to the caller so a yielded script's modal input can unwind.
+        // The task notification resumes closing only after cleanup completes.
+        event->ignore();
+        return;
     }
 
     const auto &views = EditorView::instances();

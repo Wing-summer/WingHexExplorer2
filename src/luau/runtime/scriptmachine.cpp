@@ -23,9 +23,13 @@
 #include <utility>
 
 #include <QDebug>
+#include <QLibraryInfo>
+#include <QMetaEnum>
 #include <QScopeGuard>
 #include <QScopedValueRollback>
 #include <QSet>
+#include <QTcpSocket>
+#include <QVersionNumber>
 
 #include "lua.h"
 #include "lualib.h"
@@ -40,7 +44,9 @@
 #include "class/application/applicationclock.h"
 #include "class/application/applicationmode.h"
 #include "class/plugin/pluginsystem.h"
+#include "class/settings/languagemanager.h"
 #include "class/settings/settingmanager.h"
+#include "class/settings/thememanager.h"
 #include "define.h"
 #include "luau/lsp/luaulanguageserver.h"
 #include "luau/luauinspector.h"
@@ -57,6 +63,106 @@ int luaopen_cffi(lua_State *L);
 LUAU_FASTFLAG(LuauCyclicRequireShortCircuit)
 
 namespace {
+void pushVersion(lua_State *state, const QString &text) {
+    const auto version = QVersionNumber::fromString(text);
+    lua_newtable(state);
+    const auto utf8 = text.toUtf8();
+    lua_pushlstring(state, utf8.constData(), size_t(utf8.size()));
+    lua_setfield(state, -2, "string");
+    lua_pushinteger(state, version.majorVersion());
+    lua_setfield(state, -2, "major");
+    lua_pushinteger(state, version.minorVersion());
+    lua_setfield(state, -2, "minor");
+    lua_pushinteger(state, version.microVersion());
+    lua_setfield(state, -2, "patch");
+    lua_setreadonly(state, -1, true);
+}
+
+WingHex::StandardIcon checkedStandardIcon(int id) {
+    if (ApplicationMode::headless() ||
+        !qobject_cast<QApplication *>(QCoreApplication::instance())) {
+        throw std::runtime_error("Standard icons require an available GUI");
+    }
+    const auto enumeration = QMetaEnum::fromType<WingHex::StandardIcon>();
+    if (enumeration.valueToKey(id) == nullptr) {
+        throw std::runtime_error("Unknown standard icon ID");
+    }
+    return static_cast<WingHex::StandardIcon>(id);
+}
+
+qtluau::QtArgument<QIcon> scriptStandardIcon(int id) {
+    const auto icon = checkedStandardIcon(id);
+    return {ThemeManager::instance().standardIcon(icon)};
+}
+
+qtluau::QtArgument<QPixmap> scriptStandardPixmap(int id) {
+    const auto icon = checkedStandardIcon(id);
+    return {ThemeManager::instance().standardPixmap(icon)};
+}
+
+qtluau::QtArgument<QByteArray> scriptStandardIconData(int id) {
+    const auto icon = checkedStandardIcon(id);
+    return {ThemeManager::instance().standardIconData(icon)};
+}
+
+void watchScriptSocket(qtluau::QtArgument<QTcpSocket *> argument) {
+    auto *socket = argument.value;
+    if (socket != nullptr) {
+        QObject::connect(socket, &QTcpSocket::disconnected, socket,
+                         &QObject::deleteLater, Qt::UniqueConnection);
+    }
+}
+
+void registerStandardLibrary(lua_State *state, WingLuauRequire &require,
+                             bool ui) {
+    luabridge::getGlobalNamespace(state)
+        .beginNamespace("winghex")
+        .addFunction("standard_icon", &scriptStandardIcon)
+        .addFunction("standard_pixmap", &scriptStandardPixmap)
+        .addFunction("standard_icon_data", &scriptStandardIconData)
+        .addFunction("release_socket_on_disconnect", &watchScriptSocket)
+        .endNamespace();
+    lua_getglobal(state, "winghex");
+    lua_pushboolean(state, ui);
+    lua_rawsetfield(state, -2, "guiAvailable");
+    lua_newtable(state);
+    lua_newtable(state);
+    lua_pushliteral(state, APP_NAME);
+    lua_setfield(state, -2, "name");
+    lua_pushliteral(state, "wingsummer");
+    lua_setfield(state, -2, "author");
+    pushVersion(state, QStringLiteral(WINGHEX_VERSION));
+    lua_setfield(state, -2, "version");
+    lua_setreadonly(state, -1, true);
+    lua_setfield(state, -2, "app");
+    lua_newtable(state);
+    pushVersion(state, QLibraryInfo::version().toString());
+    lua_setfield(state, -2, "version");
+    lua_setreadonly(state, -1, true);
+    lua_setfield(state, -2, "qt");
+    const auto locale =
+        LanguageManager::instance().defaultLocale().bcp47Name().toUtf8();
+    lua_pushlstring(state, locale.constData(), size_t(locale.size()));
+    lua_setfield(state, -2, "locale");
+    lua_setreadonly(state, -1, true);
+    lua_rawsetfield(state, -2, "env");
+    lua_newtable(state);
+    const auto enumeration = QMetaEnum::fromType<WingHex::StandardIcon>();
+    for (int index = 0; index < enumeration.keyCount(); ++index) {
+        lua_pushinteger(state, enumeration.value(index));
+        lua_setfield(state, -2, enumeration.key(index));
+    }
+    lua_setreadonly(state, -1, true);
+    lua_rawsetfield(state, -2, "StandardIcon");
+    lua_setreadonly(state, -1, true);
+    if (!require.registerBuiltinValue("winghex")) {
+        throw std::runtime_error("Cannot register winghex host module");
+    }
+    lua_pop(state, 1);
+    lua_pushnil(state);
+    lua_setglobal(state, "winghex");
+}
+
 class DbgStackPusher {
 public:
     DbgStackPusher(lua_State *L) : m_state(L) {
@@ -203,6 +309,9 @@ void ScriptMachine::finishScriptRegistration() {
     opts.systemModuleRoot = ropts.systemRoot;
     opts.definitionsFiles = ScriptMachineBindings::definitions();
     opts.builtinModuleFiles = bindings::moduleFiles();
+    opts.builtinModuleFiles.insert(
+        QStringLiteral("winghex"),
+        QDir(ropts.systemRoot).filePath(QStringLiteral("winghex.d.luau")));
     opts.symbolCatalogFile = bindings::symbolCatalogFile();
     QSet<QString> loadedDefinitions;
     for (const auto &file : std::as_const(opts.definitionsFiles)) {
@@ -234,7 +343,8 @@ WingScriptBind::IScriptEngine *ScriptMachine::scriptEngine() const noexcept {
 
 bool ScriptMachine::isRunning(ConsoleMode mode) const {
     Q_ASSERT(mode > Console_Begin && mode < Console_End);
-    return context(mode)->isRunning;
+    return mode == Background ? activeBackgroundTasks() > 0
+                              : context(mode)->isRunning;
 }
 
 bool ScriptMachine::configureEngine(
@@ -265,10 +375,13 @@ bool ScriptMachine::configureEngine(
 
     WingLuauRequire::Options ropts;
     ropts.readonlyBuiltins = m_runtimeOptions.retainContext;
-    ropts.moduleCacheKey = [](lua_State *thread, const QString &key) {
+    ropts.moduleCacheKey = [this](lua_State *thread, const QString &key) {
         auto *data = contextData(thread);
-        return data && data->execution ? data->execution->moduleCacheKey(key)
-                                       : key;
+        if (data && data->execution) {
+            return data->execution->moduleCacheKey(key);
+        }
+        m_consoleModuleCacheKeys.insert(key.toUtf8());
+        return key;
     };
     ropts.awaitModule = [](lua_State *parent, lua_State *module) {
         auto *data = contextData(parent);
@@ -278,12 +391,12 @@ bool ScriptMachine::configureEngine(
         data->execution->awaitModule(parent, module);
         return true;
     };
-    auto lualib = QStringLiteral("luaulib");
+    auto lualib = QStringLiteral(WINGHEX_LUAULIB_DIR);
 
     QDir appDir(QApplication::applicationDirPath());
     ropts.systemRoot = appDir.absoluteFilePath(lualib);
     QDir usrDir(Utilities::getAppDataPath());
-    ropts.userRoot = usrDir.absoluteFilePath(lualib);
+    ropts.userRoot = usrDir.absoluteFilePath(QStringLiteral("luaulib"));
     ropts.onLuauFileLoading = [](lua_State *L, lua_State *ml,
                                  const QString &path, const QByteArray &source,
                                  ScriptChunkFormat format) -> bool {
@@ -324,6 +437,8 @@ bool ScriptMachine::configureEngine(
         std::make_shared<PluginIOContext>(), nullptr);
     codec = ScriptMachineBindings::initialize(
         L, std::move(codec), m_luaReq, m_runtimeOptions.ui, *m_pluginIoService);
+
+    registerStandardLibrary(L, m_luaReq, m_runtimeOptions.ui);
 
     PluginSystem::instance().installAPI(L);
 
@@ -367,6 +482,7 @@ int ScriptMachine::__outputsep(MessageType type, lua_State *L, QChar sep) {
     MessageInfo info;
     info.type = type;
     info.mode = ConsoleMode(contextData(L)->mode);
+    info.taskId = contextData(L)->taskId;
     info.message = msg;
     ScriptMachine::instance().outputMessage(info);
     return 0;
@@ -391,6 +507,8 @@ int ScriptMachine::resumeThread(LuauThread *thread, int arguments) {
 
 void ScriptMachine::destoryMachine() {
     m_callbackFailure = {};
+    m_backgroundInput = {};
+    m_consoleModuleCacheKeys.clear();
     m_inited = false;
     m_scriptRegistrationFinished = false;
     const auto executions = std::exchange(m_executions, {});
@@ -530,11 +648,20 @@ int ScriptMachine::input(lua_State *L) {
         machine.m_regcalls.value(consoleModeIdx(mode)).getInputFn;
     QString result;
     try {
-        result = callback ? callback() : QString();
+        if (data->execution) {
+            data->execution->setWaitingInput(true);
+        }
+        result = data->taskId && machine.m_backgroundInput
+                     ? machine.m_backgroundInput(data->taskId)
+                 : callback ? callback()
+                            : QString();
+        if (data->execution) {
+            data->execution->setWaitingInput(false);
+        }
     } catch (const std::exception &error) {
         luaL_error(L, "%s", error.what());
     }
-    if (machine.context(mode)->requestStop) {
+    if (data->parent && data->parent->requestStop) {
         luaL_error(L, "Script execution was aborted");
     }
     luabridge::LuaRef(L, qtluau::QtValueRef<QString>(result)).push();
@@ -663,7 +790,8 @@ void ScriptMachine::executeScript(ConsoleMode mode, const QString &fileName,
                                   const std::function<void(bool)> &onFinished) {
     executeScriptWithResult(mode, fileName, isInDebug,
                             [onFinished](ExecutionResult result) {
-                                onFinished(result != ExecutionResult::Busy);
+                                onFinished(result != ExecutionResult::Busy &&
+                                           result != ExecutionResult::Capacity);
                             });
 }
 
@@ -707,6 +835,18 @@ ScriptMachine::loadChunk(lua_State *thread, const QByteArray &source,
 void ScriptMachine::executeScriptWithResult(
     ConsoleMode mode, const QString &fileName, bool isInDebug,
     const std::function<void(ExecutionResult)> &onFinished) {
+    if (mode == Background) {
+        const auto created = createBackgroundExecution(
+            fileName, ScriptExecution::Lifetime::OneShot);
+        if (!created.execution) {
+            onFinished(created.result);
+            return;
+        }
+        auto *execution = created.execution;
+        observeBackgroundCompletion(execution, onFinished);
+        execution->start();
+        return;
+    }
     const auto file = readScriptFile(fileName);
     if (!file) {
         outputError(mode, file.message, fileName);
@@ -723,7 +863,8 @@ void ScriptMachine::executeChunk(ConsoleMode mode, const QByteArray &bytes,
                                  const std::function<void(bool)> &finished) {
     executeChunkWithResult(mode, bytes, name, format, debug,
                            [finished](ExecutionResult result) {
-                               finished(result != ExecutionResult::Busy);
+                               finished(result != ExecutionResult::Busy &&
+                                        result != ExecutionResult::Capacity);
                            });
 }
 
@@ -753,6 +894,18 @@ void ScriptMachine::executeChunkWithResult(
     if (QThread::currentThread() != qApp->thread()) {
         qWarning("Code must execute on the main thread");
         onFinished(ExecutionResult::Failed);
+        return;
+    }
+
+    if (mode == Background) {
+        const auto created = createBackgroundExecution(
+            fileName, ScriptExecution::Lifetime::OneShot);
+        if (!created.execution) {
+            onFinished(created.result);
+            return;
+        }
+        observeBackgroundCompletion(created.execution, onFinished);
+        created.execution->startChunk(bytes, format);
         return;
     }
 
@@ -855,7 +1008,13 @@ void ScriptMachine::executeChunkWithResult(
                 // Release this execution's handles while its state is alive.
                 PluginSystem::instance().cleanScriptHandles(T, handles);
                 R.destory();
-                m_luaReq.clearRequireCache();
+                // Console contexts retain their existing shared cache policy,
+                // without invalidating independently running Background tasks.
+                for (const auto &key :
+                     std::as_const(m_consoleModuleCacheKeys)) {
+                    m_luaReq.clearRequireCacheEntry(key.constData());
+                }
+                m_consoleModuleCacheKeys.clear();
             }
 
             onFinished(stopped            ? ExecutionResult::Aborted
@@ -874,6 +1033,13 @@ void ScriptMachine::abortDbgScript() {
 }
 
 void ScriptMachine::abortScript(ConsoleMode mode) {
+    if (mode == Background) {
+        const auto executions = m_executions.values();
+        for (auto *execution : executions) {
+            execution->stop();
+        }
+        return;
+    }
     context(mode)->requestStop = true;
     qtluau::clearLuaContext(context(mode)->state);
     Q_EMIT sigOnInputCancelled(mode);
@@ -887,15 +1053,88 @@ ScriptMachine &ScriptMachine::instance() {
 ScriptMachine::ScriptMachine() {}
 
 ScriptExecution *ScriptMachine::createExecution(const QString &path) {
-    if (!m_scriptRegistrationFinished) {
-        return nullptr;
+    return createBackgroundExecution(path, ScriptExecution::Lifetime::Resident)
+        .execution;
+}
+
+ScriptMachine::BackgroundCreationResult
+ScriptMachine::createBackgroundExecution(const QString &path,
+                                         ScriptExecution::Lifetime lifetime) {
+    if (!m_scriptRegistrationFinished || !m_main || path.isEmpty() ||
+        QThread::currentThread() != qApp->thread()) {
+        return {};
     }
-    auto execution = new ScriptExecution(*this, path);
+    if (activeBackgroundTasks() >= MaxBackgroundTasks) {
+        return {ExecutionResult::Capacity, nullptr};
+    }
+    auto *execution =
+        new ScriptExecution(*this, path, ++m_nextBackgroundTaskId, lifetime);
     const auto key = execution->contextKey();
     m_executions.insert(key, execution);
-    connect(execution, &QObject::destroyed, this,
-            [this, key] { m_executions.remove(key); });
-    return execution;
+    connect(execution, &ScriptExecution::sigOnExecutionStateChanged, this,
+            [this, execution](ScriptExecution::State state) {
+                Q_EMIT sigOnBackgroundTaskStateChanged(execution->taskId(),
+                                                       state);
+                Q_EMIT sigOnBackgroundTasksChanged();
+            });
+    connect(execution, &QObject::destroyed, this, [this, key] {
+        m_executions.remove(key);
+        Q_EMIT sigOnBackgroundTasksChanged();
+    });
+    Q_EMIT sigOnBackgroundTasksChanged();
+    return {ExecutionResult::Success, execution};
+}
+
+int ScriptMachine::activeBackgroundTasks() const {
+    int count = 0;
+    for (const auto *execution : m_executions) {
+        if (execution->active()) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+ScriptExecution *ScriptMachine::backgroundTask(quint64 taskId) const {
+    for (auto *execution : m_executions) {
+        if (execution->taskId() == taskId) {
+            return execution;
+        }
+    }
+    return nullptr;
+}
+
+void ScriptMachine::abortBackgroundTask(quint64 taskId) {
+    if (auto *execution = backgroundTask(taskId)) {
+        execution->stop();
+    }
+}
+
+void ScriptMachine::setBackgroundInputHandler(
+    std::function<QString(quint64)> handler) {
+    m_backgroundInput = std::move(handler);
+}
+
+void ScriptMachine::observeBackgroundCompletion(
+    ScriptExecution *execution,
+    const std::function<void(ExecutionResult)> &onFinished) {
+    connect(execution, &ScriptExecution::sigOnExecutionCompleted, execution,
+            [execution, onFinished] {
+                onFinished(ExecutionResult::Success);
+                execution->deleteLater();
+            });
+    connect(execution, &ScriptExecution::sigOnExecutionStopped, execution,
+            [execution, onFinished] {
+                onFinished(ExecutionResult::Aborted);
+                execution->deleteLater();
+            });
+    connect(execution, &ScriptExecution::sigOnExecutionFailed, execution,
+            [execution, onFinished](ScriptFailure failure, const QString &) {
+                onFinished(failure == ScriptFailure::FileError
+                               ? ExecutionResult::FileError
+                               : ExecutionResult::Failed);
+                execution->deleteLater();
+            });
 }
 
 bool ScriptMachine::registerBuiltin(
@@ -959,6 +1198,12 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
 
     if (code.isEmpty()) {
         onFinished(true);
+        return;
+    }
+
+    if (mode == Background) {
+        executeChunk(mode, code.toUtf8(), QStringLiteral("stdin.luau"),
+                     ScriptChunkFormat::Source, false, onFinished);
         return;
     }
 

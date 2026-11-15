@@ -5,6 +5,7 @@
 
 #include <cstdio>
 
+#include <QAbstractButton>
 #include <QApplication>
 #include <QComboBox>
 #include <QDialog>
@@ -13,6 +14,7 @@
 #include <QTimer>
 
 #include "class/application/applicationmode.h"
+#include "control/console/backgroundscriptoutput.h"
 #include "control/editor/scripteditor.h"
 #include "control/editorview.h"
 #include "control/toast.h"
@@ -24,6 +26,54 @@
 
 namespace {
 bool modeProbeFailed = false;
+
+inline void answerBackgroundClosePrompt() {
+    auto *modal = QApplication::activeModalWidget();
+    auto *message = modal ? modal->findChild<QMessageBox *>() : nullptr;
+    if (message && message->button(QMessageBox::Yes)) {
+        message->button(QMessageBox::Yes)->click();
+    }
+}
+
+inline void startBackgroundCloseProbe(MainWindow *window, const QString &path) {
+    auto *panel = window->findChild<BackgroundScriptOutput *>();
+    if (!panel) {
+        for (auto *widget : QApplication::allWidgets()) {
+            panel = qobject_cast<BackgroundScriptOutput *>(widget);
+            if (panel) {
+                break;
+            }
+        }
+    }
+    if (!panel) {
+        std::fputs("Background close probe found no output panel\n", stderr);
+        modeProbeFailed = true;
+        qApp->exit(97);
+        return;
+    }
+    auto *answer = new QTimer(window);
+    QObject::connect(answer, &QTimer::timeout, window,
+                     answerBackgroundClosePrompt);
+    answer->start(10);
+    const bool waitingInput = path.endsWith(QStringLiteral("input.luau"));
+    auto &machine = ScriptMachine::instance();
+    QObject::connect(
+        &machine, &ScriptMachine::sigOnBackgroundTaskStateChanged, window,
+        [window, waitingInput](quint64, ScriptExecution::State state) {
+            if (state == (waitingInput ? ScriptExecution::State::WaitingInput
+                                       : ScriptExecution::State::Running)) {
+                QTimer::singleShot(waitingInput ? 0 : 50, window,
+                                   &QWidget::close);
+            }
+        });
+    QObject::connect(window, &MainWindow::sigOnClosed, qApp, [] {
+        if (ScriptMachine::instance().activeBackgroundTasks() != 0) {
+            modeProbeFailed = true;
+        }
+        std::puts("background-close-clean");
+    });
+    panel->runScript(path);
+}
 
 inline void inspectModeWindow() {
     const auto mode = qEnvironmentVariable("WINGHEX_MODE_TEST");
@@ -79,6 +129,12 @@ inline void inspectModeWindow() {
             if (EditorView::instances().size() != 1 ||
                 !ScriptMachine::instance().isInited()) {
                 fail("full mode did not open the initial file");
+                return;
+            }
+            const auto backgroundClose =
+                qEnvironmentVariable("WINGHEX_MODE_BG_CLOSE");
+            if (!backgroundClose.isEmpty()) {
+                startBackgroundCloseProbe(window, backgroundClose);
                 return;
             }
             std::fprintf(stdout, "full-ready\n");

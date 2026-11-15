@@ -1,0 +1,103 @@
+{
+  "env": {
+    "doc": "Read-only host environment snapshot. / 只读宿主环境快照。",
+    "types": "export type Version = { string: string, major: number, minor: number, patch: number }\nexport type Environment = { app: { name: string, author: string, version: Version }, qt: { version: Version }, locale: string }",
+    "exports": {
+      "$value": "Environment"
+    }
+  },
+  "i18n": {
+    "doc": "Locale-neutral dictionaries with parent-tag fallback. / 与语种无关的词典，按语言标签逐级回退。",
+    "types": "export type Catalog = { [string]: { [string]: string } }\nexport type Translator = (source: string, ...any) -> string",
+    "exports": {
+      "create": "(catalog: Catalog, locale: string?) -> Translator"
+    }
+  },
+  "icons": {
+    "doc": "Theme-aware standard icons; GUI required. / 主题感知标准图标，需要 GUI。",
+    "types": "",
+    "exports": {
+      "Id": "IconIds",
+      "icon": "(id: number) -> any",
+      "pixmap": "(id: number) -> any",
+      "data": "(id: number) -> string"
+    }
+  },
+  "bytes": {
+    "doc": "Strict hexadecimal and string/buffer conversions. / 严格十六进制及字节转换。",
+    "types": "export type Bytes = string | buffer",
+    "exports": {
+      "buffer": "(value: Bytes) -> buffer",
+      "string": "(value: Bytes) -> string",
+      "from_hex": "(value: Bytes) -> buffer",
+      "to_hex": "(value: Bytes) -> string"
+    }
+  },
+  "base64": {
+    "doc": "Canonical padded Base64. / 带填充的规范 Base64。",
+    "types": "",
+    "exports": {
+      "encode": "(value: string | buffer) -> string",
+      "decode": "(value: string | buffer) -> buffer"
+    }
+  },
+  "lz4": {
+    "doc": "LZ4 block format; bounded decompression. / LZ4 块格式及有界解压。",
+    "types": "",
+    "exports": {
+      "compress": "(value: string | buffer) -> string",
+      "decompress": "(value: string | buffer, maxBytes: number?) -> string"
+    }
+  },
+  "binary": {
+    "doc": "Fixed binary layouts; offsets are zero based. / 固定二进制布局，偏移从零开始。",
+    "types": "export type Field = { name: string, type: string | Schema, offset: number?, size: number?, count: number?, endian: string?, group: number? }\nexport type Definition = { fields: {Field}, size: number?, endian: string?, union: boolean?, member: string? }\nexport type Schema = { name: string, size: number, endian: string, fields: {Field} }\nexport type Source = { size: number, read: (offset: number, size: number) -> string }\nexport type Options = { maxBytes: number?, maxDepth: number?, maxWork: number? }\nexport type Mark = { path: string?, name: string?, offset: number, size: number, raw: string?, group: number?, bookmark: boolean?, foreground: any?, background: any? }\nexport type Result = { schema: Schema, values: {[string]: any}, fields: {Mark}, original: string, offset: number, size: number }",
+    "exports": {
+      "register": "(name: string, definition: Definition) -> Schema",
+      "register_cffi": "(name: string, ffi: any, ctype: string, definition: Definition) -> Schema",
+      "decode": "(schema: string | Schema, source: string | buffer | Source, offset: number?, options: Options?) -> Result",
+      "encode": "(schema: string | Schema, values: {[string]: any}, original: (string | buffer)?, options: Options?) -> string"
+    }
+  },
+  "analysis": {
+    "doc": "Scoped document parsing, transactional writes and annotations. / 作用域文档解析、事务写回与标注。",
+    "types": "local binary = require(\"@s/binary\")\nlocal hexdoc = require(\"@s/hexdoc\")\nexport type Document = hexdoc.Document\nexport type AnnotationOptions = { title: string?, offset: number?, tr: ((source: string) -> string)? }",
+    "exports": {
+      "current": "<A..., R...>(callback: (Document, A...) -> R..., A...) -> R...",
+      "transaction": "<R...>(document: Document, title: string, callback: () -> R...) -> R...",
+      "read": "(document: Document, schema: string | binary.Schema, offset: number?, options: binary.Options?) -> binary.Result",
+      "write": "(document: Document, result: binary.Result, values: {[string]: any}?, title: string?) -> binary.Result",
+      "annotate": "(document: Document, marks: {binary.Mark}, options: AnnotationOptions?) -> number"
+    }
+  },
+  "binaryreader": {
+    "doc": "Bounded random-access PE/ELF parser plans. / PE/ELF 有界随机读取和标注计划。",
+    "types": "export type Mark = {offset: number, size: number, name: string, group: number, order: number}\nexport type Reader = { size: number, little: boolean, marks: {Mark}, read: (number, number) -> string,\n range: (Reader, number, number) -> (), bytes: (Reader, number, number) -> string, uint: (Reader, number, number) -> number,\n delta: (Reader, number, number, number) -> number, mark: (Reader, number, number, string, number?) -> (),\n struct: (Reader, number, string, string, number?) -> number, array: (Reader, number, number, number, number, (number, number) -> ()) -> (),\n cstring: (Reader, number, number?, string, number?) -> string, finish: (Reader) -> () }",
+    "exports": {
+      "number": "(value: any) -> number",
+      "new": "(size: any, read: (number, number) -> string) -> Reader"
+    }
+  },
+  "mcp/init": {
+    "doc": "MCP 2026-07-28 server with explicit HTTP lifetime. / 显式 HTTP 生命周期的 MCP 服务。",
+    "types": "export type ServerOptions = { name: string, version: string }\nexport type ToolDefinition = { name: string, description: string?, inputSchema: any? }\nexport type ResourceDefinition = { uri: string, name: string?, description: string?, mimeType: string? }\nexport type PromptDefinition = { name: string, description: string?, arguments: any? }\nexport type HttpOptions = { host: string?, port: number?, path: string?, allowedOrigins: {string}?, maxMessageBytes: number?, maxConnections: number? }\nexport type Transport = { host: string, port: number, path: string, stop: (Transport) -> () }\nexport type Server = { tool: (Server, ToolDefinition, (any) -> any) -> (), resource: (Server, ResourceDefinition, (any) -> any) -> (), prompt: (Server, PromptDefinition, (any) -> any) -> (), use: (Server, any) -> (), dispatch: (Server, any) -> any?, serve_http: (Server, HttpOptions?) -> Transport, stop: (Server) -> () }",
+    "exports": {
+      "ProtocolVersion": "string",
+      "new": "(options: ServerOptions) -> Server"
+    }
+  },
+  "winghex": {
+    "builtin": true,
+    "doc": "Read-only native host module, loaded with @b/winghex. / 只读宿主模块，使用 @b/winghex 加载。",
+    "types": "local environment = require(\"@s/env_api\")\nlocal icons = require(\"@s/icons_api\")\nexport type Environment = environment.Environment\nexport type IconIds = icons.IconIds",
+    "exports": {
+      "env": "Environment",
+      "StandardIcon": "IconIds",
+      "standard_icon": "(id: number) -> any",
+      "standard_pixmap": "(id: number) -> any",
+      "standard_icon_data": "(id: number) -> string",
+      "release_socket_on_disconnect": "(socket: any) -> ()",
+      "guiAvailable": "boolean"
+    }
+  }
+}

@@ -58,6 +58,7 @@
 #include "settingdialog.h"
 #include "utilities.h"
 
+class BackgroundScriptOutput;
 class PluginSystem;
 class ScriptEnvironment;
 
@@ -300,8 +301,6 @@ private:
 
     inline ads::CDockAreaWidget *editorViewArea() const;
 
-    void onOutputBgScriptOutput(const ScriptMachine::MessageInfo &message);
-
     void restoreLayout(const QByteArray &layout);
 
 protected:
@@ -311,6 +310,8 @@ protected:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    void resumeCloseAfterBackgroundStop();
+
     template <typename Func>
     inline QToolButton *
     addPannelAction(RibbonButtonGroup *pannel, ThemeManager::StandardIcon icon,
@@ -550,15 +551,15 @@ private:
     ads::CDockWidget *m_find = nullptr;
     ads::CDockWidget *m_hashtable = nullptr;
 
-    ScriptMachine::MessageType m_lastOutputType =
-        ScriptMachine::MessageType::Unknown;
     QVarLengthArray<QAction *, QStringConverter::Encoding::LastEncoding>
         m_findEncoding;
 
     QPointer<DiffDialog> m_diffDialog;
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
-    QPlainTextEdit *m_bgScriptOutput = nullptr;
+    BackgroundScriptOutput *m_bgScriptOutput = nullptr;
+    enum class BackgroundCloseState { Idle, Stopping, Ready };
+    BackgroundCloseState m_backgroundCloseState = BackgroundCloseState::Idle;
 
     ConsoleHighlighAnim *m_hlAnim = nullptr;
     Ribbon *m_ribbon = nullptr;

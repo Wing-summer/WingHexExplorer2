@@ -20,6 +20,7 @@ Suites test production code in this repository; standalone tests need no full ap
 | [luauplugins](luauplugins/README.md) | Luau 插件包、源码／字节码、隔离及设备 IO / Plugin packages, source/bytecode, isolation, and device IO | CTest + host probe |
 | [luauindentation](luauindentation/README.md) | Luau 缩进、闭合对齐、编辑事务与控制台保护 / Luau indentation, closing alignment, edit transactions, and console protection | CTest |
 | [plugindocument](plugindocument/README.md) | 插件文档对象、句柄生命周期与宿主集成 / Plugin document objects, handle lifecycle and host integration | Qt Test / Python |
+| [background](background/README.md) | 后台环境容量、隔离与输出面板 / Background capacity, isolation and output panel | Python host probe |
 | [headless](headless/README.md) | 无头脚本、服务生命周期、标准流、socket 和插件注册 / Headless scripts, service lifetime, standard streams, sockets and plugin registration | CTest + Python |
 | [i18n](i18n/README.md) | 语言加载、回退、插件翻译与 UI 尺寸 / Language loading, fallback, plugin translation, and UI sizing | Python |
 

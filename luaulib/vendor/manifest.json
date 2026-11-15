@@ -1,0 +1,18 @@
+{
+  "base64": {
+    "repo": "Reselim/Base64",
+    "sha": "3fda9cd4d7ef047bedc29dabf1fd0c77e5789bd8"
+  },
+  "bytes": {
+    "repo": "jiwonz/luau-coolbuffer",
+    "sha": "222b71382fdc3cdf7877a694701551049160a5ef"
+  },
+  "lz4": {
+    "repo": "RiskoZS/llz4",
+    "sha": "57d869215b7a061121f5492ecff245989638816a"
+  },
+  "mcp": {
+    "repo": "slime21023/ash",
+    "sha": "94d67870c07c06bd2843c91b221a373ffd1176b2"
+  }
+}

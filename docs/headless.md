@@ -59,8 +59,8 @@ States progress through `queued → running → resident`. A returned entry rema
 标准 RPC 错误之外，`-32001` 未知任务、`-32002` 重复 ID、`-32003` 状态冲突、`-32004` 容量不足、`-32005` 文件无效、`-32006` 服务正在退出。文件错误在接受任务前返回；接受后的错误保存在任务记录。
 Besides standard RPC errors: `-32001` means unknown task, `-32002` duplicate ID, `-32003` state conflict, `-32004` capacity reached, `-32005` invalid file and `-32006` service stopping. File validation errors reject acceptance; subsequent errors are stored in the task record.
 
-上限为 64 个活动任务、1024 条记录、64 个连接、8 KiB 帧头、1 MiB 消息体及每连接 4 MiB 待发送数据。任务历史不会自动淘汰；超出连接缓冲限制会断开相应连接，不影响其他连接。
-Limits are 64 active tasks, 1024 records, 64 connections, 8 KiB headers, 1 MiB message bodies and 4 MiB queued output per connection. History is not automatically evicted. Exceeding connection buffer limits disconnects that client without affecting others.
+GUI 与 headless 共用 Background 环境管理，上限为 16 个活动任务（含待启动、常驻及停止中的环境）、1024 条记录、64 个连接、8 KiB 帧头、1 MiB 消息体及每连接 4 MiB 待发送数据。任务历史不会自动淘汰；超出连接缓冲限制会断开相应连接，不影响其他连接。
+GUI and headless share Background environment management. Limits are 16 active tasks (including pending, resident and stopping environments), 1024 records, 64 connections, 8 KiB headers, 1 MiB message bodies and 4 MiB queued output per connection. History is not automatically evicted. Exceeding connection buffer limits disconnects that client without affecting others.
 
 ## TLS 与证书 / TLS and certificates
 

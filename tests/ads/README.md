@@ -27,6 +27,10 @@ QT_QPA_PLATFORM=offscreen /tmp/wing-ads-release/ads_benchmark
 - 不处理事件就连续恢复，检查浮动注册表一致性及业务控件存活。
   Consecutive restores without event processing, checking floating registrations
   and dock widget survival.
+- 连续四次启动，关闭中央区域的插件标签后停用插件，检查相邻页面宽度及窗口缩放规则不变，覆盖直接和嵌套分割器。
+  Four launches close a plugin tab in the central area, then omit the plugin.
+  Adjacent page widths and window resize behavior remain stable with direct and
+  nested splitters.
 - 排除临时编辑器、缺失控件、分割尺寸对应关系、空布局及 perspectives。
   Excluded transient editors, missing widgets, matching splitter sizes, empty
   layouts and perspectives.
